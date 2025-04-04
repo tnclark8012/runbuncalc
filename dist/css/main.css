@@ -833,6 +833,7 @@ table.field {
 }
 
 .custom-box-options {
+    display: flex;
     margin-bottom: 8px;
     margin-top: 8px;
 }
@@ -841,3 +842,10 @@ table.field {
     display: flex;
 }
 
+#exportAll {
+    flex-shrink: 0;
+}
+
+#exportAllName {
+    flex: 1;
+}

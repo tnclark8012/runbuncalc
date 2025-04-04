@@ -85,6 +85,7 @@ $("#updateL").click(function () {
 });
 
 $("#exportAll").click(() => {
+	let name = document.querySelector("#exportAllName").value || document.querySelector('#levelCap').selectedOptions[0].label;
 	const link = document.createElement("a");
 	const allMons = localStorage.getItem("customsets");
 	navigator.clipboard.writeText(allMons)
