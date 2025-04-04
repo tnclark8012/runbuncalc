@@ -1716,6 +1716,8 @@ function allowDrop(ev) {
 var pokeDragged = null;
 function dragstart_handler(ev) {
 	pokeDragged = ev.target;
+	ev.dataTransfer.setData("text/plain", "Dragging pokemon");
+	ev.dataTransfer.setDragImage(ev.target, 10, 10);
 }
 
 function drop(ev) {
