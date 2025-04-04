@@ -495,6 +495,7 @@ $(".set-selector").change(function () {
 				newPoke.className = "opposite-pok right-side";
 				newPoke.src = `https://raw.githubusercontent.com/May8th1995/sprites/master/${pok_name}.png`;
 				newPoke.title = `${next_poks[i]}, ${next_poks[i]} BP`;
+				newPoke.draggable = true;
 				nextTrainer=`${next_poks[i]}`
 				newPoke.dataset.id = `${CURRENT_TRAINER_POKS[i].split("]")[1]}`;
 				frag.append(newPoke);
@@ -1464,6 +1465,7 @@ function addBoxed(poke, box) {
 	newPoke.className = "trainer-pok left-side";
 	newPoke.src = getSrcImgPokemon(poke);
 	newPoke.dataset.id = `${poke.name} (${poke.nameProp})`
+	newPoke.draggable = true;
 	newPoke.addEventListener("dragstart", dragstart_handler);
 	if (!box){
 		$('#box-poke-list')[0].appendChild(newPoke)
