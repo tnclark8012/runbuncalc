@@ -78,6 +78,35 @@ $("#exportL").click(function () {
 	});
 });
 
+$("#updateL").click(function () {
+	var exportData = ExportPokemon($("#p1"));
+	var name = "Custom Set";
+	addSets(pokes, name);
+});
+
+$("#exportAll").click(() => {
+	const link = document.createElement("a");
+	const allMons = localStorage.getItem("customsets");
+	navigator.clipboard.writeText(allMons)
+	const file = new Blob([allMons], { type: 'text/plain' });
+	link.href = URL.createObjectURL(file);
+	link.download = "box.json";
+	link.click();
+	URL.revokeObjectURL(link.href);
+});
+
+const importBoxInput = document.querySelector("#importBoxInput");
+$("#importBox").click(() => {
+		importBoxInput.click();
+});
+
+importBoxInput.addEventListener('change', (e) => {
+	const file = e.target.files[0];
+	file.text().then(value => {
+		localStorage.setItem("customsets", value);
+	});
+});
+
 $("#exportR").click(function () {
 	var exportData = ExportPokemon($("#p2"));
 	$("textarea.import-team-text").val(exportData);

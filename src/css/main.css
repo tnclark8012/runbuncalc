@@ -817,3 +817,19 @@ table.field {
     margin-top: 22px;
     margin-right: 41px;
 }
+
+.section-level-cap {
+    display: flex;
+    margin-bottom: 8px;
+    margin-top: 8px; 
+}
+
+.custom-box-options {
+    margin-bottom: 8px;
+    margin-top: 8px;
+}
+
+.section-level-cap {
+    display: flex;
+}
+
