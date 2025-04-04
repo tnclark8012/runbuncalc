@@ -441,9 +441,9 @@ $(".item").change(function () {
 	}
 });
 
-function smogonAnalysis(pokemonName) {
+function dexAnalysis(pokemonName) {
 	var generation = ["rb", "gs", "rs", "dp", "bw", "xy", "sm", "ss", "sv"][gen - 1];
-	return "https://smogon.com/dex/" + generation + "/pokemon/" + pokemonName.toLowerCase() + "/";
+	return "https://dex.runandbu.com/pokemon/" + pokemonName.toLowerCase();
 }
 
 function sortmons(a, b) {
@@ -525,7 +525,7 @@ $(".set-selector").change(function () {
 			stickyMoves.clearStickyMove();
 		}
 		pokeObj.find(".teraToggle").prop("checked", false);
-		pokeObj.find(".analysis").attr("href", smogonAnalysis(pokemonName));
+		pokeObj.find(".analysis").attr("href", dexAnalysis(pokemonName));
 		pokeObj.find(".type1").val(pokemon.types[0]);
 		pokeObj.find(".type2").val(pokemon.types[1]);
 		pokeObj.find(".hp .base").val(pokemon.bs.hp);
@@ -2152,8 +2152,13 @@ $(document).ready(function () {
 	showColorCodes();
 
 	initializeLevelCap();
+	adjustTabOrders();
 	
 });
+
+function adjustTabOrders() {
+	$('.boost, .evs, .base').attr('tabindex', -1);
+}
 
 function getSets() {
 	return JSON.parse(localStorage.customsets);
