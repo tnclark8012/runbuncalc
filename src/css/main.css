@@ -569,11 +569,11 @@ table.field {
 }
 .mon-dmg-1v1{
     /* Can 1v1 the opponent */
-    background: #ad59dd;
+    background: #67157c;
 }
 .mon-dmg-1v1-pivot{
     /* Can 1v1 the opponent, if it comes in on the right move */
-    background: linear-gradient(to right, #ad59dd 50%, var(--fieldset-color) 0%);
+    background: linear-gradient(to right, #67157c 50%, var(--fieldset-color) 0%);
 }
 .mon-dmg-WMO{
     /* Is considerable a wall that may OHKO*/

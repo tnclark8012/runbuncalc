@@ -120,6 +120,30 @@ function performCalculations(pP2, double) {
 	bestResult.change();
 }
 
+function getDamageRanges(attackerResults) {
+	/* Returns array of highest damage % inflicted per move
+		[{ lowestRoll: 85.6, higestRoll: 101.5 }, ...x4]
+	*/
+	var attacker = attackerResults[0].attacker;
+	var defender = attackerResults[0].defender;
+	var highestRoll, lowestRoll, damage = 0;
+	//goes from the most optimist to the least optimist
+	var p1KO = 0, p2KO = 0;
+	//Highest damage
+	var p1HD = 0, p2HD = 0;
+
+	return attackerResults.map((result, i) => {
+		let lowestHitDamage = result.damage[0] ? result.damage[0] : result.damage;
+		let highestHitDamage = result.damage[15] ? result.damage[15] : result.damage;
+		let getDamagePct = (hitDamage) => hitDamage * attacker.moves[i].hits / defender.stats.hp * 100;
+		return {
+			move: result.move,
+			lowestRoll: getDamagePct(lowestHitDamage),
+			highestRoll: getDamagePct(highestHitDamage),
+		};
+	});
+}
+
 function calculationsColors(p1info, p2) {
 	if (!p2) {
 		var p2info = $("#p2");
@@ -134,64 +158,56 @@ function calculationsColors(p1info, p2) {
 	p2 = damageResults[1][0].attacker;
 	p1.maxDamages = [];
 	p2.maxDamages = [];
-	var p1s = p1.stats.spe;
-	var p2s = p2.stats.spe;
+
+  var p1speed = p1.stats.spe;
+	var p2speed = p2.stats.spe;
 	//Faster Tied Slower
-	var fastest = p1s > p2s ? "F" : p1s < p2s ? "S" : p1s === p2s ? "T" : undefined;
+	var fastest = p1speed > p2speed ? "F" : p1speed < p2speed ? "S" : p1speed === p2speed ? "T" : undefined;
 	var result, highestRoll, lowestRoll, damage = 0;
 	//goes from the most optimist to the least optimist
 	var p1KO = 0, p2KO = 0;
 	//Highest damage
 	var p1HD = 0, p2HD = 0;
-	for (var i = 0; i < 4; i++) {
-		// P1
-		result = damageResults[0][i];
-		//lowest rolls in %
-		damage = result.damage[0] ? result.damage[0] : result.damage;
-		lowestRoll = damage * p1.moves[i].hits / p2.stats.hp * 100;
-		damage = result.damage[15] ? result.damage[15] : result.damage;
-		highestRoll = damage * p1.moves[i].hits / p2.stats.hp * 100;
-		if (highestRoll > p1HD) {
-			p1HD = highestRoll;
-		}
-		if (lowestRoll >= 100) {
-			p1KO = 1;
-		} else { //if lowest kill obviously highest will
-			//highest rolls in %
-			if (highestRoll >= 100) {
-				if (p1KO == 0) {
-					p1KO = 2;
-				}
-			}
-		}
+	// Lowest damage
+	var p1LD = 0, p2LD = 0;
 
-		// P2
-		result = damageResults[1][i];
-		//some damage like sonic boom acts a bit weird.
-		damage = result.damage[0] ? result.damage[0] : result.damage;
-		lowestRoll = damage * p2.moves[i].hits / p1.stats.hp * 100;
-		damage = result.damage[15] ? result.damage[15] : result.damage;
-		highestRoll = damage * p2.moves[i].hits / p1.stats.hp * 100;
-		if (highestRoll > p2HD) {
-			p2HD = highestRoll;
-		}
-		if (lowestRoll >= 100) {
-			p2KO = 4;
-		} else {
-			if (highestRoll >= 100) {
-				if (p2KO < 3) {
-					p2KO = 3;
-				}
-			}
-		}
+	const p1DamageRanges = getDamageRanges(damageResults[0]);
+	const p2DamageRanges = getDamageRanges(damageResults[1]);
+	p1HD = Math.max(...p1DamageRanges.map(r => r.highestRoll));
+	p2HD = Math.max(...p2DamageRanges.map(r => r.highestRoll));
+
+	// The lowest damage roll for the still the best move choice
+	p1LD = Math.max(...p1DamageRanges.map(r => r.lowestRoll));
+	p2LD = Math.max(...p2DamageRanges.map(r => r.lowestRoll));
+	
+	if (p1LD >= 100) {
+		p1KO = 1;
+	}
+	else if (p1HD >= 100 && p1KO == 0) {
+		p1KO = 2;
+	}
+	
+	if (p2LD >= 100) {
+		p2KO = 4;
+	} else if (p2HD >= 100 && p2KO < 3) {
+		p2KO = 3;
 	}
 
 	// Check if p1 can switch in and 1v1
 	let p1DiesInHits = Math.floor(Math.max(1, 100 / p2HD));
-	let p2DiesInHits = Math.floor(Math.max(1, 100 / p1HD));
+	let p2DiesInHits = Math.floor(Math.max(1, 100 / p1LD));
 	if (p1DiesInHits - 1 > p2DiesInHits) {
-		// p1 can switch in and ko
+		// p1 can switch into any move and ko
 		return { speed: fastest, code: "1v1" };
+	}
+
+	let highestRollOfLeastPowerfulMove = Math.min(...p2DamageRanges.filter(d => d.move.category !== "Status" && !(d.move.bp === 0 && d.highestRoll === 0)).map(d => d.highestRoll));
+	let p1HealthAfterPivot = 100 - highestRollOfLeastPowerfulMove;
+	let p1DiesInHitsAfterPivot = Math.floor(Math.max(1, p1HealthAfterPivot / p2HD));
+	if (p1DiesInHitsAfterPivot > p2DiesInHits || // KOs even if slower
+		(p1DiesInHitsAfterPivot === p2DiesInHits && fastest === "F")) { // KOs first
+		// p1 can switch into an advantageous move and ko
+		return { speed: fastest, code: "1v1-pivot" };
 	}
 
 
