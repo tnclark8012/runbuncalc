@@ -2167,8 +2167,6 @@ function initializeLevelCap() {
 			set.level = Math.max(set.level, newLevel);
 		});
 	});
-
-	
 }
 
 function forEachSet(setCallback) {
