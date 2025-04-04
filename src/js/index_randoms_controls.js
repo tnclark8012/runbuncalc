@@ -185,6 +185,16 @@ function calculationsColors(p1info, p2) {
 			}
 		}
 	}
+
+	// Check if p1 can switch in and 1v1
+	let p1DiesInHits = Math.floor(Math.max(1, 100 / p2HD));
+	let p2DiesInHits = Math.floor(Math.max(1, 100 / p1HD));
+	if (p1DiesInHits - 1 > p2DiesInHits) {
+		// p1 can switch in and ko
+		return { speed: fastest, code: "1v1" };
+	}
+
+
 	// Checks if the pokemon walls it
 	// i wouldn't mind change this algo for a smarter one.
 
