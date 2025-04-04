@@ -2152,6 +2152,7 @@ $(document).ready(function () {
 	showColorCodes();
 
 	initializeLevelCap();
+	
 });
 
 function getSets() {
