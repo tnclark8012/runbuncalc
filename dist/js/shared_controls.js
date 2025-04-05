@@ -2161,7 +2161,7 @@ function adjustTabOrders() {
 }
 
 function getSets() {
-	return JSON.parse(localStorage.customsets);
+	return localStorage.customsets && JSON.parse(localStorage.customsets);
 }
 
 function initializeLevelCap() {
