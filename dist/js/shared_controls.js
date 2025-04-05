@@ -1476,17 +1476,31 @@ function addBoxed(poke, box) {
 }
 
 function addMenu(pokeElement) {
+	let pointerMoveEvent;
+	let trackPointer = (e) => {
+		pointerMoveEvent = e;
+	};
 	pokeElement.addEventListener("pointerdown", (down) => {
-
+		
 		let showMenuPromise = new Promise((resolve, reject) => {
-			setTimeout(resolve, 750);
+			setTimeout(resolve, 2000);
 			pokeElement.addEventListener("pointerup", (up) => {
 				reject();
+				document.removeEventListener('pointermove', trackPointer);
+
 			}, { once: true });
+
+			document.addEventListener("pointermove", trackPointer)
 		});
 
 		showMenuPromise.then(() => {
-			if (confirm('Move to trash?')) {
+			let monRect = down.srcElement.getBoundingClientRect();
+			let showMenu = !pointerMoveEvent;
+			if (pointerMoveEvent) {
+				showMenu = monRect.left < pointerMoveEvent.clientX && monRect.right > pointerMoveEvent.clientX && 
+					monRect.bottom > pointerMoveEvent.clientY && monRect.top < pointerMoveEvent.clientY;
+			}
+			if (showMenu && confirm('Move to trash?')) {
 				pokeDragged = pokeElement;
 				dropInZone(document.getElementById("trash-box"));
 			}
