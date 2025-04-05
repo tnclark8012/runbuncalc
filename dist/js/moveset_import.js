@@ -91,7 +91,7 @@ $("#exportAll").click(() => {
 	navigator.clipboard.writeText(allMons)
 	const file = new Blob([allMons], { type: 'text/plain' });
 	link.href = URL.createObjectURL(file);
-	link.download = "box.json";
+	link.download = name + ".json";
 	link.click();
 	URL.revokeObjectURL(link.href);
 });
