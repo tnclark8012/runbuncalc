@@ -194,9 +194,11 @@ function calculationsColors(p1info, p2) {
 	}
 
 	// Check if p1 can switch in and 1v1
-	let p1DiesInHits = Math.floor(Math.max(1, 100 / p2HD));
-	let p2DiesInHits = Math.floor(Math.max(1, 100 / p1LD));
-	if (p1DiesInHits - 1 > p2DiesInHits) {
+	let p1DiesInHits = Math.max(1, Math.ceil(100 / p2HD));
+	let p2DiesInHits = Math.max(1, Math.ceil(100 / p1LD));
+	if (p1DiesInHits - 1 > p2DiesInHits || // KOs even if slower
+		(p1DiesInHits - 1 === p2DiesInHits && fastest === "F")) // Takes the pivot and KOs first
+  {
 		// p1 can switch into any move and ko
 		return { speed: fastest, code: "1v1" };
 	}
