@@ -1494,6 +1494,7 @@ function addMenu(pokeElement) {
 		});
 
 		showMenuPromise.then(() => {
+			document.removeEventListener(trackPointer);
 			let monRect = down.srcElement.getBoundingClientRect();
 			let showMenu = !pointerMoveEvent;
 			if (pointerMoveEvent) {
