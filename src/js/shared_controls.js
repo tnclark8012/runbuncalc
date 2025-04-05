@@ -451,15 +451,15 @@ function sortmons(a, b) {
 }
 
 function isMonFromCurrentTrainer(current, neew) {
-	if (current){
+	if (current) {
 		current = current.dataset.id.split("(")[1].split("\n")[0].trim();
 		neew = neew.split("(")[1].split("\n")[0].trim();
-		if ( current.substring(0,current.length -1 )== neew.substring(0,current.length -1 )) {
+		if (current.substring(0, current.length - 1) == neew.substring(0, current.length - 1)) {
 			return true
-		} else{
+		} else {
 			return false
 		}
-	}else{
+	} else {
 		return false
 	}
 }
@@ -474,10 +474,10 @@ $(".set-selector").change(function () {
 	if ($(this).hasClass('opposing')) {
 		topPokemonIcon(fullSetName, $("#p2mon")[0])
 		var currentTrainerMon = document.getElementsByClassName('opposite-pok')[0]
-		
-		if (isMonFromCurrentTrainer(currentTrainerMon, fullSetName)){
+
+		if (isMonFromCurrentTrainer(currentTrainerMon, fullSetName)) {
 			// don't reload
-		}else{
+		} else {
 			CURRENT_TRAINER_POKS = get_trainer_poks(fullSetName)
 			var next_poks = CURRENT_TRAINER_POKS.sort(sortmons)
 			monNumbers = next_poks.length;
@@ -496,24 +496,24 @@ $(".set-selector").change(function () {
 				newPoke.src = `https://raw.githubusercontent.com/May8th1995/sprites/master/${pok_name}.png`;
 				newPoke.title = `${next_poks[i]}, ${next_poks[i]} BP`;
 				newPoke.draggable = true;
-				nextTrainer=`${next_poks[i]}`
+				nextTrainer = `${next_poks[i]}`
 				newPoke.dataset.id = `${CURRENT_TRAINER_POKS[i].split("]")[1]}`;
 				frag.append(newPoke);
 			}
 		}
-		if (nextTrainer){
+		if (nextTrainer) {
 			let trainerId = nextTrainer.match(/^\[\d+/)[0].substring(1);
 			nextTrainerId = parseInt(trainerId) + 1;
-			previousTrainerId = nextTrainerId- monNumbers - 1 ;
+			previousTrainerId = nextTrainerId - monNumbers - 1;
 		}
-		
-		
+
+
 	} else {
 		topPokemonIcon(fullSetName, $("#p1mon")[0])
 	}
 
 	$('.trainer-pok-list-opposing').append(frag);
-	for (mon of document.getElementsByClassName('trainer-pok-list-opposing')[0].children){
+	for (mon of document.getElementsByClassName('trainer-pok-list-opposing')[0].children) {
 		mon.addEventListener("dragstart", dragstart_handler);
 	}
 	var pokemonName = fullSetName.substring(0, fullSetName.indexOf(" ("));
@@ -542,7 +542,7 @@ $(".set-selector").change(function () {
 		var itemObj = pokeObj.find(".item");
 		var randset = $("#randoms").prop("checked") ? randdex[pokemonName] : undefined;
 		var regSets = pokemonName in setdex && setName in setdex[pokemonName];
-q
+		q
 		if (randset) {
 			var listItems = randdex[pokemonName].items ? randdex[pokemonName].items : [];
 			var listAbilities = randdex[pokemonName].abilities ? randdex[pokemonName].abilities : [];
@@ -1468,16 +1468,16 @@ function addBoxed(poke, box) {
 	newPoke.draggable = true;
 	newPoke.addEventListener("dragstart", dragstart_handler);
 	addMenu(newPoke);
-	if (!box){
+	if (!box) {
 		$('#box-poke-list')[0].appendChild(newPoke)
-	}else{
+	} else {
 		box.append(newPoke)
 	}
 }
 
 function addMenu(pokeElement) {
 	pokeElement.addEventListener("pointerdown", (down) => {
-		
+
 		let showMenuPromise = new Promise((resolve, reject) => {
 			setTimeout(resolve, 750);
 			pokeElement.addEventListener("pointerup", (up) => {
@@ -1490,7 +1490,7 @@ function addMenu(pokeElement) {
 				pokeDragged = pokeElement;
 				dropInZone(document.getElementById("trash-box"));
 			}
-		}, () => {});
+		}, () => { });
 	});
 }
 
@@ -1508,7 +1508,7 @@ function getSrcImgPokemon(poke) {
 
 function get_trainer_poks(trainer_name) {
 	var true_name = trainer_name.split("(")[1].split("\n")[0].trim()
-	window.CURRENT_TRAINER = true_name.substring(0, true_name.length -1);
+	window.CURRENT_TRAINER = true_name.substring(0, true_name.length - 1);
 	var matches = []
 	for (i in TR_NAMES) {
 		if (TR_NAMES[i].includes(true_name)) {
@@ -1541,25 +1541,25 @@ $(document).on('click', '.left-side', function () {
 	$('.player .select2-chosen').text(set);
 })
 
-function truckMessage(){
-	var truckMsgId= Number(localStorage.getItem("truckMsg"));
-	if (truckMsgId == undefined){
+function truckMessage() {
+	var truckMsgId = Number(localStorage.getItem("truckMsg"));
+	if (truckMsgId == undefined) {
 		truckMsgId = -1;
-	} 
-	truckMsgId+=1;
-	if(truckMsgId >= TRUCK_MESSAGES.length){
+	}
+	truckMsgId += 1;
+	if (truckMsgId >= TRUCK_MESSAGES.length) {
 		truckMsgId = 2;
 	}
 	localStorage.setItem("truckMsg", truckMsgId);
 	//yaayy dynamic strings
-	return typeof TRUCK_MESSAGES[truckMsgId] === 'string' ? TRUCK_MESSAGES[truckMsgId] : TRUCK_MESSAGES[truckMsgId]() ;
-	
+	return typeof TRUCK_MESSAGES[truckMsgId] === 'string' ? TRUCK_MESSAGES[truckMsgId] : TRUCK_MESSAGES[truckMsgId]();
+
 }
 
 //select first mon of the box when loading
 function selectFirstMon() {
 	var pMons = document.getElementsByClassName("trainer-pok left-side")[0];
-	if(!pMons){
+	if (!pMons) {
 		return
 	}
 	let set = pMons.getAttribute("data-id");
@@ -1569,12 +1569,12 @@ function selectFirstMon() {
 }
 
 function selectTrainer(value) {
-	document.getElementById("trainer-pok-list-opposing2").textContent="";
-	document.getElementById("trainer-pok-list-opposing").textContent="";
-	if(value >= 1620){
+	document.getElementById("trainer-pok-list-opposing2").textContent = "";
+	document.getElementById("trainer-pok-list-opposing").textContent = "";
+	if (value >= 1620) {
 		value = 1620;
-	}else if(value<=0){
-		value=1;
+	} else if (value <= 0) {
+		value = 1;
 	}
 	localStorage.setItem("lasttimetrainer", value);
 	all_poks = SETDEX_SS
@@ -1583,7 +1583,7 @@ function selectTrainer(value) {
 		for (i in pok_tr_names) {
 			var index = (poks[pok_tr_names[i]]["index"])
 			if (index == value) {
-				if (window.CURRENT_TRAINER == pok_tr_names[0]){
+				if (window.CURRENT_TRAINER == pok_tr_names[0]) {
 					return false
 				}
 				window.CURRENT_TRAINER = pok_tr_names[0]
@@ -1599,7 +1599,7 @@ function selectTrainer(value) {
 
 function nextTrainer() {
 	if (selectTrainer(nextTrainerId) == false) {
-		if(value >= 1620){
+		if (value >= 1620) {
 			return
 		}
 		nextTrainerId++
@@ -1609,7 +1609,7 @@ function nextTrainer() {
 
 function previousTrainer() {
 	if (selectTrainer(previousTrainerId) == false) {
-		if(value<=0){
+		if (value <= 0) {
 			return
 		}
 		previousTrainerId--
@@ -1617,19 +1617,19 @@ function previousTrainer() {
 	}
 }
 function resetTrainer() {
-	if (confirm(truckMessage())){
+	if (confirm(truckMessage())) {
 		selectTrainer(1);
 		localStorage.removeItem("customsets");
 		$(allPokemon("#importedSetsOptions")).hide();
 		loadDefaultLists();
-		for (let zone of document.getElementsByClassName("dropzone")){
-			zone.innerHTML="";
+		for (let zone of document.getElementsByClassName("dropzone")) {
+			zone.innerHTML = "";
 		}
 	}
-	
+
 }
 
-function HideShowCCSettings(){
+function HideShowCCSettings() {
 	$('#show-cc')[0].toggleAttribute("hidden");
 	$('#hide-cc')[0].toggleAttribute("hidden");
 	$('#refr-cc')[0].toggleAttribute("hidden");
@@ -1637,10 +1637,10 @@ function HideShowCCSettings(){
 	$('#cc-sets')[0].toggleAttribute("hidden");
 }
 
-function colorCodeUpdate(){
+function colorCodeUpdate() {
 	var speCheck = document.getElementById("cc-spe-border").checked;
 	var ohkoCheck = document.getElementById("cc-ohko-color").checked;
-	if (!speCheck && !ohkoCheck){
+	if (!speCheck && !ohkoCheck) {
 		return
 	}
 	var pMons = document.getElementsByClassName("trainer-pok left-side");
@@ -1650,31 +1650,31 @@ function colorCodeUpdate(){
 	for (let i = 0; i < pMons.length; i++) {
 		let set = pMons[i].getAttribute("data-id");
 		let idColor = calculationsColors(set, p2);
-		if (speCheck && ohkoCheck){
+		if (speCheck && ohkoCheck) {
 			pMons[i].className = `trainer-pok left-side mon-speed-${idColor.speed} mon-dmg-${idColor.code}`;
 		}
-		else if (speCheck){
+		else if (speCheck) {
 			pMons[i].className = `trainer-pok left-side mon-speed-${idColor.speed}`;
 		}
-		else if (ohkoCheck){
+		else if (ohkoCheck) {
 			pMons[i].className = `trainer-pok left-side mon-dmg-${idColor.code}`;
 		}
-		
-		
+
+
 	}
 }
-function showColorCodes(){
+function showColorCodes() {
 	window.AUTO_REFRESH = document.getElementById("cc-auto-refr").checked;
 	colorCodeUpdate();
 	HideShowCCSettings();
 }
 
-function refreshColorCode(){
+function refreshColorCode() {
 	window.AUTO_REFRESH = document.getElementById("cc-auto-refr").checked;
 	colorCodeUpdate();
 }
 
-function hideColorCodes(){
+function hideColorCodes() {
 	var pMons = document.getElementsByClassName("trainer-pok left-side");
 	for (let i = 0; i < pMons.length; i++) {
 		pMons[i].className = "trainer-pok left-side";
@@ -1683,32 +1683,32 @@ function hideColorCodes(){
 	HideShowCCSettings();
 }
 
-function toggleInfoColorCode(){
+function toggleInfoColorCode() {
 	document.getElementById("info-cc-field").toggleAttribute("hidden");
 }
 
 function TrashPokemon() {
 	var maybeMultiple = document.getElementById("trash-box").getElementsByClassName("trainer-pok");
-	if (maybeMultiple.length == 0){
+	if (maybeMultiple.length == 0) {
 		return; //nothing to delete
 	}
-	var numberPKM = maybeMultiple.length > 1 ? `${maybeMultiple.length} Pokemon(s)` : "this Pokemon"; 
+	var numberPKM = maybeMultiple.length > 1 ? `${maybeMultiple.length} Pokemon(s)` : "this Pokemon";
 	var yes = confirm(`do you really want to remove ${numberPKM}?`);
 	if (!yes) {
 		return;
 	}
 	var customSets = JSON.parse(localStorage.customsets);
-	var length= maybeMultiple.length;
-	for( let i = 0; i<length; i++){
+	var length = maybeMultiple.length;
+	for (let i = 0; i < length; i++) {
 		var pokeTrashed = maybeMultiple[i];
 		var name = pokeTrashed.getAttribute("data-id").split(" (")[0];
 		delete customSets[name];
 	}
-	document.getElementById("trash-box").innerHTML="";
+	document.getElementById("trash-box").innerHTML = "";
 	localStorage.setItem("customsets", JSON.stringify(customSets));
 	$('#box-poke-list')[0].click();
 	//switch to the next pokemon automatically
-	
+
 }
 function RemoveAllPokemon() {
 	document.getEle
@@ -1716,16 +1716,16 @@ function RemoveAllPokemon() {
 
 
 // Check whether control button is pressed
-$(document).keydown(function(event) {
-    if (event.which == "17")
-        cntrlIsPressed = true;
-    else if (event.which == 65 && cntrlIsPressed) {
-        // Cntrl+  A
-        selectAllRows();
-    }
+$(document).keydown(function (event) {
+	if (event.which == "17")
+		cntrlIsPressed = true;
+	else if (event.which == 65 && cntrlIsPressed) {
+		// Cntrl+  A
+		selectAllRows();
+	}
 });
-$(document).keyup(function() {
-    cntrlIsPressed = false;
+$(document).keyup(function () {
+	cntrlIsPressed = false;
 });
 var cntrlIsPressed = false;
 /* dragging for pokemons in boxes*/
@@ -1748,18 +1748,18 @@ function drop(ev) {
 function dropInZone(dropZoneElement) {
 	if (dropZoneElement.classList.contains("dropzone")) {
 		pokeDragged.parentNode.removeChild(pokeDragged);
-		if(dropZoneElement.tagName=="LEGEND"){
+		if (dropZoneElement.tagName == "LEGEND") {
 			dropZoneElement.parentNode.children[1].appendChild(pokeDragged);
-		}else{
+		} else {
 			dropZoneElement.appendChild(pokeDragged);
 		}
-			
+
 	}
 	// if it's a pokemon
-	else if(dropZoneElement.classList.contains("left-side") || dropZoneElement.classList.contains("right-side")) {
-		if (!cntrlIsPressed){
+	else if (dropZoneElement.classList.contains("left-side") || dropZoneElement.classList.contains("right-side")) {
+		if (!cntrlIsPressed) {
 			let prev1 = pokeDragged.previousElementSibling
-			if (!prev1){
+			if (!prev1) {
 				dropZoneElement.after(pokeDragged)
 			} else {
 				dropZoneElement.before(pokeDragged)
@@ -1785,79 +1785,79 @@ function handleDragLeave(ev) {
 /* dragging for the item box, note box*/
 // target elements with the "box-frame-header" class
 interact('.box-frame-header').draggable({
-    inertia: true,
-    modifiers: [
-      interact.modifiers.restrictRect({
-        restriction: document.body,
-        endOnly: true
-      })
-    ],
-    autoScroll: true,
+	inertia: true,
+	modifiers: [
+		interact.modifiers.restrictRect({
+			restriction: document.body,
+			endOnly: true
+		})
+	],
+	autoScroll: true,
 
-    listeners: {
-      // call this function on every dragmove event
-      move: dragMoveListener,
-    }
-  })
+	listeners: {
+		// call this function on every dragmove event
+		move: dragMoveListener,
+	}
+})
 
-function dragMoveListener (event) {
+function dragMoveListener(event) {
 	var target = event.target;
 	var parent = target.parentNode;
 	// special case for the screen box frame
 	if (target.classList.contains("screen-box-frame")) {
 		parent = target;
 	}
-    var x = (parseFloat(target.getAttribute('data-x')) || 0) + event.dx;
-    var y = (parseFloat(target.getAttribute('data-y')) || 0) + event.dy ;
-	parent.style.left=x+"px";
-	parent.style.top=y+"px";
-    target.setAttribute('data-x', x);
-    target.setAttribute('data-y', y);
+	var x = (parseFloat(target.getAttribute('data-x')) || 0) + event.dx;
+	var y = (parseFloat(target.getAttribute('data-y')) || 0) + event.dy;
+	parent.style.left = x + "px";
+	parent.style.top = y + "px";
+	target.setAttribute('data-x', x);
+	target.setAttribute('data-y', y);
 }
 
 window.dragMoveListener = dragMoveListener
 
-function SpeedBorderSetsChange(ev){
+function SpeedBorderSetsChange(ev) {
 	var monImgs = document.getElementsByClassName("left-side");
-	if (ev.target.checked){
-		for (let monImg of monImgs){
+	if (ev.target.checked) {
+		for (let monImg of monImgs) {
 			monImg.classList.remove("mon-speed-none")
 		}
-	}else{
-		for (let monImg of monImgs){
+	} else {
+		for (let monImg of monImgs) {
 			monImg.classList.add("mon-speed-none")
 		}
 	}
 }
-function widthSpeedBorder(ev){
+function widthSpeedBorder(ev) {
 	document.documentElement.style.setProperty("--spe-bor-width", `${ev.target.value}px`)
 }
 
-function ColorCodeSetsChange(ev){
+function ColorCodeSetsChange(ev) {
 	var monImgs = document.getElementsByClassName("left-side");
-	if (ev.target.checked){
-		for (let monImg of monImgs){
+	if (ev.target.checked) {
+		for (let monImg of monImgs) {
 			monImg.classList.remove("mon-dmg-none")
 		}
-	}else{
-		for (let monImg of monImgs){
+	} else {
+		for (let monImg of monImgs) {
 			monImg.classList.add("mon-dmg-none")
 		}
 	}
 }
-function setupSideCollapsers(){
+function setupSideCollapsers() {
 	var applyF = (btns) => {
 		for (var i = 0; i < btns.length; i++) {
 			let btn = btns[i];
 			btn.cum = btn.offsetHeight;
 			btn.sisterEl = document.getElementsByClassName(btn.getAttribute("data-set"))[0];
-			btn.prevEl = btns[i-1] || null;
-			if (btn.prevEl){
+			btn.prevEl = btns[i - 1] || null;
+			if (btn.prevEl) {
 				btn.cum += btn.prevEl.cum
-			}else{
+			} else {
 				btn.cum = 0;
 			}
-			btn.nextEl = btns[i+1] || null;
+			btn.nextEl = btns[i + 1] || null;
 			btn.onclick = sideCollapsersCorrection
 		}
 	}
@@ -1869,68 +1869,68 @@ function setupSideCollapsers(){
 		readjust the left buttons
 		Because i couldn't find a proper way to do it with css
 	*/
-	for(let btn of leftBtns){
+	for (let btn of leftBtns) {
 		btn.style.left = "-" + btn.offsetWidth + "px";
 	}
 	leftBtns[0].onclick();
 	rigtBtns[0].onclick();
 }
-function sideCollapsersCorrection(ev){
-	if (ev){
+function sideCollapsersCorrection(ev) {
+	if (ev) {
 		var arrow = ev.target.children[0] || ev.target.parentNode.children[0];
 		collapseArrow(arrow);
 	}
 	var node = this;
-	if (node.tagName != "BUTTON"){
+	if (node.tagName != "BUTTON") {
 		node = this.target.parentNode;
 	}
 	var prev = node.prevEl;
 	var offset = node.sisterEl.offsetTop;
 	var relativeHeight = node.parentNode.offsetTop;
-	if(prev){
+	if (prev) {
 		//since the position is absolute, this will prevent from eating fellows.
-		var prevLowPos = prev.offsetTop + prev.offsetHeight; - relativeHeight ;
-		if(offset==0){// collapsed
+		var prevLowPos = prev.offsetTop + prev.offsetHeight; - relativeHeight;
+		if (offset == 0) {// collapsed
 			offset = prevLowPos;
-		}else{// standing
+		} else {// standing
 			offset = offset - relativeHeight;
-			if (offset < prevLowPos){
+			if (offset < prevLowPos) {
 				offset = prevLowPos;
 			}
 		}
-	}else{
-		if(offset==0){// collapsed
+	} else {
+		if (offset == 0) {// collapsed
 			offset = node.offsetTop;
-		}else{// standing
+		} else {// standing
 			offset = offset - relativeHeight;
 		}
 	}
 	node.style.top = offset + "px"
 	//propagate to next buttons
-	if(node.nextEl){
+	if (node.nextEl) {
 		node.nextEl.onclick()
 	}
 }
-function collapseArrow(arrow){
+function collapseArrow(arrow) {
 	var arrBtn = arrow.parentNode;
 	var target = arrBtn.getAttribute("data-set");
-	for (let div of document.getElementsByClassName(target)){
+	for (let div of document.getElementsByClassName(target)) {
 		div.toggleAttribute("hidden");
 	}
-	if (arrBtn.classList.contains("l-side-button")){
-		if (arrow.classList.contains("arrowdown")){
+	if (arrBtn.classList.contains("l-side-button")) {
+		if (arrow.classList.contains("arrowdown")) {
 			arrow.classList.remove("arrowdown");
 			arrow.classList.add("arrowright");
-		}else{
+		} else {
 			arrow.classList.remove("arrowright");
 			arrow.classList.add("arrowdown");
 		}
 	}
-	else if (arrBtn.classList.contains("r-side-button")){
-		if (arrow.classList.contains("arrowdown")){
+	else if (arrBtn.classList.contains("r-side-button")) {
+		if (arrow.classList.contains("arrowdown")) {
 			arrow.classList.remove("arrowdown");
 			arrow.classList.add("arrowleft");
-		}else{
+		} else {
 			arrow.classList.remove("arrowleft");
 			arrow.classList.add("arrowdown");
 		}
@@ -1938,137 +1938,137 @@ function collapseArrow(arrow){
 }
 
 window.isInDoubles = false;
-function switchIconSingle(){
+function switchIconSingle() {
 	document.getElementById("monDouble").removeAttribute("hidden");
 	window.isInDoubles = true;
-	if (+localStorage.getItem("doubleLegacy")){
+	if (+localStorage.getItem("doubleLegacy")) {
 		return;
 	}
 	document.getElementById("trainer-pok-list-opposing2").removeAttribute("hidden");
-	for (toShow of document.getElementsByClassName("for-doubles")){
+	for (toShow of document.getElementsByClassName("for-doubles")) {
 		toShow.removeAttribute("hidden");
 	}
-	
+
 }
 
-function switchIconDouble(){
-	document.getElementById("monDouble").setAttribute("hidden" ,true);
+function switchIconDouble() {
+	document.getElementById("monDouble").setAttribute("hidden", true);
 	window.isInDoubles = false;
-	if (+localStorage.getItem("doubleLegacy")){
+	if (+localStorage.getItem("doubleLegacy")) {
 		return;
 	}
 	var topOppositeBox = document.getElementById("trainer-pok-list-opposing");
 	var bottomOppositeBox = document.getElementById("trainer-pok-list-opposing2");
-	bottomOppositeBox.setAttribute("hidden" ,true);
-	for (toHide of document.getElementsByClassName("for-doubles")){
-		toHide.setAttribute("hidden" ,true);
+	bottomOppositeBox.setAttribute("hidden", true);
+	for (toHide of document.getElementsByClassName("for-doubles")) {
+		toHide.setAttribute("hidden", true);
 	}
 	// set all pokemons that were left in the bottom, replace them onto the top
-	for ( let potentialLeft of bottomOppositeBox.children) {
+	for (let potentialLeft of bottomOppositeBox.children) {
 		topOppositeBox.append(potentialLeft);
 	}
 }
 
-function openCloseItemBox(){
+function openCloseItemBox() {
 	document.getElementById("item-box-frame").toggleAttribute("hidden");
 }
 
-function openCloseNoteBox(){
+function openCloseNoteBox() {
 	document.getElementById("note-box-frame").toggleAttribute("hidden");
 }
 
-function selectItem(ev){
+function selectItem(ev) {
 	var newItem = ev.target.getAttribute("data-id");
-	document.getElementById("itemL1").value=newItem;
+	document.getElementById("itemL1").value = newItem;
 }
 
-function onFirstTime(){
+function onFirstTime() {
 	document.getElementById("team-poke-list").setAttribute("data-placeholder", "You can drag & drop your pokemons here");
-	document.getElementById("box-poke-list2").setAttribute("data-placeholder","You can drag & drop your pokemons here");
+	document.getElementById("box-poke-list2").setAttribute("data-placeholder", "You can drag & drop your pokemons here");
 	document.getElementById("trash-box").setAttribute("data-placeholder", "drop here and click remove to remove");
 }
 
-function sideArrowToggle(){
+function sideArrowToggle() {
 	var btn = document.getElementById("side-arrow-toggle");
-	var onShow= btn.getAttribute("data-id")
-	if (onShow=="true"){
+	var onShow = btn.getAttribute("data-id")
+	if (onShow == "true") {
 		btn.setAttribute("data-id", "false");
-		btn.innerText="Hide Side Arrows";
+		btn.innerText = "Hide Side Arrows";
 		localStorage.setItem("hsidearrow", "1");
-	}else{
+	} else {
 		btn.setAttribute("data-id", "true");
-		btn.innerText="Show Side Arrows";
+		btn.innerText = "Show Side Arrows";
 		localStorage.setItem("hsidearrow", "0");
 	}
-	for(pannel of document.getElementsByClassName("side-pannel")){
+	for (pannel of document.getElementsByClassName("side-pannel")) {
 		pannel.toggleAttribute("hidden")
 	}
 	setupSideCollapsers()
 }
 
-function toggleDoubleLegacyMode(){
-	if (+localStorage.getItem("doubleLegacy")){
+function toggleDoubleLegacyMode() {
+	if (+localStorage.getItem("doubleLegacy")) {
 		localStorage.setItem("doubleLegacy", 0)
-		document.getElementById("double-legacy-mode").innerText="Doubles Modern"
-		if(window.isInDoubles){
+		document.getElementById("double-legacy-mode").innerText = "Doubles Modern"
+		if (window.isInDoubles) {
 			document.getElementById("trainer-pok-list-opposing2").removeAttribute("hidden");
-			for (toShow of document.getElementsByClassName("for-doubles")){
+			for (toShow of document.getElementsByClassName("for-doubles")) {
 				toShow.removeAttribute("hidden");
 			}
 		}
-	}else{
+	} else {
 		localStorage.setItem("doubleLegacy", 1)
-		document.getElementById("double-legacy-mode").innerText="Doubles Legacy"
-		if (window.isInDoubles){
-			document.getElementById("trainer-pok-list-opposing2").setAttribute("hidden" ,true);
-			for (toHide of document.getElementsByClassName("for-doubles")){
-				toHide.setAttribute("hidden" ,true);
+		document.getElementById("double-legacy-mode").innerText = "Doubles Legacy"
+		if (window.isInDoubles) {
+			document.getElementById("trainer-pok-list-opposing2").setAttribute("hidden", true);
+			for (toHide of document.getElementsByClassName("for-doubles")) {
+				toHide.setAttribute("hidden", true);
 			}
 		}
 	}
 }
 
 var screenDivCount = 0;
-function closeScreenCalc(id){
-	var screenDiv = document.getElementById("calc-screen-id"+id);
+function closeScreenCalc(id) {
+	var screenDiv = document.getElementById("calc-screen-id" + id);
 	screenDiv.parentNode.removeChild(screenDiv);
 	screenDivCount--
 }
-function onClickScreenCalc(){
+function onClickScreenCalc() {
 	var screenDiv = document.createElement("div");
 	// box frame header here so it's less code in the end;
 	screenDiv.className = "box-frame screen-box-frame box-frame-header";
-	screenDiv.id = "calc-screen-id"+screenDivCount;
-	screenDiv.dataset.x="500";
-	screenDiv.dataset.y="250";
-	screenDiv.innerHTML=` <div class="screen-box-frame-header"><legend>Calculation ${screenDivCount+1}</legend>
+	screenDiv.id = "calc-screen-id" + screenDivCount;
+	screenDiv.dataset.x = "500";
+	screenDiv.dataset.y = "250";
+	screenDiv.innerHTML = ` <div class="screen-box-frame-header"><legend>Calculation ${screenDivCount + 1}</legend>
 	<div class="close-frame" id="close-calc-box-${screenDivCount}" onclick="closeScreenCalc(${screenDivCount})"><div class="mdiv"><div class="md"></div></div></div></div>`;
 	var moveResults = document.getElementsByClassName("move-result-group");
 	var mainResults = document.getElementsByClassName("main-result-group");
-	for (let i = 0; i<moveResults.length; i++) {
-		if(moveResults[i].parentNode.classList.contains("box-frame")){
+	for (let i = 0; i < moveResults.length; i++) {
+		if (moveResults[i].parentNode.classList.contains("box-frame")) {
 			continue
 		}
-		if(mainResults[i].parentNode.classList.contains("box-frame")){
+		if (mainResults[i].parentNode.classList.contains("box-frame")) {
 			continue
 		}
 		screenDiv.appendChild(moveResults[i].cloneNode(true));
 		screenDiv.appendChild(mainResults[i].cloneNode(true));
 	}
 	document.body.append(screenDiv);
-	for ( let label of document.querySelectorAll('.box-frame label')){
+	for (let label of document.querySelectorAll('.box-frame label')) {
 		label.removeAttribute("for");
 	}
-	for ( let span of document.querySelectorAll('.box-frame span')){
+	for (let span of document.querySelectorAll('.box-frame span')) {
 		span.removeAttribute("id");
 	}
-	for ( let input of document.querySelectorAll('.box-frame input')){
+	for (let input of document.querySelectorAll('.box-frame input')) {
 		input.removeAttribute("id");
 	}
-	for (let group of document.querySelectorAll('.box-frame .move-result-group')){
+	for (let group of document.querySelectorAll('.box-frame .move-result-group')) {
 		group.classList.remove("move-result-group");
 	}
-	for (let group of document.querySelectorAll('.box-frame .main-result-group')){
+	for (let group of document.querySelectorAll('.box-frame .main-result-group')) {
 		group.classList.remove("main-result-group");
 	}
 	screenDivCount++
@@ -2106,8 +2106,8 @@ $(document).ready(function () {
 	$('#cc-spe-border').change(SpeedBorderSetsChange);
 	$('#cc-ohko-color').change(ColorCodeSetsChange);
 	$('#cc-auto-refr').change(refreshColorCode);
-	$('#cc-spe-border')[0].checked=true;
-	$('#cc-ohko-color')[0].checked=true;
+	$('#cc-spe-border')[0].checked = true;
+	$('#cc-ohko-color')[0].checked = true;
 	$('#cc-spe-width').change(widthSpeedBorder);
 	$('#singles-format').click(switchIconDouble);
 	$('#doubles-format').click(switchIconSingle);
@@ -2118,30 +2118,30 @@ $(document).ready(function () {
 	$('#save-change').click(saveTrainerPokemon);
 	$('#double-legacy-mode').click(toggleDoubleLegacyMode);
 	$('#screen-calc').click(onClickScreenCalc)
-	for (let dropzone of document.getElementsByClassName("dropzone")){
-		dropzone.ondragenter=handleDragEnter;
-		dropzone.ondragleave=handleDragLeave;
-		dropzone.ondrop=drop;
-		dropzone.ondragover=allowDrop;
+	for (let dropzone of document.getElementsByClassName("dropzone")) {
+		dropzone.ondragenter = handleDragEnter;
+		dropzone.ondragleave = handleDragLeave;
+		dropzone.ondrop = drop;
+		dropzone.ondragover = allowDrop;
 	}
 	//select last trainer
-	var last = parseInt(localStorage.getItem("lasttimetrainer"),10);
+	var last = parseInt(localStorage.getItem("lasttimetrainer"), 10);
 	if (isNaN(last)) {
 		selectTrainer(1);
-	}else{
+	} else {
 		selectTrainer(last);
 	}
 	//to indicate some features
 	var isNotNew = JSON.parse(localStorage.getItem("isNotNew"))
-	if (!isNotNew){//first time loading the page
+	if (!isNotNew) {//first time loading the page
 		onFirstTime()
 		localStorage.setItem("isNotNew", true)
 	}
-	if (+localStorage.getItem("hsidearrow")){
+	if (+localStorage.getItem("hsidearrow")) {
 		setupSideCollapsers()
 		sideArrowToggle()
 	}
-	if (+localStorage.getItem("doubleLegacy")){
+	if (+localStorage.getItem("doubleLegacy")) {
 		toggleDoubleLegacyMode()
 	}
 
@@ -2153,7 +2153,7 @@ $(document).ready(function () {
 
 	initializeLevelCap();
 	adjustTabOrders();
-	
+
 });
 
 function adjustTabOrders() {
@@ -2165,7 +2165,7 @@ function getSets() {
 }
 
 function initializeLevelCap() {
-	populateLevelCap();	
+	populateLevelCap();
 	$("#applyCap").click(() => {
 		const levelCap = document.querySelector('#levelCap');
 		const newLevel = parseInt(levelCap.selectedOptions[0].value);
