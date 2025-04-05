@@ -5,23 +5,9 @@
     <meta charset="UTF-8" />
     <title>Pok&eacute;mon Damage Calculator</title>
     <link type="text/css" rel="stylesheet" href="./js/vendor/select2/select2.css" />
-    <link type="text/css" rel="stylesheet" href="./css/main.css?bab98f2f" />
+    <link type="text/css" rel="stylesheet" href="./css/main.css?af473974" />
     <link type="text/css" rel="stylesheet" href="./css/vendor/bootstrap.css" />
     <link type="text/css" rel="stylesheet" href="./css/dark-theme.css" id="dark-theme-styles">
-    <!-- Global site tag (gtag.js) - Google Analytics -->
-    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-26211653-3"></script>
-    <script>
-        window.dataLayer = window.dataLayer || [];
-        function gtag(){dataLayer.push(arguments);}
-        gtag('js', new Date());
-
-        gtag('config', 'UA-26211653-3');
-
-        window.onerror = function(err, uri, line) {
-            gtag('event', 'exception', {'description': uri + ':' + line + ': ' + err});
-            return false;
-        };
-    </script>
     <!-- Immediately loads the dark theme in order to reduce FOIT -->
     <script>
         /*
@@ -216,7 +202,7 @@
                         <label>Type</label>
                         <select aria-label="type1" class="type1 terrain-trigger calc-trigger"></select>
                         <select aria-label="type2" class="type2 terrain-trigger calc-trigger"></select>
-                        <small class="right">(<a class="analysis links-lighten" target="_blank" href="">Smogon&nbsp;analysis</a>)</small>
+                        <small class="right">(<a class="analysis links-lighten" target="_blank" href="">Dex&nbsp;entry</a>)</small>
                     </div>
                     <div class="gen-specific g9">
                         <label>Tera Type</label>
@@ -262,7 +248,7 @@
                                     <input class="base calc-trigger" value="100" />
                                 </td>
                                 <td class="gen-specific g3 g4 g5 g6 g7 g8 g9">
-                                    <input class="ivs save-trigger calc-trigger" value="31" />
+                                    <input type="number" min="0" max="31" step="1" type="number" min="0" max="31" step="1" class="ivs save-trigger calc-trigger" value="31" />
                                 </td>
                                 <td class="gen-specific g3 g4 g5 g6 g7 g8 g9">
                                     <input class="evs calc-trigger" type="number" min="0" max="252" step="4" value="0" />
@@ -282,7 +268,7 @@
                                     <input class="base calc-trigger" value="100" />
                                 </td>
                                 <td class="gen-specific g3 g4 g5 g6 g7 g8 g9">
-                                    <input class="ivs save-trigger calc-trigger" value="31" />
+                                    <input type="number" min="0" max="31" step="1" class="ivs save-trigger calc-trigger" value="31" />
                                 </td>
                                 <td class="gen-specific g3 g4 g5 g6 g7 g8 g9">
                                     <input class="evs calc-trigger" type="number" min="0" max="252" step="4" value="0" />
@@ -318,7 +304,7 @@
                                     <input class="base calc-trigger" value="100" />
                                 </td>
                                 <td class="gen-specific g3 g4 g5 g6 g7 g8 g9">
-                                    <input class="ivs save-trigger calc-trigger" value="31" />
+                                    <input type="number" min="0" max="31" step="1" class="ivs save-trigger calc-trigger" value="31" />
                                 </td>
                                 <td class="gen-specific g3 g4 g5 g6 g7 g8 g9">
                                     <input class="evs calc-trigger" type="number" min="0" max="252" step="4" value="0" />
@@ -354,7 +340,7 @@
                                     <input class="base calc-trigger" value="100" />
                                 </td>
                                 <td class="gen-specific g3 g4 g5 g6 g7 g8 g9">
-                                    <input class="ivs save-trigger calc-trigger" value="31" />
+                                    <input type="number" min="0" max="31" step="1" class="ivs save-trigger calc-trigger" value="31" />
                                 </td>
                                 <td class="gen-specific g3 g4 g5 g6 g7 g8 g9">
                                     <input class="evs calc-trigger" type="number" min="0" max="252" step="4" value="0" />
@@ -390,7 +376,7 @@
                                     <input class="base calc-trigger" value="100" />
                                 </td>
                                 <td class="gen-specific g3 g4 g5 g6 g7 g8 g9">
-                                    <input class="ivs save-trigger calc-trigger" value="31" />
+                                    <input type="number" min="0" max="31" step="1" class="ivs save-trigger calc-trigger" value="31" />
                                 </td>
                                 <td class="gen-specific g3 g4 g5 g6 g7 g8 g9">
                                     <input class="evs calc-trigger" type="number" min="0" max="252" step="4" value="0" />
@@ -456,7 +442,7 @@
                                     <input class="base calc-trigger" value="100" />
                                 </td>
                                 <td class="gen-specific g3 g4 g5 g6 g7 g8 g9">
-                                    <input class="ivs save-trigger calc-trigger" value="31" />
+                                    <input type="number" min="0" max="31" step="1" class="ivs save-trigger calc-trigger" value="31" />
                                 </td>
                                 <td class="gen-specific g3 g4 g5 g6 g7 g8 g9">
                                     <input class="evs calc-trigger" type="number" min="0" max="252" step="4" value="0" />
@@ -1133,6 +1119,30 @@
                             </div></td>
                         </tr>
                         <tr>
+                            <td>
+                                <div class="left custom-box-options" title="Export your entire box">
+                                    <button id="exportAll">Export All</button>
+                                    <input id="exportAllName" type="text" />
+                                </div>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <div class="left custom-box-options" title="Export your entire box">
+                                    <input type="file" id="importBoxInput" accept=".json" style="display:none" />
+                                    <button id="importBox" type="button">Import box</button>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <div class="left section-level-cap custom-box-options" title="Level cap">
+                                    <select id="levelCap"></select>
+                                    <button id="applyCap">Apply</button>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr>
                             <td><div class="left" title="Export the leftmost Pok&eacute;mon set">
                                 <button id="exportL">Export</button>
                             </div></td>
@@ -1177,7 +1187,7 @@
                         <label>Type</label>
                         <select aria-label="Type 1" class="type1 terrain-trigger calc-trigger"></select>
                         <select aria-label="Type 2" class="type2 terrain-trigger calc-trigger"></select>
-                        <small class="right">(<a class="analysis links-lighten" target="_blank" href="">Smogon&nbsp;analysis</a>)</small>
+                        <small class="right">(<a class="analysis links-lighten" target="_blank" href="">Dex&nbsp;entry</a>)</small>
                     </div>
                     <div class="gen-specific g9">
                         <label>Tera Type</label>
@@ -1223,7 +1233,7 @@
                                     <input class="base calc-trigger" value="100" />
                                 </td>
                                 <td class="gen-specific g3 g4 g5 g6 g7 g8 g9">
-                                    <input class="ivs calc-trigger" value="31" />
+                                    <input type="number" min="0" max="31" step="1" class="ivs calc-trigger" value="31" />
                                 </td>
                                 <td class="gen-specific g3 g4 g5 g6 g7 g8 g9">
                                     <input class="evs calc-trigger" type="number" min="0" max="252" step="4" value="0" />
@@ -1243,7 +1253,7 @@
                                     <input class="base calc-trigger" value="100" />
                                 </td>
                                 <td class="gen-specific g3 g4 g5 g6 g7 g8 g9">
-                                    <input class="ivs calc-trigger" value="31" />
+                                    <input type="number" min="0" max="31" step="1"  class="ivs calc-trigger" value="31" />
                                 </td>
                                 <td class="gen-specific g3 g4 g5 g6 g7 g8 g9">
                                     <input class="evs calc-trigger" type="number" min="0" max="252" step="4" value="0" />
@@ -1279,7 +1289,7 @@
                                     <input class="base calc-trigger" value="100" />
                                 </td>
                                 <td class="gen-specific g3 g4 g5 g6 g7 g8 g9">
-                                    <input class="ivs calc-trigger" value="31" />
+                                    <input type="number" min="0" max="31" step="1"  class="ivs calc-trigger" value="31" />
                                 </td>
                                 <td class="gen-specific g3 g4 g5 g6 g7 g8 g9">
                                     <input class="evs calc-trigger" type="number" min="0" max="252" step="4" value="0" />
@@ -1315,7 +1325,7 @@
                                     <input class="base calc-trigger" value="100" />
                                 </td>
                                 <td class="gen-specific g3 g4 g5 g6 g7 g8 g9">
-                                    <input class="ivs calc-trigger" value="31" />
+                                    <input type="number" min="0" max="31" step="1"  class="ivs calc-trigger" value="31" />
                                 </td>
                                 <td class="gen-specific g3 g4 g5 g6 g7 g8 g9">
                                     <input class="evs calc-trigger" type="number" min="0" max="252" step="4" value="0" />
@@ -1351,7 +1361,7 @@
                                     <input class="base calc-trigger" value="100" />
                                 </td>
                                 <td class="gen-specific g3 g4 g5 g6 g7 g8 g9">
-                                    <input class="ivs calc-trigger" value="31" />
+                                    <input type="number" min="0" max="31" step="1"  class="ivs calc-trigger" value="31" />
                                 </td>
                                 <td class="gen-specific g3 g4 g5 g6 g7 g8 g9">
                                     <input class="evs calc-trigger" type="number" min="0" max="252" step="4" value="0" />
@@ -1417,7 +1427,7 @@
                                     <input class="base calc-trigger" value="100" />
                                 </td>
                                 <td class="gen-specific g3 g4 g5 g6 g7 g8 g9">
-                                    <input class="ivs calc-trigger" value="31" />
+                                    <input type="number" min="0" max="31" step="1" class="ivs calc-trigger" value="31" />
                                 </td>
                                 <td class="gen-specific g3 g4 g5 g6 g7 g8 g9">
                                     <input class="evs calc-trigger" type="number" min="0" max="252" step="4" value="0" />
@@ -1894,9 +1904,9 @@
     <script type="text/javascript" src="./calc/result.js?9f8881b5"></script>
     <script type="text/javascript" src="./calc/adaptable.js?92e49194"></script>
     <script type="text/javascript" src="./calc/index.js?0b1745b9"></script>
-    <script type="text/javascript" src="./js/shared_controls.js?d6c9964a"></script>
-    <script type="text/javascript" src="./js/index_randoms_controls.js?0a0407ae"></script>
-    <script type="text/javascript" src="./js/moveset_import.js?a3935810"></script>
+    <script type="text/javascript" src="./js/shared_controls.js?615cfe25"></script>
+    <script type="text/javascript" src="./js/index_randoms_controls.js?c4c937ee"></script>
+    <script type="text/javascript" src="./js/moveset_import.js?acd4a538"></script>
 </div>
 
 <div class="credits">Modification by ForwardFeed Originaly Created by Honko, maintained by Austin and Kris, Special thanks to Hzla

@@ -567,6 +567,17 @@ table.field {
     /* Is considerable a wall*/
     background: linear-gradient(to right, #0f0bf3 50%, var(--fieldset-color) 0%);
 }
+.mon-dmg-1v1{
+    /* Can 1v1 the opponent */
+    background: #ad59dd;
+}
+.mon-dmg-switch-ohko {
+    background: linear-gradient(in hsl longer hue 45deg, red 0 100%);
+}
+.mon-dmg-1v1-pivot{
+    /* Can 1v1 the opponent, if it comes in on the right move */
+    background: linear-gradient(to right, #ad59dd 50%, var(--fieldset-color) 0%);
+}
 .mon-dmg-WMO{
     /* Is considerable a wall that may OHKO*/
     background: linear-gradient(to right, #1295ec 50%, var(--fieldset-color) 0%);
@@ -816,4 +827,28 @@ table.field {
     float: right;
     margin-top: 22px;
     margin-right: 41px;
+}
+
+.section-level-cap {
+    display: flex;
+    margin-bottom: 8px;
+    margin-top: 8px; 
+}
+
+.custom-box-options {
+    display: flex;
+    margin-bottom: 8px;
+    margin-top: 8px;
+}
+
+.section-level-cap {
+    display: flex;
+}
+
+#exportAll {
+    flex-shrink: 0;
+}
+
+#exportAllName {
+    flex: 1;
 }
