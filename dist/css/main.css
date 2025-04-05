@@ -571,6 +571,9 @@ table.field {
     /* Can 1v1 the opponent */
     background: #ad59dd;
 }
+.mon-dmg-switch-ohko {
+    background: linear-gradient(in hsl longer hue 45deg, red 0 100%);
+}
 .mon-dmg-1v1-pivot{
     /* Can 1v1 the opponent, if it comes in on the right move */
     background: linear-gradient(to right, #ad59dd 50%, var(--fieldset-color) 0%);

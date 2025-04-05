@@ -199,8 +199,11 @@ function calculationsColors(p1info, p2) {
 	if (p1DiesInHits - 1 > p2DiesInHits || // KOs even if slower
 		(p1DiesInHits - 1 === p2DiesInHits && fastest === "F")) // Takes the pivot and KOs first
   {
+		if (p2DiesInHits === 1) {
+			
+		}
 		// p1 can switch into any move and ko
-		return { speed: fastest, code: "1v1" };
+		return { speed: fastest, code: p2DiesInHits === 1 ? "switch-ohko": "1v1" };
 	}
 
 	let highestRollOfLeastPowerfulMove = Math.min(...p2DamageRanges.filter(d => d.move.category !== "Status" && !(d.move.bp === 0 && d.highestRoll === 0)).map(d => d.highestRoll));
