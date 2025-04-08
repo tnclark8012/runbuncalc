@@ -1010,8 +1010,8 @@ function createField() {
 	};
 	return new calc.Field({
 		gameType: gameType, weather: weather, terrain: terrain,
-		isMagicRoom: isMagicRoom, 
-		isWonderRoom: isWonderRoom, 
+		isMagicRoom: isMagicRoom,
+		isWonderRoom: isWonderRoom,
 		isGravity: isGravity,
 		isTrickRoom: isTrickRoom,
 		isBeadsOfRuin: isBeadsOfRuin, isTabletsOfRuin: isTabletsOfRuin,
@@ -1567,10 +1567,13 @@ function selectTrainer(value) {
 		for (i in pok_tr_names) {
 			var index = (poks[pok_tr_names[i]]["index"])
 			if (index == value) {
-				if (window.CURRENT_TRAINER == pok_tr_names[0]) {
+				if (window.CURRENT_TRAINER == pok_tr_names[i]) {
 					return false
 				}
-				window.CURRENT_TRAINER = pok_tr_names[0]
+				window.CURRENT_TRAINER = pok_tr_names[i];
+				const isDoubleBattle = window.CURRENT_TRAINER.includes('&') || window.CURRENT_TRAINER.includes(' And ');
+				toggleDoubles(isDoubleBattle);
+
 				var set = `${pok_name} (${pok_tr_names[i]})`;
 				$('.opposing').val(set);
 				$('.opposing').change();
@@ -2017,15 +2020,28 @@ function toggleDoubleLegacyMode() {
 			}
 		}
 	} else {
-		localStorage.setItem("doubleLegacy", 1)
-		document.getElementById("double-legacy-mode").innerText = "Doubles Legacy"
-		if (window.isInDoubles) {
-			document.getElementById("trainer-pok-list-opposing2").setAttribute("hidden", true);
-			for (toHide of document.getElementsByClassName("for-doubles")) {
-				toHide.setAttribute("hidden", true);
-			}
-		}
+		enableLegacyDoubles();
 	}
+}
+
+function toggleDoubles(enable) {
+	if (enable === undefined) {
+		enable = !window.isInDoubles;
+	}
+
+	if (enable) {
+		$('#doubles-format')[0].checked = true;
+		enableLegacyDoubles();
+	}
+	else {
+		$('#singles-format')[0].checked = true;
+		switchIconDouble();
+	}
+}
+
+function enableLegacyDoubles() {
+	localStorage.setItem("doubleLegacy", 1);
+	switchIconSingle();
 }
 
 var screenDivCount = 0;
