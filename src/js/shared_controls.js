@@ -1669,7 +1669,7 @@ function toggleInfoColorCode() {
 
 function RestoreCurrentPokemon() {
 	let currentMonId = $('.player').val();
-	dropLeftPokemon(currentMonId, "box-poke");
+	dropLeftPokemon(currentMonId, "box-poke-list");
 }
 
 function TrashCurrentPokemon() {
