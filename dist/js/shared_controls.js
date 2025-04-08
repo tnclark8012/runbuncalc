@@ -1010,8 +1010,8 @@ function createField() {
 	};
 	return new calc.Field({
 		gameType: gameType, weather: weather, terrain: terrain,
-		isMagicRoom: isMagicRoom, 
-		isWonderRoom: isWonderRoom, 
+		isMagicRoom: isMagicRoom,
+		isWonderRoom: isWonderRoom,
 		isGravity: isGravity,
 		isTrickRoom: isTrickRoom,
 		isBeadsOfRuin: isBeadsOfRuin, isTabletsOfRuin: isTabletsOfRuin,
@@ -1553,12 +1553,12 @@ function selectFirstMon() {
 }
 
 function selectTrainer(value) {
-	document.getElementById("trainer-pok-list-opposing2").textContent="";
-	document.getElementById("trainer-pok-list-opposing").textContent="";
-	if(value >= 1620){
+	document.getElementById("trainer-pok-list-opposing2").textContent = "";
+	document.getElementById("trainer-pok-list-opposing").textContent = "";
+	if (value >= 1620) {
 		value = 1620;
-	}else if(value<=0){
-		value=1;
+	} else if (value <= 0) {
+		value = 1;
 	}
 	localStorage.setItem("lasttimetrainer", value);
 	all_poks = SETDEX_SS
@@ -1567,7 +1567,7 @@ function selectTrainer(value) {
 		for (i in pok_tr_names) {
 			var index = (poks[pok_tr_names[i]]["index"])
 			if (index == value) {
-				if (window.CURRENT_TRAINER == pok_tr_names[i]){
+				if (window.CURRENT_TRAINER == pok_tr_names[i]) {
 					return false
 				}
 				window.CURRENT_TRAINER = pok_tr_names[i];
@@ -2009,17 +2009,17 @@ function sideArrowToggle() {
 	setupSideCollapsers()
 }
 
-function toggleDoubleLegacyMode(){
-	if (+localStorage.getItem("doubleLegacy")){
+function toggleDoubleLegacyMode() {
+	if (+localStorage.getItem("doubleLegacy")) {
 		localStorage.setItem("doubleLegacy", 0)
-		document.getElementById("double-legacy-mode").innerText="Doubles Modern"
-		if(window.isInDoubles){
+		document.getElementById("double-legacy-mode").innerText = "Doubles Modern"
+		if (window.isInDoubles) {
 			document.getElementById("trainer-pok-list-opposing2").removeAttribute("hidden");
-			for (toShow of document.getElementsByClassName("for-doubles")){
+			for (toShow of document.getElementsByClassName("for-doubles")) {
 				toShow.removeAttribute("hidden");
 			}
 		}
-	}else{
+	} else {
 		enableLegacyDoubles();
 	}
 }
