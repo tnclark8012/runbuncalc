@@ -852,3 +852,8 @@ table.field {
 #exportAllName {
     flex: 1;
 }
+
+.trash-option {
+    display: block;
+    margin-top: 4px;
+}

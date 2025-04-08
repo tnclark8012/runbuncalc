@@ -1467,46 +1467,11 @@ function addBoxed(poke, box) {
 	newPoke.dataset.id = `${poke.name} (${poke.nameProp})`
 	newPoke.draggable = true;
 	newPoke.addEventListener("dragstart", dragstart_handler);
-	addMenu(newPoke);
 	if (!box) {
 		$('#box-poke-list')[0].appendChild(newPoke)
 	} else {
 		box.append(newPoke)
 	}
-}
-
-function addMenu(pokeElement) {
-	let pointerMoveEvent;
-	let trackPointer = (e) => {
-		pointerMoveEvent = e;
-	};
-	pokeElement.addEventListener("pointerdown", (down) => {
-		
-		let showMenuPromise = new Promise((resolve, reject) => {
-			setTimeout(resolve, 2000);
-			pokeElement.addEventListener("pointerup", (up) => {
-				reject();
-				document.removeEventListener('pointermove', trackPointer);
-
-			}, { once: true });
-
-			document.addEventListener("pointermove", trackPointer)
-		});
-
-		showMenuPromise.then(() => {
-			document.removeEventListener('pointermove', trackPointer);
-			let monRect = down.srcElement.getBoundingClientRect();
-			let showMenu = !pointerMoveEvent;
-			if (pointerMoveEvent) {
-				showMenu = monRect.left < pointerMoveEvent.clientX && monRect.right > pointerMoveEvent.clientX && 
-					monRect.bottom > pointerMoveEvent.clientY && monRect.top < pointerMoveEvent.clientY;
-			}
-			if (showMenu && confirm('Move to trash?')) {
-				pokeDragged = pokeElement;
-				dropInZone(document.getElementById("trash-box"));
-			}
-		}, () => { });
-	});
 }
 
 function getSrcImgPokemon(poke) {
@@ -1702,6 +1667,16 @@ function toggleInfoColorCode() {
 	document.getElementById("info-cc-field").toggleAttribute("hidden");
 }
 
+function RestoreCurrentPokemon() {
+	let currentMonId = $('.player').val();
+	dropLeftPokemon(currentMonId, "box-poke-list");
+}
+
+function TrashCurrentPokemon() {
+	let currentMonId = $('.player').val();
+	dropLeftPokemon(currentMonId, "trash-box");
+}
+
 function TrashPokemon() {
 	var maybeMultiple = document.getElementById("trash-box").getElementsByClassName("trainer-pok");
 	if (maybeMultiple.length == 0) {
@@ -1758,6 +1733,12 @@ function dragstart_handler(ev) {
 function drop(ev) {
 	ev.preventDefault();
 	dropInZone(ev.target);
+}
+
+function dropLeftPokemon(id, zone) {
+	pokeElement = $(`.left-side[data-id="${id}"]`)[0];
+	pokeDragged = pokeElement;
+	dropInZone(document.getElementById(zone));
 }
 
 function dropInZone(dropZoneElement) {
@@ -2118,6 +2099,8 @@ $(document).ready(function () {
 	$('#refr-cc').click(refreshColorCode);
 	$('#info-cc').click(toggleInfoColorCode);
 	$('#trash-pok').click(TrashPokemon);
+	$('#trash-pok-current').click(TrashCurrentPokemon);
+	$('#trash-pok-restore').click(RestoreCurrentPokemon);
 	$('#cc-spe-border').change(SpeedBorderSetsChange);
 	$('#cc-ohko-color').change(ColorCodeSetsChange);
 	$('#cc-auto-refr').change(refreshColorCode);
