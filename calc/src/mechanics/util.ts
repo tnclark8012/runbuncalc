@@ -89,7 +89,7 @@ export function computeFinalStats(
   }
 }
 
-export function getFinalSpeed(gen: Generation, pokemon: Pokemon, field: Field, side: Side) {
+export function getFinalSpeed(gen: Generation, pokemon: Pokemon, field: Field, side: Side): number {
   const weather = field.weather || '';
   const terrain = field.terrain;
   let speed = getModifiedStat(pokemon.rawStats.spe, pokemon.boosts.spe, gen);
@@ -134,8 +134,13 @@ export function getFinalSpeed(gen: Generation, pokemon: Pokemon, field: Field, s
     speed = Math.floor(OF32(speed * (gen.num < 7 ? 25 : 25)) / 100);
   }
 
-  speed = Math.min(gen.num <= 2 ? 999 : 10000, speed);
-  return Math.max(0, speed);
+  const maxSpeed = gen.num <= 2 ? 999 : 10000
+  speed = Math.min(maxSpeed, speed);
+  speed =  Math.max(0, speed);
+  if (field.isTrickRoom)
+    speed = Math.max(0, maxSpeed - speed);
+
+  return speed;
 }
 
 export function getMoveEffectiveness(
