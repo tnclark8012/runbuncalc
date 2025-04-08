@@ -169,8 +169,12 @@ function getFinalSpeed(gen, pokemon, field, side) {
     if (pokemon.hasStatus('par') && !pokemon.hasAbility('Quick Feet')) {
         speed = Math.floor(OF32(speed * (gen.num < 7 ? 25 : 25)) / 100);
     }
-    speed = Math.min(gen.num <= 2 ? 999 : 10000, speed);
-    return Math.max(0, speed);
+    var maxSpeed = gen.num <= 2 ? 999 : 10000;
+    speed = Math.min(maxSpeed, speed);
+    speed = Math.max(0, speed);
+    if (field.isTrickRoom)
+        speed = Math.max(0, maxSpeed - speed);
+    return speed;
 }
 exports.getFinalSpeed = getFinalSpeed;
 function getMoveEffectiveness(gen, move, type, isGhostRevealed, isGravity, isRingTarget) {

@@ -36,6 +36,7 @@ export interface RawDesc {
     isBattery?: boolean;
     isPowerSpot?: boolean;
     isWonderRoom?: boolean;
+    isTrickRoom?: boolean;
     isSwitching?: 'out' | 'in';
     moveBP?: number;
     moveName: string;

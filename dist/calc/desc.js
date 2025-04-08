@@ -786,6 +786,9 @@ function buildDescription(description, attacker, defender) {
     if (description.isWonderRoom) {
         output += ' in Wonder Room';
     }
+    if (description.isTrickRoom) {
+        output += ' in Trick Room';
+    }
     return output;
 }
 function getDescriptionLevels(attacker, defender) {
