@@ -3,76 +3,188 @@
 import { Dex } from '@pkmn/dex';
 import {AbilityName, Weather} from '../data/interface';
 import { Field } from '../field';
-import { BattleSimulator, TurnOutcome } from '../simulator';
+import { BattleSimulator } from '../simulator';
 import { Generations } from './gen';
-import {inGen, inGens, tests} from './helper';
+import {importPokemon, importTeam, inGen, inGens, tests} from './helper';
 import { Pokemon } from '..';
+import { TurnOutcome } from '../moveScoring.contracts';
 
 const RunAndBun = 8;
 inGen(RunAndBun, ({gen, calculate, Pokemon, Move}) => {
   describe('Custom tests for calculator', () => {
     describe('Move selection', () => {
       test(`Slower CPU wins with a priority move`, () => {
-        let cpu = Pokemon('Lopunny', { 
-          moves: ['Fake Out', 'Hyper Beam'],
-          level: 1
-        });
-        let player = Pokemon('Aerodactyl', {
-          moves: ['Stone Edge'],
-          level: 100,
-          curHP: 1
-        });
+        let [cpu, player] = importTeam(`
+Lopunny
+Level: 1
+- Fake out
+- Hyper Beam
+
+Aerodactyl
+Level: 100
+- Stone Edge
+`);
+        player.originalCurHP = 1;
         let battleSimulator = new BattleSimulator(new Generations(Dex).get(gen), player, cpu, new Field(), new Field());
         const result = battleSimulator.getResult();
         expect(result.winner.name).toEqual('Lopunny');
       });
 
       test(`CPU thinks it lives with focus sash, so doesn't go for priority. Player sees focus sash and goes for multi-hit`, () => {
-          let cpuKrabby = Pokemon('Krabby', { 
-            moves: ['Aqua Jet', 'Crabhammer'],
-            level: 1,
-            item: 'Focus Sash'
-          });
-          let playerAerodactyl = Pokemon('Aerodactyl', {
-            moves: ['Dual Wingbeat', 'Stone Edge'],
-            level: 10,
-            curHP: 1
-          });
+                let [cpuKrabby, playerAerodactyl] = importTeam(`
+Krabby @ Focus Sash
+Level: 1
+- Aqua Jet
+- Crabhammer
+
+Aerodactyl
+Level: 12
+- Stone Edge
+- Dual Wingbeat
+`);  
+
+          expect(playerAerodactyl.stats.spe).toBeGreaterThan(cpuKrabby.stats.spe);
+          
           let battleSimulator = new BattleSimulator(new Generations(Dex).get(gen), playerAerodactyl, cpuKrabby, new Field(), new Field());
           const result = battleSimulator.getResult();
-          expect(result.winner.name).toEqual('Aerodactyl');
           expect(result.turnOutcomes.length).toBe(1);
           expectTurn(
             result.turnOutcomes[0], 
             { pokemon: playerAerodactyl, move: 'Dual Wingbeat' }
           )
-          expect(result.turnOutcomes[0].battleState.cpuPokemon.item).toBeUndefined();
+          expect(result.winner.name).toEqual('Aerodactyl');
+          expect(result.turnOutcomes[0].battleFieldState.cpuPokemon.item).toBeUndefined();
       });
     });
 
     describe('Turn sequence', () => {
-      test('stat changes from moves', () => {
-         let cpuKrabby = Pokemon('Krabby', { 
-            moves: ['Swords Dance'],
-            level: 100
-          });
-          let playerInfernape = Pokemon('Infernape', {
-            moves: ['Close Combat'],
-            level: 5
-          });
+      test('stat changes from moves take effect after the turn', () => {
+        let [cpuKrabby, playerInfernape] = importTeam(`
+Krabby
+Level: 100
+- Swords Dance
+
+Infernape
+Level: 5
+- Close Combat
+`); 
+        
           let battleSimulator = new BattleSimulator(new Generations(Dex).get(gen), playerInfernape, cpuKrabby, new Field(), new Field());
-          const result = battleSimulator.getResult();
+          const result = battleSimulator.getResult(1);
           expect(result.turnOutcomes.length).toBe(1);
           expectTurn(
             result.turnOutcomes[0], 
             { pokemon: cpuKrabby, move: 'Swords Dance' },
             { pokemon: playerInfernape, move: 'Close Combat' },
           )
-          expect(result.turnOutcomes[0].battleState.cpuPokemon.boosts.atk).toBe(2);
-          expect(result.turnOutcomes[0].battleState.playerPokemon.boosts.def).toBe(-1);
-          expect(result.turnOutcomes[0].battleState.playerPokemon.boosts.spd).toBe(-1);
+          expect(result.turnOutcomes[0].battleFieldState.cpuPokemon.boosts.atk).toBe(2);
+          expect(result.turnOutcomes[0].battleFieldState.playerPokemon.boosts.def).toBe(-1);
+          expect(result.turnOutcomes[0].battleFieldState.playerPokemon.boosts.spd).toBe(-1);
       })
-    })
+    });
+
+    describe('Run & Bun Battles', () => {
+      test('Brawly - Tirtouga vs. Combusken: Riskless', () => {
+        let [tirtouga, combusken] = importTeam(`
+Tirtouga
+Level: 21
+Hardy Nature
+Ability: Solid Rock
+IVs: 15 HP / 31 Atk / 15 Def / 15 SpA / 15 SpD / 15 Spe
+- Smack Down
+- Brine
+- Aqua Jet
+- Bite
+
+Combusken @ Lum Berry
+Level: 20
+Naughty Nature
+Ability: Speed Boost
+- Double Kick
+- Incinerate
+- Thunder Punch
+- Work Up
+`);
+        
+          let battleSimulator = new BattleSimulator(new Generations(Dex).get(gen), tirtouga, combusken, new Field(), new Field());
+          const result = battleSimulator.getResult();
+          expectTurn(
+            result.turnOutcomes[0],
+            { pokemon: combusken, move: 'Double Kick' },
+            { pokemon: tirtouga, move: 'Brine' },
+          )
+          expect(result.turnOutcomes[0].battleFieldState.cpuPokemon.boosts.spe).toBe(1);
+          expectTurn(
+            result.turnOutcomes[1],
+            { pokemon: tirtouga, move: 'Aqua Jet' },
+          )
+      });
+
+      test('Ninja Boy Lung - Corviknight vs. Greninja: Slow KOs because of Protean type change', () => {
+        // Give Corviknight Body Press which is higher damage to Water/Dark Greninja to make sure we're accounting for Protean
+        let [Corviknight, Greninja] = importTeam(`
+Corviknight
+Level: 48
+Calm
+Ability: Unnerve
+IVs: 13 HP / 2 Atk / 16 Def / 23 SpA / 21 SpD / 14 Spe
+- Brave Bird
+- Body Press
+- Scary Face
+- Feather Dance
+
+Greninja
+Level: 45
+Hasty Nature
+Ability: Protean
+- Water Shuriken
+- Gunk Shot
+- Acrobatics
+- Low Kick
+`);
+        
+          let battleSimulator = new BattleSimulator(new Generations(Dex).get(gen), Corviknight, Greninja, new Field(), new Field());
+          const result = battleSimulator.getResult();
+          expectTurn(
+            result.turnOutcomes[0],
+            { pokemon: Greninja, move: 'Low Kick' },
+            { pokemon: Corviknight, move: 'Brave Bird' },
+          )
+          expect(result.winner.id).toBe(Corviknight.id);
+      });
+
+      test('Team Aqua Grunt Aqua Hideout #7 - Gilscor vs. Cloyster: Skill link Icicle Spear KOs', () => {
+        let [Cloyster, Gilscor] = importTeam(`
+Cloyster
+Level: 81
+Lax Nature
+Ability: Skill Link
+IVs: 5 HP / 27 Atk / 13 Def / 21 SpA / 10 SpD / 18 Spe
+- Rapid Spin
+- Ice Shard
+- Icicle Spear
+- Rock Blast
+
+Gliscor @ Toxic Orb
+Level: 79
+Jolly Nature
+Ability: Poison Heal
+- Earthquake
+- Dual Wingbeat
+- Facade
+- Swords Dance
+`);
+        
+          let battleSimulator = new BattleSimulator(new Generations(Dex).get(gen), Cloyster, Gilscor, new Field(), new Field());
+          const result = battleSimulator.getResult();
+          expectTurn(
+            result.turnOutcomes[0],
+            { pokemon: Gilscor, move: 'Earthquake' },
+            { pokemon: Cloyster, move: 'Icicle Spear' },
+          )
+          expect(result.winner.id).toBe(Cloyster.id);
+      });
+    });
   });
 
   function expectTurn(turn: TurnOutcome, firstMover: { pokemon: Pokemon, move: string }, secondMover?: { pokemon: Pokemon, move: string }) {

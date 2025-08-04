@@ -6,8 +6,17 @@ import {State} from './state';
 const STATS = ['hp', 'atk', 'def', 'spa', 'spd', 'spe'] as I.StatID[];
 const SPC = new Set(['spc']);
 
+export type PokemonOptions = Partial<State.Pokemon> & {
+  curHP?: number;
+  id?: string;
+  ivs?: Partial<I.StatsTable> & {spc?: number};
+  evs?: Partial<I.StatsTable> & {spc?: number};
+  boosts?: Partial<I.StatsTable> & {spc?: number};
+  types?: [I.TypeName] | [I.TypeName, I.TypeName];
+};
 
 export class Pokemon implements State.Pokemon {
+  id: string;
   gen: I.Generation;
   name: I.SpeciesName;
   species: I.Specie;
@@ -41,18 +50,14 @@ export class Pokemon implements State.Pokemon {
   constructor(
     gen: I.Generation,
     name: string,
-    options: Partial<State.Pokemon> & {
-      curHP?: number;
-      ivs?: Partial<I.StatsTable> & {spc?: number};
-      evs?: Partial<I.StatsTable> & {spc?: number};
-      boosts?: Partial<I.StatsTable> & {spc?: number};
-    } = {}
+    options: PokemonOptions = {}
   ) {
     this.species = extend(true, {}, gen.species.get(toID(name)), options.overrides);
 
     this.gen = gen;
     this.name = options.name || name as I.SpeciesName;
-    this.types = this.species.types;
+    this.id = options.id || `${this.name}:Math.random()`;
+    this.types = options.types ? options.types : this.species.types;
     this.weightkg = this.species.weightkg;
 
     this.level = options.level || 100;
@@ -148,8 +153,13 @@ export class Pokemon implements State.Pokemon {
     return names.includes(this.name);
   }
 
-  clone() {
+  equals(other: Pokemon): boolean {
+    return this.id === other.id;
+  }
+  
+  clone(options?: PokemonOptions) {
     return new Pokemon(this.gen, this.name, {
+      id: this.id,
       level: this.level,
       ability: this.ability,
       abilityOn: this.abilityOn,
@@ -166,8 +176,10 @@ export class Pokemon implements State.Pokemon {
       status: this.status,
       teraType: this.teraType,
       toxicCounter: this.toxicCounter,
+      types: this.types,
       moves: this.moves.slice(),
       overrides: this.species,
+      ...options
     });
   }
 
