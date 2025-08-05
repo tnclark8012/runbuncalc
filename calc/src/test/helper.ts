@@ -188,57 +188,6 @@ expect.extend({
   },
 });
 
-
-// export function ExportPokemon(pokemon: Pokemon) {
-// 	var pokemon = createPokemon(pokeInfo);
-// 	var EV_counter = 0;
-// 	var finalText = "";
-// 	finalText = pokemon.name + (pokemon.item ? " @ " + pokemon.item : "") + "\n";
-// 	finalText += "Level: " + pokemon.level + "\n";
-// 	finalText += pokemon.nature && gen > 2 ? pokemon.nature + " Nature" + "\n" : "";
-// 	finalText += pokemon.teraType && gen > 8 ? "Tera Type: " + pokemon.teraType : "";
-// 	finalText += pokemon.ability ? "Ability: " + pokemon.ability + "\n" : "";
-// 	if (gen > 2) {
-// 		var EVs_Array = [];
-// 		for (var stat in pokemon.evs) {
-// 			var ev = pokemon.evs[stat] ? pokemon.evs[stat] : 0;
-// 			if (ev > 0) {
-// 				EVs_Array.push(ev + " " + calc.Stats.displayStat(stat));
-// 			}
-// 			EV_counter += ev;
-// 			if (EV_counter > 510) break;
-// 		}
-// 		if (EVs_Array.length > 0) {
-// 			finalText += "EVs: ";
-// 			finalText += serialize(EVs_Array, " / ");
-// 			finalText += "\n";
-// 		}
-// 	}
-
-// 	var IVs_Array = [];
-// 	for (var stat in pokemon.ivs) {
-// 		var iv = pokemon.ivs[stat] ? pokemon.ivs[stat] : 0;
-// 		if (iv < 31) {
-// 			IVs_Array.push(iv + " " + calc.Stats.displayStat(stat));
-// 		}
-// 	}
-// 	if (IVs_Array.length > 0) {
-// 		finalText += "IVs: ";
-// 		finalText += serialize(IVs_Array, " / ");
-// 		finalText += "\n";
-// 	}
-
-// 	for (var i = 0; i < 4; i++) {
-// 		var moveName = pokemon.moves[i].name;
-// 		if (moveName !== "(No Move)") {
-// 			finalText += "- " + moveName + "\n";
-// 		}
-// 	}
-// 	finalText = finalText.trim();
-// 	$("textarea.import-team-text").val(finalText);
-// 	return finalText;
-// }
-
 const statToLegacyMap: { [stat: string]: string } = {
   'hp': 'hp',
   'atk': 'at',
