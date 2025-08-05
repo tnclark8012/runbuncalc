@@ -1872,8 +1872,10 @@
         this.__createBinding = function(o, m, k) {
             o[k] = m[k];
         };
-        var calc = exports = {};
-        function require() { return exports };
+        function require() { 
+            console.log('require', arguments);
+            return {};
+         };
     </script>
     <script type="text/javascript" src="./calc/util.js?"></script>
     <script type="text/javascript" src="./calc/stats.js?"></script>
