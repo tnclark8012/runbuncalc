@@ -22,16 +22,16 @@ export interface MoveResult {
 }
 
 export interface CPUMoveConsideration extends MoveConsideration {
-	isHighestDamagingMove?: boolean;
-	isDamagingMove: boolean;
+    isHighestDamagingMove?: boolean;
+    isDamagingMove: boolean;
     aiIsFaster: boolean;
     aiIsSlower: boolean;
     playerMove: MoveResult;
     playerWillKOAI: boolean;
-	playerWill2HKOAI: boolean;
-	lastTurnCPUMove: Move | undefined;
-	aiMonFirstTurnOut: boolean;
-	field: Field
+    playerWill2HKOAI: boolean;
+    lastTurnCPUMove: Move | undefined;
+    aiMonFirstTurnOut: boolean;
+    field: Field
 }
 
 export interface PlayerMoveConsideration extends MoveConsideration {

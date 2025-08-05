@@ -40,8 +40,6 @@ export class MoveScore {
     public setAlternativeScores(modifier1: number, modifier1Chance: number, modifier2: number): void {
         this.setScore(modifier1Chance >= 0.5 ? modifier1 : modifier2);
     }
-
-
 }
 
 export class ScoreModifier {
