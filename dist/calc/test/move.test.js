@@ -1,5 +1,5 @@
 "use strict";
-exports.__esModule = true;
+Object.defineProperty(exports, "__esModule", { value: true });
 var index_1 = require("../index");
 describe('Move', function () {
     test('clone', function () {

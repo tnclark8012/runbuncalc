@@ -37,13 +37,32 @@ var __importStar = (this && this.__importStar) || function (mod) {
     __setModuleDefault(result, mod);
     return result;
 };
-exports.__esModule = true;
+Object.defineProperty(exports, "__esModule", { value: true });
 
 var data_1 = require("./data");
 var A = __importStar(require("./adaptable"));
+var simulator_1 = require("./simulator");
 var Acalculate = exports.calculate;
+function simulateAllMatchups(gen, cpuPokemon, playerPokemon, field) {
+    return playerPokemon.map(function (playerPokemon) {
+        return simulate(gen, playerPokemon, cpuPokemon, field);
+    });
+}
+exports.simulateAllMatchups = simulateAllMatchups;
+function simulate(gen, attacker, defender, field) {
+    var simulator = new simulator_1.BattleSimulator(toGeneration(gen), attacker, defender, field, field === null || field === void 0 ? void 0 : field.clone().swap());
+    try {
+        var result = simulator.getResult();
+        return result;
+    }
+    catch (e) {
+        alert(e);
+    }
+    return;
+}
+exports.simulate = simulate;
 function calculate(gen, attacker, defender, move, field) {
-    return (Acalculate || A.calculate)(typeof gen === 'number' ? data_1.Generations.get(gen) : gen, attacker, defender, move, field);
+    return (Acalculate || A.calculate)(toGeneration(gen), attacker, defender, move, field);
 }
 exports.calculate = calculate;
 var Move = (function (_super) {
@@ -72,28 +91,31 @@ function calcStat(gen, stat, base, iv, ev, level, nature) {
 }
 exports.calcStat = calcStat;
 var field_1 = require("./field");
-__createBinding(exports, field_1, "Field");
-__createBinding(exports, field_1, "Side");
+Object.defineProperty(exports, "Field", { enumerable: true, get: function () { return field_1.Field; } });
+Object.defineProperty(exports, "Side", { enumerable: true, get: function () { return field_1.Side; } });
 var result_1 = require("./result");
-__createBinding(exports, result_1, "Result");
+Object.defineProperty(exports, "Result", { enumerable: true, get: function () { return result_1.Result; } });
 var index_1 = require("./data/index");
-__createBinding(exports, index_1, "Generations");
+Object.defineProperty(exports, "Generations", { enumerable: true, get: function () { return index_1.Generations; } });
 var util_1 = require("./util");
-__createBinding(exports, util_1, "toID");
+Object.defineProperty(exports, "toID", { enumerable: true, get: function () { return util_1.toID; } });
 var abilities_1 = require("./data/abilities");
-__createBinding(exports, abilities_1, "ABILITIES");
+Object.defineProperty(exports, "ABILITIES", { enumerable: true, get: function () { return abilities_1.ABILITIES; } });
 var items_1 = require("./data/items");
-__createBinding(exports, items_1, "ITEMS");
-__createBinding(exports, items_1, "MEGA_STONES");
+Object.defineProperty(exports, "ITEMS", { enumerable: true, get: function () { return items_1.ITEMS; } });
+Object.defineProperty(exports, "MEGA_STONES", { enumerable: true, get: function () { return items_1.MEGA_STONES; } });
 var moves_1 = require("./data/moves");
-__createBinding(exports, moves_1, "MOVES");
+Object.defineProperty(exports, "MOVES", { enumerable: true, get: function () { return moves_1.MOVES; } });
 var species_1 = require("./data/species");
-__createBinding(exports, species_1, "SPECIES");
+Object.defineProperty(exports, "SPECIES", { enumerable: true, get: function () { return species_1.SPECIES; } });
 var natures_1 = require("./data/natures");
-__createBinding(exports, natures_1, "NATURES");
+Object.defineProperty(exports, "NATURES", { enumerable: true, get: function () { return natures_1.NATURES; } });
 var types_1 = require("./data/types");
-__createBinding(exports, types_1, "TYPE_CHART");
+Object.defineProperty(exports, "TYPE_CHART", { enumerable: true, get: function () { return types_1.TYPE_CHART; } });
 var stats_1 = require("./stats");
-__createBinding(exports, stats_1, "STATS");
-__createBinding(exports, stats_1, "Stats");
+Object.defineProperty(exports, "STATS", { enumerable: true, get: function () { return stats_1.STATS; } });
+Object.defineProperty(exports, "Stats", { enumerable: true, get: function () { return stats_1.Stats; } });
+function toGeneration(gen) {
+    return typeof gen === 'number' ? data_1.Generations.get(gen) : gen;
+}
 //# sourceMappingURL=index.js.map

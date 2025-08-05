@@ -1,4 +1,15 @@
 "use strict";
+var __assign = (this && this.__assign) || function () {
+    __assign = Object.assign || function(t) {
+        for (var s, i = 1, n = arguments.length; i < n; i++) {
+            s = arguments[i];
+            for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p))
+                t[p] = s[p];
+        }
+        return t;
+    };
+    return __assign.apply(this, arguments);
+};
 var __values = (this && this.__values) || function(o) {
     var s = typeof Symbol === "function" && Symbol.iterator, m = s && o[s], i = 0;
     if (m) return m.call(o);
@@ -26,10 +37,11 @@ var __read = (this && this.__read) || function (o, n) {
     }
     return ar;
 };
-exports.__esModule = true;
+Object.defineProperty(exports, "__esModule", { value: true });
 
 var index_1 = require("../index");
 var field_1 = require("../field");
+var notImplementedError_1 = require("../notImplementedError");
 var calc = function (gen) { return function (attacker, defender, move, field) { return (0, index_1.calculate)(gen, attacker, defender, move, field); }; };
 var move = function (gen) { return function (name, options) {
     if (options === void 0) { options = {}; }
@@ -54,7 +66,7 @@ function inGen(gen, fn) {
         Move: move(gen),
         Pokemon: pokemon(gen),
         Field: field,
-        Side: side
+        Side: side,
     });
 }
 exports.inGen = inGen;
@@ -134,7 +146,7 @@ expect.extend({
         catch (e_1_1) { e_1 = { error: e_1_1 }; }
         finally {
             try {
-                if (breakdowns_1_1 && !breakdowns_1_1.done && (_a = breakdowns_1["return"])) _a.call(breakdowns_1);
+                if (breakdowns_1_1 && !breakdowns_1_1.done && (_a = breakdowns_1.return)) _a.call(breakdowns_1);
             }
             finally { if (e_1) throw e_1.error; }
         }
@@ -169,6 +181,175 @@ expect.extend({
             }
         }
         return { pass: !this.isNot, message: function () { return ''; } };
-    }
+    },
 });
+var statToLegacyMap = {
+    'hp': 'hp',
+    'atk': 'at',
+    'def': 'df',
+    'spa': 'sa',
+    'spd': 'sd',
+    'spe': 'sp'
+};
+function importPokemon(importText) {
+    return importTeam(importText)[0];
+}
+exports.importPokemon = importPokemon;
+function importTeam(importText) {
+    var rows = importText.trim().split("\n");
+    rows = rows.map(function (r) { return r.trim(); });
+    var currentRow;
+    var currentPoke;
+    var addedpokes = 0;
+    var pokelist = [];
+    for (var i = 0; i < rows.length; i++) {
+        currentRow = rows[i].split(/[()@]/);
+        for (var j = 0; j < currentRow.length; j++) {
+            currentRow[j] = checkExeptions(currentRow[j].trim());
+            if (index_1.SPECIES[9][currentRow[j].trim()] !== undefined) {
+                var speciesData = index_1.SPECIES[9][currentRow[j].trim()];
+                var stats = getStats(rows, i + 1);
+                var moves = getMoves(rows, i);
+                currentPoke = new index_1.Pokemon(9, currentRow[j].trim(), __assign({ item: getItem(currentRow, j + 1), name: currentRow[j].trim(), ability: getAbility(rows[i + 1].split(":")), moves: moves }, stats));
+                pokelist.push(currentPoke);
+                break;
+            }
+        }
+    }
+    return pokelist;
+    function getAbility(row) {
+        var ability = row[1] ? row[1].trim() : '';
+        if (index_1.ABILITIES[9].indexOf(ability) !== -1)
+            return ability;
+        return;
+    }
+    function getStats(rows, offset) {
+        var currentPoke = {};
+        currentPoke.nature = "Serious";
+        var currentEV;
+        var currentIV;
+        var currentAbility;
+        var currentTeraType;
+        var currentNature;
+        currentPoke.level = 100;
+        for (var x = offset; x < offset + 9; x++) {
+            if (!rows[x] || !rows[x].length)
+                return currentPoke;
+            var currentRow = rows[x] ? rows[x].split(/[/:]/) : '';
+            var evs = {};
+            var ivs = {};
+            var ev;
+            var j;
+            switch (currentRow[0]) {
+                case 'Level':
+                    currentPoke.level = parseInt(currentRow[1].trim());
+                    continue;
+                case 'EVs':
+                    for (j = 1; j < currentRow.length; j++) {
+                        currentEV = currentRow[j].trim().split(" ");
+                        currentEV[1] = statToLegacyStat(currentEV[1].toLowerCase());
+                        evs[currentEV[1]] = parseInt(currentEV[0]);
+                    }
+                    currentPoke.evs = evs;
+                    continue;
+                case 'IVs':
+                    for (j = 1; j < currentRow.length; j++) {
+                        currentIV = currentRow[j].trim().split(" ");
+                        currentIV[1] = currentIV[1].toLowerCase();
+                        ivs[currentIV[1]] = parseInt(currentIV[0]);
+                    }
+                    currentPoke.ivs = ivs;
+                    continue;
+            }
+            currentAbility = rows[x] ? rows[x].trim().split(":") : '';
+            if (currentAbility[0] == "Ability") {
+                currentPoke.ability = currentAbility[1].trim();
+            }
+            currentNature = rows[x] ? rows[x].trim().split(" ") : '';
+            if (currentNature[1] == "Nature") {
+                currentPoke.nature = currentNature[0];
+            }
+        }
+        return currentPoke;
+    }
+    function statToLegacyStat(stat) {
+        return statToLegacyMap[stat];
+    }
+    function legacyStatToStat(legacyStat) {
+        for (var stat in statToLegacyMap) {
+            if (statToLegacyMap[stat] === legacyStat)
+                return stat;
+        }
+        (0, notImplementedError_1.notImplemented)();
+    }
+    function checkExeptions(poke) {
+        switch (poke) {
+            case 'Aegislash':
+                poke = "Aegislash-Blade";
+                break;
+            case 'Basculin-Blue-Striped':
+                poke = "Basculin";
+                break;
+            case 'Gastrodon-East':
+                poke = "Gastrodon";
+                break;
+            case 'Mimikyu-Busted-Totem':
+                poke = "Mimikyu-Totem";
+                break;
+            case 'Mimikyu-Busted':
+                poke = "Mimikyu";
+                break;
+            case 'Pikachu-Belle':
+            case 'Pikachu-Cosplay':
+            case 'Pikachu-Libre':
+            case 'Pikachu-Original':
+            case 'Pikachu-Partner':
+            case 'Pikachu-PhD':
+            case 'Pikachu-Pop-Star':
+            case 'Pikachu-Rock-Star':
+                poke = "Pikachu";
+                break;
+            case 'Vivillon-Fancy':
+            case 'Vivillon-Pokeball':
+                poke = "Vivillon";
+                break;
+            case 'Florges-White':
+            case 'Florges-Blue':
+            case 'Florges-Orange':
+            case 'Florges-Yellow':
+                poke = "Florges";
+                break;
+        }
+        return poke;
+    }
+    function getItem(currentRow, j) {
+        for (; j < currentRow.length; j++) {
+            var item = currentRow[j].trim();
+            if (index_1.ITEMS[9].indexOf(item) != -1) {
+                return item;
+            }
+        }
+        return;
+    }
+    function getMoves(rows, offset) {
+        var movesFound = false;
+        var moves = [];
+        for (var x = offset; x < offset + 12; x++) {
+            if (rows[x]) {
+                if (rows[x][0] == "-") {
+                    movesFound = true;
+                    var move = rows[x].substr(2, rows[x].length - 2).replace("[", "").replace("]", "").replace("  ", "");
+                    moves.push(move);
+                }
+                else {
+                    if (movesFound == true) {
+                        break;
+                    }
+                }
+            }
+        }
+        return moves;
+    }
+}
+exports.importTeam = importTeam;
 //# sourceMappingURL=helper.js.map

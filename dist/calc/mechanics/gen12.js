@@ -24,7 +24,7 @@ var __spreadArray = (this && this.__spreadArray) || function (to, from, pack) {
     }
     return to.concat(ar || Array.prototype.slice.call(from));
 };
-exports.__esModule = true;
+Object.defineProperty(exports, "__esModule", { value: true });
 
 var items_1 = require("../items");
 var result_1 = require("../result");
@@ -34,7 +34,7 @@ function calculateRBYGSC(gen, attacker, defender, move, field) {
     var desc = {
         attackerName: attacker.name,
         moveName: move.name,
-        defenderName: defender.name
+        defenderName: defender.name,
     };
     var result = new result_1.Result(gen, attacker, defender, move, field, 0, desc);
     if (move.category === 'Status') {
@@ -134,7 +134,7 @@ function calculateRBYGSC(gen, attacker, defender, move, field) {
         var lookup = {
             Normal: 0, Fighting: 1, Flying: 2, Poison: 3, Ground: 4, Rock: 5, Bug: 7,
             Ghost: 8, Steel: 9, '???': 19, Fire: 20, Water: 21, Grass: 22, Electric: 23,
-            Psychic: 24, Ice: 25, Dragon: 26, Dark: 27
+            Psychic: 24, Ice: 25, Dragon: 26, Dark: 27,
         };
         at = 10;
         df = Math.max(lookup[attacker.types[1] ? attacker.types[1] : attacker.types[0]], 1);

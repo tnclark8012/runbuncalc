@@ -1634,6 +1634,9 @@ function colorCodeUpdate() {
 	// i calc here to alleviate some calculation
 	var p2info = $("#p2");
 	var p2 = createPokemon(p2info);
+
+	let playerPokemon = pMons.map(p => createPokemon(p.getAttribute("data-id")));
+	console.log('Found player pokemon: ', playerPokemon);
 	for (let i = 0; i < pMons.length; i++) {
 		let set = pMons[i].getAttribute("data-id");
 		let idColor = calculationsColors(set, p2);

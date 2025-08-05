@@ -1,5 +1,5 @@
 "use strict";
-exports.__esModule = true;
+Object.defineProperty(exports, "__esModule", { value: true });
 var util_1 = require("../util");
 describe('util', function () {
     test('extend', function () {
@@ -12,7 +12,7 @@ describe('util', function () {
             b: { c: 2 },
             d: { e: 3 },
             e: { f: 5 },
-            f: 4
+            f: 4,
         });
     });
 });

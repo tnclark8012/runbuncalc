@@ -1,5 +1,5 @@
 "use strict";
-exports.__esModule = true;
+Object.defineProperty(exports, "__esModule", { value: true });
 
 var util_1 = require("./util");
 var SPECIAL = ['Fire', 'Water', 'Grass', 'Electric', 'Ice', 'Psychic', 'Dark', 'Dragon'];
@@ -26,7 +26,7 @@ var Move = (function () {
             data = (0, util_1.extend)(true, {}, maxMove_1, {
                 name: maxMoveName_1,
                 basePower: maxPower(),
-                category: data.category
+                category: data.category,
             });
         }
         if (options.useZ && ((_a = data.zMove) === null || _a === void 0 ? void 0 : _a.basePower)) {
@@ -35,7 +35,7 @@ var Move = (function () {
             data = (0, util_1.extend)(true, {}, zMove, {
                 name: zMoveName,
                 basePower: zMove.basePower === 1 ? data.zMove.basePower : zMove.basePower,
-                category: data.category
+                category: data.category,
             });
         }
         else {
@@ -123,7 +123,7 @@ var Move = (function () {
             hits: this.hits,
             timesUsed: this.timesUsed,
             timesUsedWithMetronome: this.timesUsedWithMetronome,
-            overrides: this.overrides
+            overrides: this.overrides,
         });
     };
     return Move;
@@ -190,7 +190,7 @@ var ZMOVES_TYPING = {
     Psychic: 'Shattered Psyche',
     Rock: 'Continental Crush',
     Steel: 'Corkscrew Crash',
-    Water: 'Hydro Vortex'
+    Water: 'Hydro Vortex',
 };
 function getMaxMoveName(moveType, pokemonSpecies, isStatus, pokemonAbility) {
     if (isStatus)
@@ -309,6 +309,6 @@ var MAXMOVES_TYPING = {
     Psychic: 'Mindstorm',
     Rock: 'Rockfall',
     Steel: 'Steelspike',
-    Water: 'Geyser'
+    Water: 'Geyser',
 };
 //# sourceMappingURL=move.js.map

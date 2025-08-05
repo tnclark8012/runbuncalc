@@ -1,5 +1,5 @@
 "use strict";
-exports.__esModule = true;
+Object.defineProperty(exports, "__esModule", { value: true });
 var data_1 = require("../data");
 var stats_1 = require("../stats");
 var util_1 = require("../mechanics/util");
@@ -20,7 +20,7 @@ describe('Stats', function () {
             def: 298,
             spa: 298,
             spd: 298,
-            spe: 298
+            spe: 298,
         };
         var ADV = { hp: 404, atk: 328, def: 299, spa: 269, spd: 299, spe: 299 };
         for (var gen = 1; gen <= 9; gen++) {
@@ -41,19 +41,19 @@ describe('Stats', function () {
             atk: stats_1.Stats.DVToIV(15),
             def: stats_1.Stats.DVToIV(15),
             spc: stats_1.Stats.DVToIV(15),
-            spe: stats_1.Stats.DVToIV(15)
+            spe: stats_1.Stats.DVToIV(15),
         })).toBe(15);
         expect(stats_1.Stats.getHPDV({
             atk: stats_1.Stats.DVToIV(5),
             def: stats_1.Stats.DVToIV(15),
             spc: stats_1.Stats.DVToIV(13),
-            spe: stats_1.Stats.DVToIV(13)
+            spe: stats_1.Stats.DVToIV(13),
         })).toBe(15);
         expect(stats_1.Stats.getHPDV({
             atk: stats_1.Stats.DVToIV(15),
             def: stats_1.Stats.DVToIV(3),
             spc: stats_1.Stats.DVToIV(11),
-            spe: stats_1.Stats.DVToIV(10)
+            spe: stats_1.Stats.DVToIV(10),
         })).toBe(13);
     });
     test('gen 2 modifications', function () {

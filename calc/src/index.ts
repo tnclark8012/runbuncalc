@@ -47,6 +47,7 @@ import {Generations} from './data';
 import {State} from './state';
 import * as I from './data/interface';
 import * as A from './adaptable';
+import { BattleSimulator } from './simulator';
 
 // The loading strategy outlined in the comment above breaks in the browser when we start reusing
 // names as we're doing here with our shim overrides. Because exporting calculate below tramples
@@ -57,6 +58,34 @@ import * as A from './adaptable';
 // This is obviously kludge, use a bundler kids.
 const Acalculate = exports.calculate;
 
+export function simulateAllMatchups(
+  gen: I.GenerationNum | I.Generation,
+  cpuPokemon: A.Pokemon,
+  playerPokemon: A.Pokemon[],
+  field: A.Field) {
+    return playerPokemon.map(playerPokemon => {
+      return simulate(gen, playerPokemon, cpuPokemon, field);
+    });
+}
+
+export function simulate(
+  gen: I.GenerationNum | I.Generation,
+  attacker: A.Pokemon,
+  defender: A.Pokemon,
+  field: A.Field
+) {
+  let simulator = new BattleSimulator(toGeneration(gen), attacker, defender, field, field?.clone().swap());
+  try {
+    let result = simulator.getResult();
+    return result;
+  }
+  catch (e) {
+    alert(e);
+  }
+
+  return;
+}
+
 export function calculate(
   gen: I.GenerationNum | I.Generation,
   attacker: A.Pokemon,
@@ -65,7 +94,7 @@ export function calculate(
   field?: A.Field
 ): A.Result {
   return (Acalculate || A.calculate)(
-    typeof gen === 'number' ? Generations.get(gen) : gen,
+    toGeneration(gen),
     attacker,
     defender,
     move,
@@ -156,3 +185,9 @@ export {SPECIES} from './data/species';
 export {NATURES} from './data/natures';
 export {TYPE_CHART} from './data/types';
 export {STATS, Stats} from './stats';
+
+function toGeneration(
+  gen: I.GenerationNum | I.Generation,
+): I.Generation {
+  return typeof gen === 'number' ? Generations.get(gen) : gen
+}

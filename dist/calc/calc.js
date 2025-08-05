@@ -1,5 +1,5 @@
 "use strict";
-exports.__esModule = true;
+Object.defineProperty(exports, "__esModule", { value: true });
 
 var field_1 = require("./field");
 var gen12_1 = require("./mechanics/gen12");

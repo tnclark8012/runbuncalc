@@ -35,7 +35,7 @@ var __spreadArray = (this && this.__spreadArray) || function (to, from, pack) {
     }
     return to.concat(ar || Array.prototype.slice.call(from));
 };
-exports.__esModule = true;
+Object.defineProperty(exports, "__esModule", { value: true });
 
 var util_1 = require("../util");
 var stats_1 = require("../stats");
@@ -113,7 +113,7 @@ function computeFinalStats(gen, attacker, defender, field) {
             catch (e_2_1) { e_2 = { error: e_2_1 }; }
             finally {
                 try {
-                    if (stats_2_1 && !stats_2_1.done && (_b = stats_2["return"])) _b.call(stats_2);
+                    if (stats_2_1 && !stats_2_1.done && (_b = stats_2.return)) _b.call(stats_2);
                 }
                 finally { if (e_2) throw e_2.error; }
             }
@@ -122,7 +122,7 @@ function computeFinalStats(gen, attacker, defender, field) {
     catch (e_1_1) { e_1 = { error: e_1_1 }; }
     finally {
         try {
-            if (sides_1_1 && !sides_1_1.done && (_a = sides_1["return"])) _a.call(sides_1);
+            if (sides_1_1 && !sides_1_1.done && (_a = sides_1.return)) _a.call(sides_1);
         }
         finally { if (e_1) throw e_1.error; }
     }
@@ -401,7 +401,7 @@ function chainMods(mods, lowerBound, upperBound) {
     catch (e_3_1) { e_3 = { error: e_3_1 }; }
     finally {
         try {
-            if (mods_1_1 && !mods_1_1.done && (_a = mods_1["return"])) _a.call(mods_1);
+            if (mods_1_1 && !mods_1_1.done && (_a = mods_1.return)) _a.call(mods_1);
         }
         finally { if (e_3) throw e_3.error; }
     }
@@ -427,7 +427,7 @@ function getMostProficientStat(pokemon, gen) {
     catch (e_4_1) { e_4 = { error: e_4_1 }; }
     finally {
         try {
-            if (_c && !_c.done && (_a = _b["return"])) _a.call(_b);
+            if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
         }
         finally { if (e_4) throw e_4.error; }
     }
@@ -474,7 +474,7 @@ function countBoosts(gen, boosts) {
     catch (e_5_1) { e_5 = { error: e_5_1 }; }
     finally {
         try {
-            if (STATS_1_1 && !STATS_1_1.done && (_a = STATS_1["return"])) _a.call(STATS_1);
+            if (STATS_1_1 && !STATS_1_1.done && (_a = STATS_1.return)) _a.call(STATS_1);
         }
         finally { if (e_5) throw e_5.error; }
     }

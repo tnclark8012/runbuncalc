@@ -1,5 +1,5 @@
 "use strict";
-exports.__esModule = true;
+Object.defineProperty(exports, "__esModule", { value: true });
 
 function toID(text) {
     return ('' + text).toLowerCase().replace(/[^a-z0-9]+/g, '');
@@ -31,7 +31,7 @@ var class2Type = {
     '[object Date]': 'date',
     '[object RegExp]': 'regexp',
     '[object Object]': 'object',
-    '[object Error]': 'error'
+    '[object Error]': 'error',
 };
 var coreToString = class2Type.toString;
 var coreHasOwn = class2Type.hasOwnProperty;

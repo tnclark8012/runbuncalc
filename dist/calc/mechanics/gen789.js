@@ -1,5 +1,5 @@
 "use strict";
-exports.__esModule = true;
+Object.defineProperty(exports, "__esModule", { value: true });
 
 var util_1 = require("../util");
 var items_1 = require("../items");
@@ -35,7 +35,7 @@ function calculateSMSSSV(gen, attacker, defender, move, field) {
         defenderName: defender.name,
         defenderTera: defender.teraType,
         isDefenderDynamaxed: defender.isDynamaxed,
-        isWonderRoom: field.isWonderRoom
+        isWonderRoom: field.isWonderRoom,
     };
     var result = new result_1.Result(gen, attacker, defender, move, field, 0, desc);
     if (move.category === 'Status' && !move.named('Nature Power')) {

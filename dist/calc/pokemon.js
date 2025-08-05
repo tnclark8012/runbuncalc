@@ -21,7 +21,7 @@ var __values = (this && this.__values) || function(o) {
     };
     throw new TypeError(s ? "Object is not iterable." : "Symbol.iterator is not defined.");
 };
-exports.__esModule = true;
+Object.defineProperty(exports, "__esModule", { value: true });
 
 var stats_1 = require("./stats");
 var util_1 = require("./util");
@@ -35,7 +35,8 @@ var Pokemon = (function () {
         this.species = (0, util_1.extend)(true, {}, gen.species.get((0, util_1.toID)(name)), options.overrides);
         this.gen = gen;
         this.name = options.name || name;
-        this.types = this.species.types;
+        this.id = options.id || "".concat(this.name, ":Math.random()");
+        this.types = options.types ? options.types : this.species.types;
         this.weightkg = this.species.weightkg;
         this.level = options.level || 100;
         this.gender = options.gender || this.species.gender || 'M';
@@ -58,7 +59,7 @@ var Pokemon = (function () {
                 atk: this.ivs.atk,
                 def: this.ivs.def,
                 spe: this.ivs.spe,
-                spc: this.ivs.spa
+                spc: this.ivs.spa,
             }));
         }
         this.rawStats = {};
@@ -74,12 +75,13 @@ var Pokemon = (function () {
         catch (e_1_1) { e_1 = { error: e_1_1 }; }
         finally {
             try {
-                if (STATS_1_1 && !STATS_1_1.done && (_a = STATS_1["return"])) _a.call(STATS_1);
+                if (STATS_1_1 && !STATS_1_1.done && (_a = STATS_1.return)) _a.call(STATS_1);
             }
             finally { if (e_1) throw e_1.error; }
         }
-        var curHP = options.curHP || options.originalCurHP;
-        this.originalCurHP = curHP && curHP <= this.rawStats.hp ? curHP : this.rawStats.hp;
+        var curHP = options.curHP !== undefined ? options.curHP :
+            options.originalCurHP !== undefined ? options.originalCurHP : undefined;
+        this.originalCurHP = curHP !== undefined && curHP <= this.rawStats.hp ? curHP : this.rawStats.hp;
         this.status = options.status || '';
         this.toxicCounter = options.toxicCounter || 0;
         this.moves = options.moves || [];
@@ -133,7 +135,7 @@ var Pokemon = (function () {
         catch (e_2_1) { e_2 = { error: e_2_1 }; }
         finally {
             try {
-                if (types_1_1 && !types_1_1.done && (_a = types_1["return"])) _a.call(types_1);
+                if (types_1_1 && !types_1_1.done && (_a = types_1.return)) _a.call(types_1);
             }
             finally { if (e_2) throw e_2.error; }
         }
@@ -155,7 +157,7 @@ var Pokemon = (function () {
         catch (e_3_1) { e_3 = { error: e_3_1 }; }
         finally {
             try {
-                if (types_2_1 && !types_2_1.done && (_a = types_2["return"])) _a.call(types_2);
+                if (types_2_1 && !types_2_1.done && (_a = types_2.return)) _a.call(types_2);
             }
             finally { if (e_3) throw e_3.error; }
         }
@@ -168,27 +170,11 @@ var Pokemon = (function () {
         }
         return names.includes(this.name);
     };
-    Pokemon.prototype.clone = function () {
-        return new Pokemon(this.gen, this.name, {
-            level: this.level,
-            ability: this.ability,
-            abilityOn: this.abilityOn,
-            isDynamaxed: this.isDynamaxed,
-            isSaltCure: this.isSaltCure,
-            alliesFainted: this.alliesFainted,
-            item: this.item,
-            gender: this.gender,
-            nature: this.nature,
-            ivs: (0, util_1.extend)(true, {}, this.ivs),
-            evs: (0, util_1.extend)(true, {}, this.evs),
-            boosts: (0, util_1.extend)(true, {}, this.boosts),
-            originalCurHP: this.originalCurHP,
-            status: this.status,
-            teraType: this.teraType,
-            toxicCounter: this.toxicCounter,
-            moves: this.moves.slice(),
-            overrides: this.species
-        });
+    Pokemon.prototype.equals = function (other) {
+        return this.id === other.id;
+    };
+    Pokemon.prototype.clone = function (options) {
+        return new Pokemon(this.gen, this.name, __assign({ id: this.id, level: this.level, ability: this.ability, abilityOn: this.abilityOn, isDynamaxed: this.isDynamaxed, isSaltCure: this.isSaltCure, alliesFainted: this.alliesFainted, item: this.item, gender: this.gender, nature: this.nature, ivs: (0, util_1.extend)(true, {}, this.ivs), evs: (0, util_1.extend)(true, {}, this.evs), boosts: (0, util_1.extend)(true, {}, this.boosts), originalCurHP: this.originalCurHP, status: this.status, teraType: this.teraType, toxicCounter: this.toxicCounter, types: this.types, moves: this.moves.slice(), overrides: this.species }, options));
     };
     Pokemon.prototype.calcStat = function (gen, stat) {
         return stats_1.Stats.calcStat(gen, stat, this.species.baseStats[stat], this.ivs[stat], this.evs[stat], this.level, this.nature);

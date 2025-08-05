@@ -1,12 +1,12 @@
 "use strict";
-exports.__esModule = true;
+Object.defineProperty(exports, "__esModule", { value: true });
 
 var util_1 = require("./util");
 exports.SEED_BOOSTED_STAT = {
     'Electric Seed': 'def',
     'Grassy Seed': 'def',
     'Misty Seed': 'spd',
-    'Psychic Seed': 'spd'
+    'Psychic Seed': 'spd',
 };
 function getItemBoostType(item) {
     switch (item) {

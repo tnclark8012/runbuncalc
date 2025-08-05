@@ -49,7 +49,7 @@ var __values = (this && this.__values) || function(o) {
     throw new TypeError(s ? "Object is not iterable." : "Symbol.iterator is not defined.");
 };
 var e_1, _a;
-exports.__esModule = true;
+Object.defineProperty(exports, "__esModule", { value: true });
 
 var util_1 = require("../util");
 var RBY = {
@@ -68,7 +68,7 @@ var RBY = {
         Fighting: 1,
         Psychic: 1,
         Ghost: 1,
-        Dragon: 1
+        Dragon: 1,
     },
     Normal: {
         '???': 1,
@@ -86,7 +86,7 @@ var RBY = {
         Fighting: 1,
         Psychic: 1,
         Ghost: 0,
-        Dragon: 1
+        Dragon: 1,
     },
     Grass: {
         '???': 1,
@@ -104,7 +104,7 @@ var RBY = {
         Fighting: 1,
         Psychic: 1,
         Ghost: 1,
-        Dragon: 0.5
+        Dragon: 0.5,
     },
     Fire: {
         '???': 1,
@@ -122,7 +122,7 @@ var RBY = {
         Fighting: 1,
         Psychic: 1,
         Ghost: 1,
-        Dragon: 0.5
+        Dragon: 0.5,
     },
     Water: {
         '???': 1,
@@ -140,7 +140,7 @@ var RBY = {
         Fighting: 1,
         Psychic: 1,
         Ghost: 1,
-        Dragon: 0.5
+        Dragon: 0.5,
     },
     Electric: {
         '???': 1,
@@ -158,7 +158,7 @@ var RBY = {
         Fighting: 1,
         Psychic: 1,
         Ghost: 1,
-        Dragon: 0.5
+        Dragon: 0.5,
     },
     Ice: {
         '???': 1,
@@ -176,7 +176,7 @@ var RBY = {
         Fighting: 1,
         Psychic: 1,
         Ghost: 1,
-        Dragon: 2
+        Dragon: 2,
     },
     Flying: {
         '???': 1,
@@ -194,7 +194,7 @@ var RBY = {
         Fighting: 2,
         Psychic: 1,
         Ghost: 1,
-        Dragon: 1
+        Dragon: 1,
     },
     Bug: {
         '???': 1,
@@ -212,7 +212,7 @@ var RBY = {
         Fighting: 0.5,
         Psychic: 2,
         Ghost: 0.5,
-        Dragon: 1
+        Dragon: 1,
     },
     Poison: {
         '???': 1,
@@ -230,7 +230,7 @@ var RBY = {
         Fighting: 1,
         Psychic: 1,
         Ghost: 0.5,
-        Dragon: 1
+        Dragon: 1,
     },
     Ground: {
         '???': 1,
@@ -248,7 +248,7 @@ var RBY = {
         Fighting: 1,
         Psychic: 1,
         Ghost: 1,
-        Dragon: 1
+        Dragon: 1,
     },
     Rock: {
         '???': 1,
@@ -266,7 +266,7 @@ var RBY = {
         Fighting: 0.5,
         Psychic: 1,
         Ghost: 1,
-        Dragon: 1
+        Dragon: 1,
     },
     Fighting: {
         '???': 1,
@@ -284,7 +284,7 @@ var RBY = {
         Fighting: 1,
         Psychic: 0.5,
         Ghost: 0,
-        Dragon: 1
+        Dragon: 1,
     },
     Psychic: {
         '???': 1,
@@ -302,7 +302,7 @@ var RBY = {
         Fighting: 2,
         Psychic: 0.5,
         Ghost: 1,
-        Dragon: 1
+        Dragon: 1,
     },
     Ghost: {
         '???': 1,
@@ -320,7 +320,7 @@ var RBY = {
         Fighting: 1,
         Psychic: 0,
         Ghost: 2,
-        Dragon: 1
+        Dragon: 1,
     },
     Dragon: {
         '???': 1,
@@ -338,8 +338,8 @@ var RBY = {
         Fighting: 1,
         Psychic: 1,
         Ghost: 1,
-        Dragon: 2
-    }
+        Dragon: 2,
+    },
 };
 var GSC = (0, util_1.extend)(true, {}, RBY, {
     '???': { Dark: 1, Steel: 1 },
@@ -376,7 +376,7 @@ var GSC = (0, util_1.extend)(true, {}, RBY, {
         Ghost: 2,
         Dragon: 1,
         Dark: 0.5,
-        Steel: 0.5
+        Steel: 0.5,
     },
     Steel: {
         '???': 1,
@@ -396,8 +396,8 @@ var GSC = (0, util_1.extend)(true, {}, RBY, {
         Ghost: 1,
         Dragon: 1,
         Dark: 1,
-        Steel: 0.5
-    }
+        Steel: 0.5,
+    },
 });
 var ADV = GSC;
 var DPP = GSC;
@@ -440,8 +440,8 @@ var XY = (0, util_1.extend)(true, {}, GSC, {
         Dragon: 2,
         Dark: 2,
         Steel: 0.5,
-        Fairy: 1
-    }
+        Fairy: 1,
+    },
 });
 var SM = XY;
 var SS = SM;
@@ -508,7 +508,7 @@ try {
 catch (e_1_1) { e_1 = { error: e_1_1 }; }
 finally {
     try {
-        if (TYPE_CHART_1_1 && !TYPE_CHART_1_1.done && (_a = TYPE_CHART_1["return"])) _a.call(TYPE_CHART_1);
+        if (TYPE_CHART_1_1 && !TYPE_CHART_1_1.done && (_a = TYPE_CHART_1.return)) _a.call(TYPE_CHART_1);
     }
     finally { if (e_1) throw e_1.error; }
 }

@@ -15,7 +15,7 @@ var __read = (this && this.__read) || function (o, n) {
     }
     return ar;
 };
-exports.__esModule = true;
+Object.defineProperty(exports, "__esModule", { value: true });
 
 var Field = (function () {
     function Field(field) {
@@ -73,7 +73,7 @@ var Field = (function () {
             isBeadsOfRuin: this.isBeadsOfRuin,
             isSwordOfRuin: this.isSwordOfRuin,
             isTabletsOfRuin: this.isTabletsOfRuin,
-            isVesselOfRuin: this.isVesselOfRuin
+            isVesselOfRuin: this.isVesselOfRuin,
         });
     };
     return Field;

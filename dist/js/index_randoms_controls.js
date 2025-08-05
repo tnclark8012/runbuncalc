@@ -299,6 +299,10 @@ function checkStatBoost(p1, p2) {
 	}
 }
 
+function simulateBattle(gen, p1, p1field, p2, p2field, double) {
+	calc.simulateBattle()
+}
+
 function calculateAllMoves(gen, p1, p1field, p2, p2field, double) {
 	double = double ? 2 : 0;
 	checkStatBoost(p1, p2);

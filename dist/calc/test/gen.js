@@ -62,7 +62,7 @@ var __spreadArray = (this && this.__spreadArray) || function (to, from, pack) {
     }
     return to.concat(ar || Array.prototype.slice.call(from));
 };
-exports.__esModule = true;
+Object.defineProperty(exports, "__esModule", { value: true });
 
 function toID(s) {
     return ('' + s).toLowerCase().replace(/[^a-z0-9]+/g, '');
@@ -196,7 +196,7 @@ var Item = (function () {
         this.isBerry = item.isBerry;
         this.naturalGift = item.naturalGift && {
             basePower: item.naturalGift.basePower - (gen === 2 ? 20 : 0),
-            type: item.naturalGift.type
+            type: item.naturalGift.type,
         };
     }
     return Item;
@@ -387,7 +387,7 @@ function NoMove(dex) {
         target: 'any',
         flags: {},
         gen: 1,
-        priority: 0
+        priority: 0,
     }, dex);
 }
 var Specie = (function () {
@@ -456,7 +456,7 @@ function AegislashBoth(dex) {
         def: shield.baseStats.def,
         spa: blade.baseStats.spa,
         spd: shield.baseStats.spd,
-        spe: shield.baseStats.spe
+        spe: shield.baseStats.spe,
     };
     return new Specie(__assign(__assign({}, shield), { baseStats: baseStats, id: 'aegislashboth', name: 'Aegislash-Both' }), dex);
 }
@@ -468,7 +468,7 @@ var Types = (function () {
             kind: 'Type',
             id: '',
             name: '???',
-            effectiveness: {}
+            effectiveness: {},
         };
         this.byID = {};
         for (var id in this.dex.data.Types) {

@@ -15,7 +15,7 @@ var __read = (this && this.__read) || function (o, n) {
     }
     return ar;
 };
-exports.__esModule = true;
+Object.defineProperty(exports, "__esModule", { value: true });
 
 var result_1 = require("./result");
 var util_1 = require("./util");
@@ -205,7 +205,7 @@ function getKOChance(gen, attacker, defender, move, field, damage, err) {
             return {
                 chance: chance,
                 n: 1,
-                text: qualifier + Math.round(chance * 1000) / 10 + "% chance to OHKO".concat(hazardsText)
+                text: qualifier + Math.round(chance * 1000) / 10 + "% chance to OHKO".concat(hazardsText),
             };
         }
         if (damage.length === 256) {
@@ -220,7 +220,7 @@ function getKOChance(gen, attacker, defender, move, field, damage, err) {
                 return {
                     chance: chance_1,
                     n: i,
-                    text: qualifier + Math.round(chance_1 * 1000) / 10 + "% chance to ".concat(i, "HKO").concat(afterText)
+                    text: qualifier + Math.round(chance_1 * 1000) / 10 + "% chance to ".concat(i, "HKO").concat(afterText),
                 };
             }
         }
@@ -241,7 +241,7 @@ function getKOChance(gen, attacker, defender, move, field, damage, err) {
             return {
                 chance: chance,
                 n: move.timesUsed,
-                text: "".concat(qualifier || 'guaranteed ', "KO in ").concat(move.timesUsed, " turns").concat(afterText)
+                text: "".concat(qualifier || 'guaranteed ', "KO in ").concat(move.timesUsed, " turns").concat(afterText),
             };
         }
         else if (chance > 0) {
@@ -250,7 +250,7 @@ function getKOChance(gen, attacker, defender, move, field, damage, err) {
                 n: move.timesUsed,
                 text: qualifier +
                     Math.round(chance * 1000) / 10 +
-                    "% chance to ".concat(move.timesUsed, "HKO").concat(afterText)
+                    "% chance to ".concat(move.timesUsed, "HKO").concat(afterText),
             };
         }
         if (predictTotal(damage[0], eot.damage, move.hits, move.timesUsed, toxicCounter, defender.maxHP()) >=
@@ -258,14 +258,14 @@ function getKOChance(gen, attacker, defender, move, field, damage, err) {
             return {
                 chance: 1,
                 n: move.timesUsed,
-                text: "".concat(qualifier || 'guaranteed ', "KO in ").concat(move.timesUsed, " turns").concat(afterText)
+                text: "".concat(qualifier || 'guaranteed ', "KO in ").concat(move.timesUsed, " turns").concat(afterText),
             };
         }
         else if (predictTotal(damage[damage.length - 1], eot.damage, move.hits, move.timesUsed, toxicCounter, defender.maxHP()) >=
             defender.curHP() - hazards.damage) {
             return {
                 n: move.timesUsed,
-                text: qualifier + "possible KO in ".concat(move.timesUsed, " turns").concat(afterText)
+                text: qualifier + "possible KO in ".concat(move.timesUsed, " turns").concat(afterText),
             };
         }
         return { n: move.timesUsed, text: qualifier + 'not a KO' };

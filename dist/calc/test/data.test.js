@@ -49,7 +49,7 @@ var __read = (this && this.__read) || function (o, n) {
     }
     return ar;
 };
-exports.__esModule = true;
+Object.defineProperty(exports, "__esModule", { value: true });
 var adaptable_1 = require("../adaptable");
 var calc = __importStar(require("../index"));
 var dex_1 = require("@pkmn/dex");
@@ -73,7 +73,7 @@ describe('Generations', function () {
                 catch (e_2_1) { e_2 = { error: e_2_1 }; }
                 finally {
                     try {
-                        if (_e && !_e.done && (_b = _d["return"])) _b.call(_d);
+                        if (_e && !_e.done && (_b = _d.return)) _b.call(_d);
                     }
                     finally { if (e_2) throw e_2.error; }
                 }
@@ -82,13 +82,13 @@ describe('Generations', function () {
                     for (var p_1 = (e_3 = void 0, __values(p)), p_1_1 = p_1.next(); !p_1_1.done; p_1_1 = p_1.next()) {
                         var ability = p_1_1.value;
                         expect(c.get(ability.id)).toEqual(ability);
-                        c["delete"](ability.id);
+                        c.delete(ability.id);
                     }
                 }
                 catch (e_3_1) { e_3 = { error: e_3_1 }; }
                 finally {
                     try {
-                        if (p_1_1 && !p_1_1.done && (_c = p_1["return"])) _c.call(p_1);
+                        if (p_1_1 && !p_1_1.done && (_c = p_1.return)) _c.call(p_1);
                     }
                     finally { if (e_3) throw e_3.error; }
                 }
@@ -98,7 +98,7 @@ describe('Generations', function () {
         catch (e_1_1) { e_1 = { error: e_1_1 }; }
         finally {
             try {
-                if (gens_1_1 && !gens_1_1.done && (_a = gens_1["return"])) _a.call(gens_1);
+                if (gens_1_1 && !gens_1_1.done && (_a = gens_1.return)) _a.call(gens_1);
             }
             finally { if (e_1) throw e_1.error; }
         }
@@ -119,7 +119,7 @@ describe('Generations', function () {
                 catch (e_5_1) { e_5 = { error: e_5_1 }; }
                 finally {
                     try {
-                        if (_e && !_e.done && (_b = _d["return"])) _b.call(_d);
+                        if (_e && !_e.done && (_b = _d.return)) _b.call(_d);
                     }
                     finally { if (e_5) throw e_5.error; }
                 }
@@ -128,13 +128,13 @@ describe('Generations', function () {
                     for (var p_2 = (e_6 = void 0, __values(p)), p_2_1 = p_2.next(); !p_2_1.done; p_2_1 = p_2.next()) {
                         var item = p_2_1.value;
                         expect(c.get(item.id)).toEqual(item);
-                        c["delete"](item.id);
+                        c.delete(item.id);
                     }
                 }
                 catch (e_6_1) { e_6 = { error: e_6_1 }; }
                 finally {
                     try {
-                        if (p_2_1 && !p_2_1.done && (_c = p_2["return"])) _c.call(p_2);
+                        if (p_2_1 && !p_2_1.done && (_c = p_2.return)) _c.call(p_2);
                     }
                     finally { if (e_6) throw e_6.error; }
                 }
@@ -144,7 +144,7 @@ describe('Generations', function () {
         catch (e_4_1) { e_4 = { error: e_4_1 }; }
         finally {
             try {
-                if (gens_2_1 && !gens_2_1.done && (_a = gens_2["return"])) _a.call(gens_2);
+                if (gens_2_1 && !gens_2_1.done && (_a = gens_2.return)) _a.call(gens_2);
             }
             finally { if (e_4) throw e_4.error; }
         }
@@ -165,7 +165,7 @@ describe('Generations', function () {
                 catch (e_8_1) { e_8 = { error: e_8_1 }; }
                 finally {
                     try {
-                        if (_f && !_f.done && (_b = _e["return"])) _b.call(_e);
+                        if (_f && !_f.done && (_b = _e.return)) _b.call(_e);
                     }
                     finally { if (e_8) throw e_8.error; }
                 }
@@ -184,18 +184,18 @@ describe('Generations', function () {
                         catch (e_10_1) { e_10 = { error: e_10_1 }; }
                         finally {
                             try {
-                                if (_h && !_h.done && (_d = _g["return"])) _d.call(_g);
+                                if (_h && !_h.done && (_d = _g.return)) _d.call(_g);
                             }
                             finally { if (e_10) throw e_10.error; }
                         }
                         expect(c.get(move.id)).toMatchObject(move);
-                        c["delete"](move.id);
+                        c.delete(move.id);
                     }
                 }
                 catch (e_9_1) { e_9 = { error: e_9_1 }; }
                 finally {
                     try {
-                        if (p_3_1 && !p_3_1.done && (_c = p_3["return"])) _c.call(p_3);
+                        if (p_3_1 && !p_3_1.done && (_c = p_3.return)) _c.call(p_3);
                     }
                     finally { if (e_9) throw e_9.error; }
                 }
@@ -205,7 +205,7 @@ describe('Generations', function () {
         catch (e_7_1) { e_7 = { error: e_7_1 }; }
         finally {
             try {
-                if (gens_3_1 && !gens_3_1.done && (_a = gens_3["return"])) _a.call(gens_3);
+                if (gens_3_1 && !gens_3_1.done && (_a = gens_3.return)) _a.call(gens_3);
             }
             finally { if (e_7) throw e_7.error; }
         }
@@ -226,7 +226,7 @@ describe('Generations', function () {
                 catch (e_12_1) { e_12 = { error: e_12_1 }; }
                 finally {
                     try {
-                        if (_e && !_e.done && (_b = _d["return"])) _b.call(_d);
+                        if (_e && !_e.done && (_b = _d.return)) _b.call(_d);
                     }
                     finally { if (e_12) throw e_12.error; }
                 }
@@ -235,13 +235,13 @@ describe('Generations', function () {
                     for (var p_4 = (e_13 = void 0, __values(p)), p_4_1 = p_4.next(); !p_4_1.done; p_4_1 = p_4.next()) {
                         var specie = p_4_1.value;
                         expect(c.get(specie.id)).toEqual(specie);
-                        c["delete"](specie.id);
+                        c.delete(specie.id);
                     }
                 }
                 catch (e_13_1) { e_13 = { error: e_13_1 }; }
                 finally {
                     try {
-                        if (p_4_1 && !p_4_1.done && (_c = p_4["return"])) _c.call(p_4);
+                        if (p_4_1 && !p_4_1.done && (_c = p_4.return)) _c.call(p_4);
                     }
                     finally { if (e_13) throw e_13.error; }
                 }
@@ -251,7 +251,7 @@ describe('Generations', function () {
         catch (e_11_1) { e_11 = { error: e_11_1 }; }
         finally {
             try {
-                if (gens_4_1 && !gens_4_1.done && (_a = gens_4["return"])) _a.call(gens_4);
+                if (gens_4_1 && !gens_4_1.done && (_a = gens_4.return)) _a.call(gens_4);
             }
             finally { if (e_11) throw e_11.error; }
         }
@@ -272,7 +272,7 @@ describe('Generations', function () {
                 catch (e_15_1) { e_15 = { error: e_15_1 }; }
                 finally {
                     try {
-                        if (_e && !_e.done && (_b = _d["return"])) _b.call(_d);
+                        if (_e && !_e.done && (_b = _d.return)) _b.call(_d);
                     }
                     finally { if (e_15) throw e_15.error; }
                 }
@@ -281,13 +281,13 @@ describe('Generations', function () {
                     for (var p_5 = (e_16 = void 0, __values(p)), p_5_1 = p_5.next(); !p_5_1.done; p_5_1 = p_5.next()) {
                         var type = p_5_1.value;
                         expect(c.get(type.id)).toEqual(type);
-                        c["delete"](type.id);
+                        c.delete(type.id);
                     }
                 }
                 catch (e_16_1) { e_16 = { error: e_16_1 }; }
                 finally {
                     try {
-                        if (p_5_1 && !p_5_1.done && (_c = p_5["return"])) _c.call(p_5);
+                        if (p_5_1 && !p_5_1.done && (_c = p_5.return)) _c.call(p_5);
                     }
                     finally { if (e_16) throw e_16.error; }
                 }
@@ -297,7 +297,7 @@ describe('Generations', function () {
         catch (e_14_1) { e_14 = { error: e_14_1 }; }
         finally {
             try {
-                if (gens_5_1 && !gens_5_1.done && (_a = gens_5["return"])) _a.call(gens_5);
+                if (gens_5_1 && !gens_5_1.done && (_a = gens_5.return)) _a.call(gens_5);
             }
             finally { if (e_14) throw e_14.error; }
         }
@@ -318,7 +318,7 @@ describe('Generations', function () {
                 catch (e_18_1) { e_18 = { error: e_18_1 }; }
                 finally {
                     try {
-                        if (_e && !_e.done && (_b = _d["return"])) _b.call(_d);
+                        if (_e && !_e.done && (_b = _d.return)) _b.call(_d);
                     }
                     finally { if (e_18) throw e_18.error; }
                 }
@@ -327,13 +327,13 @@ describe('Generations', function () {
                     for (var p_6 = (e_19 = void 0, __values(p)), p_6_1 = p_6.next(); !p_6_1.done; p_6_1 = p_6.next()) {
                         var nature = p_6_1.value;
                         expect(c.get(nature.id)).toEqual(nature);
-                        c["delete"](nature.id);
+                        c.delete(nature.id);
                     }
                 }
                 catch (e_19_1) { e_19 = { error: e_19_1 }; }
                 finally {
                     try {
-                        if (p_6_1 && !p_6_1.done && (_c = p_6["return"])) _c.call(p_6);
+                        if (p_6_1 && !p_6_1.done && (_c = p_6.return)) _c.call(p_6);
                     }
                     finally { if (e_19) throw e_19.error; }
                 }
@@ -343,7 +343,7 @@ describe('Generations', function () {
         catch (e_17_1) { e_17 = { error: e_17_1 }; }
         finally {
             try {
-                if (gens_6_1 && !gens_6_1.done && (_a = gens_6["return"])) _a.call(gens_6);
+                if (gens_6_1 && !gens_6_1.done && (_a = gens_6.return)) _a.call(gens_6);
             }
             finally { if (e_17) throw e_17.error; }
         }
@@ -356,11 +356,11 @@ describe('Adaptable', function () {
             item: 'Choice Specs',
             nature: 'Timid',
             evs: { spa: 252 },
-            boosts: { spa: 1 }
+            boosts: { spa: 1 },
         }), new adaptable_1.Pokemon(gen, 'Chansey', {
             item: 'Eviolite',
             nature: 'Calm',
-            evs: { hp: 252, spd: 252 }
+            evs: { hp: 252, spd: 252 },
         }), new adaptable_1.Move(gen, 'Focus Blast'));
         expect(result.range()).toEqual([274, 324]);
     });

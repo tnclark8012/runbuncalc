@@ -1,5 +1,5 @@
 "use strict";
-exports.__esModule = true;
+Object.defineProperty(exports, "__esModule", { value: true });
 
 var util_1 = require("../util");
 var items_1 = require("../items");
@@ -29,7 +29,7 @@ function calculateBWXY(gen, attacker, defender, move, field) {
         attackerName: attacker.name,
         moveName: move.name,
         defenderName: defender.name,
-        isWonderRoom: field.isWonderRoom
+        isWonderRoom: field.isWonderRoom,
     };
     var result = new result_1.Result(gen, attacker, defender, move, field, 0, desc);
     if (move.category === 'Status' && !move.named('Nature Power')) {

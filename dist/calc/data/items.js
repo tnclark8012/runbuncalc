@@ -63,7 +63,7 @@ var __values = (this && this.__values) || function(o) {
     throw new TypeError(s ? "Object is not iterable." : "Symbol.iterator is not defined.");
 };
 var e_1, _a, e_2, _b;
-exports.__esModule = true;
+Object.defineProperty(exports, "__esModule", { value: true });
 
 var util_1 = require("../util");
 var RBY = [];
@@ -400,7 +400,7 @@ exports.MEGA_STONES = {
     Steelixite: 'Steelix',
     Swampertite: 'Swampert',
     Tyranitarite: 'Tyranitar',
-    Venusaurite: 'Venusaur'
+    Venusaurite: 'Venusaur',
 };
 var XY = BW.concat(__spreadArray(__spreadArray([], __read(Object.keys(exports.MEGA_STONES)), false), [
     'Assault Vest',
@@ -609,7 +609,7 @@ var BERRIES = {
     'Watmel Berry': { t: 'Fire', p: 100 },
     'Wepear Berry': { t: 'Electric', p: 90 },
     'Wiki Berry': { t: 'Rock', p: 80 },
-    'Yache Berry': { t: 'Ice', p: 80 }
+    'Yache Berry': { t: 'Ice', p: 80 },
 };
 exports.ITEMS = [[], RBY, GSC, ADV, DPP, BW, XY, SM, SS, SV];
 var Items = (function () {
@@ -660,7 +660,7 @@ var Item = (function () {
             this.isBerry = true;
             this.naturalGift = {
                 basePower: gen < 6 ? berry.p - 20 : berry.p,
-                type: berry.t
+                type: berry.t,
             };
         }
     }
@@ -682,7 +682,7 @@ try {
         catch (e_2_1) { e_2 = { error: e_2_1 }; }
         finally {
             try {
-                if (items_1_1 && !items_1_1.done && (_b = items_1["return"])) _b.call(items_1);
+                if (items_1_1 && !items_1_1.done && (_b = items_1.return)) _b.call(items_1);
             }
             finally { if (e_2) throw e_2.error; }
         }
@@ -693,7 +693,7 @@ try {
 catch (e_1_1) { e_1 = { error: e_1_1 }; }
 finally {
     try {
-        if (ITEMS_1_1 && !ITEMS_1_1.done && (_a = ITEMS_1["return"])) _a.call(ITEMS_1);
+        if (ITEMS_1_1 && !ITEMS_1_1.done && (_a = ITEMS_1.return)) _a.call(ITEMS_1);
     }
     finally { if (e_1) throw e_1.error; }
 }

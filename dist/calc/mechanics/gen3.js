@@ -24,7 +24,7 @@ var __spreadArray = (this && this.__spreadArray) || function (to, from, pack) {
     }
     return to.concat(ar || Array.prototype.slice.call(from));
 };
-exports.__esModule = true;
+Object.defineProperty(exports, "__esModule", { value: true });
 
 var items_1 = require("../items");
 var result_1 = require("../result");
@@ -41,7 +41,7 @@ function calculateADV(gen, attacker, defender, move, field) {
     var desc = {
         attackerName: attacker.name,
         moveName: move.name,
-        defenderName: defender.name
+        defenderName: defender.name,
     };
     var result = new result_1.Result(gen, attacker, defender, move, field, 0, desc);
     if (move.category === 'Status' && !move.named('Nature Power')) {

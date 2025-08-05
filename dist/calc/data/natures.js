@@ -42,7 +42,7 @@ var __read = (this && this.__read) || function (o, n) {
     }
     return ar;
 };
-exports.__esModule = true;
+Object.defineProperty(exports, "__esModule", { value: true });
 
 var util_1 = require("../util");
 exports.NATURES = {
@@ -70,7 +70,7 @@ exports.NATURES = {
     Relaxed: ['def', 'spe'],
     Sassy: ['spd', 'spe'],
     Serious: ['spe', 'spe'],
-    Timid: ['spe', 'atk']
+    Timid: ['spe', 'atk'],
 };
 var Natures = (function () {
     function Natures() {

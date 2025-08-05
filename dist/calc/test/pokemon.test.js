@@ -1,5 +1,5 @@
 "use strict";
-exports.__esModule = true;
+Object.defineProperty(exports, "__esModule", { value: true });
 var index_1 = require("../index");
 describe('Pokemon', function () {
     test('defaults', function () {
@@ -36,7 +36,7 @@ describe('Pokemon', function () {
             curHP: 60,
             status: 'tox',
             toxicCounter: 2,
-            moves: ['Surf', 'Rest', 'Curse', 'Sleep Talk']
+            moves: ['Surf', 'Rest', 'Curse', 'Sleep Talk'],
         });
         expect(p.name).toBe('Suicune');
         expect(p.types).toEqual(['Water']);
@@ -60,7 +60,7 @@ describe('Pokemon', function () {
             level: 100,
             ivs: { spc: 20, def: 16 },
             evs: { atk: 200 },
-            curHP: 500
+            curHP: 500,
         });
         expect(p.ivs).toEqual({ hp: 20, atk: 31, def: 16, spa: 20, spd: 20, spe: 31 });
         expect(p.evs).toEqual({ hp: 252, atk: 200, def: 252, spa: 252, spd: 252, spe: 252 });

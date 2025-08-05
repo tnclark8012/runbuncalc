@@ -1,5 +1,5 @@
 "use strict";
-exports.__esModule = true;
+Object.defineProperty(exports, "__esModule", { value: true });
 
 var util_1 = require("./util");
 var RBY = ['hp', 'atk', 'def', 'spc', 'spe'];
@@ -32,7 +32,7 @@ var HP = {
     Psychic: { ivs: { atk: 30, spe: 30 }, dvs: { def: 12 } },
     Rock: { ivs: { def: 30, spd: 30, spe: 30 }, dvs: { atk: 13, def: 12 } },
     Steel: { ivs: { spd: 30 }, dvs: { atk: 13 } },
-    Water: { ivs: { atk: 30, def: 30, spa: 30 }, dvs: { atk: 14, def: 13 } }
+    Water: { ivs: { atk: 30, def: 30, spa: 30 }, dvs: { atk: 14, def: 13 } },
 };
 exports.Stats = new ((function () {
     function class_1() {
@@ -160,7 +160,7 @@ exports.Stats = new ((function () {
                     (2 * (speDV >> 3)) +
                     (4 * (defDV >> 3)) +
                     (8 * (atkDV >> 3))) +
-                    (spcDV % 4)) / 2 + 31)
+                    (spcDV % 4)) / 2 + 31),
             };
         }
         else {
@@ -174,7 +174,7 @@ exports.Stats = new ((function () {
             }
             return {
                 type: HP_TYPES[tr(hpTypeX * 15 / 63)],
-                power: (gen.num && gen.num < 6) ? tr(hpPowerX * 40 / 63) + 30 : 60
+                power: (gen.num && gen.num < 6) ? tr(hpPowerX * 40 / 63) + 30 : 60,
             };
         }
     };
