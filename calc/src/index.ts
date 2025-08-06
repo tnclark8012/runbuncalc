@@ -87,22 +87,20 @@ export class Move extends A.Move {
   }
 }
 
-export type PokemonOptions = Partial<Omit<State.Pokemon, 'ability' | 'item' | 'nature' | 'moves'>> & {
-  ability?: string;
-  item?: string;
-  nature?: string;
-  moves?: string[];
-  curHP?: number;
-  ivs?: Partial<I.StatsTable> & {spc?: number};
-  evs?: Partial<I.StatsTable> & {spc?: number};
-  boosts?: Partial<I.StatsTable> & {spc?: number};
-};
-
 export class Pokemon extends A.Pokemon {
   constructor(
     gen: I.GenerationNum | I.Generation,
     name: string,
-    options: PokemonOptions = {}
+    options: Partial<Omit<State.Pokemon, 'ability' | 'item' | 'nature' | 'moves'>> & {
+      ability?: string;
+      item?: string;
+      nature?: string;
+      moves?: string[];
+      curHP?: number;
+      ivs?: Partial<I.StatsTable> & {spc?: number};
+      evs?: Partial<I.StatsTable> & {spc?: number};
+      boosts?: Partial<I.StatsTable> & {spc?: number};
+    } = {}
   ) {
     super(typeof gen === 'number' ? Generations.get(gen) : gen, name, options as any);
   }
