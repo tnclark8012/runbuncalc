@@ -156,7 +156,7 @@ export function getRecoil(
   damage: Damage,
   notation = '%'
 ) {
-  const [minDamage, maxDamage] = damageRange(damage);
+  const [minDamage, maxDamage] = damageRange(damage) as [number, number];
   const min = (typeof minDamage === 'number' ? minDamage : minDamage[0] + minDamage[1]) * move.hits;
   const max = (typeof maxDamage === 'number' ? maxDamage : maxDamage[0] + maxDamage[1]) * move.hits;
 

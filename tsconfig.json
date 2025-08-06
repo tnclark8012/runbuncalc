@@ -16,6 +16,9 @@
     "sourceMap": true,
     "strict": true,
     "target": "es6",
+    "paths": {
+        "@smogon/test/*" : ["./calc/src/test/*"]
+    },
     "removeComments": true,
   }
 }
