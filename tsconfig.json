@@ -1,19 +1,21 @@
 {
+  "exclude": ["calc", "import"],
   "compilerOptions": {
+    "outDir": "obj",
     "allowUnreachableCode": false,
     "allowUnusedLabels": false,
     "declaration": true,
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
     "incremental": true,
-    "lib": ["es2016", "dom"],
+    "lib": ["ES6", "dom"],
     "module": "commonjs",
     "noEmitOnError": true,
     "noFallthroughCasesInSwitch": true,
     "noImplicitReturns": true,
     "sourceMap": true,
     "strict": true,
-    "target": "es3",
+    "target": "es6",
     "removeComments": true,
   }
 }

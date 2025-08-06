@@ -7,9 +7,14 @@
     "@smogon/calc": "file:calc"
   },
   "devDependencies": {
+    "@types/jquery": "^3.5.32",
     "eslint": "^8.27.0",
     "express": "^4.18.2",
-    "subpkg": "^4.1.0"
+    "subpkg": "^4.1.0",
+    "ts-loader": "^9.5.2",
+    "typescript": "^5.9.2",
+    "webpack": "^5.101.0",
+    "webpack-cli": "^6.0.1"
   },
   "optionalDependencies": {
     "@babel/core": "^7.20.2",
@@ -39,7 +44,7 @@
     "fix": "subpkg run fix && eslint --fix src --ext js",
     "compile": "subpkg run compile && node build view",
     "bundle": "subpkg run bundle",
-    "build": "subpkg run build && node build view",
+    "build": "subpkg run build && node build view && webpack",
     "test": "subpkg run test && npm run build && eslint --cache src --ext js",
     "postinstall": "subpkg install"
   },

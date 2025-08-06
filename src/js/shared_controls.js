@@ -1625,31 +1625,9 @@ function HideShowCCSettings() {
 }
 
 function colorCodeUpdate() {
-	var speCheck = document.getElementById("cc-spe-border").checked;
-	var ohkoCheck = document.getElementById("cc-ohko-color").checked;
-	if (!speCheck && !ohkoCheck) {
-		return
-	}
-	var pMons = document.getElementsByClassName("trainer-pok left-side");
-	// i calc here to alleviate some calculation
-	var p2info = $("#p2");
-	var p2 = createPokemon(p2info);
-	for (let i = 0; i < pMons.length; i++) {
-		let set = pMons[i].getAttribute("data-id");
-		let idColor = calculationsColors(set, p2);
-		if (speCheck && ohkoCheck) {
-			pMons[i].className = `trainer-pok left-side mon-speed-${idColor.speed} mon-dmg-${idColor.code}`;
-		}
-		else if (speCheck) {
-			pMons[i].className = `trainer-pok left-side mon-speed-${idColor.speed}`;
-		}
-		else if (ohkoCheck) {
-			pMons[i].className = `trainer-pok left-side mon-dmg-${idColor.code}`;
-		}
-
-
-	}
+	window.extensions.updateColorCodes();
 }
+
 function showColorCodes() {
 	window.AUTO_REFRESH = document.getElementById("cc-auto-refr").checked;
 	colorCodeUpdate();
