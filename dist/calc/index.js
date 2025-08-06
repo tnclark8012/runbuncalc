@@ -40,7 +40,10 @@ var __importStar = (this && this.__importStar) || function (mod) {
 exports.__esModule = true;
 
 var data_1 = require("./data");
+var I = __importStar(require("./data/interface"));
+exports.I = I;
 var A = __importStar(require("./adaptable"));
+exports.A = A;
 var Acalculate = exports.calculate;
 function calculate(gen, attacker, defender, move, field) {
     return (Acalculate || A.calculate)(typeof gen === 'number' ? data_1.Generations.get(gen) : gen, attacker, defender, move, field);
