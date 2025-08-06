@@ -1,19 +1,24 @@
 {
+  "include": ["src"],
+  "exclude": ["calc", "import", "node_modules"],
   "compilerOptions": {
     "allowUnreachableCode": false,
     "allowUnusedLabels": false,
+    "resolveJsonModule": true,
     "declaration": true,
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
     "incremental": true,
     "lib": ["es2016", "dom"],
-    "module": "commonjs",
     "noEmitOnError": true,
     "noFallthroughCasesInSwitch": true,
     "noImplicitReturns": true,
     "sourceMap": true,
     "strict": true,
-    "target": "es3",
+    "module": "es6",
+    "target": "es6",
+    "moduleResolution": "node",
+    "allowJs": true,
     "removeComments": true,
   }
 }
