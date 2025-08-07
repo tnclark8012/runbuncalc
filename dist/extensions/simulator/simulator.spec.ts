@@ -269,6 +269,41 @@ Ability: Poison Heal
           )
           expect(result.winner.id).toBe(Cloyster.id);
       });
+
+      test('Leader Tate - Latios vs. Musharna: Switch in and get KOd', () => {
+        let [Musharna, Latios] = importTeam(`
+Musharna
+Level: 85
+Naughty Nature
+Ability: Synchronize
+IVs: 3 HP / 24 Atk / 3 Def / 0 SpA / 26 SpD / 26 Spe
+- Psychic
+- Moonblast
+- Psyshock
+- Moonlight
+
+Latios-Mega
+Level: 85
+Hasty Nature
+Ability: Levitate
+- Draco Meteor
+- Zen Headbutt
+- Earthquake
+- Dragon Dance
+`);
+        
+          let battleSimulator = new BattleSimulator(Generations.get(gen), Musharna, Latios, new Field(), new Field());
+          const result = battleSimulator.getResult({ playerSwitchingIn: true });
+          expectTurn(
+            result.turnOutcomes[0],
+            { pokemon: Latios, move: 'Draco Meteor' },
+          )
+          expectTurn(
+            result.turnOutcomes[1],
+            { pokemon: Latios, move: 'Draco Meteor' },
+          )
+          expect(result.winner.id).toBe(Latios.id);
+      });
     });
   });
 

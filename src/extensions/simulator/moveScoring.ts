@@ -492,8 +492,8 @@ export function canUseDamagingMoves(pokemon: A.Pokemon): boolean {
 
 /** Creates a Move as used by a particular pokemon. This will account for things like skill link, item boosts, etc in damage calcs */
 export function createMove(pokemon: A.Pokemon, moveName: string | A.Move): Move {
-    if (typeof moveName !== "string")
+    if (moveName && typeof moveName !== "string")
         moveName = moveName.name;
-    
+
     return new Move(pokemon.gen, moveName as string, { ability: pokemon.ability, item: pokemon.item, species: pokemon.species.name });
 }
