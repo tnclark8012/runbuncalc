@@ -1,12 +1,7 @@
 /* eslint-env jest */
 
-import * as I from '../data/interface';
-import {calculate, Pokemon, Move, Result, SPECIES, ITEMS, ABILITIES, PokemonOptions} from '../index';
-import {State} from '../state';
-import {Field, Side} from '../field';
-import { SpeciesData } from '../data/species';
-import { isNativeError } from 'util/types';
-import { formatWithOptions } from 'util';
+import { I, State, Field, Pokemon, Move, calculate, SPECIES, ABILITIES, PokemonOptions, ITEMS, Side, SpeciesData } from '@smogon/calc';
+import { Result } from '@smogon/calc/src';
 
 const calc = (gen: I.GenerationNum) => (
   attacker: Pokemon,

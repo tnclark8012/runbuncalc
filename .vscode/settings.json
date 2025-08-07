@@ -4,5 +4,6 @@
       "node_modules": true,
       "calc/node_modules": true,
       "calc/dist": true,
+      "obj": true,
     }
   }

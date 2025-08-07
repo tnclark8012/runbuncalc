@@ -1,6 +1,21 @@
 import * as I from './data/interface';
 import { State } from './state';
+export type PokemonOptions = Partial<State.Pokemon> & {
+    curHP?: number;
+    id?: string;
+    ivs?: Partial<I.StatsTable> & {
+        spc?: number;
+    };
+    evs?: Partial<I.StatsTable> & {
+        spc?: number;
+    };
+    boosts?: Partial<I.StatsTable> & {
+        spc?: number;
+    };
+    types?: [I.TypeName] | [I.TypeName, I.TypeName];
+};
 export declare class Pokemon implements State.Pokemon {
+    id: string;
     gen: I.Generation;
     name: I.SpeciesName;
     species: I.Specie;
@@ -25,18 +40,7 @@ export declare class Pokemon implements State.Pokemon {
     status: I.StatusName | '';
     toxicCounter: number;
     moves: I.MoveName[];
-    constructor(gen: I.Generation, name: string, options?: Partial<State.Pokemon> & {
-        curHP?: number;
-        ivs?: Partial<I.StatsTable> & {
-            spc?: number;
-        };
-        evs?: Partial<I.StatsTable> & {
-            spc?: number;
-        };
-        boosts?: Partial<I.StatsTable> & {
-            spc?: number;
-        };
-    });
+    constructor(gen: I.Generation, name: string, options?: PokemonOptions);
     maxHP(original?: boolean): number;
     curHP(original?: boolean): number;
     hasAbility(...abilities: string[]): boolean;
@@ -45,7 +49,8 @@ export declare class Pokemon implements State.Pokemon {
     hasType(...types: I.TypeName[]): boolean;
     hasOriginalType(...types: I.TypeName[]): boolean;
     named(...names: string[]): boolean;
-    clone(): Pokemon;
+    equals(other: Pokemon): boolean;
+    clone(options?: PokemonOptions): Pokemon;
     private calcStat;
     static getForme(gen: I.Generation, speciesName: string, item?: I.ItemName, moveName?: I.MoveName): string;
     private static withDefault;

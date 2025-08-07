@@ -43,7 +43,7 @@
 // If we're not being used as a module we're just going to rely on globals and
 // that the correct loading order being followed.
 
-import {Generations} from './data';
+import { Generations } from './data';
 import {State} from './state';
 import * as I from './data/interface';
 import * as A from './adaptable';
@@ -89,20 +89,22 @@ export class Move extends A.Move {
   }
 }
 
+export type PokemonOptions = Partial<Omit<State.Pokemon, 'ability' | 'item' | 'nature' | 'moves'>> & {
+  ability?: string;
+  item?: string;
+  nature?: string;
+  moves?: string[];
+  curHP?: number;
+  ivs?: Partial<I.StatsTable> & {spc?: number};
+  evs?: Partial<I.StatsTable> & {spc?: number};
+  boosts?: Partial<I.StatsTable> & {spc?: number};
+};
+
 export class Pokemon extends A.Pokemon {
   constructor(
     gen: I.GenerationNum | I.Generation,
     name: string,
-    options: Partial<Omit<State.Pokemon, 'ability' | 'item' | 'nature' | 'moves'>> & {
-      ability?: string;
-      item?: string;
-      nature?: string;
-      moves?: string[];
-      curHP?: number;
-      ivs?: Partial<I.StatsTable> & {spc?: number};
-      evs?: Partial<I.StatsTable> & {spc?: number};
-      boosts?: Partial<I.StatsTable> & {spc?: number};
-    } = {}
+    options: PokemonOptions = {}
   ) {
     super(typeof gen === 'number' ? Generations.get(gen) : gen, name, options as any);
   }
@@ -156,3 +158,4 @@ export {SPECIES} from './data/species';
 export {NATURES} from './data/natures';
 export {TYPE_CHART} from './data/types';
 export {STATS, Stats} from './stats';
+export { SpeciesData } from './data/species';

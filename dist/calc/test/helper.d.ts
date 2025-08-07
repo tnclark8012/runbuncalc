@@ -52,4 +52,6 @@ interface ResultBreakdown {
     desc: string;
     result: string;
 }
+export declare function importPokemon(importText: string): Pokemon;
+export declare function importTeam(importText: string): Pokemon[];
 export {};

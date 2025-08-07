@@ -10,23 +10,24 @@ export declare class Move extends A.Move {
         species?: string;
     });
 }
+export type PokemonOptions = Partial<Omit<State.Pokemon, 'ability' | 'item' | 'nature' | 'moves'>> & {
+    ability?: string;
+    item?: string;
+    nature?: string;
+    moves?: string[];
+    curHP?: number;
+    ivs?: Partial<I.StatsTable> & {
+        spc?: number;
+    };
+    evs?: Partial<I.StatsTable> & {
+        spc?: number;
+    };
+    boosts?: Partial<I.StatsTable> & {
+        spc?: number;
+    };
+};
 export declare class Pokemon extends A.Pokemon {
-    constructor(gen: I.GenerationNum | I.Generation, name: string, options?: Partial<Omit<State.Pokemon, 'ability' | 'item' | 'nature' | 'moves'>> & {
-        ability?: string;
-        item?: string;
-        nature?: string;
-        moves?: string[];
-        curHP?: number;
-        ivs?: Partial<I.StatsTable> & {
-            spc?: number;
-        };
-        evs?: Partial<I.StatsTable> & {
-            spc?: number;
-        };
-        boosts?: Partial<I.StatsTable> & {
-            spc?: number;
-        };
-    });
+    constructor(gen: I.GenerationNum | I.Generation, name: string, options?: PokemonOptions);
     static getForme(gen: I.GenerationNum | I.Generation, speciesName: string, item?: string, moveName?: string): string;
 }
 export declare function calcStat(gen: I.GenerationNum | I.Generation, stat: I.StatID | 'spc', base: number, iv: number, ev: number, level: number, nature?: string): number;
@@ -43,3 +44,4 @@ export { SPECIES } from './data/species';
 export { NATURES } from './data/natures';
 export { TYPE_CHART } from './data/types';
 export { STATS, Stats } from './stats';
+export { SpeciesData } from './data/species';
