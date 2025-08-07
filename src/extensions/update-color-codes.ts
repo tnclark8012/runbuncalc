@@ -65,7 +65,7 @@ function getCalculationColor(p1info: JQuery<HTMLElement> | string | null, p2: A.
 	let simulated = getSimulatedCalculationResult(p1, p2, p1field, p2field);
 
 	if (legacy.code !== simulated.code)
-		alert(`${p1.name} - Legacy: ${legacy}, Sim: ${simulated}`);
+		alert(`${p1.name} - Legacy: ${JSON.stringify(legacy)}, Sim: ${JSON.stringify(simulated)}`);
 
 	return legacy;
 }
