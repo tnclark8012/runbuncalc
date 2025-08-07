@@ -79,7 +79,7 @@ function getSimulatedCalculationResult(p1: A.Pokemon, p2: A.Pokemon, p1Field: Fi
 	const simulator = new BattleSimulator(gen, p1, p2, p1Field, p2Field);
 	const result = simulator.getResult({ playerSwitchingIn: true });
 	if (result.winner.equals(p1)) {
-		return { speed: fastest, code: MatchupResultCode.SafeOneVOne };
+		return { speed: fastest, code: result.turnOutcomes.length < 3 /* switch + attack */ ? MatchupResultCode.SwitchAndGetOneHitKO : MatchupResultCode.SafeOneVOne };
 	}
 
 	return getLegacyCalculationResult(p1, p2, p1Field, p2Field);
