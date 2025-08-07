@@ -264,11 +264,6 @@ function getBoosts(attacker: Pokemon, defender: Pokemon, move: Move): { attacker
 		if (defender.hasAbility('Clear Body'))
 			return;
 
-		if (defender.hasItem('White Herb')) {
-			defender.item = undefined;
-			return;
-		}
-
 		stats[kind] = Math.min(Math.max(-6, stats[kind] + modifier), 6);
 	};
 
@@ -301,6 +296,21 @@ function getBoosts(attacker: Pokemon, defender: Pokemon, move: Move): { attacker
 			modifyStat(attackerBoosts, 'atk', 2);
 			break;
 	}
+
+	const checkWhiteHerb = (pokemon: Pokemon, boosts: StatsTable) => { 
+		if (!defender.hasItem('White Herb'))
+			return;
+
+		for (let [name, value] of Object.entries(boosts)) {
+			if (value < 0) {
+				(boosts as any)[name] = 0;
+				defender.item = undefined;
+			}
+		}
+	};
+
+	checkWhiteHerb(attacker, attackerBoosts);
+	checkWhiteHerb(defender, defenderBoosts);
 
 	return {
 		attacker: attackerBoosts,
@@ -341,95 +351,3 @@ function calculateAllMoves(gen: I.Generation, attacker: Pokemon, defender: Pokem
 	}
 	return results;
 }
-
-// function calculationsColors(p1info, p2) {
-// 	if (!p2) {
-// 		var p2info = $("#p2");
-// 		var p2 = createPokemon(p2info);
-// 	}
-// 	var p1 = createPokemon(p1info);
-// 	var p1field = createField();
-// 	var p2field = p1field.clone().swap();
-
-// 	damageResults = calculateAllMoves(gen, p1, p1field, p2, p2field);
-// 	p1 = damageResults[0][0].attacker;
-// 	p2 = damageResults[1][0].attacker;
-// 	p1.maxDamages = [];
-// 	p2.maxDamages = [];
-
-// 	var p1speed = p1.stats.spe;
-// 	var p2speed = p2.stats.spe;
-// 	//Faster Tied Slower
-// 	var fastest = p1speed > p2speed ? "F" : p1speed < p2speed ? "S" : p1speed === p2speed ? "T" : undefined;
-// 	var result, highestRoll, lowestRoll, damage = 0;
-// 	//goes from the most optimist to the least optimist
-// 	var p1KO = 0, p2KO = 0;
-// 	//Highest damage
-// 	var p1HD = 0, p2HD = 0;
-// 	// Lowest damage
-// 	var p1LD = 0, p2LD = 0;
-
-// 	const p1DamageRanges = getDamageRanges(damageResults[0]);
-// 	const p2DamageRanges = getDamageRanges(damageResults[1]);
-// 	p1HD = Math.max(...p1DamageRanges.map(r => r.highestRoll));
-// 	p2HD = Math.max(...p2DamageRanges.map(r => r.highestRoll));
-
-// 	// The lowest damage roll for the still the best move choice
-// 	p1LD = Math.max(...p1DamageRanges.map(r => r.lowestRoll));
-// 	p2LD = Math.max(...p2DamageRanges.map(r => r.lowestRoll));
-
-// 	if (p1LD >= 100) {
-// 		p1KO = 1;
-// 	}
-// 	else if (p1HD >= 100 && p1KO == 0) {
-// 		p1KO = 2;
-// 	}
-
-// 	if (p2LD >= 100) {
-// 		p2KO = 4;
-// 	} else if (p2HD >= 100 && p2KO < 3) {
-// 		p2KO = 3;
-// 	}
-
-// 	// Check if p1 can switch in and 1v1
-// 	let p1DiesInHits = Math.max(1, Math.ceil(100 / p2HD));
-// 	let p2DiesInHits = Math.max(1, Math.ceil(100 / p1LD));
-// 	if (p1DiesInHits - 1 > p2DiesInHits || // KOs even if slower
-// 		(p1DiesInHits - 1 === p2DiesInHits && fastest === "F")) // Takes the pivot and KOs first
-// 	{
-// 		if (p2DiesInHits === 1) {
-
-// 		}
-// 		// p1 can switch into any move and ko
-// 		return { speed: fastest, code: p2DiesInHits === 1 ? "switch-ohko" : "1v1" };
-// 	}
-
-// 	let highestRollOfLeastPowerfulMove = Math.min(...p2DamageRanges.filter(d => d.move.category !== "Status" && !(d.move.bp === 0 && d.highestRoll === 0)).map(d => d.highestRoll));
-// 	let p1HealthAfterPivot = 100 - highestRollOfLeastPowerfulMove;
-// 	let p1DiesInHitsAfterPivot = Math.floor(Math.max(1, p1HealthAfterPivot / p2HD));
-// 	if (p1DiesInHitsAfterPivot > p2DiesInHits || // KOs even if slower
-// 		(p1DiesInHitsAfterPivot === p2DiesInHits && fastest === "F")) { // KOs first
-// 		// p1 can switch into an advantageous move and ko
-// 		return { speed: fastest, code: "1v1-pivot" };
-// 	}
-
-
-// 	// Checks if the pokemon walls it
-// 	// i wouldn't mind change this algo for a smarter one.
-
-// 	// if the adversary don't three shots our pokemon
-// 	if (Math.round(p2HD * 3) < 100) {
-// 		// And if our pokemon does more damage
-// 		if (p1HD > p2HD) {
-// 			if (p1HD > 100) {
-// 				// Then i consider it a wall that may OHKO
-// 				return { speed: fastest, code: "WMO" };
-// 			}
-// 			// if not Then i consider it a good wall
-// 			return { speed: fastest, code: "W" };
-// 		}
-// 	}
-// 	let p1KOText = p1KO > 0 ? p1KO.toString() : "";
-// 	let p2KOText = p2KO > 0 ? p2KO.toString() : "";
-// 	return { speed: fastest, code: p1KOText + p2KOText };
-// }
