@@ -50,13 +50,14 @@ Level: 12
           
           let battleSimulator = new BattleSimulator(Generations.get(gen), playerAerodactyl, cpuKrabby, new Field(), new Field());
           const result = battleSimulator.getResult();
-          expect(result.turnOutcomes.length).toBe(1);
           expectTurn(
             result.turnOutcomes[0], 
             { pokemon: playerAerodactyl, move: 'Dual Wingbeat' }
           )
           expect(result.winner.name).toEqual('Aerodactyl');
           expect(result.turnOutcomes[0].battleFieldState.cpuPokemon.item).toBeUndefined();
+          
+          expect(result.turnOutcomes.length).toBe(1);
       });
     });
 
@@ -83,7 +84,52 @@ Level: 5
           expect(result.turnOutcomes[0].battleFieldState.cpuPokemon.boosts.atk).toBe(2);
           expect(result.turnOutcomes[0].battleFieldState.playerPokemon.boosts.def).toBe(-1);
           expect(result.turnOutcomes[0].battleFieldState.playerPokemon.boosts.spd).toBe(-1);
-      })
+      });
+
+      test('Turns contain immutable state', () => {
+        let [greninja, combusken] = importTeam(`
+Greninja @ White Herb
+Level: 100
+Ability: Intimidate
+Hardy Nature
+- Close Combat
+
+Combusken @ Focus Sash
+Level: 2
+Naughty Nature
+Ability: Speed Boost
+- Double Kick
+- Incinerate
+- Thunder Punch
+- Work Up
+`);
+        
+          let battleSimulator = new BattleSimulator(Generations.get(gen), greninja, combusken, new Field(), new Field());
+          const result = battleSimulator.getResult();
+          expect(result.turnOutcomes.length).toBe(2);
+          let [turn1, turn2] = result.turnOutcomes;
+          
+          expectTurn(
+            turn1,
+            { pokemon: greninja, move: 'Close Combat' },
+            { pokemon: combusken, move: 'Double Kick' }
+          );
+
+          expectTurn(
+            turn2,
+            { pokemon: greninja, move: 'Close Combat' }
+          )
+
+          // Greninja's white herb should have restored the stat drops from CC
+          expect(turn1.battleFieldState.playerPokemon.item).toBeUndefined();
+          expect(turn1.battleFieldState.playerPokemon.boosts.def).toBe(0);
+          expect(turn1.battleFieldState.playerPokemon.boosts.spd).toBe(0);
+          expect(result.turnOutcomes[0].battleFieldState.cpuPokemon.boosts.spe).toBe(1);
+
+          expect(turn2.battleFieldState.playerPokemon.boosts.def).toBe(-1);
+          expect(turn2.battleFieldState.playerPokemon.boosts.spd).toBe(-1);
+          expect(result.turnOutcomes[0].battleFieldState.cpuPokemon.boosts.spe).toBe(1);
+      });
     });
 
     describe('Run & Bun Battles', () => {

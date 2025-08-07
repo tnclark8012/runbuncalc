@@ -236,7 +236,7 @@ function applymove(gen: I.Generation, attacker: Pokemon, defender: Pokemon, move
 		attacker.types = [moveResult.move.type];
 
 	defender = defender.clone({ 
-		curHP: Math.max(0, defender.curHP() - moveResult.lowestRollDamage),
+		curHP: Math.max(0, defender.curHP() - moveResult.lowestRollDamage, hasLifeSavingItem(defender) && defenderLostItem && moveResult.move.hits < 2 ? 1 : 0),
 		item: !defenderLostItem ? defender.item: undefined,
 		boosts: boosts.defender,
 		abilityOn: defender.abilityOn || (defenderLostItem && defender.hasAbility('Unburden'))
