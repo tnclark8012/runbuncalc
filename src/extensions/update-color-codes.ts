@@ -77,7 +77,7 @@ function getSimulatedCalculationResult(p1: A.Pokemon, p2: A.Pokemon, p1Field: Fi
 	var fastest: SpeedTier = p1speed > p2speed ? "F" : p1speed < p2speed ? "S" : p1speed === p2speed ? "T" : "T";
 
 	const simulator = new BattleSimulator(gen, p1, p2, p1Field, p2Field);
-	const result = simulator.getResult();
+	const result = simulator.getResult({ playerSwitchingIn: true });
 	if (result.winner.equals(p1)) {
 		return { speed: fastest, code: MatchupResultCode.SafeOneVOne };
 	}

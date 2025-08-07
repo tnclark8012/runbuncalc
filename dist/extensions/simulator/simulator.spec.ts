@@ -74,7 +74,7 @@ Level: 5
 `); 
         
           let battleSimulator = new BattleSimulator(Generations.get(gen), playerInfernape, cpuKrabby, new Field(), new Field());
-          const result = battleSimulator.getResult(1);
+          const result = battleSimulator.getResult({ maxTurns: 1 });
           expect(result.turnOutcomes.length).toBe(1);
           expectTurn(
             result.turnOutcomes[0], 

@@ -4,12 +4,21 @@ import { BattleFieldState, MoveResult, PlayerMoveConsideration, PokemonPosition,
 import { canUseDamagingMoves, createMove, findHighestDamageMove, getDamageRanges, hasLifeSavingItem, savedFromKO, scoreCPUMoves } from './moveScoring';
 
 export interface MatchupResult {
-
+	
 }
 
 export interface BattleResult {
 	winner: Pokemon;
 	turnOutcomes: TurnOutcome[];
+}
+
+export interface SimulationOptions {
+	maxTurns?: number;
+	playerSwitchingIn?: boolean;
+}
+
+interface ResolvedOptions extends SimulationOptions {
+	maxTurns: number;
 }
 
 export class BattleSimulator {
@@ -35,15 +44,20 @@ export class BattleSimulator {
 		return this.turns[this.turns.length - 1];
 	}
 
-	public getResult(maxTurns?: number): BattleResult {
-		maxTurns = maxTurns || 50;
+	public getResult(options?: SimulationOptions): BattleResult {
+		const resolvedOptions: ResolvedOptions = {
+			maxTurns: 50,
+			...options,
+		};
+
 		this.currentTurnState = this.originalState.clone();
 		do {
-			let turnOutcome = this.simulateTurn();
+			let turnOutcome = this.simulateTurn(resolvedOptions.playerSwitchingIn);
 			this.turns.push(turnOutcome);
 			this.currentTurnState = turnOutcome.endOfTurnState.clone();
 			// Apply post-turn switches, field effect noticing etc.
-		} while(this.turns.length < maxTurns && this.currentTurnState.playerSide.pokemon.curHP() > 0 && this.currentTurnState.cpuSide.pokemon.curHP() > 0 &&
+			resolvedOptions.playerSwitchingIn = false;
+		} while(this.turns.length < resolvedOptions.maxTurns && this.currentTurnState.playerSide.pokemon.curHP() > 0 && this.currentTurnState.cpuSide.pokemon.curHP() > 0 &&
 			(canUseDamagingMoves(this.currentTurnState.cpuSide.pokemon) || canUseDamagingMoves(this.currentTurnState.playerSide.pokemon)))
 		
 		
@@ -58,7 +72,7 @@ export class BattleSimulator {
 		}
 	}
 
-	private simulateTurn(): TurnOutcome  {
+	private simulateTurn(playerSwitchingIn?: boolean): TurnOutcome  {
 		applyStartOfTurnEffects(this.currentTurnState);
 		let playerDamageResults = calculateAllMoves(this.gen, this.currentTurnState.playerSide.pokemon, this.currentTurnState.cpuSide.pokemon, this.currentTurnState.playerField);
 		let cpuDamageResults = calculateAllMoves(this.gen, this.currentTurnState.cpuSide.pokemon, this.currentTurnState.playerSide.pokemon, this.currentTurnState.cpuField);
@@ -73,35 +87,38 @@ export class BattleSimulator {
 		let playerPokemon = this.currentTurnState.playerSide;
 		let cpuPokemon = this.currentTurnState.cpuSide;
 		
-		if (firstMove === naivePlayerMoveBasedOnStartingTurnState) {
-			actions.push(naivePlayerMoveBasedOnStartingTurnState);
-			let moveResult = applymove(this.gen, playerPokemon.pokemon, cpuPokemon.pokemon, naivePlayerMoveBasedOnStartingTurnState);
-			playerPokemon.pokemon = moveResult.attacker;
-			cpuPokemon.pokemon = moveResult.defender;
-
+		const moveCPU = () => {
 			if (cpuPokemon.pokemon.curHP() > 0) {
 				actions.push(cpuMove);
-				moveResult = applymove(this.gen, cpuPokemon.pokemon, playerPokemon.pokemon, cpuMove);
+				let moveResult = applymove(this.gen, cpuPokemon.pokemon, playerPokemon.pokemon, cpuMove);
 				cpuPokemon.pokemon = moveResult.attacker;
 				playerPokemon.pokemon = moveResult.defender;
 			}
-		}
-		else {
-			actions.push(cpuMove);
-			let moveResult = applymove(this.gen, cpuPokemon.pokemon, playerPokemon.pokemon, cpuMove);
-			cpuPokemon.pokemon = moveResult.attacker;
-			playerPokemon.pokemon = moveResult.defender;
+		};
 
+		const movePlayer = (move: MoveResult) => {
 			if (playerPokemon.pokemon.curHP() > 0) {
-				// If the player moves second, the result of CPU actions could change what would be best for us.
-				playerDamageResults = calculateAllMoves(this.gen, playerPokemon.pokemon, cpuPokemon.pokemon, this.currentTurnState.playerField);
-				const bestPlayerMove = this.calculatePlayerMove(playerDamageResults);
-				let playerMove = bestPlayerMove.move.priority <= naivePlayerMoveBasedOnStartingTurnState.move.priority ? bestPlayerMove : naivePlayerMoveBasedOnStartingTurnState;
-				actions.push(playerMove);
-				moveResult = applymove(this.gen, playerPokemon.pokemon, cpuPokemon.pokemon, playerMove);
+				actions.push(move);
+				let moveResult = applymove(this.gen, playerPokemon.pokemon, cpuPokemon.pokemon, move);
 				playerPokemon.pokemon = moveResult.attacker;
 				cpuPokemon.pokemon = moveResult.defender;
 			}
+		}
+
+		if (playerSwitchingIn) {
+			moveCPU();
+		}
+		else if (firstMove === naivePlayerMoveBasedOnStartingTurnState) {
+			movePlayer(naivePlayerMoveBasedOnStartingTurnState);
+			moveCPU();
+		}
+		else {
+			moveCPU();
+			// If the player moves second, the result of CPU actions could change what would be best for us.
+			playerDamageResults = calculateAllMoves(this.gen, playerPokemon.pokemon, cpuPokemon.pokemon, this.currentTurnState.playerField);
+			const bestPlayerMove = this.calculatePlayerMove(playerDamageResults);
+			let playerMove = bestPlayerMove.move.priority <= naivePlayerMoveBasedOnStartingTurnState.move.priority ? bestPlayerMove : naivePlayerMoveBasedOnStartingTurnState;
+			movePlayer(playerMove);
 		}
 
 		applyEndOfTurnEffects(playerPokemon.pokemon);
