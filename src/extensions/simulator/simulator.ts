@@ -227,6 +227,7 @@ function applyStartOfTurnEffects(battleField: BattleFieldState): void {
 function applyAbilityToOpponent(attacker: PokemonPosition, opponent: PokemonPosition): void {
 	if (attacker.pokemon.hasAbility('Intimidate') && 
 		attacker.firstTurnOut &&
+		attacker.pokemon.abilityOn &&
 		!opponent.pokemon.hasAbility('Clear Body')) {
 		attacker.pokemon.abilityOn = false;
 		applyBoost(opponent.pokemon.boosts, 'atk', -1);

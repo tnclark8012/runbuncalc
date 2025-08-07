@@ -1,4 +1,5 @@
 import { A, I, calculate, Field, GenerationNum } from '@smogon/calc';
+import { BattleSimulator } from './simulator/simulator';
 
 export function updateColorCodes(): void {
 	var speCheck = (document.getElementById("cc-spe-border") as HTMLInputElement).checked;
@@ -26,9 +27,29 @@ export function updateColorCodes(): void {
 }
 
 export type SpeedTier = 'F' | 'S' | 'T';
+
+export enum MatchupResultCode {
+	/** Switch OHKO */
+	SwitchAndGetOneHitKO = 'switch-ohko',
+	/** Can switch in and 1v1 */
+	OneVOne = '1v1',
+	/** Can 1v1 if switching in on the right move */
+	OneVOne_Pivot = '1v1-pivot',
+	GetsOneHitKO = 'ohkos',
+	GetsOneHitKOd = 'ohkod',
+	MaybeGetsOneHitKO = 'maybe-ohkos',
+	MaybeGetsOneHitKOd = 'maybe-ohkod',
+	MutualOneHitKOs = 'mutual-ohko',
+	MutualMaybeOneHitKOs = 'mutual-maybe-ohko',
+	GetsOneHitKO_MaybeGetsOneHitKOd = 'ohkos-maybe-ohkod',
+	MaybeGetsOneHitKO_GetsOneHitKOd = 'maybe-ohko-ohkod',
+
+	SafeOneVOne = 'safe-1v1'
+}
+
 export interface CalculationColor {
   speed: SpeedTier;
-  code: string;
+  code: MatchupResultCode;
 }
 
 function getCalculationColor(p1info: JQuery<HTMLElement> | string | null, p2: A.Pokemon | undefined): CalculationColor {
@@ -40,7 +61,32 @@ function getCalculationColor(p1info: JQuery<HTMLElement> | string | null, p2: A.
 	var p1field = createField();
 	var p2field = p1field.clone().swap();
 
-	let damageResults = calculateAllMoves(gen, p1, p1field, p2, p2field);
+	let legacy = getLegacyCalculationResult(p1, p2, p1field, p2field);
+	let simulated = getSimulatedCalculationResult(p1, p2, p1field, p2field);
+
+	if (legacy.code !== simulated.code)
+		alert(`${p1.name} - Legacy: ${legacy}, Sim: ${simulated}`);
+
+	return legacy;
+}
+
+function getSimulatedCalculationResult(p1: A.Pokemon, p2: A.Pokemon, p1Field: Field, p2Field: Field): CalculationColor {
+	var p1speed = p1.stats.spe;
+	var p2speed = p2.stats.spe;
+	//Faster Tied Slower
+	var fastest: SpeedTier = p1speed > p2speed ? "F" : p1speed < p2speed ? "S" : p1speed === p2speed ? "T" : "T";
+
+	const simulator = new BattleSimulator(gen, p1, p2, p1Field, p2Field);
+	const result = simulator.getResult();
+	if (result.winner.equals(p1)) {
+		return { speed: fastest, code: MatchupResultCode.SafeOneVOne };
+	}
+
+	return getLegacyCalculationResult(p1, p2, p1Field, p2Field);
+}
+
+function getLegacyCalculationResult(p1: A.Pokemon, p2: A.Pokemon, p1Field: Field, p2Field: Field): CalculationColor {
+	let damageResults = calculateAllMoves(gen, p1, p1Field, p2, p2Field);
 	p1 = damageResults[0][0].attacker;
 	p2 = damageResults[1][0].attacker;
 	(p1 as any).maxDamages = [];
@@ -52,7 +98,7 @@ function getCalculationColor(p1info: JQuery<HTMLElement> | string | null, p2: A.
 	var fastest: SpeedTier = p1speed > p2speed ? "F" : p1speed < p2speed ? "S" : p1speed === p2speed ? "T" : "T";
 	var result, highestRoll, lowestRoll, damage = 0;
 	//goes from the most optimist to the least optimist
-	var p1KO = 0, p2KO = 0;
+	var p1KO: MatchupResultCode | undefined, p2KO: MatchupResultCode | undefined;
 	//Highest damage
 	var p1HD = 0, p2HD = 0;
 	// Lowest damage
@@ -68,16 +114,16 @@ function getCalculationColor(p1info: JQuery<HTMLElement> | string | null, p2: A.
 	p2LD = Math.max(...p2DamageRanges.map(r => r.lowestRoll));
 
 	if (p1LD >= 100) {
-		p1KO = 1;
+		p1KO = MatchupResultCode.GetsOneHitKO;
 	}
-	else if (p1HD >= 100 && p1KO == 0) {
-		p1KO = 2;
+	else if (p1HD >= 100 && p1KO != MatchupResultCode.GetsOneHitKO) {
+		p1KO = MatchupResultCode.MaybeGetsOneHitKO;
 	}
 
 	if (p2LD >= 100) {
-		p2KO = 4;
-	} else if (p2HD >= 100 && p2KO < 3) {
-		p2KO = 3;
+		p2KO = MatchupResultCode.GetsOneHitKOd;
+	} else if (p2HD >= 100 && p2KO != MatchupResultCode.GetsOneHitKO) {
+		p2KO = MatchupResultCode.MaybeGetsOneHitKOd;
 	}
 
 	// Check if p1 can switch in and 1v1
@@ -90,7 +136,7 @@ function getCalculationColor(p1info: JQuery<HTMLElement> | string | null, p2: A.
 
 		}
 		// p1 can switch into any move and ko
-		return { speed: fastest, code: p2DiesInHits === 1 ? "switch-ohko" : "1v1" };
+		return { speed: fastest, code: p2DiesInHits === 1 ? MatchupResultCode.SwitchAndGetOneHitKO : MatchupResultCode.OneVOne };
 	}
 
 	let highestRollOfLeastPowerfulMove = Math.min(...p2DamageRanges.filter(d => d.move.category !== "Status" && !(d.move.bp === 0 && d.highestRoll === 0)).map(d => d.highestRoll));
@@ -99,7 +145,7 @@ function getCalculationColor(p1info: JQuery<HTMLElement> | string | null, p2: A.
 	if (p1DiesInHitsAfterPivot > p2DiesInHits || // KOs even if slower
 		(p1DiesInHitsAfterPivot === p2DiesInHits && fastest === "F")) { // KOs first
 		// p1 can switch into an advantageous move and ko
-		return { speed: fastest, code: "1v1-pivot" };
+		return { speed: fastest, code: MatchupResultCode.OneVOne_Pivot };
 	}
 
 
@@ -112,17 +158,24 @@ function getCalculationColor(p1info: JQuery<HTMLElement> | string | null, p2: A.
 		if (p1HD > p2HD) {
 			if (p1HD > 100) {
 				// Then i consider it a wall that may OHKO
-				return { speed: fastest, code: "WMO" };
+				return { speed: fastest, code: "WMO" as any };
 			}
 			// if not Then i consider it a good wall
-			return { speed: fastest, code: "W" };
+			return { speed: fastest, code: "W" as any };
 		}
 	}
 	// p1KO = p1KO > 0 ? p1KO.toString() : "";
 	// p2KO = p2KO > 0 ? p2KO.toString() : "";
-	return { speed: fastest, code: `${p1KO || ''}${p2KO || ''}` };
-}
+	let code = p1KO || p2KO;
+	if (p1KO && p2KO) {
+		if (p1KO == MatchupResultCode.GetsOneHitKO)
+			code = p2KO == MatchupResultCode.GetsOneHitKO ? MatchupResultCode.MutualOneHitKOs : MatchupResultCode.GetsOneHitKO_MaybeGetsOneHitKOd;
+		else if (p1KO == MatchupResultCode.MaybeGetsOneHitKO)
+			code = p2KO == MatchupResultCode.GetsOneHitKO ? MatchupResultCode.MaybeGetsOneHitKO_GetsOneHitKOd : MatchupResultCode.MutualMaybeOneHitKOs;
+	}
 
+	return { speed: fastest, code: code! };
+}
 function calculateAllMoves(gen: GenerationNum | I.Generation, p1: A.Pokemon, p1field: Field, p2: A.Pokemon, p2field: Field, double?: number): A.Result[][] {
 	double = double ? 2 : 0;
 	checkStatBoost(p1, p2);
