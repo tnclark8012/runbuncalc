@@ -37,13 +37,31 @@ export interface PlayerMoveConsideration extends MoveConsideration {
 }
 
 export interface TurnOutcome {
+	turnNumber: number;
 	actions: MoveResult[];
-	battleFieldState: BattleFieldState;
+	endOfTurnState: BattleFieldState;
 }
 
-export interface BattleFieldState {
-	readonly playerPokemon: Pokemon;
-	readonly cpuPokemon: Pokemon;
-	readonly playerField: Field;
-	readonly cpuField: Field;
+export interface PokemonPosition {
+	pokemon: Pokemon;
+	firstTurnOut?: boolean;
+}
+
+export class BattleFieldState {
+	constructor(
+		public readonly playerSide: PokemonPosition,
+		public readonly cpuSide: PokemonPosition,
+		public readonly playerField: Field,
+		public readonly cpuField: Field) {
+		
+	}
+
+	public clone(): BattleFieldState {
+		return new BattleFieldState(
+			{ ...this.playerSide, pokemon: this.playerSide.pokemon.clone() },
+			{ ...this.cpuSide, pokemon: this.cpuSide.pokemon.clone() },
+			this.playerField.clone(),
+			this.cpuField.clone()
+		)
+	}
 }
