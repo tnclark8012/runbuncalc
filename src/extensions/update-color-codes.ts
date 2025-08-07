@@ -51,7 +51,6 @@ export enum MatchupResultCode {
 	MutualMaybeOneHitKOs = 'mutual-maybe-ohko',
 	GetsOneHitKO_MaybeGetsOneHitKOd = 'ohkos-maybe-ohkod',
 	MaybeGetsOneHitKO_GetsOneHitKOd = 'maybe-ohko-ohkod',
-
 	SafeOneVOne = 'safe-1v1'
 }
 
@@ -76,7 +75,7 @@ function getCalculationColors(playerPokemon: A.Pokemon[], cpuPokemon: A.Pokemon)
 	}
 
 	if (diff.length)
-		alert(`${JSON.stringify(diff)}`);
+		console.warn('Simulator and legacy impl diverge:', diff);
 
 	return result;
 }
