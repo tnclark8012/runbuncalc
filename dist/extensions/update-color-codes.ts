@@ -1,4 +1,4 @@
-import { A, I, calculate, Field, GenerationNum } from '@smogon/calc';
+import { A, I, calculate, Field, GenerationNum, Pokemon } from '@smogon/calc';
 import { BattleSimulator } from './simulator/simulator';
 
 export function updateColorCodes(): void {
@@ -9,11 +9,19 @@ export function updateColorCodes(): void {
 	}
 	var pMons = document.getElementsByClassName("trainer-pok left-side");
 	// i calc here to alleviate some calculation
+	var p1info = $("#p1");
 	var p2info = $("#p2");
+	var p1 = createPokemon(p1info);
 	var p2 = createPokemon(p2info);
+	
+	let playerPokemon = [];
+	for (let i = 0; i < pMons.length; i++) {
+		playerPokemon.push(createPokemon(pMons[i].getAttribute("data-id")));
+	}
+	let pokemonResults = getCalculationColors(playerPokemon, p2);
 	for (let i = 0; i < pMons.length; i++) {
 		let set = pMons[i].getAttribute("data-id");
-		let idColor = getCalculationColor(set, p2);
+		let idColor = pokemonResults[i];
 		if (speCheck && ohkoCheck) {
 			pMons[i].className = `trainer-pok left-side mon-speed-${idColor.speed} mon-dmg-${idColor.code}`;
 		}
@@ -52,22 +60,25 @@ export interface CalculationColor {
   code: MatchupResultCode;
 }
 
-function getCalculationColor(p1info: JQuery<HTMLElement> | string | null, p2: A.Pokemon | undefined): CalculationColor {
-	if (!p2) {
-		var p2info = $("#p2");
-		p2 = createPokemon(p2info);
-	}
-	var p1 = createPokemon(p1info);
+function getCalculationColors(playerPokemon: A.Pokemon[], cpuPokemon: A.Pokemon): CalculationColor[] {
 	var p1field = createField();
 	var p2field = p1field.clone().swap();
 
-	let legacy = getLegacyCalculationResult(p1, p2, p1field, p2field);
-	let simulated = getSimulatedCalculationResult(p1, p2, p1field, p2field);
+	const result: CalculationColor[] = [];
+	const diff: Array<{ name: string, legacy: MatchupResultCode, simulated: MatchupResultCode }> = [];
+	for (let playerMon of playerPokemon) {
+		let legacy = getLegacyCalculationResult(playerMon, cpuPokemon, p1field, p2field);
+		let simulated = getSimulatedCalculationResult(playerMon, cpuPokemon, p1field, p2field);
+		result.push(legacy);
 
-	if (legacy.code !== simulated.code)
-		alert(`${p1.name} - Legacy: ${JSON.stringify(legacy)}, Sim: ${JSON.stringify(simulated)}`);
+		if (legacy.code !== simulated.code)
+			diff.push({ name: playerMon.name, legacy: legacy.code, simulated: simulated.code });
+	}
 
-	return legacy;
+	if (diff.length)
+		alert(`${JSON.stringify(diff)}`);
+
+	return result;
 }
 
 function getSimulatedCalculationResult(p1: A.Pokemon, p2: A.Pokemon, p1Field: Field, p2Field: Field): CalculationColor {
