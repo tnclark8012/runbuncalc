@@ -1,4 +1,4 @@
-import { Field, Move, Pokemon, Result } from '@smogon/calc';
+import { Field, Move, A, Result } from '@smogon/calc';
 import { MoveScore } from "./moveScore";
 import { notImplemented } from "./notImplementedError";
 import { CPUMoveConsideration, MoveResult, TurnOutcome } from './moveScoring.contracts';
@@ -85,11 +85,11 @@ export function damagingMinus2SpDefReductionWithGuaranteedEffect(moveScore: Move
         moveScore.addScore(6);
 }
 
-export function hasSpecialMoves(pokemon: Pokemon): boolean {
+export function hasSpecialMoves(pokemon: A.Pokemon): boolean {
     return !!pokemon.moves.find(m => createMove(pokemon, m).category === 'Special');
 }
 
-export function hasPhysicalMoves(pokemon: Pokemon): boolean {
+export function hasPhysicalMoves(pokemon: A.Pokemon): boolean {
     return !!pokemon.moves.find(m => createMove(pokemon, m).category === 'Physical');
 }
 
@@ -407,7 +407,7 @@ export function recovery(moveScore: MoveScore, consideration: CPUMoveConsiderati
 }
 
 
-export function isSuperEffective(move: Move, defendingPokemon: Pokemon): boolean {
+export function isSuperEffective(move: Move, defendingPokemon: A.Pokemon): boolean {
 	notImplemented();
 }
 
@@ -474,23 +474,26 @@ export function getDamageRanges(attackerResults: Result[], expectedHits?: number
 	});
 }
 
-export function savedFromKO(pokemon: Pokemon): boolean {
+export function savedFromKO(pokemon: A.Pokemon): boolean {
 	return hasLifeSavingAbility(pokemon) || hasLifeSavingItem(pokemon);
 }
 
-export function hasLifeSavingItem(pokemon: Pokemon): boolean {
+export function hasLifeSavingItem(pokemon: A.Pokemon): boolean {
 	return pokemon.hasItem('Focus Sash') && pokemon.curHP() === pokemon.maxHP();
 }
 
-export function hasLifeSavingAbility(pokemon: Pokemon): boolean {
+export function hasLifeSavingAbility(pokemon: A.Pokemon): boolean {
 	return pokemon.hasAbility('Sturdy') && pokemon.curHP() === pokemon.maxHP();
 }
 
-export function canUseDamagingMoves(pokemon: Pokemon): boolean {
+export function canUseDamagingMoves(pokemon: A.Pokemon): boolean {
     return pokemon.moves.map(m => createMove(pokemon, m)).some(m => m.category !== 'Status');
 }
 
 /** Creates a Move as used by a particular pokemon. This will account for things like skill link, item boosts, etc in damage calcs */
-export function createMove(pokemon: Pokemon, moveName: string): Move {
-    return new Move(pokemon.gen, moveName, { ability: pokemon.ability, item: pokemon.item, species: pokemon.species.name });
+export function createMove(pokemon: A.Pokemon, moveName: string | A.Move): Move {
+    if (typeof moveName !== "string")
+        moveName = moveName.name;
+    
+    return new Move(pokemon.gen, moveName as string, { ability: pokemon.ability, item: pokemon.item, species: pokemon.species.name });
 }
