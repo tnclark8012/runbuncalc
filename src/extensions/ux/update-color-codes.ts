@@ -84,7 +84,7 @@ function getCalculationColors(playerPokemon: A.Pokemon[], cpuPokemon: A.Pokemon)
 	for (let playerMon of playerPokemon) {
 		let legacy = getLegacyCalculationResult(playerMon, cpuPokemon, p1field, p2field);
 		let simulated = getSimulatedCalculationResult(playerMon, cpuPokemon, p1field, p2field);
-		result.push(legacy);
+		result.push(simulated);
 
 		if (legacy.code !== simulated.code)
 			diff.push({ name: playerMon.name, legacy: legacy.code, simulated: simulated.code });
