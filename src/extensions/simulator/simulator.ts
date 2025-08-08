@@ -1,11 +1,14 @@
 import { Field, I, StatsTable, Move, Result, Pokemon, calculate, MEGA_STONES } from '@smogon/calc';
 import { MoveScore } from './moveScore';
-import { BattleFieldState, MoveResult, PlayerMoveConsideration, PokemonPosition, TurnOutcome } from './moveScoring.contracts';
+import { BattleFieldState, MoveConsideration, MoveResult, PlayerMoveConsideration, PokemonPosition, TurnOutcome } from './moveScoring.contracts';
 import { canUseDamagingMoves, createMove, findHighestDamageMove, getDamageRanges, hasLifeSavingItem, savedFromKO, scoreCPUMoves } from './moveScoring';
 
-export interface MatchupResult {
-	
+export interface RNGStrategy {
+	getDamageRoll(moveResult: MoveResult): number;
 }
+
+const playerRng: RNGStrategy = { getDamageRoll: (r) => r.lowestRollDamage };
+const cpuRng: RNGStrategy = { getDamageRoll: (r) => r.highestRollDamage };
 
 export interface BattleResult {
 	winner: Pokemon;
@@ -90,7 +93,7 @@ export class BattleSimulator {
 		const moveCPU = () => {
 			if (cpuPokemon.pokemon.curHP() > 0) {
 				actions.push(cpuMove);
-				let moveResult = applymove(this.gen, cpuPokemon.pokemon, playerPokemon.pokemon, cpuMove);
+				let moveResult = applymove(this.gen, cpuPokemon.pokemon, playerPokemon.pokemon, cpuMove, cpuRng);
 				cpuPokemon.pokemon = moveResult.attacker;
 				playerPokemon.pokemon = moveResult.defender;
 			}
@@ -99,7 +102,7 @@ export class BattleSimulator {
 		const movePlayer = (move: MoveResult) => {
 			if (playerPokemon.pokemon.curHP() > 0) {
 				actions.push(move);
-				let moveResult = applymove(this.gen, playerPokemon.pokemon, cpuPokemon.pokemon, move);
+				let moveResult = applymove(this.gen, playerPokemon.pokemon, cpuPokemon.pokemon, move, playerRng);
 				playerPokemon.pokemon = moveResult.attacker;
 				cpuPokemon.pokemon = moveResult.defender;
 			}
@@ -174,7 +177,7 @@ export class BattleSimulator {
 					kosThroughRequiredLifesaver: kos && savedFromKO(r.defender)
 				};
 			})
-			.filter(m => !BattleSimulator.moveKillsAttacker(m.result));
+			.filter(m => !BattleSimulator.moveKillsAttacker(m.result) && !BattleSimulator.canUseMove(this.currentTurnState.playerSide, m))
 
 		let playerChosenMove!: PlayerMoveConsideration;
 		for (let potentialMove of movesToConsider) {
@@ -195,6 +198,13 @@ export class BattleSimulator {
 		}
 
 		return playerChosenMove.result;
+	}
+
+	private static canUseMove(pokemonSide: PokemonPosition, consideration: MoveConsideration): boolean {
+		if (!pokemonSide.firstTurnOut && ['First Impression', 'Fake Out'].includes(consideration.result.move.name))
+			return false;
+		
+		return true;
 	}
 
 	private static moveKillsAttacker(moveResult: MoveResult): boolean {
@@ -251,7 +261,7 @@ function applyAbilityToOpponent(attacker: PokemonPosition, opponent: PokemonPosi
 	}
 }
 
-function applymove(gen: I.Generation, attacker: Pokemon, defender: Pokemon, moveResult: MoveResult): { attacker: Pokemon, defender: Pokemon } {
+function applymove(gen: I.Generation, attacker: Pokemon, defender: Pokemon, moveResult: MoveResult, rng: RNGStrategy): { attacker: Pokemon, defender: Pokemon } {
 	let boosts = getBoosts(attacker, defender, moveResult.move);
 	const attackerLostItem = consumesAttackerItem(attacker, moveResult.move);
 	const defenderLostItem = consumesDefenderItem(defender, moveResult.move);
@@ -266,7 +276,7 @@ function applymove(gen: I.Generation, attacker: Pokemon, defender: Pokemon, move
 		attacker.types = [moveResult.move.type];
 
 	defender = defender.clone({ 
-		curHP: Math.max(0, defender.curHP() - moveResult.lowestRollDamage, hasLifeSavingItem(defender) && defenderLostItem && moveResult.move.hits < 2 ? 1 : 0),
+		curHP: Math.max(0, defender.curHP() - rng.getDamageRoll(moveResult), hasLifeSavingItem(defender) && defenderLostItem && moveResult.move.hits < 2 ? 1 : 0),
 		item: !defenderLostItem ? defender.item: undefined,
 		boosts: boosts.defender,
 		abilityOn: defender.abilityOn || (defenderLostItem && defender.hasAbility('Unburden'))
