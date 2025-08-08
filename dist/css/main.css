@@ -567,67 +567,83 @@ table.field {
 
 .mon-dmg-none{
     background: var(--fieldset-color) !important;
+    color: var(--text);
 }
 .mon-dmg-W{
     /* Is considerable a wall*/
     background: linear-gradient(to right, #0f0bf3 50%, var(--fieldset-color) 0%);
+    color: var(--text);
 }
 .mon-dmg-1v1{
     /* Can 1v1 the opponent */
     background: #ad59dd;
+    color: var(--text);
 }
 .mon-dmg-switch-ohko {
     background: linear-gradient(in hsl longer hue 45deg, red 0 100%);
+    color: var(--text);
 }
 .mon-dmg-1v1-pivot {
     /* Can 1v1 the opponent, if it comes in on the right move */
     background: linear-gradient(to right, #ad59dd 50%, var(--fieldset-color) 0%);
+    color: var(--text);
 }
 
 .mon-dmg-safe-1v1 {
     background: linear-gradient(90deg, rgba(42, 123, 155, 1) 0%, rgba(87, 199, 133, 1) 50%, rgba(237, 221, 83, 1) 100%);
+    color: var(--text);
 }
 
 .mon-dmg-safe-ohko {
     background: #c0dd59;
+    color: var(--text);
 }
 
 .mon-dmg-WMO{
     /* Is considerable a wall that may OHKO*/
     background: linear-gradient(to right, #1295ec 50%, var(--fieldset-color) 0%);
+    color: var(--text);
 }
 .mon-dmg-4, .mon-dmg-ohkod {
     /*Gets OHKO*/
     background: linear-gradient(to right, var(--fieldset-color) 50%, #dd0b0b 0%);
+    color: var(--text);
 }
 .mon-dmg-3, .mon-dmg-maybe-ohkod {
     /*maybe gets OHKO*/
     background: linear-gradient(to right, var(--fieldset-color) 50%, #ff7f16 0%);
+    color: var(--text);
 }
 .mon-dmg-1, .mon-dmg-ohkos {
     /*inflicts OHKO*/
     background: linear-gradient(to right, #20d408 50%, var(--fieldset-color) 0%);
+    color: var(--text);
 }
 .mon-dmg-2, .mon-dmg-maybe-ohkos {
     /*may inflicts OHKO*/
     background: linear-gradient(to right, #daff08 50%, var(--fieldset-color) 0%);
+    color: var(--text);
 }
 
 .mon-dmg-14, .mon-dmg-mutual-ohko {
     /*both sides Gets OHKO*/
     background: linear-gradient(to right, #20d408 50%, #dd0b0b 0%);
+    color: var(--text);
 }
 .mon-dmg-23, .mon-dmg-mutual-maybe-ohko {
     /*both sides might inflict OHKO*/
     background: linear-gradient(to right, #daff08 50%, #ff7f16 0%);
+    color: var(--text);
 }
 .mon-dmg-13, .mon-dmg-ohkos-maybe-ohkod {
     /*inflict OHKO but may Gets OHKO*/
     background: linear-gradient(to right, #20d408 50%, #ff7f16 0%);
+    color: var(--text);
 }
 .mon-dmg-24, .mon-dmg-maybe-ohko-ohkod {
     /*may inflict OHKO but Gets OHKO*/
     background: linear-gradient(to right, #daff08 50%, #dd0b0b 0%);
+    color: var(--text);
 }
 
 .box-poke, #trainer-pok-list-opposing2, #trainer-pok-list-opposing{
