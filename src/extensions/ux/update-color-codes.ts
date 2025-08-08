@@ -94,7 +94,8 @@ function getCalculationColors(playerPokemon: A.Pokemon[], cpuPokemon: A.Pokemon)
 		.filter(r => r.type === 'simulator')
 		.sort((a, b) => curHPPercentage(a.finalState.playerSide.pokemon) - curHPPercentage(b.finalState.playerSide.pokemon))
 		.at(0);
-	(bestMon as any).best = true;
+		if (bestMon)
+			(bestMon as any).best = true;
 
 	if (diff.length)
 		console.warn('Simulator and legacy impl diverge:', diff);
