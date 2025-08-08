@@ -34,7 +34,7 @@ export function updateColorCodes(): void {
 			pMons[i].className = `trainer-pok left-side mon-dmg-${pokemonResult.code}`;
 		}
 
-		pMons[i].classList.toggle('best', (pokemonResult as any).best);
+		pMons[i].classList.toggle('best', !!(pokemonResult as any).best);
 	}
 }
 
