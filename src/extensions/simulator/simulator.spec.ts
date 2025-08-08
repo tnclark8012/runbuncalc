@@ -62,6 +62,31 @@ Level: 12
     });
 
     describe('Turn sequence', () => {
+
+      test('Damage recovery', () => {
+let [playerGolisopod, cpuAppletun] = importTeam(`
+Golisopod
+Level: 100
+Ability: Emergency Exit
+- Leech Life
+
+Appletun @ Lum Berry
+Level: 100
+Ability: Thick Fat
+- Dragon Pulse
+- Apple Acid
+`); 
+        
+          let battleSimulator = new BattleSimulator(Generations.get(gen), playerGolisopod, cpuAppletun, new Field(), new Field());
+          const result = battleSimulator.getResult({ maxTurns: 2 });
+          
+          const [turn1, turn2] = result.turnOutcomes;
+          expect(turn1.actions[0].attacker.equals(playerGolisopod)).toBe(true);
+          expect(turn1.endOfTurnState.playerSide.pokemon.curHP()).toBeLessThan(playerGolisopod.maxHP());
+          const goliDamageTaken = turn1.actions[1].lowestRollDamage;
+          expect(turn2.endOfTurnState.playerSide.pokemon.curHP()).toBe(playerGolisopod.maxHP()); 
+      });
+
       test('stat changes from moves take effect after the turn', () => {
         let [cpuKrabby, playerInfernape] = importTeam(`
 Krabby

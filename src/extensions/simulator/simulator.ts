@@ -2,6 +2,7 @@ import { Field, I, StatsTable, Move, Result, Pokemon, calculate, MEGA_STONES } f
 import { MoveScore } from './moveScore';
 import { BattleFieldState, MoveConsideration, MoveResult, PlayerMoveConsideration, PokemonPosition, TurnOutcome } from './moveScoring.contracts';
 import { canUseDamagingMoves, createMove, findHighestDamageMove, getDamageRanges, hasLifeSavingItem, savedFromKO, scoreCPUMoves } from './moveScoring';
+import { getRecovery } from '@smogon/calc/dist/desc';
 
 export interface RNGStrategy {
 	getDamageRoll(moveResult: MoveResult): number;
@@ -254,7 +255,6 @@ function applyStartOfTurnEffects(battleField: BattleFieldState): void {
 function applyAbilityToOpponent(attacker: PokemonPosition, opponent: PokemonPosition): void {
 	if (attacker.pokemon.hasAbility('Intimidate') && 
 		attacker.firstTurnOut &&
-		attacker.pokemon.abilityOn &&
 		!opponent.pokemon.hasAbility('Clear Body')) {
 		attacker.pokemon.abilityOn = false;
 		applyBoost(opponent.pokemon.boosts, 'atk', -1);
@@ -266,9 +266,12 @@ function applymove(gen: I.Generation, attacker: Pokemon, defender: Pokemon, move
 	const attackerLostItem = consumesAttackerItem(attacker, moveResult.move);
 	const defenderLostItem = consumesDefenderItem(defender, moveResult.move);
 
+	const recovery = getRecovery(gen, attacker, defender, moveResult.move, moveResult.highestRollDamage);
+	
 	attacker = attacker.clone({ 
 		boosts: boosts.attacker,
 		item: !attackerLostItem ? attacker.item: undefined,
+		curHP: Math.min(attacker.maxHP(), attacker.curHP() + recovery.recovery[0]),
 		abilityOn: attacker.abilityOn || (attackerLostItem && attacker.hasAbility('Unburden'))
 	});
 
