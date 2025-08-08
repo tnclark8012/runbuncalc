@@ -560,6 +560,11 @@ table.field {
 .mon-speed-none{
     border: none !important; 
 }
+
+.best {
+    border: 2px solid gold !important;
+}
+
 .mon-dmg-none{
     background: var(--fieldset-color) !important;
 }
