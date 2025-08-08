@@ -177,7 +177,7 @@ export class BattleSimulator {
 					kosThroughRequiredLifesaver: kos && savedFromKO(r.defender)
 				};
 			})
-			.filter(m => !BattleSimulator.moveKillsAttacker(m.result) && !BattleSimulator.canUseMove(this.currentTurnState.playerSide, m))
+			.filter(m => !BattleSimulator.moveKillsAttacker(m.result) && BattleSimulator.canUseMove(this.currentTurnState.playerSide, m))
 
 		let playerChosenMove!: PlayerMoveConsideration;
 		for (let potentialMove of movesToConsider) {
@@ -203,7 +203,7 @@ export class BattleSimulator {
 	private static canUseMove(pokemonSide: PokemonPosition, consideration: MoveConsideration): boolean {
 		if (!pokemonSide.firstTurnOut && ['First Impression', 'Fake Out'].includes(consideration.result.move.name))
 			return false;
-		
+
 		return true;
 	}
 
