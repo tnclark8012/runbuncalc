@@ -8,7 +8,7 @@ import {
   Generations,
   Pokemon
 } from '@smogon/calc';
-import { inGen, importTeam, importPokemon } from './helper';
+import { inGen, importTeam, importPokemon } from './test-helper';
 import { TurnOutcome } from './moveScoring.contracts';
 import { BattleSimulator } from './simulator';
 

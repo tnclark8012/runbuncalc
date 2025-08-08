@@ -1,5 +1,7 @@
 import { A, I, calculate, Field, GenerationNum, Pokemon } from '@smogon/calc';
-import { BattleSimulator } from './simulator/simulator';
+import { BattleSimulator } from '../simulator/simulator';
+import { BattleFieldState } from '../simulator/moveScoring.contracts';
+import { curHPPercentage } from '../simulator/utils';
 
 export function updateColorCodes(): void {
 	var speCheck = (document.getElementById("cc-spe-border") as HTMLInputElement).checked;
@@ -21,16 +23,18 @@ export function updateColorCodes(): void {
 	let pokemonResults = getCalculationColors(playerPokemon, p2);
 	for (let i = 0; i < pMons.length; i++) {
 		let set = pMons[i].getAttribute("data-id");
-		let idColor = pokemonResults[i];
+		let pokemonResult = pokemonResults[i];
 		if (speCheck && ohkoCheck) {
-			pMons[i].className = `trainer-pok left-side mon-speed-${idColor.speed} mon-dmg-${idColor.code}`;
+			pMons[i].className = `trainer-pok left-side mon-speed-${pokemonResult.speed} mon-dmg-${pokemonResult.code}`;
 		}
 		else if (speCheck) {
-			pMons[i].className = `trainer-pok left-side mon-speed-${idColor.speed}`;
+			pMons[i].className = `trainer-pok left-side mon-speed-${pokemonResult.speed}`;
 		}
 		else if (ohkoCheck) {
-			pMons[i].className = `trainer-pok left-side mon-dmg-${idColor.code}`;
+			pMons[i].className = `trainer-pok left-side mon-dmg-${pokemonResult.code}`;
 		}
+
+		pMons[i].classList.toggle('best', !!(pokemonResult as any).best);
 	}
 }
 
@@ -51,13 +55,24 @@ export enum MatchupResultCode {
 	MutualMaybeOneHitKOs = 'mutual-maybe-ohko',
 	GetsOneHitKO_MaybeGetsOneHitKOd = 'ohkos-maybe-ohkod',
 	MaybeGetsOneHitKO_GetsOneHitKOd = 'maybe-ohko-ohkod',
-	SafeOneVOne = 'safe-1v1'
+	SafeOneVOne = 'safe-1v1',
+	SwitchAndFastKO = 'switch-ohko-fast',
 }
 
-export interface CalculationColor {
+export interface LegacyCalculationColor {
+  type: 'legacy';
   speed: SpeedTier;
   code: MatchupResultCode;
 }
+
+export interface SimulatorCalculationColor {
+	type: 'simulator';
+	speed: SpeedTier;
+	code: MatchupResultCode;
+	finalState: BattleFieldState;
+}
+
+export type CalculationColor = LegacyCalculationColor | SimulatorCalculationColor;
 
 function getCalculationColors(playerPokemon: A.Pokemon[], cpuPokemon: A.Pokemon): CalculationColor[] {
 	var p1field = createField();
@@ -65,14 +80,22 @@ function getCalculationColors(playerPokemon: A.Pokemon[], cpuPokemon: A.Pokemon)
 
 	const result: CalculationColor[] = [];
 	const diff: Array<{ name: string, legacy: MatchupResultCode, simulated: MatchupResultCode }> = [];
+	
 	for (let playerMon of playerPokemon) {
 		let legacy = getLegacyCalculationResult(playerMon, cpuPokemon, p1field, p2field);
 		let simulated = getSimulatedCalculationResult(playerMon, cpuPokemon, p1field, p2field);
-		result.push(legacy);
+		result.push(simulated);
 
 		if (legacy.code !== simulated.code)
 			diff.push({ name: playerMon.name, legacy: legacy.code, simulated: simulated.code });
 	}
+
+	let bestMon = result
+		.filter(r => r.type === 'simulator')
+		.sort((a, b) => curHPPercentage(b.finalState.playerSide.pokemon) - curHPPercentage(a.finalState.playerSide.pokemon))
+		.at(0);
+		if (bestMon)
+			(bestMon as any).best = true;
 
 	if (diff.length)
 		console.warn('Simulator and legacy impl diverge:', diff);
@@ -88,14 +111,26 @@ function getSimulatedCalculationResult(p1: A.Pokemon, p2: A.Pokemon, p1Field: Fi
 
 	const simulator = new BattleSimulator(gen, p1, p2, p1Field, p2Field);
 	const result = simulator.getResult({ playerSwitchingIn: true });
+	let code: MatchupResultCode;
 	if (result.winner.equals(p1)) {
-		return { speed: fastest, code: result.turnOutcomes.length < 3 /* switch + attack */ ? MatchupResultCode.SwitchAndGetOneHitKO : MatchupResultCode.SafeOneVOne };
-	}
+		const turnsOut = result.turnOutcomes.slice(1);
+		if (turnsOut.length == 1) {
+			if (turnsOut[0].actions[0].attacker.equals(result.winner))
+				code = MatchupResultCode.SwitchAndFastKO;
+			else
+				code = MatchupResultCode.SwitchAndGetOneHitKO;
+		}
+		else {
+			code = MatchupResultCode.SafeOneVOne;
+		}
 
+		return { type: 'simulator', speed: fastest, code, finalState: result.turnOutcomes.at(-1)!.endOfTurnState };
+	}
+	
 	return getLegacyCalculationResult(p1, p2, p1Field, p2Field);
 }
 
-function getLegacyCalculationResult(p1: A.Pokemon, p2: A.Pokemon, p1Field: Field, p2Field: Field): CalculationColor {
+function getLegacyCalculationResult(p1: A.Pokemon, p2: A.Pokemon, p1Field: Field, p2Field: Field): LegacyCalculationColor {
 	let damageResults = calculateAllMoves(gen, p1, p1Field, p2, p2Field);
 	p1 = damageResults[0][0].attacker;
 	p2 = damageResults[1][0].attacker;
@@ -146,7 +181,7 @@ function getLegacyCalculationResult(p1: A.Pokemon, p2: A.Pokemon, p1Field: Field
 
 		}
 		// p1 can switch into any move and ko
-		return { speed: fastest, code: p2DiesInHits === 1 ? MatchupResultCode.SwitchAndGetOneHitKO : MatchupResultCode.OneVOne };
+		return { type: 'legacy', speed: fastest, code: p2DiesInHits === 1 ? MatchupResultCode.SwitchAndGetOneHitKO : MatchupResultCode.OneVOne };
 	}
 
 	let highestRollOfLeastPowerfulMove = Math.min(...p2DamageRanges.filter(d => d.move.category !== "Status" && !(d.move.bp === 0 && d.highestRoll === 0)).map(d => d.highestRoll));
@@ -155,7 +190,7 @@ function getLegacyCalculationResult(p1: A.Pokemon, p2: A.Pokemon, p1Field: Field
 	if (p1DiesInHitsAfterPivot > p2DiesInHits || // KOs even if slower
 		(p1DiesInHitsAfterPivot === p2DiesInHits && fastest === "F")) { // KOs first
 		// p1 can switch into an advantageous move and ko
-		return { speed: fastest, code: MatchupResultCode.OneVOne_Pivot };
+		return { type: 'legacy', speed: fastest, code: MatchupResultCode.OneVOne_Pivot };
 	}
 
 
@@ -168,10 +203,10 @@ function getLegacyCalculationResult(p1: A.Pokemon, p2: A.Pokemon, p1Field: Field
 		if (p1HD > p2HD) {
 			if (p1HD > 100) {
 				// Then i consider it a wall that may OHKO
-				return { speed: fastest, code: "WMO" as any };
+				return { type: 'legacy', speed: fastest, code: "WMO" as any };
 			}
 			// if not Then i consider it a good wall
-			return { speed: fastest, code: "W" as any };
+			return { type: 'legacy', speed: fastest, code: "W" as any };
 		}
 	}
 	// p1KO = p1KO > 0 ? p1KO.toString() : "";
@@ -184,8 +219,9 @@ function getLegacyCalculationResult(p1: A.Pokemon, p2: A.Pokemon, p1Field: Field
 			code = p2KO == MatchupResultCode.GetsOneHitKO ? MatchupResultCode.MaybeGetsOneHitKO_GetsOneHitKOd : MatchupResultCode.MutualMaybeOneHitKOs;
 	}
 
-	return { speed: fastest, code: code! };
+	return { type: 'legacy', speed: fastest, code: code! };
 }
+
 function calculateAllMoves(gen: GenerationNum | I.Generation, p1: A.Pokemon, p1field: Field, p2: A.Pokemon, p2field: Field, double?: number): A.Result[][] {
 	double = double ? 2 : 0;
 	checkStatBoost(p1, p2);
