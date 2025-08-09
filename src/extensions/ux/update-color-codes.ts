@@ -92,7 +92,7 @@ function getCalculationColors(playerPokemon: A.Pokemon[], cpuPokemon: A.Pokemon)
 
 	let bestMon = result
 		.filter(r => r.type === 'simulator')
-		.sort((a, b) => curHPPercentage(b.finalState.playerSide.pokemon) - curHPPercentage(a.finalState.playerSide.pokemon))
+		.sort((a, b) => curHPPercentage(b.finalState.player.activePokemon.pokemon) - curHPPercentage(a.finalState.player.activePokemon.pokemon))
 		.at(0);
 		if (bestMon)
 			(bestMon as any).best = true;
