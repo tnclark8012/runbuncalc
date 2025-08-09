@@ -60,7 +60,7 @@ export interface SwitchStrategy {
 
 export class Trainer {
 	constructor(
-		public readonly activePokemon: PokemonPosition,
+		public readonly activeSlot: PokemonPosition,
 		public readonly remainingPokemon: Pokemon[],
 		public readonly switchStrategy: SwitchStrategy)
 	{
@@ -68,7 +68,7 @@ export class Trainer {
 
 	public clone(): Trainer {
 		return new Trainer(
-			this.activePokemon.clone(),
+			this.activeSlot.clone(),
 			this.remainingPokemon.map(p => p.clone()),
 			this.switchStrategy);
 	}
