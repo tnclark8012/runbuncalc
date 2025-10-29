@@ -145,6 +145,7 @@ Level: 12
 Ability: Intimidate
 - Stone Edge
 `);
+          Aerodactyl.abilityOn = true;
         
           let battleSimulator = new BattleSimulator(Generations.get(gen), Aerodactyl, Krabby, new Field(), new Field());
           const result = battleSimulator.getResult();
