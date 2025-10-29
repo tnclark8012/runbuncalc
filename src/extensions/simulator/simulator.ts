@@ -1,6 +1,6 @@
 import { Field, I, StatsTable, Move, Result, Pokemon, calculate, MEGA_STONES } from '@smogon/calc';
 import { MoveScore } from './moveScore';
-import { BattleFieldState, MoveConsideration, MoveResult, PlayerMoveConsideration, PokemonPosition, TurnOutcome } from './moveScoring.contracts';
+import { BattleFieldState, MoveConsideration, MoveResult, PlayerMoveConsideration, ActivePokemon, TurnOutcome } from './moveScoring.contracts';
 import { canUseDamagingMoves, createMove, findHighestDamageMove, getDamageRanges, hasLifeSavingItem, savedFromKO, scoreCPUMoves } from './moveScoring';
 
 export interface RNGStrategy {
@@ -204,7 +204,7 @@ export class BattleSimulator {
 		return playerChosenMove.result;
 	}
 
-	private static canUseMove(pokemonSide: PokemonPosition, consideration: MoveConsideration): boolean {
+	private static canUseMove(pokemonSide: ActivePokemon, consideration: MoveConsideration): boolean {
 		if (!pokemonSide.firstTurnOut && ['First Impression', 'Fake Out'].includes(consideration.result.move.name))
 			return false;
 
@@ -255,7 +255,7 @@ function applyStartOfTurnEffects(battleField: BattleFieldState): void {
 	}
 }
 
-function applyAbilityToOpponent(attacker: PokemonPosition, opponent: PokemonPosition): void {
+function applyAbilityToOpponent(attacker: ActivePokemon, opponent: ActivePokemon): void {
 	if (attacker.pokemon.hasAbility('Intimidate') && 
 		attacker.firstTurnOut &&
 		attacker.pokemon.abilityOn &&

@@ -42,15 +42,15 @@ export interface TurnOutcome {
 	endOfTurnState: BattleFieldState;
 }
 
-export interface PokemonPosition {
+export interface ActivePokemon {
 	pokemon: Pokemon;
 	firstTurnOut?: boolean;
 }
 
 export class BattleFieldState {
 	constructor(
-		public readonly playerActive: PokemonPosition[],
-		public readonly cpuActive: PokemonPosition[],
+		public readonly playerActive: ActivePokemon[],
+		public readonly cpuActive: ActivePokemon[],
 		public readonly playerParty: Pokemon[],
 		public readonly cpuParty: Pokemon[],
 		public readonly playerField: Field,
