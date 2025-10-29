@@ -36,8 +36,10 @@ export class BattleSimulator {
 		cpuField: Field
 	) {
 		this.originalState = new BattleFieldState(
-			 { pokemon: playerPokemon.clone(), firstTurnOut: true },
-			 { pokemon: cpuPokemon.clone(), firstTurnOut: true },
+			 [{ pokemon: playerPokemon.clone(), firstTurnOut: true }],
+			 [{ pokemon: cpuPokemon.clone(), firstTurnOut: true }],
+			 [],
+			 [],
 			 playerField.clone(),
 			 cpuField.clone()
 		);
@@ -60,8 +62,8 @@ export class BattleSimulator {
 			this.currentTurnState = turnOutcome.endOfTurnState.clone();
 			// Apply post-turn switches, field effect noticing etc.
 			resolvedOptions.playerSwitchingIn = false;
-		} while(this.turns.length < resolvedOptions.maxTurns && this.currentTurnState.playerSide.pokemon.curHP() > 0 && this.currentTurnState.cpuSide.pokemon.curHP() > 0 &&
-			(canUseDamagingMoves(this.currentTurnState.cpuSide.pokemon) || canUseDamagingMoves(this.currentTurnState.playerSide.pokemon)))
+		} while(this.turns.length < resolvedOptions.maxTurns && this.currentTurnState.playerActive[0].pokemon.curHP() > 0 && this.currentTurnState.cpuActive[0].pokemon.curHP() > 0 &&
+			(canUseDamagingMoves(this.currentTurnState.cpuActive[0].pokemon) || canUseDamagingMoves(this.currentTurnState.playerActive[0].pokemon)))
 		
 		
 		let outcome = this.lastTurn;
@@ -70,15 +72,15 @@ export class BattleSimulator {
 
 		return {
 			turnOutcomes: this.turns,
-			winner: outcome.endOfTurnState.cpuSide.pokemon.curHP() > outcome.endOfTurnState.playerSide.pokemon.curHP() || 
-			(firstMover === battleState.cpuSide.pokemon && battleState.cpuSide.pokemon.curHP() == 0 && battleState.playerSide.pokemon.curHP() == 0) ? battleState.cpuSide.pokemon : battleState.playerSide.pokemon
+			winner: outcome.endOfTurnState.cpuActive[0].pokemon.curHP() > outcome.endOfTurnState.playerActive[0].pokemon.curHP() || 
+			(firstMover === battleState.cpuActive[0].pokemon && battleState.cpuActive[0].pokemon.curHP() == 0 && battleState.playerActive[0].pokemon.curHP() == 0) ? battleState.cpuActive[0].pokemon : battleState.playerActive[0].pokemon
 		}
 	}
 
 	private simulateTurn(playerSwitchingIn?: boolean): TurnOutcome  {
 		applyStartOfTurnEffects(this.currentTurnState);
-		let playerDamageResults = calculateAllMoves(this.gen, this.currentTurnState.playerSide.pokemon, this.currentTurnState.cpuSide.pokemon, this.currentTurnState.playerField);
-		let cpuDamageResults = calculateAllMoves(this.gen, this.currentTurnState.cpuSide.pokemon, this.currentTurnState.playerSide.pokemon, this.currentTurnState.cpuField);
+		let playerDamageResults = calculateAllMoves(this.gen, this.currentTurnState.playerActive[0].pokemon, this.currentTurnState.cpuActive[0].pokemon, this.currentTurnState.playerField);
+		let cpuDamageResults = calculateAllMoves(this.gen, this.currentTurnState.cpuActive[0].pokemon, this.currentTurnState.playerActive[0].pokemon, this.currentTurnState.cpuField);
 		let cpuAssumedPlayerMove = findHighestDamageMove(getDamageRanges(playerDamageResults));
 		let cpuMove = this.calculateCpuMove(cpuDamageResults, cpuAssumedPlayerMove).move;
 		
@@ -87,9 +89,9 @@ export class BattleSimulator {
 
 		let firstMove = BattleSimulator.resolveTurnOrder(naivePlayerMoveBasedOnStartingTurnState, cpuMove);
 		let actions: MoveResult[] = [];
-		let playerPokemon = this.currentTurnState.playerSide;
-		let cpuPokemon = this.currentTurnState.cpuSide;
-		
+		let playerPokemon = this.currentTurnState.playerActive[0];
+		let cpuPokemon = this.currentTurnState.cpuActive[0];
+
 		const moveCPU = () => {
 			if (cpuPokemon.pokemon.curHP() > 0) {
 				actions.push(cpuMove);
@@ -131,8 +133,10 @@ export class BattleSimulator {
 			actions,
 			turnNumber: this.turns.length,
 			endOfTurnState: new BattleFieldState(
-				{ pokemon: playerPokemon.pokemon.clone() },
-				{ pokemon: cpuPokemon.pokemon.clone() },
+				[{ pokemon: playerPokemon.pokemon.clone() }],
+				[{ pokemon: cpuPokemon.pokemon.clone() }],
+				this.currentTurnState.playerParty.map(p => p.clone()),
+				this.currentTurnState.cpuParty.map(p => p.clone()),
 				this.currentTurnState.playerField.clone(),
 				this.currentTurnState.cpuField.clone(),
 			)
@@ -177,7 +181,7 @@ export class BattleSimulator {
 					kosThroughRequiredLifesaver: kos && savedFromKO(r.defender)
 				};
 			})
-			.filter(m => !BattleSimulator.moveKillsAttacker(m.result) && BattleSimulator.canUseMove(this.currentTurnState.playerSide, m))
+			.filter(m => !BattleSimulator.moveKillsAttacker(m.result) && BattleSimulator.canUseMove(this.currentTurnState.playerActive[0], m))
 
 		let playerChosenMove!: PlayerMoveConsideration;
 		for (let potentialMove of movesToConsider) {
@@ -239,9 +243,9 @@ function applyEndOfTurnEffects(pokemon: Pokemon): void {
 }
 
 function applyStartOfTurnEffects(battleField: BattleFieldState): void {
-	let playerMons = [battleField.playerSide];
-	let cpuMons = [battleField.cpuSide];
-	
+	let playerMons = [battleField.playerActive[0]];
+	let cpuMons = [battleField.cpuActive[0]];
+
 	// TODO: Apply in speed order
 	for (let playerMon of playerMons) {
 		for (let cpuMon of cpuMons) {

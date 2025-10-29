@@ -49,8 +49,10 @@ export interface PokemonPosition {
 
 export class BattleFieldState {
 	constructor(
-		public readonly playerSide: PokemonPosition,
-		public readonly cpuSide: PokemonPosition,
+		public readonly playerActive: PokemonPosition[],
+		public readonly cpuActive: PokemonPosition[],
+		public readonly playerParty: Pokemon[],
+		public readonly cpuParty: Pokemon[],
 		public readonly playerField: Field,
 		public readonly cpuField: Field) {
 		
@@ -58,8 +60,10 @@ export class BattleFieldState {
 
 	public clone(): BattleFieldState {
 		return new BattleFieldState(
-			{ ...this.playerSide, pokemon: this.playerSide.pokemon.clone() },
-			{ ...this.cpuSide, pokemon: this.cpuSide.pokemon.clone() },
+			this.playerActive.map(p => ({ ...p, pokemon: p.pokemon.clone() })),
+			this.cpuActive.map(p => ({ ...p, pokemon: p.pokemon.clone() })),
+			this.playerParty.map(p => p.clone()),
+			this.cpuParty.map(p => p.clone()),
 			this.playerField.clone(),
 			this.cpuField.clone()
 		)
