@@ -27,6 +27,8 @@ export interface CPUMoveConsideration extends MoveConsideration {
     playerMove: MoveResult;
     playerWillKOAI: boolean;
     playerWill2HKOAI: boolean;
+	aiWillOHKOPlayer: boolean;
+	aiOutdamagesPlayer: boolean;
     lastTurnCPUMove: Move | undefined;
     aiMonFirstTurnOut: boolean;
     field: Field
@@ -42,15 +44,17 @@ export interface TurnOutcome {
 	endOfTurnState: BattleFieldState;
 }
 
-export interface PokemonPosition {
+export interface ActivePokemon {
 	pokemon: Pokemon;
 	firstTurnOut?: boolean;
 }
 
+export type BattleFormat = 'singles' | 'doubles';
 export class BattleFieldState {
 	constructor(
-		public readonly playerActive: PokemonPosition[],
-		public readonly cpuActive: PokemonPosition[],
+		public readonly battleFormat: BattleFormat,
+		public readonly playerActive: ActivePokemon[],
+		public readonly cpuActive: ActivePokemon[],
 		public readonly playerParty: Pokemon[],
 		public readonly cpuParty: Pokemon[],
 		public readonly playerField: Field,
@@ -58,8 +62,13 @@ export class BattleFieldState {
 		
 	}
 
+	public get isDoubles(): boolean {
+		return this.battleFormat === 'doubles';
+	}
+
 	public clone(): BattleFieldState {
 		return new BattleFieldState(
+			this.battleFormat,
 			this.playerActive.map(p => ({ ...p, pokemon: p.pokemon.clone() })),
 			this.cpuActive.map(p => ({ ...p, pokemon: p.pokemon.clone() })),
 			this.playerParty.map(p => p.clone()),

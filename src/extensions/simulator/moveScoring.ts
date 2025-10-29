@@ -1,41 +1,11 @@
-import { Field, Move, A, Result } from '@smogon/calc';
+import { Field, Move, A, I, Result, Pokemon, calculate } from '@smogon/calc';
 import { MoveScore } from "./moveScore";
 import { notImplemented } from "./notImplementedError";
 import { CPUMoveConsideration, MoveResult, TurnOutcome } from './moveScoring.contracts';
 
 export function scoreCPUMoves(cpuResults: Result[], playerMove: MoveResult, field: Field, lastTurnOutcome: TurnOutcome | undefined): MoveScore[] {
-    let highestDamageResult: Result = cpuResults[0];
-    let damageResults = getDamageRanges(cpuResults);
-    let maxDamageMove = findHighestDamageMove(damageResults);
-    let cpuChosenMove: MoveResult = maxDamageMove;
-    const aiMon = maxDamageMove.attacker
-    const playerMon = maxDamageMove.defender;
-    const aiIsFaster: boolean = aiMon.stats.spe >= playerMon.stats.spe;
-
     // Not quite
-    let movesToConsider = damageResults.map<CPUMoveConsideration>(r => {
-        const kos = r.lowestRollDamage >= r.defender.curHP();
-        
-        const aiActionLastTurn = lastTurnOutcome?.actions.find(a => a.attacker.equals(aiMon))
-        return {
-            result: r,
-            lowestRollHpPercentage: r.lowestRollHpPercentage,
-            hightestRollHpPercentage: r.highestRollHpPercentage,
-            kos: kos,
-            isDamagingMove: r.move.category !== 'Status',
-            isHighestDamagingMove: maxDamageMove === r,
-            aiIsFaster,
-            aiIsSlower: !aiIsFaster,
-            playerMon,
-            aiMon,
-            playerMove,
-            playerWillKOAI: playerMove.highestRollDamage >= aiMon.curHP() && !savedFromKO(aiMon),
-            playerWill2HKOAI: playerMove.highestRollDamage * 2 >= aiMon.curHP(),
-            aiMonFirstTurnOut: !lastTurnOutcome || !lastTurnOutcome.endOfTurnState.cpuActive.find(p => p.pokemon.equals(aiMon)), // TODO: Not quite right, but probably good enough
-            lastTurnCPUMove: aiActionLastTurn ? aiActionLastTurn.move : undefined,
-            field
-        };
-    });
+    let movesToConsider = getCpuMoveConsiderations(cpuResults, playerMove, field, lastTurnOutcome);
 
     let moveScores = [];
     for (let potentialMove of movesToConsider) {
@@ -59,6 +29,43 @@ export function scoreCPUMoves(cpuResults: Result[], playerMove: MoveResult, fiel
     }
 
     return moveScores;
+}
+
+export function getCpuMoveConsiderations(cpuResults: Result[], playerMove: MoveResult, field: Field, lastTurnOutcome: TurnOutcome | undefined): CPUMoveConsideration[] {
+    let damageResults = getDamageRanges(cpuResults);
+    let maxDamageMove = findHighestDamageMove(damageResults);
+    const aiMon = maxDamageMove.attacker
+    const playerMon = maxDamageMove.defender;
+    const aiIsFaster: boolean = aiMon.stats.spe >= playerMon.stats.spe;
+
+    // Not quite
+    let movesToConsider = damageResults.map<CPUMoveConsideration>(r => {
+        const kos = r.lowestRollDamage >= r.defender.curHP();
+        
+        const aiActionLastTurn = lastTurnOutcome?.actions.find(a => a.attacker.equals(aiMon))
+        return {
+            result: r,
+            lowestRollHpPercentage: r.lowestRollHpPercentage,
+            hightestRollHpPercentage: r.highestRollHpPercentage,
+            kos: kos,
+            isDamagingMove: r.move.category !== 'Status',
+            isHighestDamagingMove: maxDamageMove === r,
+            aiIsFaster,
+            aiIsSlower: !aiIsFaster,
+            aiWillOHKOPlayer: r.lowestRollDamage >= playerMon.curHP(),
+            playerMon,
+            aiMon,
+            playerMove,
+            playerWillKOAI: playerMove.highestRollDamage >= aiMon.curHP() && !savedFromKO(aiMon),
+            playerWill2HKOAI: playerMove.highestRollDamage * 2 >= aiMon.curHP(),
+            aiOutdamagesPlayer: r.highestRollHpPercentage > playerMove.highestRollHpPercentage,
+            aiMonFirstTurnOut: !lastTurnOutcome || !lastTurnOutcome.endOfTurnState.cpuActive.find(p => p.pokemon.equals(aiMon)), // TODO: Not quite right, but probably good enough
+            lastTurnCPUMove: aiActionLastTurn ? aiActionLastTurn.move : undefined,
+            field
+        };
+    });
+
+    return movesToConsider;
 }
 
 export function damagingAttackSpAttackReductionWithGuarnateedEffect(moveScore: MoveScore, considerations: CPUMoveConsideration): void {
@@ -496,4 +503,12 @@ export function createMove(pokemon: A.Pokemon, moveName: string | A.Move): Move 
         moveName = moveName.name;
 
     return new Move(pokemon.gen, moveName as string, { ability: pokemon.ability, item: pokemon.item, species: pokemon.species.name });
+}
+
+export function calculateAllMoves(gen: I.Generation, attacker: Pokemon, defender: Pokemon, attackerField: Field): Result[] {
+	var results = [];
+	for (var i = 0; i < 4; i++) {
+		results[i] = calculate(gen, attacker, defender, createMove(attacker, attacker.moves[i]), attackerField);
+	}
+	return results;
 }

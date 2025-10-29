@@ -28,7 +28,7 @@ Level: 100
 - Stone Edge
 `);
         player.originalCurHP = 1;
-        let battleSimulator = new BattleSimulator(Generations.get(gen), player, cpu, new Field(), new Field());
+        let battleSimulator = new BattleSimulator(Generations.get(gen), 'singles', player, cpu, new Field(), new Field());
         const result = battleSimulator.getResult();
         expect(result.winner.name).toEqual('Lopunny');
       });
@@ -48,7 +48,7 @@ Level: 12
 
           expect(playerAerodactyl.stats.spe).toBeGreaterThan(cpuKrabby.stats.spe);
           
-          let battleSimulator = new BattleSimulator(Generations.get(gen), playerAerodactyl, cpuKrabby, new Field(), new Field());
+          let battleSimulator = new BattleSimulator(Generations.get(gen), 'singles', playerAerodactyl, cpuKrabby, new Field(), new Field());
           const result = battleSimulator.getResult();
           expectTurn(
             result.turnOutcomes[0], 
@@ -73,7 +73,7 @@ Level: 5
 - Close Combat
 `); 
         
-          let battleSimulator = new BattleSimulator(Generations.get(gen), playerInfernape, cpuKrabby, new Field(), new Field());
+          let battleSimulator = new BattleSimulator(Generations.get(gen), 'singles', playerInfernape, cpuKrabby, new Field(), new Field());
           const result = battleSimulator.getResult({ maxTurns: 1 });
           expect(result.turnOutcomes.length).toBe(1);
           expectTurn(
@@ -104,7 +104,7 @@ Ability: Speed Boost
 - Work Up
 `);
         
-          let battleSimulator = new BattleSimulator(Generations.get(gen), greninja, combusken, new Field(), new Field());
+          let battleSimulator = new BattleSimulator(Generations.get(gen), 'singles', greninja, combusken, new Field(), new Field());
           const result = battleSimulator.getResult();
           expect(result.turnOutcomes.length).toBe(2);
           let [turn1, turn2] = result.turnOutcomes;
@@ -147,7 +147,7 @@ Ability: Intimidate
 `);
           Aerodactyl.abilityOn = true;
         
-          let battleSimulator = new BattleSimulator(Generations.get(gen), Aerodactyl, Krabby, new Field(), new Field());
+          let battleSimulator = new BattleSimulator(Generations.get(gen), 'singles', Aerodactyl, Krabby, new Field(), new Field());
           const result = battleSimulator.getResult();
           expect(result.turnOutcomes.length).toBe(2);
           let [turn1, turn2] = result.turnOutcomes;
@@ -192,7 +192,7 @@ Ability: Speed Boost
 - Work Up
 `);
         
-          let battleSimulator = new BattleSimulator(Generations.get(gen), tirtouga, combusken, new Field(), new Field());
+          let battleSimulator = new BattleSimulator(Generations.get(gen), 'singles', tirtouga, combusken, new Field(), new Field());
           const result = battleSimulator.getResult();
           expectTurn(
             result.turnOutcomes[0],
@@ -229,7 +229,7 @@ Ability: Protean
 - Low Kick
 `);
         
-          let battleSimulator = new BattleSimulator(Generations.get(gen), Corviknight, Greninja, new Field(), new Field());
+          let battleSimulator = new BattleSimulator(Generations.get(gen), 'singles', Corviknight, Greninja, new Field(), new Field());
           const result = battleSimulator.getResult();
           expectTurn(
             result.turnOutcomes[0],
@@ -261,7 +261,7 @@ Ability: Poison Heal
 - Swords Dance
 `);
         
-          let battleSimulator = new BattleSimulator(Generations.get(gen), Cloyster, Gilscor, new Field(), new Field());
+          let battleSimulator = new BattleSimulator(Generations.get(gen), 'singles', Cloyster, Gilscor, new Field(), new Field());
           const result = battleSimulator.getResult();
           expectTurn(
             result.turnOutcomes[0],
@@ -293,7 +293,7 @@ Ability: Levitate
 - Dragon Dance
 `);
         
-          let battleSimulator = new BattleSimulator(Generations.get(gen), Musharna, Latios, new Field(), new Field());
+          let battleSimulator = new BattleSimulator(Generations.get(gen), 'singles', Musharna, Latios, new Field(), new Field());
           const result = battleSimulator.getResult({ playerSwitchingIn: true });
           expectTurn(
             result.turnOutcomes[0],
@@ -329,7 +329,7 @@ IVs: 23 HP / 9 Atk / 5 Def / 0 SpA / 29 SpD / 10 Spe
 - Rapid Spin
 `);
         
-          let battleSimulator = new BattleSimulator(Generations.get(gen), Excadrill, Alakazam, new Field(), new Field());
+          let battleSimulator = new BattleSimulator(Generations.get(gen), 'singles', Excadrill, Alakazam, new Field(), new Field());
           const result = battleSimulator.getResult();
           expectTurn(
             result.turnOutcomes[0],
