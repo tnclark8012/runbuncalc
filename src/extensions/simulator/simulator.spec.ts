@@ -306,6 +306,42 @@ Ability: Levitate
           expect(result.winner.id).toBe(Latios.id);
       });
     });
+
+    xtest('Winstrate Vito Fallarbor - Safe KO Alakazam', () => {
+        let [Alakazam, Excadrill] = importTeam(`
+Alakazam @ Focus Sash
+Level: 48
+Timid Nature
+Ability: Inner Focus
+- Psychic
+- Aura Sphere
+- Shadow Ball
+- Charge Beam
+
+Excadrill
+Level: 48
+Naive Nature
+Ability: Sand Force
+IVs: 23 HP / 9 Atk / 5 Def / 0 SpA / 29 SpD / 10 Spe
+- Drill Run
+- Iron Head
+- Rock Slide
+- Rapid Spin
+`);
+        
+          let battleSimulator = new BattleSimulator(Generations.get(gen), Excadrill, Alakazam, new Field(), new Field());
+          const result = battleSimulator.getResult();
+          expectTurn(
+            result.turnOutcomes[0],
+            { pokemon: Alakazam, move: 'Aura Sphere' },
+            { pokemon: Excadrill, move: 'Rapid Spin' },
+          );
+          expectTurn(
+            result.turnOutcomes[1],
+            { pokemon: Excadrill, move: 'Drill Run' },
+          );
+          expect(result.winner.id).toBe(Excadrill.id);
+    });
   });
 
   function expectTurn(turn: TurnOutcome, firstMover: { pokemon: Pokemon, move: string }, secondMover?: { pokemon: Pokemon, move: string }) {
