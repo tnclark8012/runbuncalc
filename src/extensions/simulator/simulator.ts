@@ -2,6 +2,7 @@ import { Field, I, StatsTable, Move, Result, Pokemon, MEGA_STONES } from '@smogo
 import { MoveScore } from './moveScore';
 import { BattleFieldState, MoveConsideration, MoveResult, PlayerMoveConsideration, ActivePokemon, TurnOutcome, BattleFormat } from './moveScoring.contracts';
 import { calculateAllMoves, canUseDamagingMoves, createMove, findHighestDamageMove, getDamageRanges, hasLifeSavingItem, savedFromKO, scoreCPUMoves } from './moveScoring';
+import { applyBoost } from './utils';
 
 export interface RNGStrategy {
 	getDamageRoll(moveResult: MoveResult): number;
@@ -291,10 +292,6 @@ function applymove(gen: I.Generation, attacker: Pokemon, defender: Pokemon, move
 	});
 
 	return { attacker, defender };
-}
-
-function applyBoost(stats: StatsTable, kind: keyof StatsTable, modifier: number): void {
-	stats[kind] = Math.min(Math.max(-6, stats[kind] + modifier), 6);
 }
 
 function getBoosts(attacker: Pokemon, defender: Pokemon, move: Move): { attacker: StatsTable, defender: StatsTable } {

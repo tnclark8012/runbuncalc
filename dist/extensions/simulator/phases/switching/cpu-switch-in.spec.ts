@@ -4,7 +4,7 @@ import {
   Field,
   Pokemon,
 } from '@smogon/calc';
-import { inGen, importTeam, importPokemon, expectCpuTeam } from '../../test-helper';
+import { inGen, importTeam, importPokemon } from '../../test-helper';
 import { ActivePokemon, BattleFieldState } from '../../moveScoring.contracts';
 import { applyCpuSwitchIns, chooseSwitchIn } from './cpu-switch-in';
 
@@ -234,3 +234,16 @@ IVs: 29 HP / 24 Atk / 18 Def / 3 SpA / 24 SpD / 23 Spe
     })
   });
 });
+
+function expectCpuTeam(active: ActivePokemon[], party: Pokemon[], state: BattleFieldState): void {
+  expectTeam({ active, party }, { active: state.cpuActive, party: state.cpuParty });
+}
+
+function expectPlayerTeam(active: ActivePokemon[], party: Pokemon[], state: BattleFieldState): void {
+  expectTeam({ active, party }, { active: state.playerActive, party: state.playerParty });
+}
+
+function expectTeam(expected: { active: ActivePokemon[], party: Pokemon[] }, actual: { active: ActivePokemon[], party: Pokemon[] }): void {
+  expect(actual.active.map(p => p.pokemon.id )).toEqual(expected.active.map(p => p.pokemon.id));
+  expect(actual.party.map(p => p.id)).toEqual(expected.party.map(p => p.id));
+}

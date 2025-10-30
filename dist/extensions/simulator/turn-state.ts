@@ -2,7 +2,7 @@ import { BattleFieldState } from "./moveScoring.contracts";
 import { Field, Move, Pokemon } from '@smogon/calc';
 import { applyPlayerSwitchIns, applyCpuSwitchIns } from "./phases/switching";
 
-export type BattleFieldStateTransform = (state: BattleFieldState) => BattleFieldState | BattleFieldState[];
+type BattleFieldStateTransform = (state: BattleFieldState) => BattleFieldState | BattleFieldState[];
 
 export function applyTransforms(state: BattleFieldState, transforms: BattleFieldStateTransform[]): BattleFieldState[] {
     let statesToExplore = [state];

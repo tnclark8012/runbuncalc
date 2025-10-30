@@ -326,7 +326,7 @@ eval("{\nObject.defineProperty(exports, \"__esModule\", ({ value: true }));\nexp
   \*******************************************/
 /***/ ((__unused_webpack_module, exports) => {
 
-eval("{\nObject.defineProperty(exports, \"__esModule\", ({ value: true }));\nexports.curHPPercentage = curHPPercentage;\nfunction curHPPercentage(pokemon) {\n    return pokemon.curHP() / pokemon.maxHP();\n}\n\n\n//# sourceURL=webpack:///./src/extensions/simulator/utils.ts?\n}");
+eval("{\nObject.defineProperty(exports, \"__esModule\", ({ value: true }));\nexports.curHPPercentage = curHPPercentage;\nexports.isFainted = isFainted;\nfunction curHPPercentage(pokemon) {\n    return pokemon.curHP() / pokemon.maxHP();\n}\nfunction isFainted(pokemon) {\n    return pokemon.curHP() <= 0;\n}\n\n\n//# sourceURL=webpack:///./src/extensions/simulator/utils.ts?\n}");
 
 /***/ }),
 

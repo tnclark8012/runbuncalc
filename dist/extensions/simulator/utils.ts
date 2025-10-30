@@ -1,5 +1,4 @@
 import { A } from "@smogon/calc";
-import { StatsTable } from "@smogon/calc/src";
 
 export function curHPPercentage(pokemon: A.Pokemon): number {
     return pokemon.curHP() / pokemon.maxHP();
@@ -7,8 +6,4 @@ export function curHPPercentage(pokemon: A.Pokemon): number {
 
 export function isFainted(pokemon: A.Pokemon): boolean {
     return pokemon.curHP() <= 0;
-}
-
-export function applyBoost(stats: StatsTable, kind: keyof StatsTable, modifier: number): void {
-	stats[kind] = Math.min(Math.max(-6, stats[kind] + modifier), 6);
 }
