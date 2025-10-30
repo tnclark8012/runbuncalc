@@ -1,5 +1,7 @@
+import { applyCpuSwitchIns } from "./phases/switching";
 import { BattleFieldState } from "./moveScoring.contracts";
 import { Field, Move, Pokemon } from '@smogon/calc';
+import { applyPlayerSwitchIns } from "./phases/switching";
 
 export function runTurn(state: BattleFieldState): BattleFieldState {
     state = switchInPokemon(state)[0];
@@ -15,8 +17,9 @@ export function runTurn(state: BattleFieldState): BattleFieldState {
  * @param state 
  */
 function switchInPokemon(state: BattleFieldState): BattleFieldState[] {
-    // Use BattleFieldState.clone() for deep cloning
-
+    state = applyCpuSwitchIns(state);
+    let states = applyPlayerSwitchIns(state);
+    return states;
     // Find indices of playerActive slots that need switch-in (KO'd or empty)
     function getKOdIndices(activeArr: any[]): number[] {
         return activeArr
