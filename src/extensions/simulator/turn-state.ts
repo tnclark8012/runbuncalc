@@ -1,6 +1,7 @@
 import { BattleFieldState } from "./moveScoring.contracts";
 import { Field, Move, Pokemon } from '@smogon/calc';
 import { applyPlayerSwitchIns, applyCpuSwitchIns } from "./phases/switching";
+import { applyStartOfTurnAbilities } from "./phases/turn-start/start-of-turn-abilities";
 
 export type BattleFieldStateTransform = (state: BattleFieldState) => BattleFieldState | BattleFieldState[];
 
@@ -16,15 +17,10 @@ export function runTurn(state: BattleFieldState): BattleFieldState[] {
     const transforms: BattleFieldStateTransform[] = [
         applyPlayerSwitchIns,
         applyCpuSwitchIns,
+        applyStartOfTurnAbilities,
     ];
 
     return applyTransforms(state, transforms);
-}
-
-function applyStartOfTurnEffects(state: BattleFieldState): BattleFieldState {
-    // Implementation of start-of-turn effects
-    state = applyAbilities(state);
-    return state;
 }
 
 function determineMoveOrderAndExecute(state: BattleFieldState): BattleFieldState {
