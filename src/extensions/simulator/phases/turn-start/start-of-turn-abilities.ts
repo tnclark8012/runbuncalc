@@ -8,7 +8,7 @@ export function applyStartOfTurnAbilities(state: BattleFieldState): BattleFieldS
     { source: state.playerActive[1], ally: state.playerActive[0], opponents: state.cpuActive },
     { source: state.cpuActive[0], ally: state.cpuActive[1], opponents: state.playerActive },
     { source: state.cpuActive[1], ally: state.cpuActive[0], opponents: state.playerActive }
-  ].filter(x => !!x.source);
+  ].filter(x => !!x.source); 
 
   // Abilities trigger in speed order
   participants.sort((a, b) => a.source.pokemon.stats.spe - b.source.pokemon.stats.spe);

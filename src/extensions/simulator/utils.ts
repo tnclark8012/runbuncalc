@@ -1,5 +1,8 @@
-import { A } from "@smogon/calc";
+import { A, toID } from "@smogon/calc";
 import { StatsTable } from "@smogon/calc/src";
+import { BattleFieldState } from "./moveScoring.contracts";
+import { IBattleFieldStateVisitor } from "./battle-field-state-visitor";
+import { Type, TypeEffectiveness, TypeName } from "@smogon/calc/src/data/interface";
 
 export function curHPPercentage(pokemon: A.Pokemon): number {
     return pokemon.curHP() / pokemon.maxHP();
@@ -11,4 +14,16 @@ export function isFainted(pokemon: A.Pokemon): boolean {
 
 export function applyBoost(stats: StatsTable, kind: keyof StatsTable, modifier: number): void {
 	stats[kind] = Math.min(Math.max(-6, stats[kind] + modifier), 6);
+}
+
+export function consumeItem(pokemon: A.Pokemon): void {
+    if (pokemon.item) {
+        pokemon.item = undefined;
+        if (pokemon.hasAbility('Unburden'))
+            pokemon.abilityOn = true;
+    }
+}
+
+export function getTypeEffectiveness(attackType: TypeName, type: TypeName): TypeEffectiveness {
+    return gen.types.get(toID(attackType))?.effectiveness[type]!;
 }

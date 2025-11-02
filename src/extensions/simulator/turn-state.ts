@@ -1,7 +1,7 @@
 import { BattleFieldState } from "./moveScoring.contracts";
-import { Field, Move, Pokemon } from '@smogon/calc';
 import { applyPlayerSwitchIns, applyCpuSwitchIns } from "./phases/switching";
 import { applyStartOfTurnAbilities } from "./phases/turn-start/start-of-turn-abilities";
+import { applyFieldHazards } from "./phases/turn-start/field-hazards";
 
 export type BattleFieldStateTransform = (state: BattleFieldState) => BattleFieldState | BattleFieldState[];
 
@@ -17,6 +17,7 @@ export function runTurn(state: BattleFieldState): BattleFieldState[] {
     const transforms: BattleFieldStateTransform[] = [
         applyPlayerSwitchIns,
         applyCpuSwitchIns,
+        applyFieldHazards,
         applyStartOfTurnAbilities,
     ];
 
