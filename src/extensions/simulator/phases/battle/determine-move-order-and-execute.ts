@@ -95,42 +95,57 @@ function executeActions(state: BattleFieldState, actions: PossibleAction[]): Bat
 function getPossibleActionsForAllSlots(state: BattleFieldState): Array<PossiblePokemonActions> {
     let possibleActionsByPokemon: Array<PossiblePokemonActions> = [];
     for (let i = 0; i < state.cpuActive.length; i++) {
-        let possibleActions: PossibleAction[] = []; //getCpuPossibleActions(state);//, state.cpuActive[i], state.playerActive, state.cpuActive);
+        let possibleActions: PossibleAction[] = getCpuPossibleActions(state, state.cpuActive[i], state.playerActive, state.cpuActive);
         possibleActionsByPokemon.push({ pokemon: state.cpuActive[i], possibleActions });
     }
 
     for (let i = 0; i < state.playerActive.length; i++) {
-        let possibleActions: PossibleAction[] = []; //getPlayerPossibleActions(state);//, state.playerActive[i], state.cpuActive, state.playerActive);
+        let possibleActions: PossibleAction[] = getPlayerPossibleActions(state);
         possibleActionsByPokemon.push({ pokemon: state.playerActive[i], possibleActions });
     }
 
     return possibleActionsByPokemon;
 }
 
+export function getPlayerPossibleActions(state: BattleFieldState): PossibleAction[] {
+    // TODO - implement player possible actions
+    return [];
+}
+
 export function getCpuPossibleActions(state: BattleFieldState, cpuPokemon: ActivePokemon, playerActive: ActivePokemon[], cpuActive: ActivePokemon[]): PossibleAction[] {
-    let actions: PossibleAction[] = [];
+    let actions: ScoredPossibleAction[] = [];
+    let topScore = -Infinity;
     for (let targetSlot = 0; targetSlot < playerActive.length; targetSlot++) {
         let target = playerActive[targetSlot];
         let actionsAgainstTarget = getCpuPossibleActionsAgainstTarget(state, cpuPokemon, target, { type: 'opponent', slot: targetSlot });
-        if (!actions.length) {
+        if (!actionsAgainstTarget.length)
+            continue;
+        
+        let batchScore = actionsAgainstTarget[0].score;
+        if (batchScore > topScore) {
+            topScore = batchScore;
+            actions = actionsAgainstTarget;
+        }
+        else if (batchScore === topScore) {
             actions.push(...actionsAgainstTarget);
         }
-        // else if (actionsAgainstTarget[0]?) // score them
-
     }
-    return [];   
+
+    return actions;
 }
 
-function getCpuPossibleActionsAgainstTarget(state: BattleFieldState, cpuPokemon: ActivePokemon, target: ActivePokemon, targetSlot: TargetSlot): PossibleAction[] {
+type ScoredPossibleAction = PossibleAction & { score: number };
+function getCpuPossibleActionsAgainstTarget(state: BattleFieldState, cpuPokemon: ActivePokemon, target: ActivePokemon, targetSlot: TargetSlot): Array<ScoredPossibleAction> {
     let playerDamageResults = calculateAllMoves(gen, target.pokemon, cpuPokemon.pokemon, state.playerField);
     let cpuDamageResults = calculateAllMoves(gen, cpuPokemon.pokemon, target.pokemon, state.cpuField);
     let cpuAssumedPlayerMove = findHighestDamageMove(getDamageRanges(playerDamageResults));
     let highestScoringCpuMoves = calculateCpuMove(cpuDamageResults, cpuAssumedPlayerMove, state.cpuField, /* lastTurnMoveByCPU -- not yet implemented */undefined);
 
-    return highestScoringCpuMoves.map<PossibleAction>((cpuMove: MoveScore) => {
+    return highestScoringCpuMoves.map((cpuMove: MoveScore) => {
         return ({
             action: { type: 'move', move: { move: cpuMove.move.move, target: targetSlot } }, // TODO - status, protect, etc target self?
-            probability: 1/highestScoringCpuMoves.length
+            probability: 1/highestScoringCpuMoves.length,
+            score: cpuMove.finalScore
         });
     });
 }
