@@ -14,16 +14,32 @@ export function applyStartOfTurnAbilities(state: BattleFieldState): BattleFieldS
   participants.sort((a, b) => a.source.pokemon.stats.spe - b.source.pokemon.stats.spe);
   
   for (let participant of participants) {
-    applyAbilityToSelf(participant.source);
-    participant.opponents?.forEach(opponent => applyAbilityToTarget(participant.source, opponent));
+    if (participant.source.pokemon.hasItem('Eject Pack')) {
+      throw new Error("Eject Pack not implemented in start-of-turn abilities");
+    }
+    
     applyAbilityToField(participant.source, state);
+    applyAbilityToSelf(participant.source, participant.opponents!);
+    participant.opponents?.forEach(opponent => applyAbilityToTarget(participant.source, opponent));
   }
 
   return state;
 }
 
-function applyAbilityToSelf(source: ActivePokemon): void {
-  
+function applyAbilityToSelf(source: ActivePokemon, opponents: ActivePokemon[]): void {
+  if (!source.firstTurnOut)
+    return;
+
+    if (source.pokemon.hasAbility('Download')) {
+      // Calculate average Defense and Special Defense
+      const avgDef = opponents.reduce((sum, curr) => sum + curr.pokemon.stats.def, 0) / opponents.length;
+      const avgSpd = opponents.reduce((sum, curr) => sum + curr.pokemon.stats.spd, 0) / opponents.length;
+      if (avgSpd <= avgDef) {
+        applyBoost(source.pokemon.boosts, 'spa', 1);
+      } else {
+        applyBoost(source.pokemon.boosts, 'atk', 1);
+      }
+    }
 }
 
 function applyAbilityToTarget(source: ActivePokemon, target: ActivePokemon): void {
@@ -37,10 +53,6 @@ function applyAbilityToTarget(source: ActivePokemon, target: ActivePokemon): voi
     }
     else if (!target.pokemon.hasAbility('Clear Body', 'Hyper Cutter', 'Inner Focus', 'Oblivious', 'Scrappy', 'White Smoke')) {
       applyBoost(target.pokemon.boosts, 'atk', -1);
-    }
-
-    if (target.pokemon.hasAbility('Rattled')) {
-      applyBoost(target.pokemon.boosts, 'spe', 1);
     }
   }
 }

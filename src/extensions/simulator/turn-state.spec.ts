@@ -121,6 +121,6 @@ IVs: 30 HP / 9 Atk / 21 Def / 6 SpA / 14 SpD / 25 Spe
       const newStates = applyTransforms(state, transforms);
       expect(newStates.length).toBe(1);
       // Cinderace comes out because it fast KO's Aggron, but doesn't see that it gets fast KO'd by Excadrill
-      expectCpuTeam([{ pokemon: Victreebel, firstTurnOut: false }, { pokemon: Cinderace, firstTurnOut: true }], [Mimikyu, Ursaluna, Sharpedo, Aerodactyl], newStates[0]);
+      expectCpuTeam([{ pokemon: Victreebel, firstTurnOut: false }, { pokemon: Cinderace, firstTurnOut: true }], [Mimikyu, Ursaluna, Sharpedo, Aerodactyl], newStates[0].state);
   });
 });

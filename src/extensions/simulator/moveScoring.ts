@@ -505,6 +505,14 @@ export function createMove(pokemon: A.Pokemon, moveName: string | A.Move): Move 
     return new Move(pokemon.gen, moveName as string, { ability: pokemon.ability, item: pokemon.item, species: pokemon.species.name });
 }
 
+/**
+ * Returns an array of Result objects, one for each move the attacker has (up to 4).
+ * @param gen 
+ * @param attacker 
+ * @param defender 
+ * @param attackerField 
+ * @returns 
+ */
 export function calculateAllMoves(gen: I.Generation, attacker: Pokemon, defender: Pokemon, attackerField: Field): Result[] {
 	var results = [];
 	for (var i = 0; i < 4; i++) {

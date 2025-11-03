@@ -3,45 +3,41 @@ import { applyPlayerSwitchIns, applyCpuSwitchIns } from "./phases/switching";
 import { applyStartOfTurnAbilities } from "./phases/turn-start/start-of-turn-abilities";
 import { applyFieldHazards } from "./phases/turn-start/field-hazards";
 
-export type BattleFieldStateTransform = (state: BattleFieldState) => BattleFieldState | BattleFieldState[];
+export type PossibleBattleFieldState = { type: 'possible', probability: number, state: BattleFieldState };
+export type BattleFieldStateTransform = (state: BattleFieldState) => BattleFieldState | BattleFieldState[] | PossibleBattleFieldState[];
 
-export function applyTransforms(state: BattleFieldState, transforms: BattleFieldStateTransform[]): BattleFieldState[] {
-    let statesToExplore = [state];
-    for (const transform of transforms) {
-        statesToExplore = statesToExplore.flatMap(transform);
-    }
+export function applyTransforms(state: BattleFieldState, transforms: BattleFieldStateTransform[]): PossibleBattleFieldState[] {
+    let statesToExplore: PossibleBattleFieldState[] = [{ type: 'possible', probability: 1, state }];
     
+    for (const phase of transforms) {
+        statesToExplore = statesToExplore.flatMap(possibleState => {
+            let result = phase(possibleState.state);
+            if (!Array.isArray(result))
+                result = [result];
+            return result.map<PossibleBattleFieldState>(r => isPossibleState(r) ? r : { type: 'possible', probability: 1, state: r })
+            .map(r => ({ ...r, probability: r.probability * possibleState.probability }));
+        });
+    }
+
     return statesToExplore;
 }
-export function runTurn(state: BattleFieldState): BattleFieldState[] {
+
+function isPossibleState(state: BattleFieldState | PossibleBattleFieldState): state is PossibleBattleFieldState {
+    return (state as PossibleBattleFieldState).type === 'possible';
+}
+
+export function runTurn(state: BattleFieldState): PossibleBattleFieldState[] {
     const transforms: BattleFieldStateTransform[] = [
         applyPlayerSwitchIns,
         applyCpuSwitchIns,
         applyFieldHazards,
         applyStartOfTurnAbilities,
+        // determineMoveOrderAndExecute,
+        // applyEndOfTurnEffects,
+        // applyEndOfTurnAbilities,
     ];
 
     return applyTransforms(state, transforms);
-}
-
-function determineMoveOrderAndExecute(state: BattleFieldState): BattleFieldState {
-    // Implementation of move order determination and execution
-    return state;
-}
-
-function applyEndOfTurnEffects(state: BattleFieldState): BattleFieldState {
-    // Implementation of end-of-turn effects
-    return state;
-}
-
-export function getActions(state: BattleFieldState): BattleFieldState {
-    // Implementation to get actions for the turn
-    return state;
-}
-
-export function simulateBattleTurn(state: BattleFieldState): BattleFieldState {
-    state = getActions(state);
-    return state;
 }
 
 function applyAbilities(state: BattleFieldState): BattleFieldState {
