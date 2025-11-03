@@ -2190,6 +2190,11 @@ function updateSets(setCallback) {
 	localStorage.setItem('customsets', JSON.stringify(updated));
 }
 
+function populateSetSwitcher() {
+	const setSwitcher = document.querySelector('#setSwitcher');
+	
+}
+
 function populateLevelCap() {
 	const levelCap = document.querySelector('#levelCap');
 	const options = [

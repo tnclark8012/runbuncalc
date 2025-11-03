@@ -320,6 +320,7 @@ function updateDex(customsets) {
 	}
 	localStorage.customsets = JSON.stringify(customsets);
 }
+
 function sortImports (a,b){
 	var sorted = [a.name, b.name].sort()[0]
 	if (sorted == b.name){
