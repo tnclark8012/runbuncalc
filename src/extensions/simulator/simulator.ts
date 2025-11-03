@@ -149,7 +149,9 @@ export class BattleSimulator {
 	}
 
 	private calculateCpuMove(cpuResults: Result[], playerMove: MoveResult): MoveScore {
-		let moveScores = scoreCPUMoves(cpuResults, playerMove, this.currentTurnState.cpuField, this.lastTurn);
+		let aiMon = cpuResults[0].attacker;
+        const aiActionLastTurn = this.lastTurn?.actions.find(a => a.attacker.equals(aiMon))
+		let moveScores = scoreCPUMoves(cpuResults, playerMove, this.currentTurnState.cpuField, aiActionLastTurn?.move);
 		
 		let highestScoringMoves: MoveScore[] = [];
 		for (let score of moveScores) {

@@ -3,9 +3,9 @@ import { MoveScore } from "./moveScore";
 import { notImplemented } from "./notImplementedError";
 import { CPUMoveConsideration, MoveResult, TurnOutcome } from './moveScoring.contracts';
 
-export function scoreCPUMoves(cpuResults: Result[], playerMove: MoveResult, field: Field, lastTurnOutcome: TurnOutcome | undefined): MoveScore[] {
+export function scoreCPUMoves(cpuResults: Result[], playerMove: MoveResult, field: Field, lastTurnMoveByCpu: Move | undefined): MoveScore[] {
     // Not quite
-    let movesToConsider = getCpuMoveConsiderations(cpuResults, playerMove, field, lastTurnOutcome);
+    let movesToConsider = getCpuMoveConsiderations(cpuResults, playerMove, field, lastTurnMoveByCpu);
 
     let moveScores = [];
     for (let potentialMove of movesToConsider) {
@@ -31,7 +31,7 @@ export function scoreCPUMoves(cpuResults: Result[], playerMove: MoveResult, fiel
     return moveScores;
 }
 
-export function getCpuMoveConsiderations(cpuResults: Result[], playerMove: MoveResult, field: Field, lastTurnOutcome: TurnOutcome | undefined): CPUMoveConsideration[] {
+export function getCpuMoveConsiderations(cpuResults: Result[], playerMove: MoveResult, field: Field, lastTurnMoveByCPU: Move | undefined): CPUMoveConsideration[] {
     let damageResults = getDamageRanges(cpuResults);
     let maxDamageMove = findHighestDamageMove(damageResults);
     const aiMon = maxDamageMove.attacker
@@ -41,8 +41,6 @@ export function getCpuMoveConsiderations(cpuResults: Result[], playerMove: MoveR
     // Not quite
     let movesToConsider = damageResults.map<CPUMoveConsideration>(r => {
         const kos = r.lowestRollDamage >= r.defender.curHP();
-        
-        const aiActionLastTurn = lastTurnOutcome?.actions.find(a => a.attacker.equals(aiMon))
         return {
             result: r,
             lowestRollHpPercentage: r.lowestRollHpPercentage,
@@ -59,8 +57,8 @@ export function getCpuMoveConsiderations(cpuResults: Result[], playerMove: MoveR
             playerWillKOAI: playerMove.highestRollDamage >= aiMon.curHP() && !savedFromKO(aiMon),
             playerWill2HKOAI: playerMove.highestRollDamage * 2 >= aiMon.curHP(),
             aiOutdamagesPlayer: r.highestRollHpPercentage > playerMove.highestRollHpPercentage,
-            aiMonFirstTurnOut: !lastTurnOutcome || !lastTurnOutcome.endOfTurnState.cpuActive.find(p => p.pokemon.equals(aiMon)), // TODO: Not quite right, but probably good enough
-            lastTurnCPUMove: aiActionLastTurn ? aiActionLastTurn.move : undefined,
+            aiMonFirstTurnOut: !lastTurnMoveByCPU, // TODO: Not quite right, but probably good enough
+            lastTurnCPUMove: lastTurnMoveByCPU,
             field
         };
     });

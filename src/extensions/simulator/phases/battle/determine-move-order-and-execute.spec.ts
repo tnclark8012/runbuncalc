@@ -7,7 +7,7 @@ import {
 import { inGen, importTeam, importPokemon, expectPlayerTeam, expectCpuTeam } from '../../test-helper';
 import { ActivePokemon, BattleFieldState } from '../../moveScoring.contracts';
 import { generateAllActionCombinations } from './determine-move-order-and-execute';
-import { PossibleAction, PossiblePokemonActions } from './move-selection.contracts';
+import { MoveAction, PossibleAction, PossiblePokemonAction, PossiblePokemonActions } from './move-selection.contracts';
 import { createMove } from '../../moveScoring';
 
 const RunAndBun = 8;
@@ -61,10 +61,26 @@ IVs: 24 HP / 10 Atk / 21 Def / 16 SpA / 28 SpD / 18 Spe
         generateEqualLikelyhoodActions(Golurk, [Gyarados, Armaldo]),
         generateEqualLikelyhoodActions(Flapple, [Gyarados, Armaldo]),
       ];
-      let allCombinations = generateAllActionCombinations(possibleActionsByPokemon);
-      expect(allCombinations.length).toBe(
+      let allPossibleTurns: PossiblePokemonAction[][] = generateAllActionCombinations(possibleActionsByPokemon);
+      expect(allPossibleTurns.length).toBe(
         (4 /* moves */ * 2 /* possible targets */)**2 /* per pokemon */ **2 /* per side */); // 4 pokemon, each with 16 possible actions
-    });
+      const gyaradosActions = allPossibleTurns
+        .map(turn => turn.find(action => action.pokemon.pokemon === Gyarados)!);
+      const gyaradosTargettingFlapple = gyaradosActions.filter(
+        possibleAction => possibleAction?.action.action.type === 'move' &&
+        (possibleAction.action.action.move.target.type === 'opponent' && 
+          possibleAction.action.action.move.target.slot === 1))
+        .map(possibleAction => (possibleAction.action.action as MoveAction).move.move.name);
+      expect(gyaradosTargettingFlapple.length).toBe(allPossibleTurns.length / 2);
+      // Each move should be equally represented when targetting Flapple
+      const appearingMoves = new Map<string, number>();
+      gyaradosTargettingFlapple.forEach(moveName => {
+        appearingMoves.set(moveName, (appearingMoves.get(moveName) || 0) + 1);
+      });
+      appearingMoves.forEach((count, moveName) => {
+        expect(count).toBe(gyaradosTargettingFlapple.length / 4);
+      });
+});
   });
 });
 

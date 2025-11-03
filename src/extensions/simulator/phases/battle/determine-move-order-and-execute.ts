@@ -1,25 +1,26 @@
-import { Pokemon } from "@smogon/calc";
+import { Field, Move, Pokemon, Result } from "@smogon/calc";
 import { visitActivePokemonInSpeedOrder } from "../../battle-field-state-visitor";
-import { ActivePokemon, BattleFieldState } from "../../moveScoring.contracts";
+import { ActivePokemon, BattleFieldState, MoveResult } from "../../moveScoring.contracts";
 import { PossibleBattleFieldState } from "../../turn-state";
 import { getCpuPossibleMoves } from "./cpu-move-selection";
-import { PossibleAction, PossiblePokemonAction, PossiblePokemonActions, TargetedMove } from "./move-selection.contracts";
+import { PossibleAction, PossiblePokemonAction, PossiblePokemonActions, TargetedMove, TargetSlot } from "./move-selection.contracts";
+import { calculateAllMoves, findHighestDamageMove, getDamageRanges, scoreCPUMoves } from "../../moveScoring";
+import { MoveScore } from "../../moveScore";
 
 export function determineMoveOrderAndExecute(state: BattleFieldState): PossibleBattleFieldState[] {
-    
     // One entry per pokemon on the field
-    let possibleActionsByPokemon: PossiblePokemonActions[] = getPossibleActionsForAllPokemon(state);
+    let possibleActionsByPokemon: PossiblePokemonActions[] = getPossibleActionsForAllSlots(state);
 
 
     // Now, we need to determine move order based on speed and execute the moves accordingly.
     // First, we'll flatten the possible actions into a list of all combinations of possibilities for a turn
     // Then, we'll iterate through and execute the actions in the correct order: switches (speed order), megas (not implemented) (speed order), attacks (priority order, then speed order for ties. if speed tied, we'll execute both possibilities).
     // Flatten all possible actions into combinations for the turn
-    let allCombinations: PossiblePokemonAction[][] = generateAllActionCombinations(possibleActionsByPokemon);
+    let allPossibleTurns: PossiblePokemonAction[][] = generateAllActionCombinations(possibleActionsByPokemon);
 
     let results: PossibleBattleFieldState[] = [];
 
-    for (const combination of allCombinations) {
+    for (const combination of allPossibleTurns) {
         // Separate actions by type
         const switches = combination.filter(a => a.action.action.type === 'switch');
         // const megas = combination.filter(a => a.action.type === 'mega');
@@ -44,7 +45,7 @@ export function determineMoveOrderAndExecute(state: BattleFieldState): PossibleB
         // Execute attacks
         // let finalState = executeActions(stateAfterMegas, attacks);
 
-        results.push({ type: 'possible', probability: 1 / allCombinations.length, state: state.clone() });
+        results.push({ type: 'possible', probability: 1 / allPossibleTurns.length, state: state.clone() });
     }
 
     return results;
@@ -91,7 +92,7 @@ function executeActions(state: BattleFieldState, actions: PossibleAction[]): Bat
     return newState;
 }
 
-function getPossibleActionsForAllPokemon(state: BattleFieldState): Array<PossiblePokemonActions> {
+function getPossibleActionsForAllSlots(state: BattleFieldState): Array<PossiblePokemonActions> {
     let possibleActionsByPokemon: Array<PossiblePokemonActions> = [];
     for (let i = 0; i < state.cpuActive.length; i++) {
         let possibleActions: PossibleAction[] = []; //getCpuPossibleActions(state);//, state.cpuActive[i], state.playerActive, state.cpuActive);
@@ -104,4 +105,54 @@ function getPossibleActionsForAllPokemon(state: BattleFieldState): Array<Possibl
     }
 
     return possibleActionsByPokemon;
+}
+
+export function getCpuPossibleActions(state: BattleFieldState, cpuPokemon: ActivePokemon, playerActive: ActivePokemon[], cpuActive: ActivePokemon[]): PossibleAction[] {
+    let actions: PossibleAction[] = [];
+    for (let targetSlot = 0; targetSlot < playerActive.length; targetSlot++) {
+        let target = playerActive[targetSlot];
+        let actionsAgainstTarget = getCpuPossibleActionsAgainstTarget(state, cpuPokemon, target, { type: 'opponent', slot: targetSlot });
+        if (!actions.length) {
+            actions.push(...actionsAgainstTarget);
+        }
+        // else if (actionsAgainstTarget[0]?) // score them
+
+    }
+    return [];   
+}
+
+function getCpuPossibleActionsAgainstTarget(state: BattleFieldState, cpuPokemon: ActivePokemon, target: ActivePokemon, targetSlot: TargetSlot): PossibleAction[] {
+    let playerDamageResults = calculateAllMoves(gen, target.pokemon, cpuPokemon.pokemon, state.playerField);
+    let cpuDamageResults = calculateAllMoves(gen, cpuPokemon.pokemon, target.pokemon, state.cpuField);
+    let cpuAssumedPlayerMove = findHighestDamageMove(getDamageRanges(playerDamageResults));
+    let highestScoringCpuMoves = calculateCpuMove(cpuDamageResults, cpuAssumedPlayerMove, state.cpuField, /* lastTurnMoveByCPU -- not yet implemented */undefined);
+
+    return highestScoringCpuMoves.map<PossibleAction>((cpuMove: MoveScore) => {
+        return ({
+            action: { type: 'move', move: { move: cpuMove.move.move, target: targetSlot } }, // TODO - status, protect, etc target self?
+            probability: 1/highestScoringCpuMoves.length
+        });
+    });
+}
+
+function calculateCpuMove(cpuResults: Result[], playerMove: MoveResult, cpuField: Field, lastTurnMoveByCpuPokemon: Move | undefined): MoveScore[] {
+    let moveScores = scoreCPUMoves(cpuResults, playerMove, cpuField, lastTurnMoveByCpuPokemon);
+
+    let highestScoringMoves: MoveScore[] = [];
+    for (let score of moveScores) {
+        let soFar = highestScoringMoves[highestScoringMoves.length - 1];
+        if (!soFar) {
+            highestScoringMoves.push(score);
+            continue;
+        }
+
+        if (score.finalScore > soFar.finalScore) {
+            highestScoringMoves = [score];
+        }
+        else if (score.finalScore === soFar.finalScore) {
+            highestScoringMoves.push(score);
+        }
+    }
+
+    return highestScoringMoves;
 }
