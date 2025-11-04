@@ -24,13 +24,16 @@ export function getCurrentPokemonId(): string {
 }
 
 function promoteCurrentPokemonToParty() {
-  let pokemonId = getCurrentPokemonId();
+  promotePokemonToParty(getCurrentPokemonId());
+}
+
+function promotePokemonToParty(pokemonId: string): void {
   let currentParty = getParty();
   if (currentParty.includes(pokemonId))
     return;
 
   addToParty(pokemonId);
-  dropLeftPokemon(pokemonId, "team-poke-list");
+  movePlayerPokemonElement(pokemonId, "party");
 }
 
 function demoteCurrentPokemonToBox() {
@@ -40,15 +43,15 @@ function demoteCurrentPokemonToBox() {
     return;
   
   removeFromParty(pokemonId);
-  dropLeftPokemon(pokemonId, "box-poke-list");
+  movePlayerPokemonElement(pokemonId, "box");
 }
 
 function restoreCurrentPokemon() {
-	dropLeftPokemon(getCurrentPokemonId(), "box-poke-list");
+	movePlayerPokemonElement(getCurrentPokemonId(), "box");
 }
 
 function trashCurrentPokemon() {
-	dropLeftPokemon(getCurrentPokemonId(), "trash-box");
+	movePlayerPokemonElement(getCurrentPokemonId(), "trash");
 }
 
 function trashPokemon() {
@@ -74,9 +77,15 @@ function trashPokemon() {
 	//switch to the next pokemon automatically
 }
 
-function dropLeftPokemon(id: string, zoneId: string) {
+type DropZone = "party" | "box" | "trash";
+function movePlayerPokemonElement(id: string, dropZone: DropZone): void {
 	let pokeElement = $(`.left-side[data-id="${id}"]`)[0];
-	dropInZone(pokeElement, document.getElementById(zoneId)!);
+	const zones = {
+		party: "team-poke-list",
+		box: "box-poke-list",
+		trash: "trash-box"
+	};
+	dropInZone(pokeElement, document.getElementById(zones[dropZone])!);
 }
 
 function dropInZone(pokeElement: HTMLElement, dropZoneElement: HTMLElement) {
@@ -106,4 +115,17 @@ function dropInZone(pokeElement: HTMLElement, dropZoneElement: HTMLElement) {
 		}
 	}
 	dropZoneElement.classList.remove('over');
+}
+
+export function getPokemonId(speciesName: string, setName: string): string {
+	return `${speciesName}${setName}`;
+}
+
+export function refreshPlayerPokedex() {
+  document.querySelector('#box-poke-list')!.innerHTML = '';
+  updateDex(getActiveSets());
+  for (let pokeId of getParty()) {
+	movePlayerPokemonElement(pokeId, "party");
+  }
+  selectFirstMon();
 }

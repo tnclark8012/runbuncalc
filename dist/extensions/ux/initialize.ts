@@ -1,6 +1,6 @@
 import { getActiveSets, getSetCollection, saveActiveCollectionName, saveSetCollection } from "../core/storage";
 import { updateSets } from "../simulator/utils";
-import { initializePartyControls } from "./party";
+import { initializePartyControls, refreshPlayerPokedex } from "./party";
 
 export function initializeUx(): void {
   initializeLevelCap();
@@ -41,20 +41,15 @@ function initializeCollectionSelection() {
   });
 }
 
-function refreshPlayerPokedex() {
-  document.querySelector('#box-poke-list')!.innerHTML = '';
-  updateDex(getActiveSets());
-  selectFirstMon();
-}
 function initializeLevelCap() {
 	populateLevelCap();
-  document.querySelector('#applyCap')!.addEventListener('click', () => {
+  	document.querySelector('#applyCap')!.addEventListener('click', () => {
 		const levelCap = document.querySelector<HTMLSelectElement>('#levelCap')!;
 		const newLevel = parseInt(levelCap.selectedOptions[0].value);
 		updateSets((set) => {
 			set.level = Math.max(set.level!, newLevel);
 		});
-    refreshPlayerPokedex();
+    	refreshPlayerPokedex();
 	});
 }
 
