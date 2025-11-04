@@ -118,7 +118,7 @@ export function damagingSpeedReductionMoves(moveScore: MoveScore, considerations
 }
 
 export function damagingPriorityMoves(moveScore: MoveScore, considerations: CPUMoveConsideration): void {
-    if (considerations.result.move.priority > 0 && considerations.aiIsSlower && considerations.kos) {
+    if (considerations.result.move.priority > 0 && considerations.aiIsSlower && considerations.playerWillKOAI) {
         moveScore.addScore(11);
     }
 }
