@@ -2,7 +2,6 @@ import { Field, Move, Pokemon, Result } from "@smogon/calc";
 import { visitActivePokemonInSpeedOrder } from "../../battle-field-state-visitor";
 import { ActivePokemon, BattleFieldState, MoveResult } from "../../moveScoring.contracts";
 import { PossibleBattleFieldState } from "../../turn-state";
-import { getCpuPossibleMoves } from "./cpu-move-selection";
 import { PossibleAction, PossiblePokemonAction, PossiblePokemonActions, TargetedMove, TargetSlot } from "./move-selection.contracts";
 import { calculateAllMoves, findHighestDamageMove, getDamageRanges, scoreCPUMoves } from "../../moveScoring";
 import { MoveScore } from "../../moveScore";

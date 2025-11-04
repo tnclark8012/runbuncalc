@@ -42,6 +42,11 @@ function cpdir(src, dest) {
 		} else if (current.isSymbolicLink()) {
 			var symlink = fs.readlinkSync(path.join(src, file));
 			fs.symlinkSync(symlink, path.join(dest, file));
+		} else if (file.endsWith('.ts')) {
+			// Skip TypeScript files - they will be compiled by webpack
+			continue;
+		} else if (file.endsWith('.md')) {
+			continue;
 		} else if (file.endsWith('.js')) {
 			const contents = fs.readFileSync(path.join(src, file), 'utf8').replace(/^exports.* = void 0;$/gm, '');
 			fs.writeFileSync(path.join(dest, file), contents);
