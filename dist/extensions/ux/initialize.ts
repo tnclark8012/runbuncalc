@@ -7,6 +7,7 @@ export function initializeUx(): void {
   initializeCollectionSelection();
   adjustTabOrders(); 
   initializePartyControls();
+	refreshPlayerPokedex();
 }
 
 function adjustTabOrders() {
@@ -35,7 +36,10 @@ function initializeCollectionSelection() {
       activeCollection.selectedIndex = activeCollection.options.length - 1;
       saveActiveCollectionName(collectionName);
       const collection = getSetCollection();
-      collection[collectionName] = {};
+      collection[collectionName] = {
+				customSets: {},
+				party: []
+			};
       saveSetCollection(collection);
     }
   });

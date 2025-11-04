@@ -5,7 +5,12 @@ export interface LocalStorageData {
 }
 
 export interface SetCollection {
-    [collectionName: string]: CustomSets;
+    [collectionName: string]: SetCollectionData;
+}
+
+export interface SetCollectionData {
+    customSets: CustomSets;
+    party: string[];
 }
 
 export interface CustomSets {

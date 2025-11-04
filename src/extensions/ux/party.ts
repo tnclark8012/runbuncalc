@@ -1,4 +1,4 @@
-import { addToParty, getActiveSets, getParty, removeFromParty, saveActiveSets } from "../core/storage";
+import { addToParty, getActiveSets, getParty, removeFromParty, saveActiveSets, getPokemonId } from "../core/storage";
 
 export function initializePartyControls(): void {
   document.querySelector('#trash-pok')?.addEventListener('click', trashPokemon);
@@ -20,7 +20,9 @@ trainerSection.querySelector('.move-to-box')?.addEventListener('click', demoteCu
 }
 
 export function getCurrentPokemonId(): string {
-  return $('.player').val() as string;
+	let selectedDropdownForPlayer = $('.player').val() as string;
+	// const match = /^(.*) (\(.*\))$/.exec(selectedDropdownForPlayer)!;
+	return selectedDropdownForPlayer;
 }
 
 function promoteCurrentPokemonToParty() {
@@ -43,7 +45,7 @@ function demoteCurrentPokemonToBox() {
     return;
   
   removeFromParty(pokemonId);
-  movePlayerPokemonElement(pokemonId, "box");
+  refreshPlayerPokedex();
 }
 
 function restoreCurrentPokemon() {
@@ -117,15 +119,12 @@ function dropInZone(pokeElement: HTMLElement, dropZoneElement: HTMLElement) {
 	dropZoneElement.classList.remove('over');
 }
 
-export function getPokemonId(speciesName: string, setName: string): string {
-	return `${speciesName}${setName}`;
-}
-
 export function refreshPlayerPokedex() {
   document.querySelector('#box-poke-list')!.innerHTML = '';
+	document.querySelector('#team-poke-list')!.innerHTML = '';
   updateDex(getActiveSets());
   for (let pokeId of getParty()) {
-	movePlayerPokemonElement(pokeId, "party");
+		movePlayerPokemonElement(pokeId, "party");
   }
   selectFirstMon();
 }
