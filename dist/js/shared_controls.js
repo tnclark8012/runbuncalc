@@ -1606,7 +1606,7 @@ function previousTrainer() {
 function resetTrainer() {
 	if (confirm(truckMessage())) {
 		selectTrainer(1);
-		localStorage.removeItem("customsets");
+		window.core.storage.saveActiveSets({});
 		$(allPokemon("#importedSetsOptions")).hide();
 		loadDefaultLists();
 		for (let zone of document.getElementsByClassName("dropzone")) {
@@ -1652,44 +1652,6 @@ function toggleInfoColorCode() {
 	document.getElementById("info-cc-field").toggleAttribute("hidden");
 }
 
-function RestoreCurrentPokemon() {
-	let currentMonId = $('.player').val();
-	dropLeftPokemon(currentMonId, "box-poke-list");
-}
-
-function TrashCurrentPokemon() {
-	let currentMonId = $('.player').val();
-	dropLeftPokemon(currentMonId, "trash-box");
-}
-
-function TrashPokemon() {
-	var maybeMultiple = document.getElementById("trash-box").getElementsByClassName("trainer-pok");
-	if (maybeMultiple.length == 0) {
-		return; //nothing to delete
-	}
-	var numberPKM = maybeMultiple.length > 1 ? `${maybeMultiple.length} Pokemon(s)` : "this Pokemon";
-	var yes = confirm(`do you really want to remove ${numberPKM}?`);
-	if (!yes) {
-		return;
-	}
-	var customSets = JSON.parse(localStorage.customsets);
-	var length = maybeMultiple.length;
-	for (let i = 0; i < length; i++) {
-		var pokeTrashed = maybeMultiple[i];
-		var name = pokeTrashed.getAttribute("data-id").split(" (")[0];
-		delete customSets[name];
-	}
-	document.getElementById("trash-box").innerHTML = "";
-	localStorage.setItem("customsets", JSON.stringify(customSets));
-	$('#box-poke-list')[0].click();
-	//switch to the next pokemon automatically
-
-}
-function RemoveAllPokemon() {
-	document.getEle
-}
-
-
 // Check whether control button is pressed
 $(document).keydown(function (event) {
 	if (event.which == "17")
@@ -1718,12 +1680,6 @@ function dragstart_handler(ev) {
 function drop(ev) {
 	ev.preventDefault();
 	dropInZone(ev.target);
-}
-
-function dropLeftPokemon(id, zone) {
-	pokeElement = $(`.left-side[data-id="${id}"]`)[0];
-	pokeDragged = pokeElement;
-	dropInZone(document.getElementById(zone));
 }
 
 function dropInZone(dropZoneElement) {
@@ -2096,9 +2052,6 @@ $(document).ready(function () {
 	$('#hide-cc').click(hideColorCodes);
 	$('#refr-cc').click(refreshColorCode);
 	$('#info-cc').click(toggleInfoColorCode);
-	$('#trash-pok').click(TrashPokemon);
-	$('#trash-pok-current').click(TrashCurrentPokemon);
-	$('#trash-pok-restore').click(RestoreCurrentPokemon);
 	$('#cc-spe-border').change(SpeedBorderSetsChange);
 	$('#cc-ohko-color').change(ColorCodeSetsChange);
 	$('#cc-auto-refr').change(refreshColorCode);
@@ -2147,95 +2100,10 @@ $(document).ready(function () {
 	document.getElementById("cc-auto-refr").checked = true;
 	showColorCodes();
 
-	initializeLevelCap();
-	adjustTabOrders();
-
 });
 
-function adjustTabOrders() {
-	$('.boost, .evs, .base').attr('tabindex', -1);
-}
-
 function getSets() {
-	return localStorage.customsets && JSON.parse(localStorage.customsets);
-}
-
-function initializeLevelCap() {
-	populateLevelCap();
-	$("#applyCap").click(() => {
-		const levelCap = document.querySelector('#levelCap');
-		const newLevel = parseInt(levelCap.selectedOptions[0].value);
-		updateSets((set) => {
-			set.level = Math.max(set.level, newLevel);
-		});
-	});
-}
-
-function forEachSet(setCallback) {
-	const sets = getSets();
-	for (let pokemonName in sets) {
-		for (let setName in sets[pokemonName]) {
-			const set = sets[pokemonName][setName];
-			if (setCallback(set, setName, pokemonName)) {
-				return;
-			}
-		}
-	}
-
-	return sets;
-}
-
-function updateSets(setCallback) {
-	let updated = forEachSet(setCallback);
-	localStorage.setItem('customsets', JSON.stringify(updated));
-}
-
-function populateSetSwitcher() {
-	const setSwitcher = document.querySelector('#setSwitcher');
-	
-}
-
-function populateLevelCap() {
-	const levelCap = document.querySelector('#levelCap');
-	const options = [
-		new Option('Route 104 Aqua Grunt', 12),
-		new Option('Museum Aqua Grunts', 17),
-		new Option('Leader Brawly', 21),
-		new Option('Leader Roxanne', 25),
-		new Option('Route 117 Chelle', 32),
-		new Option('Leader Wattson', 35),
-		new Option('Cycling Road Rival', 38),
-		new Option('Leader Norman', 42),
-		new Option('Fallarbor Town Vito', 48),
-		new Option('Mt. Chimney Maxie', 54),
-		new Option('Leader Flannery', 57),
-		new Option('Weather Institute Shelly', 65),
-		new Option('Route 119 Rival', 66),
-		new Option('Leader Winona', 69),
-		new Option('Lilycove City Rival', 73),
-		new Option('Mt. Pyre Archie', 76),
-		new Option('Magma Hideout Maxie', 79),
-		new Option('Aqua Hideout Matt', 81),
-		new Option('Leaders Tate & Liza', 85),
-		new Option('Seafloor Cavern Archie', 89),
-		new Option('Leader Juan', 91),
-		new Option('Victory Road Vito', 95),
-		new Option('Champion Wallace', 99)
-	];
-	for (let option of options) {
-		levelCap.options.add(option);
-	}
-
-	const sets = getSets();
-	let maxMonLevel = 0;
-	forEachSet((set) => {
-		maxMonLevel = Math.max(maxMonLevel, set.level);
-	});
-
-	let currentCap = options.findIndex(o => o.value >= maxMonLevel);
-	if (currentCap == -1)
-		currentCap = options.length - 1;
-	levelCap.options.selectedIndex = currentCap;
+	return window.core.storage.getActiveSets();
 }
 
 /* Click-to-copy function */
