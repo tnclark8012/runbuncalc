@@ -16,24 +16,32 @@ export const MoveResultGroup: React.FC<MoveResultGroupProps> = ({
 	onMoveSelect,
 	selectedMoveId,
 }) => {
-	// Determine which move should be selected
-	const getSelectedId = React.useCallback((): string | undefined => {
-		if (selectedMoveId) {
+	// Determine initial selected move
+	const getInitialSelectedId = (): string | undefined => {
+		if (selectedMoveId !== undefined) {
 			return selectedMoveId;
 		}
 		const defaultMove = moves.find(m => m.defaultChecked);
 		return defaultMove ? defaultMove.id : (moves.length > 0 ? moves[0].id : undefined);
-	}, [selectedMoveId, moves]);
+	};
 
-	const [selectedId, setSelectedId] = React.useState<string | undefined>(getSelectedId);
+	// Use internal state only when component is uncontrolled (no selectedMoveId prop)
+	const [internalSelectedId, setInternalSelectedId] = React.useState<string | undefined>(getInitialSelectedId);
+
+	// Determine which ID is currently selected (controlled prop takes precedence)
+	const currentSelectedId = selectedMoveId !== undefined ? selectedMoveId : internalSelectedId;
 
 	// Update selected move when selection changes
 	const handleMoveChange = React.useCallback((moveId: string) => {
-		setSelectedId(moveId);
+		// Update internal state only if uncontrolled
+		if (selectedMoveId === undefined) {
+			setInternalSelectedId(moveId);
+		}
+		// Always call the callback if provided
 		if (onMoveSelect) {
 			onMoveSelect(moveId);
 		}
-	}, [onMoveSelect]);
+	}, [selectedMoveId, onMoveSelect]);
 
 	// Extract the suffix from the move ID for the damage span ID (e.g., "L1" from "resultMoveL1")
 	const getDamageId = (moveId: string): string => {
@@ -56,7 +64,7 @@ export const MoveResultGroup: React.FC<MoveResultGroupProps> = ({
 						type="radio" 
 						name={radioGroupName} 
 						id={move.id}
-						checked={selectedId === move.id}
+						checked={currentSelectedId === move.id}
 						onChange={() => handleMoveChange(move.id)}
 						aria-describedby={getDamageId(move.id)}
 					/>
