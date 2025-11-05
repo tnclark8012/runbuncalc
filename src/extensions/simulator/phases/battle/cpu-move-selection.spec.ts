@@ -100,8 +100,8 @@ Ability: Hyper Cutter
       // Situation: Krabby is slower than Dragapult and is KOd, but Krabby can KO with priority before it dies.
       const state = new BattleFieldState(
         'doubles', 
-        new Trainer([ new PokemonPosition(Torkoal), new PokemonPosition(Dragapult)], [], undefined!), 
-        new Trainer([ new PokemonPosition(Krabby) ], [], undefined!), 
+        new Trainer([ new PokemonPosition(Torkoal), new PokemonPosition(Dragapult)], []), 
+        new Trainer([ new PokemonPosition(Krabby) ], []), 
         new Field(), 
         new Field());
         
@@ -142,11 +142,11 @@ function getCpuActionsFor1v1(cpuPokemon: Pokemon, playerPokemon: Pokemon): Possi
     new Trainer(
       [new PokemonPosition(playerPokemon)],
       [],
-      undefined!),
+      ),
     new Trainer(
       [new PokemonPosition(cpuPokemon)],
       [],
-      undefined!),
+      ),
     new Field(),
     new Field()
   );
@@ -156,14 +156,8 @@ function getCpuActionsFor1v1(cpuPokemon: Pokemon, playerPokemon: Pokemon): Possi
 function getCpuActionsForDoubleBattle(cpuPokemon: Pokemon, playerPokemon: Pokemon[]): PossibleAction[] {
   const state = new BattleFieldState(
     'doubles',
-    new Trainer(
-      playerPokemon.map(p => new PokemonPosition(p)),
-      [],
-      undefined!),
-    new Trainer(
-      [new PokemonPosition(cpuPokemon)],
-      [],
-      undefined!),
+    new Trainer(playerPokemon.map(p => new PokemonPosition(p)), []),
+    new Trainer([new PokemonPosition(cpuPokemon)], []),
     new Field(),
     new Field()
   );
