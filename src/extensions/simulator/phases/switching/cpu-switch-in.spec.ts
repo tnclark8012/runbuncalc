@@ -5,7 +5,7 @@ import {
   Pokemon,
 } from '@smogon/calc';
 import { inGen, importTeam, importPokemon, expectCpuTeam } from '../../test-helper';
-import { ActivePokemon, BattleFieldState } from '../../moveScoring.contracts';
+import { ActivePokemon, BattleFieldState, PokemonPosition, Trainer } from '../../moveScoring.contracts';
 import { applyCpuSwitchIns, chooseSwitchIn } from './cpu-switch-in';
 
 const RunAndBun = 8;
@@ -69,10 +69,8 @@ IVs: 23 HP / 9 Atk / 5 Def / 0 SpA / 29 SpD / 10 Spe
 `);
       let state = new BattleFieldState(
         'singles',
-        [],
-        [],
-        [player1, player2, player3],
-        [cpu1, cpu2, cpu3],
+        new Trainer([], [player1, player2, player3], undefined!),
+        new Trainer([], [cpu1, cpu2, cpu3], undefined!),
         new Field(),
         new Field(),
       );
@@ -81,32 +79,14 @@ IVs: 23 HP / 9 Atk / 5 Def / 0 SpA / 29 SpD / 10 Spe
     
       const doublesState = new BattleFieldState(
         'doubles',
-        [],
-        [],
-        [player1, player2, player3],
-        [cpu1, cpu2, cpu3],
+        new Trainer([], [player1, player2, player3], undefined!),
+        new Trainer([], [cpu1, cpu2, cpu3], undefined!),
         new Field(),
         new Field(),
       );
 
       const newDoublesState = applyCpuSwitchIns(doublesState);
       expectCpuTeam([{ pokemon: cpu1, firstTurnOut: true }, { pokemon: cpu2, firstTurnOut: true }], [cpu3], newDoublesState);
-    });
-
-    xit('Prefer fast OHKO', () => {
-      let cpuParty = importTeam(``);
-      let playerMon = importPokemon(``);
-      let state = new BattleFieldState(
-        'singles',
-        [{pokemon: playerMon}],
-        [],
-        [],
-        cpuParty,
-        new Field(),
-        new Field(),
-      );
-      // const switchIn = applyCpuSwitchIns(cpuParty, playerMon, state);
-      // expect(switchIn.id).toBe('mewtwo');
     });
 
     xit(`Doesn't see player priority KOs`, () => {
@@ -165,10 +145,8 @@ IVs: 29 HP / 24 Atk / 18 Def / 3 SpA / 24 SpD / 23 Spe
       Scrafty = Scrafty.clone({ curHP: 0 });
       let state = new BattleFieldState(
         'singles',
-        [{ pokemon: player1 }],
-        [{ pokemon: Scrafty }],
-        [player1],
-        [Bruxish, Gothitelle, Bisharp],
+        new Trainer([new PokemonPosition(player1)], [], undefined!),
+        new Trainer([new PokemonPosition(Scrafty)], [Bruxish, Gothitelle, Bisharp], undefined!),
         new Field(),
         new Field(),
       );
@@ -221,10 +199,8 @@ IVs: 29 HP / 24 Atk / 18 Def / 3 SpA / 24 SpD / 23 Spe
       Golurk = Golurk.clone({ curHP: 0 });
       let state = new BattleFieldState(
         'singles',
-        [{ pokemon: player1 }],
-        [{ pokemon: Golurk }],
-        [player1],
-        [Flapple, Vikavolt],
+        new Trainer([new PokemonPosition(player1)], [], undefined!),
+        new Trainer([new PokemonPosition(Golurk)], [Flapple, Vikavolt], undefined!),
         new Field(),
         new Field(),
       );

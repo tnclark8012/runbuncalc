@@ -10,11 +10,11 @@ export function visitActivePokemonInSpeedOrder(state: BattleFieldState, visitor:
         return;
 
     let toVisit: Array<{ active: ActivePokemon, field: Field, side: Side}> = [];
-    for (let active of state.playerActive) {
+    for (let active of state.player.active) {
         toVisit.push({ active, field: state.playerField, side: state.playerField.attackerSide });
     }
 
-    for (let active of state.cpuActive) {
+    for (let active of state.cpu.active) {
         toVisit.push({ active, field: state.cpuField, side: state.cpuField.attackerSide });
     }
 

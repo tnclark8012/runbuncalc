@@ -2,6 +2,7 @@ import { A, I, calculate, Field, GenerationNum, Pokemon } from '@smogon/calc';
 import { BattleSimulator } from '../simulator/simulator';
 import { BattleFieldState } from '../simulator/moveScoring.contracts';
 import { curHPPercentage } from '../simulator/utils';
+import { gen } from '../configuration';
 
 export function updateColorCodes(): void {
 	var speCheck = (document.getElementById("cc-spe-border") as HTMLInputElement).checked;
@@ -92,7 +93,7 @@ function getCalculationColors(playerPokemon: A.Pokemon[], cpuPokemon: A.Pokemon)
 
 	let bestMon = result
 		.filter(r => r.type === 'simulator')
-		.sort((a, b) => curHPPercentage(b.finalState.playerActive[0].pokemon) - curHPPercentage(a.finalState.playerActive[0].pokemon))
+		.sort((a, b) => curHPPercentage(b.finalState.player.active[0].pokemon) - curHPPercentage(a.finalState.player.active[0].pokemon))
 		.at(0);
 		if (bestMon)
 			(bestMon as any).best = true;

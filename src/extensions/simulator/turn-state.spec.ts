@@ -1,7 +1,7 @@
 import { expectCpuTeam, importTeam } from './test-helper';
 import { applyTransforms, BattleFieldStateTransform } from './turn-state';
 import { applyCpuSwitchIns, applyPlayerSwitchIns } from './phases/switching';
-import { BattleFieldState } from './moveScoring.contracts';
+import { BattleFieldState, PokemonPosition, Trainer } from './moveScoring.contracts';
 import { Field } from '@smogon/calc';
 
 describe('Turn state', () => {
@@ -111,10 +111,8 @@ IVs: 30 HP / 9 Atk / 21 Def / 6 SpA / 14 SpD / 25 Spe
       let sun = new Field({ weather: 'Sun' });
       let state = new BattleFieldState(
         'doubles',
-        [{ pokemon: Excadrill, firstTurnOut: false }, { pokemon: Aggron, firstTurnOut: true }],
-        [{ pokemon: Victreebel, firstTurnOut: false }, { pokemon: Aerodactyl, firstTurnOut: false }],
-        [Carracosta],
-        [Cinderace, Mimikyu, Ursaluna, Sharpedo],
+        new Trainer([ new PokemonPosition(Excadrill, false), new PokemonPosition(Aggron, true) ], [Carracosta]),
+        new Trainer([ new PokemonPosition(Victreebel, false), new PokemonPosition(Aerodactyl, false) ], [Cinderace, Mimikyu, Ursaluna, Sharpedo]),
         sun,
         sun,
       );

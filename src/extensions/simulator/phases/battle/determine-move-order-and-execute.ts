@@ -98,15 +98,15 @@ function executeActions(state: BattleFieldState, actions: PossibleAction[]): Bat
 
 function getPossibleActionsForAllSlots(state: BattleFieldState): Array<PossiblePokemonActions> {
     let possibleActionsByPokemon: Array<PossiblePokemonActions> = [];
-    for (let i = 0; i < state.cpuActive.length; i++) {
-        let possibleActions: PossibleAction[] = getCpuPossibleActions(state, state.cpuActive[i], state.playerActive, state.cpuActive);
-        possibleActionsByPokemon.push({ pokemon: state.cpuActive[i], possibleActions });
+    for (let i = 0; i < state.cpu.active.length; i++) {
+        let possibleActions: PossibleAction[] = getCpuPossibleActions(state, state.cpu.active[i], state.player.active, state.cpu.active);
+        possibleActionsByPokemon.push({ pokemon: state.cpu.active[i], possibleActions });
     }
 
     let cpuPossibleActions = [...possibleActionsByPokemon];
-    for (let i = 0; i < state.playerActive.length; i++) {
-        let possibleActions: PossibleAction[] = getPlayerPossibleActions(state, state.playerActive[i], state.cpuActive, state.playerActive, cpuPossibleActions);
-        possibleActionsByPokemon.push({ pokemon: state.playerActive[i], possibleActions });
+    for (let i = 0; i < state.player.active.length; i++) {
+        let possibleActions: PossibleAction[] = getPlayerPossibleActions(state, state.player.active[i], state.cpu.active, state.player.active, cpuPossibleActions);
+        possibleActionsByPokemon.push({ pokemon: state.player.active[i], possibleActions });
     }
 
     return possibleActionsByPokemon;

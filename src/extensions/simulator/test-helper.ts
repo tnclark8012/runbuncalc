@@ -372,11 +372,11 @@ export function importTeam(importText: string): Pokemon[] {
 }
 
 export function expectCpuTeam(active: ActivePokemon[], party: Pokemon[], state: BattleFieldState): void {
-  expectTeam({ active, party }, { active: state.cpuActive, party: state.cpuParty });
+  expectTeam({ active, party }, { active: state.cpu.active, party: state.cpu.party });
 }
 
 export function expectPlayerTeam(active: ActivePokemon[], party: Pokemon[], state: BattleFieldState): void {
-  expectTeam({ active, party }, { active: state.playerActive, party: state.playerParty });
+  expectTeam({ active, party }, { active: state.player.active, party: state.player.party });
 }
 
 export function expectTeam(expected: { active: ActivePokemon[], party: Pokemon[] }, actual: { active: ActivePokemon[], party: Pokemon[] }): void {

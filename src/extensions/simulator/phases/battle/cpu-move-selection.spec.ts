@@ -5,12 +5,13 @@ import {
   Pokemon,
 } from '@smogon/calc';
 import { inGen, importTeam, importPokemon, expectPlayerTeam, expectCpuTeam } from '../../test-helper';
-import { ActivePokemon, BattleFieldState } from '../../moveScoring.contracts';
+import { ActivePokemon, BattleFieldState, PokemonPosition, Trainer } from '../../moveScoring.contracts';
 import { generateAllActionCombinations } from './determine-move-order-and-execute';
 import { MoveAction, PossibleAction, PossiblePokemonAction, PossiblePokemonActions } from './move-selection.contracts';
 import { createMove } from '../../moveScoring';
 import { getCpuMoveScoresAgainstTarget, getCpuPossibleActions } from './cpu-move-selection';
 import { get } from 'jquery';
+import { PartyOrderSwitchStrategy } from '../../switchStrategy.partyOrder';
 
 const RunAndBun = 8;
 inGen(RunAndBun, ({ gen, calculate, Pokemon, Move }) => {
@@ -97,8 +98,14 @@ Ability: Hyper Cutter
       Torkoal.originalCurHP = 68;
 
       // Situation: Krabby is slower than Dragapult and is KOd, but Krabby can KO with priority before it dies.
-      const state = new BattleFieldState('doubles', [{ pokemon: Torkoal }, { pokemon: Dragapult }], [{ pokemon: Krabby }], [], [], new Field(), new Field());
-      const scores = getCpuMoveScoresAgainstTarget(state, state.cpuActive[0], state.playerActive[0], { slot: 0, type: 'opponent'});
+      const state = new BattleFieldState(
+        'doubles', 
+        new Trainer([ new PokemonPosition(Torkoal), new PokemonPosition(Dragapult)], [], undefined!), 
+        new Trainer([ new PokemonPosition(Krabby) ], [], undefined!), 
+        new Field(), 
+        new Field());
+        
+      const scores = getCpuMoveScoresAgainstTarget(state, state.cpu.active[0], state.player.active[0], { slot: 0, type: 'opponent'});
       const torkoalActions = getCpuActionsFor1v1(Krabby, Torkoal);
       const dragapultActions = getCpuActionsFor1v1(Krabby, Dragapult);
 
@@ -132,25 +139,33 @@ Ability: Hyper Cutter
 function getCpuActionsFor1v1(cpuPokemon: Pokemon, playerPokemon: Pokemon): PossibleAction[] {
   const state = new BattleFieldState(
     'singles',
-    [{ pokemon: playerPokemon }],
-    [{ pokemon: cpuPokemon }],
-    [],
-    [],
+    new Trainer(
+      [new PokemonPosition(playerPokemon)],
+      [],
+      undefined!),
+    new Trainer(
+      [new PokemonPosition(cpuPokemon)],
+      [],
+      undefined!),
     new Field(),
     new Field()
   );
-  return getCpuPossibleActions(state, state.cpuActive[0], state.playerActive, state.cpuActive);
+  return getCpuPossibleActions(state, state.cpu.active[0], state.player.active, state.cpu.active);
 }
 
 function getCpuActionsForDoubleBattle(cpuPokemon: Pokemon, playerPokemon: Pokemon[]): PossibleAction[] {
   const state = new BattleFieldState(
     'doubles',
-    playerPokemon.map(pokemon => ({ pokemon })),
-    [{ pokemon: cpuPokemon }],
-    [],
-    [],
+    new Trainer(
+      playerPokemon.map(p => new PokemonPosition(p)),
+      [],
+      undefined!),
+    new Trainer(
+      [new PokemonPosition(cpuPokemon)],
+      [],
+      undefined!),
     new Field(),
     new Field()
   );
-  return getCpuPossibleActions(state, state.cpuActive[0], state.playerActive, state.cpuActive);
+  return getCpuPossibleActions(state, state.cpu.active[0], state.player.active, state.cpu.active);
 }

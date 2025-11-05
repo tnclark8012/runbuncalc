@@ -4,11 +4,11 @@ import { applyBoost } from "../../utils";
 export function applyStartOfTurnAbilities(state: BattleFieldState): BattleFieldState {
   state = state.clone();
   let participants = [
-    { source: state.playerActive[0], ally: state.playerActive[1] },
-    { source: state.playerActive[1], ally: state.playerActive[0], opponents: state.cpuActive },
-    { source: state.cpuActive[0], ally: state.cpuActive[1], opponents: state.playerActive },
-    { source: state.cpuActive[1], ally: state.cpuActive[0], opponents: state.playerActive }
-  ].filter(x => !!x.source); 
+    { source: state.player.active[0], ally: state.player.active[1] },
+    { source: state.player.active[1], ally: state.player.active[0], opponents: state.cpu.active },
+    { source: state.cpu.active[0], ally: state.cpu.active[1], opponents: state.player.active },
+    { source: state.cpu.active[1], ally: state.cpu.active[0], opponents: state.player.active }
+  ].filter(x => !!x.source);
 
   // Abilities trigger in speed order
   participants.sort((a, b) => a.source.pokemon.stats.spe - b.source.pokemon.stats.spe);

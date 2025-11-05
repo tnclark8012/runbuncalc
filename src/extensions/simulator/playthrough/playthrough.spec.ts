@@ -1,8 +1,7 @@
-import { Field, Move, StatsTable } from '@smogon/calc';
+import { Field } from '@smogon/calc';
 import { getAllPlayerAndCpuPossibleTurns } from '../phases/battle/determine-move-order-and-execute';
-import { BattleFieldState } from '../moveScoring.contracts';
+import { BattleFieldState, PokemonPosition, Trainer } from '../moveScoring.contracts';
 import { importTeam } from '../helper';
-import { Heuristics } from '../../configuration';
 import { usingHeuristics } from '../test-helper';
 import { BasicScoring, IntuitionScoring } from '../phases/battle/player-move-selection-strategy';
 
@@ -29,7 +28,12 @@ IVs: 20 HP / 27 Atk / 8 SpA
 - Growl
 
 `);
-        const state = new BattleFieldState('singles', [{pokemon:Turtwig, firstTurnOut: true}], [{ pokemon: Torchic, firstTurnOut: true }], [], [], new Field(), new Field());
+        const state = new BattleFieldState(
+          'singles', 
+          new Trainer([ new PokemonPosition(Turtwig, true) ], []),
+          new Trainer([ new PokemonPosition(Torchic, true) ], []),
+          new Field(), 
+          new Field());
         
         usingHeuristics({ playerMoveScoringStrategy: BasicScoring }, () => {
           let possibleTurns = getAllPlayerAndCpuPossibleTurns(state);

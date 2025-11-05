@@ -1,6 +1,7 @@
 import { A, I, Field } from '@smogon/calc';
 
 declare global {
+  var cntrlIsPressed: boolean;
   /**
    * dist\js\shared_controls.js
    */
@@ -15,4 +16,7 @@ declare global {
   }
 
   function getDamageRanges(results: A.Result[]): DamageRange[];
+
+  function updateDex(customSets: any): void;
+  function selectFirstMon(): void;
 }

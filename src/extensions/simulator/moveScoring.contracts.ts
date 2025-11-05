@@ -1,4 +1,5 @@
 import { Field, Move, Pokemon } from '@smogon/calc';
+import { PartyOrderSwitchStrategy } from './switchStrategy.partyOrder';
 
 export interface MoveConsideration {
 	result: MoveResult;
@@ -51,14 +52,45 @@ export interface ActivePokemon {
 	firstTurnOut?: boolean;
 }
 
+export class PokemonPosition {
+	constructor(public pokemon: Pokemon,
+		public firstTurnOut?: boolean)
+		{
+
+		}
+
+	public clone(): PokemonPosition {
+		return new PokemonPosition(this.pokemon.clone(), this.firstTurnOut);
+	}
+}
+
+export interface SwitchStrategy {
+	getPostKOSwitchIn(state: BattleFieldState): Pokemon | undefined;
+}
+
+export class Trainer {
+	constructor(
+		public readonly active: PokemonPosition[],
+		public readonly party: Pokemon[],
+		public readonly switchStrategy?: SwitchStrategy)
+	{
+		this.switchStrategy = new PartyOrderSwitchStrategy(() => this);
+	}
+
+	public clone(): Trainer {
+		return new Trainer(
+			this.active.map(p => p.clone()),
+			this.party.map(p => p.clone()),
+			this.switchStrategy);
+	}
+}
+
 export type BattleFormat = 'singles' | 'doubles';
 export class BattleFieldState {
 	constructor(
 		public readonly battleFormat: BattleFormat,
-		public readonly playerActive: ActivePokemon[],
-		public readonly cpuActive: ActivePokemon[],
-		public readonly playerParty: Pokemon[],
-		public readonly cpuParty: Pokemon[],
+		public readonly player: Trainer,
+		public readonly cpu: Trainer,
 		public readonly playerField: Field,
 		public readonly cpuField: Field) {
 		
@@ -71,10 +103,8 @@ export class BattleFieldState {
 	public clone(): BattleFieldState {
 		return new BattleFieldState(
 			this.battleFormat,
-			this.playerActive.map(p => ({ ...p, pokemon: p.pokemon.clone() })),
-			this.cpuActive.map(p => ({ ...p, pokemon: p.pokemon.clone() })),
-			this.playerParty.map(p => p.clone()),
-			this.cpuParty.map(p => p.clone()),
+			this.player.clone(),
+			this.cpu.clone(),
 			this.playerField.clone(),
 			this.cpuField.clone()
 		)

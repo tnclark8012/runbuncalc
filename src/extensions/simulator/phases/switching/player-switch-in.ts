@@ -1,5 +1,5 @@
 import { Generations, Pokemon } from "@smogon/calc";
-import { ActivePokemon, BattleFieldState } from "../../moveScoring.contracts";
+import { ActivePokemon, BattleFieldState, PokemonPosition, Trainer } from "../../moveScoring.contracts";
 import { calculateAllMoves, findHighestDamageMove, getCpuMoveConsiderations, getDamageRanges } from "../../moveScoring";
 import { isFainted } from "../../utils";
 
@@ -18,8 +18,8 @@ export function applyPlayerSwitchIns(state: BattleFieldState): BattleFieldState[
     
     // Find all fainted active Pokemon positions
     const faintedPositions: number[] = [];
-    for (let i = 0; i < state.playerActive.length; i++) {
-        if (isFainted(state.playerActive[i].pokemon)) {
+    for (let i = 0; i < state.player.active.length; i++) {
+        if (isFainted(state.player.active[i].pokemon)) {
             faintedPositions.push(i);
         }
     }
@@ -30,8 +30,8 @@ export function applyPlayerSwitchIns(state: BattleFieldState): BattleFieldState[
     }
     
     // Get all non-fainted Pokemon from party
-    const availableSwitchIns = state.playerParty.filter(pokemon => !isFainted(pokemon));
-    
+    const availableSwitchIns = state.player.party.filter(pokemon => !isFainted(pokemon));
+
     // If no available switch-ins, return original state
     if (availableSwitchIns.length === 0) {
         return [state];
@@ -50,20 +50,17 @@ export function applyPlayerSwitchIns(state: BattleFieldState): BattleFieldState[
             const switchInPokemon = combination[i];
             
             // Get the fainted Pokemon to move to party
-            const faintedPokemon = newState.playerActive[position].pokemon;
+            const faintedPokemon = newState.player.active[position].pokemon;
             
             // Remove switch-in from party
-            const switchInIndex = newState.playerParty.findIndex((p: Pokemon) => p.equals(switchInPokemon));
-            newState.playerParty.splice(switchInIndex, 1);
+            const switchInIndex = newState.player.party.findIndex((p: Pokemon) => p.equals(switchInPokemon));
+            newState.player.party.splice(switchInIndex, 1);
             
             // Replace active Pokemon
-            newState.playerActive[position] = { 
-                pokemon: switchInPokemon, 
-                firstTurnOut: true 
-            };
+            newState.player.active[position] = new PokemonPosition(switchInPokemon, true);
             
             // Add fainted Pokemon to end of party
-            newState.playerParty.push(faintedPokemon);
+            newState.player.party.push(faintedPokemon);
         }
         
         futureStates.push(newState);
@@ -98,7 +95,7 @@ function generateCombinations<T>(items: T[], count: number): T[][] {
 }
 
 function isUninitialized(state: BattleFieldState): boolean {
-    return !state.playerActive.length;
+    return !state.player.active.length;
 }
 
 function initializeActivePokemon(state: BattleFieldState): BattleFieldState {
@@ -107,18 +104,16 @@ function initializeActivePokemon(state: BattleFieldState): BattleFieldState {
 
     state = state.clone();
 
-    let newActive: ActivePokemon = { pokemon: popFromParty(state.playerParty, state.playerParty[0]), firstTurnOut: true };
+    let newActive: PokemonPosition = new PokemonPosition(popFromParty(state.player.party, state.player.party[0]), true);
      
-    let playerActive: ActivePokemon[] = [newActive];
-    if (state.isDoubles && state.playerParty.length)
-        playerActive.push({ pokemon: popFromParty(state.playerParty, state.playerParty[0]), firstTurnOut: true });
+    let playerActive: PokemonPosition[] = [newActive];
+    if (state.isDoubles && state.player.party.length)
+        playerActive.push(new PokemonPosition(popFromParty(state.player.party, state.player.party[0]), true));
 
     return new BattleFieldState(
         state.battleFormat,
-        playerActive,
-        state.cpuActive,
-        state.playerParty,
-        state.cpuParty,
+        new Trainer(playerActive, state.player.party, state.player.switchStrategy),
+        state.cpu,
         state.playerField,
         state.cpuField);
 }
