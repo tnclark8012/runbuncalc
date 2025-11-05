@@ -1,8 +1,13 @@
 const path = require('path');
+const CopyWebpackPlugin = require('copy-webpack-plugin');
 
 module.exports = {
   mode: 'development',
-  entry: { extensions: './src/extensions/main.ts', core: './src/extensions/core/main.ts', sandbox: './src/sandbox/main.ts' },
+  entry: {
+    extensions: './src/extensions/main.ts',
+    core: './src/extensions/core/main.ts',
+    sandbox: './src/sandbox/main.ts',
+  },
   module: {
     rules: [
       {
@@ -19,4 +24,11 @@ module.exports = {
     filename: '[name].bundle.js',
     path: path.resolve(__dirname, 'dist'),
   },
+  plugins: [
+    new CopyWebpackPlugin({
+      patterns: [
+        { from: './*.html', to: '[name][ext]', context: 'src' },
+      ],
+    }),
+  ],
 };
