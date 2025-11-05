@@ -31,7 +31,7 @@ export function scoreCPUMoves(cpuResults: Result[], playerMove: MoveResult, fiel
             playerMove,
             playerWillKOAI: playerMove.highestRollDamage >= aiMon.curHP() && !savedFromKO(aiMon),
             playerWill2HKOAI: playerMove.highestRollDamage * 2 >= aiMon.curHP(),
-            aiMonFirstTurnOut: !lastTurnOutcome || !lastTurnOutcome.endOfTurnState.cpuSide.pokemon.equals(aiMon), // TODO: Not quite right, but probably good enough
+            aiMonFirstTurnOut: !lastTurnOutcome || !lastTurnOutcome.endOfTurnState.cpu.activeSlot.pokemon.equals(aiMon), // TODO: Not quite right, but probably good enough
             lastTurnCPUMove: aiActionLastTurn ? aiActionLastTurn.move : undefined,
             field
         };

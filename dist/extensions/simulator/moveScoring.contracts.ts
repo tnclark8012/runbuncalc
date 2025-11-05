@@ -42,15 +42,42 @@ export interface TurnOutcome {
 	endOfTurnState: BattleFieldState;
 }
 
-export interface PokemonPosition {
-	pokemon: Pokemon;
-	firstTurnOut?: boolean;
+export class PokemonPosition {
+	constructor(public pokemon: Pokemon,
+		public firstTurnOut?: boolean)
+		{
+
+		}
+
+	public clone(): PokemonPosition {
+		return new PokemonPosition(this.pokemon.clone(), this.firstTurnOut);
+	}
+}
+
+export interface SwitchStrategy {
+	getPostKOSwitchIn(state: BattleFieldState): Pokemon | undefined;
+}
+
+export class Trainer {
+	constructor(
+		public readonly activeSlot: PokemonPosition,
+		public readonly remainingPokemon: Pokemon[],
+		public readonly switchStrategy: SwitchStrategy)
+	{
+	}
+
+	public clone(): Trainer {
+		return new Trainer(
+			this.activeSlot.clone(),
+			this.remainingPokemon.map(p => p.clone()),
+			this.switchStrategy);
+	}
 }
 
 export class BattleFieldState {
 	constructor(
-		public readonly playerSide: PokemonPosition,
-		public readonly cpuSide: PokemonPosition,
+		public readonly player: Trainer,
+		public readonly cpu: Trainer,
 		public readonly playerField: Field,
 		public readonly cpuField: Field) {
 		
@@ -58,9 +85,8 @@ export class BattleFieldState {
 
 	public clone(): BattleFieldState {
 		return new BattleFieldState(
-			{ ...this.playerSide, pokemon: this.playerSide.pokemon.clone() },
-			{ ...this.cpuSide, pokemon: this.cpuSide.pokemon.clone() },
-			this.playerField.clone(),
+			this.player.clone(),
+			this.cpu.clone(),this.playerField.clone(),
 			this.cpuField.clone()
 		)
 	}

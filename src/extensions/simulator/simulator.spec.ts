@@ -55,13 +55,38 @@ Level: 12
             { pokemon: playerAerodactyl, move: 'Dual Wingbeat' }
           )
           expect(result.winner.name).toEqual('Aerodactyl');
-          expect(result.turnOutcomes[0].endOfTurnState.cpuSide.pokemon.item).toBeUndefined();
+          expect(result.turnOutcomes[0].endOfTurnState.cpu.activeSlot.pokemon.item).toBeUndefined();
           
           expect(result.turnOutcomes.length).toBe(1);
       });
     });
 
     describe('Turn sequence', () => {
+
+      test('Damage recovery', () => {
+let [playerGolisopod, cpuAppletun] = importTeam(`
+Golisopod
+Level: 100
+Ability: Emergency Exit
+- Leech Life
+
+Appletun @ Lum Berry
+Level: 100
+Ability: Thick Fat
+- Dragon Pulse
+- Apple Acid
+`); 
+        
+          let battleSimulator = new BattleSimulator(Generations.get(gen), playerGolisopod, cpuAppletun, new Field(), new Field());
+          const result = battleSimulator.getResult({ maxTurns: 2 });
+          
+          const [turn1, turn2] = result.turnOutcomes;
+          expect(turn1.actions[0].attacker.equals(playerGolisopod)).toBe(true);
+          expect(turn1.endOfTurnState.player.activeSlot.pokemon.curHP()).toBeLessThan(playerGolisopod.maxHP());
+          const goliDamageTaken = turn1.actions[1].lowestRollDamage;
+          expect(turn2.endOfTurnState.player.activeSlot.pokemon.curHP()).toBe(playerGolisopod.maxHP()); 
+      });
+
       test('stat changes from moves take effect after the turn', () => {
         let [cpuKrabby, playerInfernape] = importTeam(`
 Krabby
@@ -81,9 +106,9 @@ Level: 5
             { pokemon: cpuKrabby, move: 'Swords Dance' },
             { pokemon: playerInfernape, move: 'Close Combat' },
           )
-          expect(result.turnOutcomes[0].endOfTurnState.cpuSide.pokemon.boosts.atk).toBe(2);
-          expect(result.turnOutcomes[0].endOfTurnState.playerSide.pokemon.boosts.def).toBe(-1);
-          expect(result.turnOutcomes[0].endOfTurnState.playerSide.pokemon.boosts.spd).toBe(-1);
+          expect(result.turnOutcomes[0].endOfTurnState.cpu.activeSlot.pokemon.boosts.atk).toBe(2);
+          expect(result.turnOutcomes[0].endOfTurnState.player.activeSlot.pokemon.boosts.def).toBe(-1);
+          expect(result.turnOutcomes[0].endOfTurnState.player.activeSlot.pokemon.boosts.spd).toBe(-1);
       });
 
       test('Turns contain immutable state', () => {
@@ -121,16 +146,16 @@ Ability: Speed Boost
           )
 
           // Greninja's white herb should have restored the stat drops from CC
-          expect(turn1.endOfTurnState.playerSide.pokemon.item).toBeUndefined();
-          expect(turn1.endOfTurnState.playerSide.pokemon.boosts.def).toBe(0);
-          expect(turn1.endOfTurnState.playerSide.pokemon.boosts.spd).toBe(0);
-          expect(turn1.endOfTurnState.cpuSide.pokemon.curHP()).toBe(1);
-          expect(result.turnOutcomes[0].endOfTurnState.cpuSide.pokemon.boosts.spe).toBe(1);
+          expect(turn1.endOfTurnState.player.activeSlot.pokemon.item).toBeUndefined();
+          expect(turn1.endOfTurnState.player.activeSlot.pokemon.boosts.def).toBe(0);
+          expect(turn1.endOfTurnState.player.activeSlot.pokemon.boosts.spd).toBe(0);
+          expect(turn1.endOfTurnState.cpu.activeSlot.pokemon.curHP()).toBe(1);
+          expect(result.turnOutcomes[0].endOfTurnState.cpu.activeSlot.pokemon.boosts.spe).toBe(1);
 
-          expect(turn2.endOfTurnState.playerSide.pokemon.boosts.def).toBe(-1);
-          expect(turn2.endOfTurnState.playerSide.pokemon.boosts.spd).toBe(-1);
-          expect(turn2.endOfTurnState.cpuSide.pokemon.boosts.spe).toBe(1);
-          expect(turn2.endOfTurnState.cpuSide.pokemon.curHP()).toBe(0);
+          expect(turn2.endOfTurnState.player.activeSlot.pokemon.boosts.def).toBe(-1);
+          expect(turn2.endOfTurnState.player.activeSlot.pokemon.boosts.spd).toBe(-1);
+          expect(turn2.endOfTurnState.cpu.activeSlot.pokemon.boosts.spe).toBe(1);
+          expect(turn2.endOfTurnState.cpu.activeSlot.pokemon.curHP()).toBe(0);
       });
 
       test('Abilities that activate on switch-in', () => {
@@ -164,8 +189,8 @@ Ability: Intimidate
           )
 
           // Intimidate should only activate once
-          expect(turn1.endOfTurnState.cpuSide.pokemon.boosts.atk).toBe(-1);
-          expect(turn2.endOfTurnState.cpuSide.pokemon.boosts.atk).toBe(-1);
+          expect(turn1.endOfTurnState.cpu.activeSlot.pokemon.boosts.atk).toBe(-1);
+          expect(turn2.endOfTurnState.cpu.activeSlot.pokemon.boosts.atk).toBe(-1);
       });
     });
 
@@ -199,7 +224,7 @@ Ability: Speed Boost
             { pokemon: combusken, move: 'Double Kick' },
             { pokemon: tirtouga, move: 'Brine' },
           )
-          expect(result.turnOutcomes[0].endOfTurnState.cpuSide.pokemon.boosts.spe).toBe(1);
+          expect(result.turnOutcomes[0].endOfTurnState.cpu.activeSlot.pokemon.boosts.spe).toBe(1);
           expectTurn(
             result.turnOutcomes[1],
             { pokemon: tirtouga, move: 'Aqua Jet' },
