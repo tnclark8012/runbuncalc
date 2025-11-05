@@ -56,7 +56,7 @@ export class Pokemon implements State.Pokemon {
 
     this.gen = gen;
     this.name = options.name || name as I.SpeciesName;
-    this.id = options.id || `${this.name}:Math.random()`;
+    this.id = options.id || `${this.name}:${Math.random()}`;
     this.types = options.types ? options.types : this.species.types;
     this.weightkg = this.species.weightkg;
 

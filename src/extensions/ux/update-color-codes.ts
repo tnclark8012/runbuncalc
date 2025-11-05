@@ -2,6 +2,7 @@ import { A, I, calculate, Field, GenerationNum, Pokemon } from '@smogon/calc';
 import { BattleSimulator } from '../simulator/simulator';
 import { BattleFieldState } from '../simulator/moveScoring.contracts';
 import { curHPPercentage } from '../simulator/utils';
+import { gen } from '../configuration';
 
 export function updateColorCodes(): void {
 	var speCheck = (document.getElementById("cc-spe-border") as HTMLInputElement).checked;
@@ -92,7 +93,7 @@ function getCalculationColors(playerPokemon: A.Pokemon[], cpuPokemon: A.Pokemon)
 
 	let bestMon = result
 		.filter(r => r.type === 'simulator')
-		.sort((a, b) => curHPPercentage(b.finalState.player.activeSlot.pokemon) - curHPPercentage(a.finalState.player.activeSlot.pokemon))
+		.sort((a, b) => curHPPercentage(b.finalState.player.active[0].pokemon) - curHPPercentage(a.finalState.player.active[0].pokemon))
 		.at(0);
 		if (bestMon)
 			(bestMon as any).best = true;
@@ -109,7 +110,7 @@ function getSimulatedCalculationResult(p1: A.Pokemon, p2: A.Pokemon, p1Field: Fi
 	//Faster Tied Slower
 	var fastest: SpeedTier = p1speed > p2speed ? "F" : p1speed < p2speed ? "S" : p1speed === p2speed ? "T" : "T";
 
-	const simulator = new BattleSimulator(gen, p1, p2, p1Field, p2Field);
+	const simulator = new BattleSimulator(gen, (window as any).isInDoubles ? 'doubles' : 'singles', p1, p2, p1Field, p2Field);
 	const result = simulator.getResult({ playerSwitchingIn: true });
 	let code: MatchupResultCode;
 	if (result.winner.equals(p1)) {

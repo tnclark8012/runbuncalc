@@ -1,4 +1,5 @@
 import { Field, Move, Pokemon } from '@smogon/calc';
+import { PartyOrderSwitchStrategy } from './switchStrategy.partyOrder';
 
 export interface MoveConsideration {
 	result: MoveResult;
@@ -27,6 +28,8 @@ export interface CPUMoveConsideration extends MoveConsideration {
     playerMove: MoveResult;
     playerWillKOAI: boolean;
     playerWill2HKOAI: boolean;
+	aiWillOHKOPlayer: boolean;
+	aiOutdamagesPlayer: boolean;
     lastTurnCPUMove: Move | undefined;
     aiMonFirstTurnOut: boolean;
     field: Field
@@ -34,12 +37,19 @@ export interface CPUMoveConsideration extends MoveConsideration {
 
 export interface PlayerMoveConsideration extends MoveConsideration {
 	kosThroughRequiredLifesaver: boolean;
+	attackerDiesToRecoil: boolean;
+	guaranteedToFail: boolean;
 }
 
 export interface TurnOutcome {
 	turnNumber: number;
 	actions: MoveResult[];
 	endOfTurnState: BattleFieldState;
+}
+
+export interface ActivePokemon {
+	pokemon: Pokemon;
+	firstTurnOut?: boolean;
 }
 
 export class PokemonPosition {
@@ -60,22 +70,25 @@ export interface SwitchStrategy {
 
 export class Trainer {
 	constructor(
-		public readonly activeSlot: PokemonPosition,
-		public readonly remainingPokemon: Pokemon[],
-		public readonly switchStrategy: SwitchStrategy)
+		public readonly active: PokemonPosition[],
+		public readonly party: Pokemon[],
+		public readonly switchStrategy?: SwitchStrategy)
 	{
+		this.switchStrategy = new PartyOrderSwitchStrategy(() => this);
 	}
 
 	public clone(): Trainer {
 		return new Trainer(
-			this.activeSlot.clone(),
-			this.remainingPokemon.map(p => p.clone()),
+			this.active.map(p => p.clone()),
+			this.party.map(p => p.clone()),
 			this.switchStrategy);
 	}
 }
 
+export type BattleFormat = 'singles' | 'doubles';
 export class BattleFieldState {
 	constructor(
+		public readonly battleFormat: BattleFormat,
 		public readonly player: Trainer,
 		public readonly cpu: Trainer,
 		public readonly playerField: Field,
@@ -83,10 +96,16 @@ export class BattleFieldState {
 		
 	}
 
+	public get isDoubles(): boolean {
+		return this.battleFormat === 'doubles';
+	}
+
 	public clone(): BattleFieldState {
 		return new BattleFieldState(
+			this.battleFormat,
 			this.player.clone(),
-			this.cpu.clone(),this.playerField.clone(),
+			this.cpu.clone(),
+			this.playerField.clone(),
 			this.cpuField.clone()
 		)
 	}

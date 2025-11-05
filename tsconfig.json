@@ -1,5 +1,5 @@
 {
-  "exclude": ["calc", "import"],
+  "exclude": ["calc", "import", "obj", "dist"],
   "compilerOptions": {
     "outDir": "obj",
     "allowUnreachableCode": false,

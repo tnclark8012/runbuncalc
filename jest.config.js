@@ -5,6 +5,7 @@ module.exports = {
   coverageDirectory: 'coverage',
   testPathIgnorePatterns: ['<rootDir>/node_modules/', '<rootDir>/dist/'],
   coveragePathIgnorePatterns: ['<rootDir>/node_modules/', '<rootDir>/dist/' ],
+  setupFilesAfterEnv: ['<rootDir>/src/extensions/simulator/jest-setup.ts'],
   globals: {
     'ts-jest': {
       packageJson: 'package.json',
