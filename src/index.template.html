@@ -1133,6 +1133,14 @@
                         </tr>
                         <tr>
                             <td>
+                                <div class="left section-collection-options custom-box-options" title="Collection">
+                                    <select id="activeCollection"></select>
+                                    <button id="newCollection">New</button>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
                                 <div class="left custom-box-options" title="Export your entire box">
                                     <button id="exportAll">Export All</button>
                                     <input id="exportAllName" type="text" />
@@ -1883,6 +1891,7 @@
         var calc = exports = {};
         function require() { return exports };
     </script>
+    <script type="text/javascript" src="./core.bundle.js?"></script>
     <script type="text/javascript" src="./calc/util.js?"></script>
     <script type="text/javascript" src="./calc/stats.js?"></script>
     <script type="text/javascript" src="./calc/data/species.js?"></script>
