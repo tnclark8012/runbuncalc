@@ -16,6 +16,7 @@
     "sourceMap": true,
     "strict": true,
     "target": "es6",
+    "jsx": "react",
     "paths": {
         "@smogon/test/*" : ["./calc/src/test/*"]
     },

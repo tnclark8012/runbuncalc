@@ -4,20 +4,27 @@
   "repository": "github:smogon/damage-calc",
   "license": "MIT",
   "dependencies": {
-    "@smogon/calc": "file:calc"
+    "@fluentui/react": "^8.125.0",
+    "@reduxjs/toolkit": "^2.10.1",
+    "@smogon/calc": "file:calc",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0",
+    "react-redux": "^9.2.0"
   },
   "devDependencies": {
     "@types/jquery": "^3.5.32",
+    "@types/react": "^19.2.2",
+    "@types/react-dom": "^19.2.2",
     "eslint": "^8.27.0",
+    "eslint-plugin-jest": "^27.1.5",
     "express": "^4.18.2",
+    "jest": "^29.3.1",
     "subpkg": "^4.1.0",
+    "ts-jest": "^29.0.3",
     "ts-loader": "^9.5.2",
     "typescript": "^5.9.2",
     "webpack": "^5.101.0",
-    "webpack-cli": "^6.0.1",
-    "eslint-plugin-jest": "^27.1.5",
-    "jest": "^29.3.1",
-    "ts-jest": "^29.0.3"
+    "webpack-cli": "^6.0.1"
   },
   "optionalDependencies": {
     "@babel/core": "^7.20.2",
