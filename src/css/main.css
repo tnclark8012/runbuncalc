@@ -151,12 +151,16 @@ html, body {
     flex-wrap: wrap;
 }
 
-.trainer-pok{
-    height:  100%;
-    width:  auto;
+.opposite-pok, .trainer-pok  {
+    height:  30px;
+    width:  40px;
     margin-right:  10px;
     cursor: pointer;
     box-sizing: border-box;
+    background-image: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="40" height="30"><rect width="100%" height="100%" fill="transparent"/><text x="50%" y="50%" text-anchor="middle" dy=".3em" fill="%23999" font-size="8">?</text></svg>');
+    background-size: contain;
+    background-position: center;
+    background-repeat: no-repeat;
 }
 
 .trainer-pok:hover,  .opposite-pok:hover{

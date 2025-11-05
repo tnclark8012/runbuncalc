@@ -87,7 +87,7 @@ $("#updateL").click(function () {
 $("#exportAll").click(() => {
 	let name = document.querySelector("#exportAllName").value || document.querySelector('#levelCap').selectedOptions[0].label;
 	const link = document.createElement("a");
-	const allMons = localStorage.getItem("customsets");
+	const allMons = window.core.storage.getActiveSets();
 	navigator.clipboard.writeText(allMons)
 	const file = new Blob([allMons], { type: 'text/plain' });
 	link.href = URL.createObjectURL(file);
@@ -104,7 +104,7 @@ $("#importBox").click(() => {
 importBoxInput.addEventListener('change', (e) => {
 	const file = e.target.files[0];
 	file.text().then(value => {
-		localStorage.setItem("customsets", value);
+		window.core.storage.saveActiveSetsText(value);
 	});
 });
 
@@ -274,12 +274,7 @@ function addToDex(poke) {
 	dexObject.nature = poke.nature;
 	dexObject.item = poke.item;
 	dexObject.isCustomSet = poke.isCustomSet;
-	var customsets;
-	if (localStorage.customsets) {
-		customsets = JSON.parse(localStorage.customsets);
-	} else {
-		customsets = {};
-	}
+	var customsets = window.core.storage.getActiveSets();
 	if (!customsets[poke.name]) {
 		customsets[poke.name] = {};
 	}
@@ -318,8 +313,9 @@ function updateDex(customsets) {
 			addBoxed(poke);
 		}
 	}
-	localStorage.customsets = JSON.stringify(customsets);
+	window.core.storage.saveActiveSets(customsets);
 }
+
 function sortImports (a,b){
 	var sorted = [a.name, b.name].sort()[0]
 	if (sorted == b.name){
@@ -419,7 +415,7 @@ $("#clearSets").click(function () {
 	if (!yes){
 		return
 	}
-	localStorage.removeItem("customsets");
+	window.core.storage.saveActiveSets({});
 	$(allPokemon("#importedSetsOptions")).hide();
 	loadDefaultLists();
 	for (let zone of document.getElementsByClassName("dropzone")){
@@ -441,8 +437,8 @@ $(allPokemon("#importedSets")).click(function () {
 $(document).ready(function () {
 	var customSets;
 	placeBsBtn();
-	if (localStorage.customsets) {
-		customSets = JSON.parse(localStorage.customsets);
+	customSets = window.core.storage.getActiveSets();
+	if (Object.keys(customSets).length > 0) {
 		updateDex(customSets);
 		selectFirstMon();
 		$(allPokemon("#importedSetsOptions")).css("display", "inline");

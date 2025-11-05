@@ -55,7 +55,7 @@ Level: 12
             { pokemon: playerAerodactyl, move: 'Dual Wingbeat' }
           )
           expect(result.winner.name).toEqual('Aerodactyl');
-          expect(result.turnOutcomes[0].endOfTurnState.cpu.activePokemon.pokemon.item).toBeUndefined();
+          expect(result.turnOutcomes[0].endOfTurnState.cpu.activeSlot.pokemon.item).toBeUndefined();
           
           expect(result.turnOutcomes.length).toBe(1);
       });
@@ -82,9 +82,9 @@ Ability: Thick Fat
           
           const [turn1, turn2] = result.turnOutcomes;
           expect(turn1.actions[0].attacker.equals(playerGolisopod)).toBe(true);
-          expect(turn1.endOfTurnState.player.activePokemon.pokemon.curHP()).toBeLessThan(playerGolisopod.maxHP());
+          expect(turn1.endOfTurnState.player.activeSlot.pokemon.curHP()).toBeLessThan(playerGolisopod.maxHP());
           const goliDamageTaken = turn1.actions[1].lowestRollDamage;
-          expect(turn2.endOfTurnState.player.activePokemon.pokemon.curHP()).toBe(playerGolisopod.maxHP()); 
+          expect(turn2.endOfTurnState.player.activeSlot.pokemon.curHP()).toBe(playerGolisopod.maxHP()); 
       });
 
       test('stat changes from moves take effect after the turn', () => {
@@ -106,9 +106,9 @@ Level: 5
             { pokemon: cpuKrabby, move: 'Swords Dance' },
             { pokemon: playerInfernape, move: 'Close Combat' },
           )
-          expect(result.turnOutcomes[0].endOfTurnState.cpu.activePokemon.pokemon.boosts.atk).toBe(2);
-          expect(result.turnOutcomes[0].endOfTurnState.player.activePokemon.pokemon.boosts.def).toBe(-1);
-          expect(result.turnOutcomes[0].endOfTurnState.player.activePokemon.pokemon.boosts.spd).toBe(-1);
+          expect(result.turnOutcomes[0].endOfTurnState.cpu.activeSlot.pokemon.boosts.atk).toBe(2);
+          expect(result.turnOutcomes[0].endOfTurnState.player.activeSlot.pokemon.boosts.def).toBe(-1);
+          expect(result.turnOutcomes[0].endOfTurnState.player.activeSlot.pokemon.boosts.spd).toBe(-1);
       });
 
       test('Turns contain immutable state', () => {
@@ -146,16 +146,16 @@ Ability: Speed Boost
           )
 
           // Greninja's white herb should have restored the stat drops from CC
-          expect(turn1.endOfTurnState.player.activePokemon.pokemon.item).toBeUndefined();
-          expect(turn1.endOfTurnState.player.activePokemon.pokemon.boosts.def).toBe(0);
-          expect(turn1.endOfTurnState.player.activePokemon.pokemon.boosts.spd).toBe(0);
-          expect(turn1.endOfTurnState.cpu.activePokemon.pokemon.curHP()).toBe(1);
-          expect(result.turnOutcomes[0].endOfTurnState.cpu.activePokemon.pokemon.boosts.spe).toBe(1);
+          expect(turn1.endOfTurnState.player.activeSlot.pokemon.item).toBeUndefined();
+          expect(turn1.endOfTurnState.player.activeSlot.pokemon.boosts.def).toBe(0);
+          expect(turn1.endOfTurnState.player.activeSlot.pokemon.boosts.spd).toBe(0);
+          expect(turn1.endOfTurnState.cpu.activeSlot.pokemon.curHP()).toBe(1);
+          expect(result.turnOutcomes[0].endOfTurnState.cpu.activeSlot.pokemon.boosts.spe).toBe(1);
 
-          expect(turn2.endOfTurnState.player.activePokemon.pokemon.boosts.def).toBe(-1);
-          expect(turn2.endOfTurnState.player.activePokemon.pokemon.boosts.spd).toBe(-1);
-          expect(turn2.endOfTurnState.cpu.activePokemon.pokemon.boosts.spe).toBe(1);
-          expect(turn2.endOfTurnState.cpu.activePokemon.pokemon.curHP()).toBe(0);
+          expect(turn2.endOfTurnState.player.activeSlot.pokemon.boosts.def).toBe(-1);
+          expect(turn2.endOfTurnState.player.activeSlot.pokemon.boosts.spd).toBe(-1);
+          expect(turn2.endOfTurnState.cpu.activeSlot.pokemon.boosts.spe).toBe(1);
+          expect(turn2.endOfTurnState.cpu.activeSlot.pokemon.curHP()).toBe(0);
       });
 
       test('Abilities that activate on switch-in', () => {
@@ -170,6 +170,7 @@ Level: 12
 Ability: Intimidate
 - Stone Edge
 `);
+          Aerodactyl.abilityOn = true;
         
           let battleSimulator = new BattleSimulator(Generations.get(gen), Aerodactyl, Krabby, new Field(), new Field());
           const result = battleSimulator.getResult();
@@ -188,8 +189,8 @@ Ability: Intimidate
           )
 
           // Intimidate should only activate once
-          expect(turn1.endOfTurnState.cpu.activePokemon.pokemon.boosts.atk).toBe(-1);
-          expect(turn2.endOfTurnState.cpu.activePokemon.pokemon.boosts.atk).toBe(-1);
+          expect(turn1.endOfTurnState.cpu.activeSlot.pokemon.boosts.atk).toBe(-1);
+          expect(turn2.endOfTurnState.cpu.activeSlot.pokemon.boosts.atk).toBe(-1);
       });
     });
 
@@ -223,7 +224,7 @@ Ability: Speed Boost
             { pokemon: combusken, move: 'Double Kick' },
             { pokemon: tirtouga, move: 'Brine' },
           )
-          expect(result.turnOutcomes[0].endOfTurnState.cpu.activePokemon.pokemon.boosts.spe).toBe(1);
+          expect(result.turnOutcomes[0].endOfTurnState.cpu.activeSlot.pokemon.boosts.spe).toBe(1);
           expectTurn(
             result.turnOutcomes[1],
             { pokemon: tirtouga, move: 'Aqua Jet' },
@@ -329,6 +330,42 @@ Ability: Levitate
           )
           expect(result.winner.id).toBe(Latios.id);
       });
+    });
+
+    xtest('Winstrate Vito Fallarbor - Safe KO Alakazam', () => {
+        let [Alakazam, Excadrill] = importTeam(`
+Alakazam @ Focus Sash
+Level: 48
+Timid Nature
+Ability: Inner Focus
+- Psychic
+- Aura Sphere
+- Shadow Ball
+- Charge Beam
+
+Excadrill
+Level: 48
+Naive Nature
+Ability: Sand Force
+IVs: 23 HP / 9 Atk / 5 Def / 0 SpA / 29 SpD / 10 Spe
+- Drill Run
+- Iron Head
+- Rock Slide
+- Rapid Spin
+`);
+        
+          let battleSimulator = new BattleSimulator(Generations.get(gen), Excadrill, Alakazam, new Field(), new Field());
+          const result = battleSimulator.getResult();
+          expectTurn(
+            result.turnOutcomes[0],
+            { pokemon: Alakazam, move: 'Aura Sphere' },
+            { pokemon: Excadrill, move: 'Rapid Spin' },
+          );
+          expectTurn(
+            result.turnOutcomes[1],
+            { pokemon: Excadrill, move: 'Drill Run' },
+          );
+          expect(result.winner.id).toBe(Excadrill.id);
     });
   });
 
