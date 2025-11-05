@@ -28,7 +28,7 @@ Level: 100
 - Stone Edge
 `);
         player.originalCurHP = 1;
-        let battleSimulator = new BattleSimulator(Generations.get(gen), player, cpu, new Field(), new Field());
+        let battleSimulator = new BattleSimulator(Generations.get(gen), 'singles', player, cpu, new Field(), new Field());
         const result = battleSimulator.getResult();
         expect(result.winner.name).toEqual('Lopunny');
       });
@@ -48,14 +48,14 @@ Level: 12
 
           expect(playerAerodactyl.stats.spe).toBeGreaterThan(cpuKrabby.stats.spe);
           
-          let battleSimulator = new BattleSimulator(Generations.get(gen), playerAerodactyl, cpuKrabby, new Field(), new Field());
+          let battleSimulator = new BattleSimulator(Generations.get(gen), 'singles', playerAerodactyl, cpuKrabby, new Field(), new Field());
           const result = battleSimulator.getResult();
           expectTurn(
             result.turnOutcomes[0], 
             { pokemon: playerAerodactyl, move: 'Dual Wingbeat' }
           )
           expect(result.winner.name).toEqual('Aerodactyl');
-          expect(result.turnOutcomes[0].endOfTurnState.cpu.activeSlot.pokemon.item).toBeUndefined();
+          expect(result.turnOutcomes[0].endOfTurnState.cpu.active[0].pokemon.item).toBeUndefined();
           
           expect(result.turnOutcomes.length).toBe(1);
       });
@@ -77,14 +77,14 @@ Ability: Thick Fat
 - Apple Acid
 `); 
         
-          let battleSimulator = new BattleSimulator(Generations.get(gen), playerGolisopod, cpuAppletun, new Field(), new Field());
+          let battleSimulator = new BattleSimulator(Generations.get(gen), 'singles', playerGolisopod, cpuAppletun, new Field(), new Field());
           const result = battleSimulator.getResult({ maxTurns: 2 });
           
           const [turn1, turn2] = result.turnOutcomes;
           expect(turn1.actions[0].attacker.equals(playerGolisopod)).toBe(true);
-          expect(turn1.endOfTurnState.player.activeSlot.pokemon.curHP()).toBeLessThan(playerGolisopod.maxHP());
+          expect(turn1.endOfTurnState.player.active[0].pokemon.curHP()).toBeLessThan(playerGolisopod.maxHP());
           const goliDamageTaken = turn1.actions[1].lowestRollDamage;
-          expect(turn2.endOfTurnState.player.activeSlot.pokemon.curHP()).toBe(playerGolisopod.maxHP()); 
+          expect(turn2.endOfTurnState.player.active[0].pokemon.curHP()).toBe(playerGolisopod.maxHP()); 
       });
 
       test('stat changes from moves take effect after the turn', () => {
@@ -98,7 +98,7 @@ Level: 5
 - Close Combat
 `); 
         
-          let battleSimulator = new BattleSimulator(Generations.get(gen), playerInfernape, cpuKrabby, new Field(), new Field());
+          let battleSimulator = new BattleSimulator(Generations.get(gen), 'singles', playerInfernape, cpuKrabby, new Field(), new Field());
           const result = battleSimulator.getResult({ maxTurns: 1 });
           expect(result.turnOutcomes.length).toBe(1);
           expectTurn(
@@ -106,9 +106,9 @@ Level: 5
             { pokemon: cpuKrabby, move: 'Swords Dance' },
             { pokemon: playerInfernape, move: 'Close Combat' },
           )
-          expect(result.turnOutcomes[0].endOfTurnState.cpu.activeSlot.pokemon.boosts.atk).toBe(2);
-          expect(result.turnOutcomes[0].endOfTurnState.player.activeSlot.pokemon.boosts.def).toBe(-1);
-          expect(result.turnOutcomes[0].endOfTurnState.player.activeSlot.pokemon.boosts.spd).toBe(-1);
+          expect(result.turnOutcomes[0].endOfTurnState.cpu.active[0].pokemon.boosts.atk).toBe(2);
+          expect(result.turnOutcomes[0].endOfTurnState.player.active[0].pokemon.boosts.def).toBe(-1);
+          expect(result.turnOutcomes[0].endOfTurnState.player.active[0].pokemon.boosts.spd).toBe(-1);
       });
 
       test('Turns contain immutable state', () => {
@@ -129,7 +129,7 @@ Ability: Speed Boost
 - Work Up
 `);
         
-          let battleSimulator = new BattleSimulator(Generations.get(gen), greninja, combusken, new Field(), new Field());
+          let battleSimulator = new BattleSimulator(Generations.get(gen), 'singles', greninja, combusken, new Field(), new Field());
           const result = battleSimulator.getResult();
           expect(result.turnOutcomes.length).toBe(2);
           let [turn1, turn2] = result.turnOutcomes;
@@ -146,16 +146,16 @@ Ability: Speed Boost
           )
 
           // Greninja's white herb should have restored the stat drops from CC
-          expect(turn1.endOfTurnState.player.activeSlot.pokemon.item).toBeUndefined();
-          expect(turn1.endOfTurnState.player.activeSlot.pokemon.boosts.def).toBe(0);
-          expect(turn1.endOfTurnState.player.activeSlot.pokemon.boosts.spd).toBe(0);
-          expect(turn1.endOfTurnState.cpu.activeSlot.pokemon.curHP()).toBe(1);
-          expect(result.turnOutcomes[0].endOfTurnState.cpu.activeSlot.pokemon.boosts.spe).toBe(1);
+          expect(turn1.endOfTurnState.player.active[0].pokemon.item).toBeUndefined();
+          expect(turn1.endOfTurnState.player.active[0].pokemon.boosts.def).toBe(0);
+          expect(turn1.endOfTurnState.player.active[0].pokemon.boosts.spd).toBe(0);
+          expect(turn1.endOfTurnState.cpu.active[0].pokemon.curHP()).toBe(1);
+          expect(result.turnOutcomes[0].endOfTurnState.cpu.active[0].pokemon.boosts.spe).toBe(1);
 
-          expect(turn2.endOfTurnState.player.activeSlot.pokemon.boosts.def).toBe(-1);
-          expect(turn2.endOfTurnState.player.activeSlot.pokemon.boosts.spd).toBe(-1);
-          expect(turn2.endOfTurnState.cpu.activeSlot.pokemon.boosts.spe).toBe(1);
-          expect(turn2.endOfTurnState.cpu.activeSlot.pokemon.curHP()).toBe(0);
+          expect(turn2.endOfTurnState.player.active[0].pokemon.boosts.def).toBe(-1);
+          expect(turn2.endOfTurnState.player.active[0].pokemon.boosts.spd).toBe(-1);
+          expect(turn2.endOfTurnState.cpu.active[0].pokemon.boosts.spe).toBe(1);
+          expect(turn2.endOfTurnState.cpu.active[0].pokemon.curHP()).toBe(0);
       });
 
       test('Abilities that activate on switch-in', () => {
@@ -172,7 +172,7 @@ Ability: Intimidate
 `);
           Aerodactyl.abilityOn = true;
         
-          let battleSimulator = new BattleSimulator(Generations.get(gen), Aerodactyl, Krabby, new Field(), new Field());
+          let battleSimulator = new BattleSimulator(Generations.get(gen), 'singles', Aerodactyl, Krabby, new Field(), new Field());
           const result = battleSimulator.getResult();
           expect(result.turnOutcomes.length).toBe(2);
           let [turn1, turn2] = result.turnOutcomes;
@@ -189,8 +189,8 @@ Ability: Intimidate
           )
 
           // Intimidate should only activate once
-          expect(turn1.endOfTurnState.cpu.activeSlot.pokemon.boosts.atk).toBe(-1);
-          expect(turn2.endOfTurnState.cpu.activeSlot.pokemon.boosts.atk).toBe(-1);
+          expect(turn1.endOfTurnState.cpu.active[0].pokemon.boosts.atk).toBe(-1);
+          expect(turn2.endOfTurnState.cpu.active[0].pokemon.boosts.atk).toBe(-1);
       });
     });
 
@@ -217,14 +217,14 @@ Ability: Speed Boost
 - Work Up
 `);
         
-          let battleSimulator = new BattleSimulator(Generations.get(gen), tirtouga, combusken, new Field(), new Field());
+          let battleSimulator = new BattleSimulator(Generations.get(gen), 'singles', tirtouga, combusken, new Field(), new Field());
           const result = battleSimulator.getResult();
           expectTurn(
             result.turnOutcomes[0],
             { pokemon: combusken, move: 'Double Kick' },
             { pokemon: tirtouga, move: 'Brine' },
           )
-          expect(result.turnOutcomes[0].endOfTurnState.cpu.activeSlot.pokemon.boosts.spe).toBe(1);
+          expect(result.turnOutcomes[0].endOfTurnState.cpu.active[0].pokemon.boosts.spe).toBe(1);
           expectTurn(
             result.turnOutcomes[1],
             { pokemon: tirtouga, move: 'Aqua Jet' },
@@ -254,7 +254,7 @@ Ability: Protean
 - Low Kick
 `);
         
-          let battleSimulator = new BattleSimulator(Generations.get(gen), Corviknight, Greninja, new Field(), new Field());
+          let battleSimulator = new BattleSimulator(Generations.get(gen), 'singles', Corviknight, Greninja, new Field(), new Field());
           const result = battleSimulator.getResult();
           expectTurn(
             result.turnOutcomes[0],
@@ -286,7 +286,7 @@ Ability: Poison Heal
 - Swords Dance
 `);
         
-          let battleSimulator = new BattleSimulator(Generations.get(gen), Cloyster, Gilscor, new Field(), new Field());
+          let battleSimulator = new BattleSimulator(Generations.get(gen), 'singles', Cloyster, Gilscor, new Field(), new Field());
           const result = battleSimulator.getResult();
           expectTurn(
             result.turnOutcomes[0],
@@ -318,7 +318,7 @@ Ability: Levitate
 - Dragon Dance
 `);
         
-          let battleSimulator = new BattleSimulator(Generations.get(gen), Musharna, Latios, new Field(), new Field());
+          let battleSimulator = new BattleSimulator(Generations.get(gen), 'singles', Musharna, Latios, new Field(), new Field());
           const result = battleSimulator.getResult({ playerSwitchingIn: true });
           expectTurn(
             result.turnOutcomes[0],
@@ -354,7 +354,7 @@ IVs: 23 HP / 9 Atk / 5 Def / 0 SpA / 29 SpD / 10 Spe
 - Rapid Spin
 `);
         
-          let battleSimulator = new BattleSimulator(Generations.get(gen), Excadrill, Alakazam, new Field(), new Field());
+          let battleSimulator = new BattleSimulator(Generations.get(gen), 'singles', Excadrill, Alakazam, new Field(), new Field());
           const result = battleSimulator.getResult();
           expectTurn(
             result.turnOutcomes[0],

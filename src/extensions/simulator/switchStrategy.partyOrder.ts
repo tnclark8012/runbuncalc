@@ -15,6 +15,6 @@ export class PartyOrderSwitchStrategy implements SwitchStrategy {
 
     }
 	public getPostKOSwitchIn(state: BattleFieldState): Pokemon | undefined {
-		return this.getSelf(state).remainingPokemon[0];
+		return this.getSelf(state).party[0];
 	}
 }

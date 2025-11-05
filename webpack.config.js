@@ -2,7 +2,7 @@ const path = require('path');
 
 module.exports = {
   mode: 'development',
-  entry: { extensions: './src/extensions/main.ts', core: './src/extensions/core/main.ts' },
+  entry: { extensions: './src/extensions/main.ts', core: './src/extensions/core/main.ts', sandbox: './src/sandbox/main.ts' },
   module: {
     rules: [
       {

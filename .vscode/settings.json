@@ -5,5 +5,11 @@
       "calc/node_modules": true,
       "calc/dist": true,
       "obj": true,
-    }
+    },
+    "typescript.preferences.autoImportFileExcludePatterns": [
+      "**/node_modules/@smogon/calc/src/**"
+    ],
+    "javascript.preferences.autoImportFileExcludePatterns": [
+      "**/node_modules/@smogon/calc/src/**"
+    ]
   }

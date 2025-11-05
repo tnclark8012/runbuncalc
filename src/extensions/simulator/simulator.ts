@@ -1,10 +1,11 @@
-import { Field, I, StatsTable, Move, Result, Pokemon, calculate, MEGA_STONES } from '@smogon/calc';
+import { Field, I, StatsTable, Move, Result, Pokemon, MEGA_STONES } from '@smogon/calc';
 import { MoveScore } from './moveScore';
-import { BattleFieldState, MoveConsideration, MoveResult, PlayerMoveConsideration, PokemonPosition, Trainer, TurnOutcome } from './moveScoring.contracts';
-import { canUseDamagingMoves, createMove, findHighestDamageMove, getDamageRanges, hasLifeSavingItem, savedFromKO, scoreCPUMoves } from './moveScoring';
-import { getRecovery } from '@smogon/calc/dist/desc';
-import { PartyOrderSwitchStrategy } from './switchStrategy.partyOrder';
+import { BattleFieldState, MoveConsideration, MoveResult, PlayerMoveConsideration, ActivePokemon, TurnOutcome, BattleFormat, Trainer, PokemonPosition } from './moveScoring.contracts';
+import { calculateAllMoves, canUseDamagingMoves, createMove, findHighestDamageMove, getDamageRanges, hasLifeSavingItem, moveKillsAttacker, moveWillFail, savedFromKO, scoreCPUMoves } from './moveScoring';
+import { applyBoost } from './utils';
 import { CpuSwitchStrategy } from './switchStrategy.cpu';
+import { PartyOrderSwitchStrategy } from './switchStrategy.partyOrder';
+import { getRecovery } from '@smogon/calc/dist/desc';
 
 export interface RNGStrategy {
 	getDamageRoll(moveResult: MoveResult): number;
@@ -33,24 +34,26 @@ export class BattleSimulator {
 	private readonly turns: TurnOutcome[] = [];
 
 	constructor(private readonly gen: I.Generation,
+		public readonly battleFormat: BattleFormat,
 		playerTrainerOrPokemon: Pokemon | Trainer,
 		cpuTrainerOrPokemon: Pokemon | Trainer,
 		playerField: Field, 
 		cpuField: Field
 	) {
 		let cpuTrainer = !(cpuTrainerOrPokemon instanceof Trainer) ?
-			new Trainer(new PokemonPosition(cpuTrainerOrPokemon.clone(), true), [], new CpuSwitchStrategy()) :
+			new Trainer([new PokemonPosition(cpuTrainerOrPokemon.clone(), true)], [], new CpuSwitchStrategy()) :
 			cpuTrainerOrPokemon;
 
 		let playerTrainer = !(playerTrainerOrPokemon instanceof Trainer) ?
-			new Trainer(new PokemonPosition(playerTrainerOrPokemon.clone(), true), [], new PartyOrderSwitchStrategy(s => s.player)) :
+			new Trainer([new PokemonPosition(playerTrainerOrPokemon.clone(), true)], [], new PartyOrderSwitchStrategy(s => s.player)) :
 			playerTrainerOrPokemon;
 
 		this.originalState = new BattleFieldState(
-			 playerTrainer,
-			 cpuTrainer,
-			 playerField.clone(),
-			 cpuField.clone()
+			this.battleFormat,
+			playerTrainer,
+			cpuTrainer,
+			playerField.clone(),
+			cpuField.clone()
 		);
 	}
 
@@ -71,13 +74,13 @@ export class BattleSimulator {
 			
 			this.currentTurnState = turnOutcome.endOfTurnState.clone();
 			
-			this.currentTurnState.player.activeSlot.firstTurnOut = false;
-			this.currentTurnState.cpu.activeSlot.firstTurnOut = false;
+			this.currentTurnState.player.active[0].firstTurnOut = false;
+			this.currentTurnState.cpu.active[0].firstTurnOut = false;
 
 			// Apply post-turn switches, field effect noticing etc.
 			resolvedOptions.playerSwitchingIn = false;
-		} while(this.turns.length < resolvedOptions.maxTurns && this.currentTurnState.player.activeSlot.pokemon.curHP() > 0 && this.currentTurnState.cpu.activeSlot.pokemon.curHP() > 0 &&
-			(canUseDamagingMoves(this.currentTurnState.cpu.activeSlot.pokemon) || canUseDamagingMoves(this.currentTurnState.player.activeSlot.pokemon)))
+		} while(this.turns.length < resolvedOptions.maxTurns && this.currentTurnState.player.active[0].pokemon.curHP() > 0 && this.currentTurnState.cpu.active[0].pokemon.curHP() > 0 &&
+			(canUseDamagingMoves(this.currentTurnState.cpu.active[0].pokemon) || canUseDamagingMoves(this.currentTurnState.player.active[0].pokemon)))
 		
 		
 		let outcome = this.lastTurn;
@@ -86,15 +89,15 @@ export class BattleSimulator {
 
 		return {
 			turnOutcomes: this.turns,
-			winner: outcome.endOfTurnState.cpu.activeSlot.pokemon.curHP() > outcome.endOfTurnState.player.activeSlot.pokemon.curHP() || 
-			(firstMover === battleState.cpu.activeSlot.pokemon && battleState.cpu.activeSlot.pokemon.curHP() == 0 && battleState.player.activeSlot.pokemon.curHP() == 0) ? battleState.cpu.activeSlot.pokemon : battleState.player.activeSlot.pokemon
+			winner: outcome.endOfTurnState.cpu.active[0].pokemon.curHP() > outcome.endOfTurnState.player.active[0].pokemon.curHP() || 
+			(firstMover === battleState.cpu.active[0].pokemon && battleState.cpu.active[0].pokemon.curHP() == 0 && battleState.player.active[0].pokemon.curHP() == 0) ? battleState.cpu.active[0].pokemon : battleState.player.active[0].pokemon
 		}
 	}
 
 	private simulateTurn(playerSwitchingIn?: boolean): TurnOutcome  {
 		applyStartOfTurnEffects(this.currentTurnState);
-		let playerPokemon = this.currentTurnState.player.activeSlot;
-		let cpuPokemon = this.currentTurnState.cpu.activeSlot;
+		let playerPokemon = this.currentTurnState.player.active[0];
+		let cpuPokemon = this.currentTurnState.cpu.active[0];
 		let playerDamageResults = calculateAllMoves(this.gen, playerPokemon.pokemon, cpuPokemon.pokemon, this.currentTurnState.playerField);
 		let cpuDamageResults = calculateAllMoves(this.gen, cpuPokemon.pokemon, playerPokemon.pokemon, this.currentTurnState.cpuField);
 		let cpuAssumedPlayerMove = findHighestDamageMove(getDamageRanges(playerDamageResults));
@@ -105,7 +108,7 @@ export class BattleSimulator {
 
 		let firstMove = BattleSimulator.resolveTurnOrder(naivePlayerMoveBasedOnStartingTurnState, cpuMove);
 		let actions: MoveResult[] = [];
-		
+
 		const moveCPU = () => {
 			if (cpuPokemon.pokemon.curHP() > 0) {
 				actions.push(cpuMove);
@@ -147,6 +150,7 @@ export class BattleSimulator {
 			actions,
 			turnNumber: this.turns.length,
 			endOfTurnState: new BattleFieldState(
+				this.battleFormat,
 				this.currentTurnState.player.clone(),
 				this.currentTurnState.cpu.clone(),
 				this.currentTurnState.playerField.clone(),
@@ -155,8 +159,10 @@ export class BattleSimulator {
 		};
 	}
 
-	private calculateCpuMove(cpuResults: Result[], playerMove: MoveResult) {
-		let moveScores = scoreCPUMoves(cpuResults, playerMove, this.currentTurnState.cpuField, this.lastTurn);
+	private calculateCpuMove(cpuResults: Result[], playerMove: MoveResult): MoveScore {
+		let aiMon = cpuResults[0].attacker;
+        const aiActionLastTurn = this.lastTurn?.actions.find(a => a.attacker.equals(aiMon))
+		let moveScores = scoreCPUMoves(cpuResults, playerMove, this.currentTurnState.cpuField, aiActionLastTurn?.move);
 		
 		let highestScoringMoves: MoveScore[] = [];
 		for (let score of moveScores) {
@@ -190,10 +196,12 @@ export class BattleSimulator {
 					lowestRollHpPercentage: r.lowestRollHpPercentage,
 					hightestRollHpPercentage: r.highestRollHpPercentage,
 					kos: kos,
-					kosThroughRequiredLifesaver: kos && savedFromKO(r.defender)
+					kosThroughRequiredLifesaver: kos && savedFromKO(r.defender),
+					attackerDiesToRecoil: moveKillsAttacker(r),
+					guaranteedToFail: false
 				};
 			})
-			.filter(m => !BattleSimulator.moveKillsAttacker(m.result) && BattleSimulator.canUseMove(this.currentTurnState.player.activeSlot, m))
+			.filter(m => !moveKillsAttacker(m.result) && !moveWillFail(this.currentTurnState.player.active[0], m))
 
 		let playerChosenMove!: PlayerMoveConsideration;
 		for (let potentialMove of movesToConsider) {
@@ -214,17 +222,6 @@ export class BattleSimulator {
 		}
 
 		return playerChosenMove.result;
-	}
-
-	private static canUseMove(pokemonSide: PokemonPosition, consideration: MoveConsideration): boolean {
-		if (!pokemonSide.firstTurnOut && ['First Impression', 'Fake Out'].includes(consideration.result.move.name))
-			return false;
-
-		return true;
-	}
-
-	private static moveKillsAttacker(moveResult: MoveResult): boolean {
-		return !!(moveResult.move.recoil && moveResult.attacker.curHP() <= moveResult.move.recoil[0]);
 	}
 
 	private static resolveTurnOrder(playerMove: MoveResult, cpuMove: MoveResult): MoveResult {
@@ -261,13 +258,13 @@ function applyStartOfTurnEffects(battleField: BattleFieldState): void {
 	// TODO: Apply in speed order
 	for (let playerMon of playerMons) {
 		for (let cpuMon of cpuMons) {
-			applyAbilityToOpponent(playerMon.activeSlot, cpuMon.activeSlot);
-			applyAbilityToOpponent(cpuMon.activeSlot, playerMon.activeSlot);
+			applyAbilityToOpponent(playerMon.active[0], cpuMon.active[0]);
+			applyAbilityToOpponent(cpuMon.active[0], playerMon.active[0]);
 		}
 	}
 }
 
-function applyAbilityToOpponent(attacker: PokemonPosition, opponent: PokemonPosition): void {
+function applyAbilityToOpponent(attacker: ActivePokemon, opponent: ActivePokemon): void {
 	if (attacker.pokemon.hasAbility('Intimidate') && 
 		attacker.firstTurnOut &&
 		!opponent.pokemon.hasAbility('Clear Body')) {
@@ -301,10 +298,6 @@ function applymove(gen: I.Generation, attacker: Pokemon, defender: Pokemon, move
 	});
 
 	return { attacker, defender };
-}
-
-function applyBoost(stats: StatsTable, kind: keyof StatsTable, modifier: number): void {
-	stats[kind] = Math.min(Math.max(-6, stats[kind] + modifier), 6);
 }
 
 function getBoosts(attacker: Pokemon, defender: Pokemon, move: Move): { attacker: StatsTable, defender: StatsTable } {
@@ -392,12 +385,4 @@ function consumesDefenderItem(defender: Pokemon, move: Move): boolean {
 		return true;
 
 	return false;
-}
-
-function calculateAllMoves(gen: I.Generation, attacker: Pokemon, defender: Pokemon, attackerField: Field): Result[] {
-	var results = [];
-	for (var i = 0; i < 4; i++) {
-		results[i] = calculate(gen, attacker, defender, createMove(attacker, attacker.moves[i]), attackerField);
-	}
-	return results;
 }

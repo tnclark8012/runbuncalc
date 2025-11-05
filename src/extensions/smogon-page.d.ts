@@ -1,7 +1,6 @@
 import { A, I, Field } from '@smogon/calc';
 
 declare global {
-  var gen: I.Generation;
   var cntrlIsPressed: boolean;
   /**
    * dist\js\shared_controls.js
