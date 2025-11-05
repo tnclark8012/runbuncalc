@@ -3,23 +3,14 @@ import { visitActivePokemonInSpeedOrder } from "../../battle-field-state-visitor
 import { ActivePokemon, BattleFieldState, MoveResult } from "../../moveScoring.contracts";
 import { PossibleBattleFieldState } from "../../turn-state";
 import { PossibleAction, PossiblePokemonAction, PossiblePokemonActions, TargetedMove, TargetSlot } from "./move-selection.contracts";
-import { calculateAllMoves, findHighestDamageMove, getDamageRanges, scoreCPUMoves } from "../../moveScoring";
 import { MoveScore } from "../../moveScore";
 import { getCpuPossibleActions } from "./cpu-move-selection";
+import { getPlayerPossibleActions } from "./player-move-selection";
 
 export function determineMoveOrderAndExecute(state: BattleFieldState): PossibleBattleFieldState[] {
-    // One entry per pokemon on the field
-    let possibleActionsByPokemon: PossiblePokemonActions[] = getPossibleActionsForAllSlots(state);
-
-
-    // Now, we need to determine move order based on speed and execute the moves accordingly.
-    // First, we'll flatten the possible actions into a list of all combinations of possibilities for a turn
-    // Then, we'll iterate through and execute the actions in the correct order: switches (speed order), megas (not implemented) (speed order), attacks (priority order, then speed order for ties. if speed tied, we'll execute both possibilities).
-    // Flatten all possible actions into combinations for the turn
-    let allPossibleTurns: PossiblePokemonAction[][] = generateAllActionCombinations(possibleActionsByPokemon);
-
+    
     let results: PossibleBattleFieldState[] = [];
-
+    const allPossibleTurns: PossiblePokemonAction[][] = getAllPlayerAndCpuPossibleTurns(state);
     for (const combination of allPossibleTurns) {
         // Separate actions by type
         const switches = combination.filter(a => a.action.action.type === 'switch');
@@ -49,6 +40,19 @@ export function determineMoveOrderAndExecute(state: BattleFieldState): PossibleB
     }
 
     return results;
+}
+
+export function getAllPlayerAndCpuPossibleTurns(state: BattleFieldState): PossiblePokemonAction[][] {
+    // One entry per pokemon on the field
+    let possibleActionsByPokemon: PossiblePokemonActions[] = getPossibleActionsForAllSlots(state);
+
+
+    // Now, we need to determine move order based on speed and execute the moves accordingly.
+    // First, we'll flatten the possible actions into a list of all combinations of possibilities for a turn
+    // Then, we'll iterate through and execute the actions in the correct order: switches (speed order), megas (not implemented) (speed order), attacks (priority order, then speed order for ties. if speed tied, we'll execute both possibilities).
+    // Flatten all possible actions into combinations for the turn
+    let allPossibleTurns: PossiblePokemonAction[][] = generateAllActionCombinations(possibleActionsByPokemon);
+    return allPossibleTurns;
 }
 
 /**
@@ -99,16 +103,12 @@ function getPossibleActionsForAllSlots(state: BattleFieldState): Array<PossibleP
         possibleActionsByPokemon.push({ pokemon: state.cpuActive[i], possibleActions });
     }
 
+    let cpuPossibleActions = [...possibleActionsByPokemon];
     for (let i = 0; i < state.playerActive.length; i++) {
-        let possibleActions: PossibleAction[] = getPlayerPossibleActions(state);
+        let possibleActions: PossibleAction[] = getPlayerPossibleActions(state, state.playerActive[i], state.cpuActive, state.playerActive, cpuPossibleActions);
         possibleActionsByPokemon.push({ pokemon: state.playerActive[i], possibleActions });
     }
 
     return possibleActionsByPokemon;
-}
-
-export function getPlayerPossibleActions(state: BattleFieldState): PossibleAction[] {
-    // TODO - implement player possible actions
-    return [];
 }
 

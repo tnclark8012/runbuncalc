@@ -36,6 +36,8 @@ export interface CPUMoveConsideration extends MoveConsideration {
 
 export interface PlayerMoveConsideration extends MoveConsideration {
 	kosThroughRequiredLifesaver: boolean;
+	attackerDiesToRecoil: boolean;
+	guaranteedToFail: boolean;
 }
 
 export interface TurnOutcome {

@@ -2,7 +2,7 @@ import { Field, Generations, Move, Result } from "@smogon/calc";
 import { MoveScore } from "../../moveScore";
 import { calculateAllMoves, findHighestDamageMove, scoreCPUMoves, getDamageRanges } from "../../moveScoring";
 import { ActivePokemon, BattleFieldState, MoveResult } from "../../moveScoring.contracts";
-import { PossibleAction, TargetSlot } from "./move-selection.contracts";
+import { PossibleAction, ScoredPossibleAction, TargetSlot } from "./move-selection.contracts";
 
 const gen = Generations.get(8);
 export function getCpuPossibleActions(state: BattleFieldState, cpuPokemon: ActivePokemon, playerActive: ActivePokemon[], cpuActive: ActivePokemon[]): PossibleAction[] {
@@ -35,7 +35,6 @@ export function getCpuMoveScoresAgainstTarget(state: BattleFieldState, cpuPokemo
     return moveScores;
 }
 
-type ScoredPossibleAction = PossibleAction & { score: number };
 function getCpuPossibleActionsAgainstTarget(state: BattleFieldState, cpuPokemon: ActivePokemon, target: ActivePokemon, targetSlot: TargetSlot): Array<ScoredPossibleAction> {
     const highestScoringCpuMoves = calculateCpuMove(getCpuMoveScoresAgainstTarget(state, cpuPokemon, target, targetSlot));
     return highestScoringCpuMoves.map((cpuMove: MoveScore) => {

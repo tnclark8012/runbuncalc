@@ -3,6 +3,7 @@
 import { I, State, Field, Pokemon, Move, calculate, SPECIES, ABILITIES, PokemonOptions, ITEMS, Side, SpeciesData } from '@smogon/calc';
 import { Result } from '@smogon/calc/src';
 import { ActivePokemon, BattleFieldState } from './moveScoring.contracts';
+import { ConfiguredHeuristics, Heuristics } from '../configuration';
 
 const calc = (gen: I.GenerationNum) => (
   attacker: Pokemon,
@@ -381,4 +382,14 @@ export function expectPlayerTeam(active: ActivePokemon[], party: Pokemon[], stat
 export function expectTeam(expected: { active: ActivePokemon[], party: Pokemon[] }, actual: { active: ActivePokemon[], party: Pokemon[] }): void {
   expect(actual.active.map(p => p.pokemon.id )).toEqual(expected.active.map(p => p.pokemon.id));
   expect(actual.party.map(p => p.id)).toEqual(expected.party.map(p => p.id));
+}
+
+export function usingHeuristics(chosenHeuristics: ConfiguredHeuristics, fn: () => any): void {
+  const originalHeuristics = { ...Heuristics };
+  try {
+    Heuristics.playerMoveScoringStrategy = chosenHeuristics.playerMoveScoringStrategy;
+    fn();
+  } finally {
+    Heuristics.playerMoveScoringStrategy = originalHeuristics.playerMoveScoringStrategy;
+  }
 }

@@ -1,7 +1,7 @@
 import { Field, I, StatsTable, Move, Result, Pokemon, MEGA_STONES } from '@smogon/calc';
 import { MoveScore } from './moveScore';
 import { BattleFieldState, MoveConsideration, MoveResult, PlayerMoveConsideration, ActivePokemon, TurnOutcome, BattleFormat } from './moveScoring.contracts';
-import { calculateAllMoves, canUseDamagingMoves, createMove, findHighestDamageMove, getDamageRanges, hasLifeSavingItem, savedFromKO, scoreCPUMoves } from './moveScoring';
+import { calculateAllMoves, canUseDamagingMoves, createMove, findHighestDamageMove, getDamageRanges, hasLifeSavingItem, moveKillsAttacker, moveWillFail, savedFromKO, scoreCPUMoves } from './moveScoring';
 import { applyBoost } from './utils';
 
 export interface RNGStrategy {
@@ -185,10 +185,12 @@ export class BattleSimulator {
 					lowestRollHpPercentage: r.lowestRollHpPercentage,
 					hightestRollHpPercentage: r.highestRollHpPercentage,
 					kos: kos,
-					kosThroughRequiredLifesaver: kos && savedFromKO(r.defender)
+					kosThroughRequiredLifesaver: kos && savedFromKO(r.defender),
+					attackerDiesToRecoil: moveKillsAttacker(r),
+					guaranteedToFail: false
 				};
 			})
-			.filter(m => !BattleSimulator.moveKillsAttacker(m.result) && BattleSimulator.canUseMove(this.currentTurnState.playerActive[0], m))
+			.filter(m => !moveKillsAttacker(m.result) && !moveWillFail(this.currentTurnState.playerActive[0], m))
 
 		let playerChosenMove!: PlayerMoveConsideration;
 		for (let potentialMove of movesToConsider) {
@@ -209,17 +211,6 @@ export class BattleSimulator {
 		}
 
 		return playerChosenMove.result;
-	}
-
-	private static canUseMove(pokemonSide: ActivePokemon, consideration: MoveConsideration): boolean {
-		if (!pokemonSide.firstTurnOut && ['First Impression', 'Fake Out'].includes(consideration.result.move.name))
-			return false;
-
-		return true;
-	}
-
-	private static moveKillsAttacker(moveResult: MoveResult): boolean {
-		return !!(moveResult.move.recoil && moveResult.attacker.curHP() <= moveResult.move.recoil[0]);
 	}
 
 	private static resolveTurnOrder(playerMove: MoveResult, cpuMove: MoveResult): MoveResult {

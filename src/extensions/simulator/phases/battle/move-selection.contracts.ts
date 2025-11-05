@@ -37,3 +37,5 @@ export interface TargetSlot {
     type: 'self' | 'ally' | 'opponent';
     slot: number;
 }
+
+export type ScoredPossibleAction = PossibleAction & { score: number };

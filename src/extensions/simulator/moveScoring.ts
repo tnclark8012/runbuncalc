@@ -1,7 +1,7 @@
 import { Field, Move, A, I, Result, Pokemon, calculate } from '@smogon/calc';
 import { MoveScore } from "./moveScore";
 import { notImplemented } from "./notImplementedError";
-import { CPUMoveConsideration, MoveResult, TurnOutcome } from './moveScoring.contracts';
+import { ActivePokemon, CPUMoveConsideration, MoveConsideration, MoveResult, TurnOutcome } from './moveScoring.contracts';
 
 export function scoreCPUMoves(cpuResults: Result[], playerMove: MoveResult, field: Field, lastTurnMoveByCpu: Move | undefined): MoveScore[] {
     // Not quite
@@ -482,6 +482,17 @@ export function getDamageRanges(attackerResults: Result[], expectedHits?: number
 export function savedFromKO(pokemon: A.Pokemon): boolean {
 	return hasLifeSavingAbility(pokemon) || hasLifeSavingItem(pokemon);
 }
+
+export function moveKillsAttacker(moveResult: MoveResult): boolean {
+    return !!(moveResult.move.recoil && moveResult.attacker.curHP() <= moveResult.move.recoil[0]);
+}
+
+export function moveWillFail(pokemonSide: ActivePokemon, consideration: MoveConsideration): boolean {
+		if (!pokemonSide.firstTurnOut && ['First Impression', 'Fake Out'].includes(consideration.result.move.name))
+			return true;
+
+		return false;
+	}
 
 export function hasLifeSavingItem(pokemon: A.Pokemon): boolean {
 	return pokemon.hasItem('Focus Sash') && pokemon.curHP() === pokemon.maxHP();
