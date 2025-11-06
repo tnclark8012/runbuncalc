@@ -57,6 +57,7 @@
     "compile": "subpkg run compile && node build view",
     "bundle": "subpkg run bundle",
     "build": "subpkg run build && node build view && webpack",
+    "init": "npm install && npm run start",
     "watch": "webpack --watch",
     "serve": "node server.js",
     "dev": "concurrently \"npm run watch\" \"npm run serve\"",
