@@ -4,11 +4,19 @@
   "repository": "github:smogon/damage-calc",
   "license": "MIT",
   "dependencies": {
-    "@smogon/calc": "file:calc"
+    "@fluentui/react": "^8.125.0",
+    "@reduxjs/toolkit": "^2.10.1",
+    "@smogon/calc": "file:calc",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0",
+    "react-redux": "^9.2.0"
   },
   "devDependencies": {
     "@types/jquery": "^3.5.32",
+    "@types/react": "^19.2.2",
+    "@types/react-dom": "^19.2.2",
     "concurrently": "^9.2.1",
+    "copy-webpack-plugin": "^13.0.1",
     "eslint": "^8.27.0",
     "eslint-plugin-jest": "^27.1.5",
     "express": "^4.18.2",
@@ -49,6 +57,7 @@
     "compile": "subpkg run compile && node build view",
     "bundle": "subpkg run bundle",
     "build": "subpkg run build && node build view && webpack",
+    "init": "npm install && npm run start",
     "watch": "webpack --watch",
     "serve": "node server.js",
     "dev": "concurrently \"npm run watch\" \"npm run serve\"",
