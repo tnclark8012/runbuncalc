@@ -100,8 +100,8 @@ export class Pokemon implements State.Pokemon {
       this.stats[stat] = val;
     }
 
-    const curHP = options.curHP !== undefined ? options.curHP : 
-                    options.originalCurHP !== undefined ? options.originalCurHP : undefined;
+    const curHP = options.curHP !== undefined ? options.curHP
+      : options.originalCurHP !== undefined ? options.originalCurHP : undefined;
     this.originalCurHP = curHP !== undefined && curHP <= this.rawStats.hp ? curHP : this.rawStats.hp;
     this.status = options.status || '';
     this.toxicCounter = options.toxicCounter || 0;
@@ -156,7 +156,7 @@ export class Pokemon implements State.Pokemon {
   equals(other: Pokemon): boolean {
     return this.id === other.id;
   }
-  
+
   clone(options?: PokemonOptions) {
     return new Pokemon(this.gen, this.name, {
       id: this.id,
@@ -179,7 +179,7 @@ export class Pokemon implements State.Pokemon {
       types: this.types,
       moves: this.moves.slice(),
       overrides: this.species,
-      ...options
+      ...options,
     });
   }
 

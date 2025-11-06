@@ -37,20 +37,24 @@ const DeveloperToolsContent: React.FC<DeveloperToolsProps> = ({
   );
 
   const handleExport = React.useCallback(() => {
-    // Get the current state from localStorage
-    const persistedState = localStorage.getItem('persist:root');
-    if (persistedState) {
-      // Create a blob and download it as JSON
-      const blob = new Blob([persistedState], { type: 'application/json' });
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = `redux-store-${new Date().toISOString()}.json`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      URL.revokeObjectURL(url);
-    }
+    // Get the current state from the Redux store
+    const state = store.getState();
+    
+    // Serialize the state to JSON
+    const stateJson = JSON.stringify(state, null, 2);
+    
+    // Create a blob and download it as JSON
+    const blob = new Blob([stateJson], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    // Create filesystem-safe filename (replace colons and dots from ISO string)
+    const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+    link.download = `redux-store-${timestamp}.json`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
   }, []);
 
   return (
