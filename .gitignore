@@ -6,3 +6,4 @@ Thumbs.db
 pnpm-debug.log
 npm-debug.log
 obj
+dist/
