@@ -5,7 +5,7 @@ import {
   Pokemon,
 } from '@smogon/calc';
 import { inGen, importTeam, importPokemon, expectPlayerTeam } from '../../test-helper';
-import { ActivePokemon, BattleFieldState, PokemonPosition, Trainer } from '../../moveScoring.contracts';
+import { ActivePokemon, BattleFieldState, CpuTrainer, PlayerTrainer, PokemonPosition, Trainer } from '../../moveScoring.contracts';
 import { applyCpuSwitchIns, chooseSwitchIn } from './cpu-switch-in';
 import { applyPlayerSwitchIns } from './player-switch-in';
 
@@ -80,8 +80,8 @@ IVs: 3 Atk / 3 Spe
       Aerodactyl = Aerodactyl.clone({ curHP: 0 });
       let state = new BattleFieldState(
         'singles',
-        new Trainer([new PokemonPosition(Aerodactyl)], [Aggron, Excadrill, Kingler]),
-        new Trainer([new PokemonPosition(cpu1)], [cpu2, cpu3]),
+        new PlayerTrainer([new PokemonPosition(Aerodactyl)], [Aggron, Excadrill, Kingler]),
+        new CpuTrainer([new PokemonPosition(cpu1)], [cpu2, cpu3]),
         new Field(),
         new Field(),
       );
@@ -167,8 +167,8 @@ IVs: 3 Atk / 3 Spe
       Lopunny = Lopunny.clone({ curHP: 0 });
       let state = new BattleFieldState(
         'doubles',
-        new Trainer([new PokemonPosition(Aerodactyl), new PokemonPosition(Lopunny)], [Aggron, Excadrill, Kingler]),
-        new Trainer([new PokemonPosition(cpu1)], [cpu2, cpu3]),
+        new PlayerTrainer([new PokemonPosition(Aerodactyl), new PokemonPosition(Lopunny)], [Aggron, Excadrill, Kingler]),
+        new CpuTrainer([new PokemonPosition(cpu1)], [cpu2, cpu3]),
         new Field(),
         new Field(),
       );

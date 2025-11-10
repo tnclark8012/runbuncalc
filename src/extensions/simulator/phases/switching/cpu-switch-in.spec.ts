@@ -5,7 +5,7 @@ import {
   Pokemon,
 } from '@smogon/calc';
 import { inGen, importTeam, importPokemon, expectCpuTeam } from '../../test-helper';
-import { ActivePokemon, BattleFieldState, PokemonPosition, Trainer } from '../../moveScoring.contracts';
+import { ActivePokemon, BattleFieldState, CpuTrainer, PlayerTrainer, PokemonPosition, Trainer } from '../../moveScoring.contracts';
 import { applyCpuSwitchIns, chooseSwitchIn } from './cpu-switch-in';
 
 const RunAndBun = 8;
@@ -69,8 +69,8 @@ IVs: 23 HP / 9 Atk / 5 Def / 0 SpA / 29 SpD / 10 Spe
 `);
       let state = new BattleFieldState(
         'singles',
-        new Trainer([], [player1, player2, player3]),
-        new Trainer([], [cpu1, cpu2, cpu3]),
+        new PlayerTrainer([], [player1, player2, player3]),
+        new CpuTrainer([], [cpu1, cpu2, cpu3]),
         new Field(),
         new Field(),
       );
@@ -79,8 +79,8 @@ IVs: 23 HP / 9 Atk / 5 Def / 0 SpA / 29 SpD / 10 Spe
     
       const doublesState = new BattleFieldState(
         'doubles',
-        new Trainer([], [player1, player2, player3]),
-        new Trainer([], [cpu1, cpu2, cpu3]),
+        new PlayerTrainer([], [player1, player2, player3]),
+        new CpuTrainer([], [cpu1, cpu2, cpu3]),
         new Field(),
         new Field(),
       );
@@ -145,8 +145,8 @@ IVs: 29 HP / 24 Atk / 18 Def / 3 SpA / 24 SpD / 23 Spe
       Scrafty = Scrafty.clone({ curHP: 0 });
       let state = new BattleFieldState(
         'singles',
-        new Trainer([new PokemonPosition(player1)], []),
-        new Trainer([new PokemonPosition(Scrafty)], [Bruxish, Gothitelle, Bisharp]),
+        new PlayerTrainer([new PokemonPosition(player1)], []),
+        new CpuTrainer([new PokemonPosition(Scrafty)], [Bruxish, Gothitelle, Bisharp]),
         new Field(),
         new Field(),
       );
@@ -199,8 +199,8 @@ IVs: 29 HP / 24 Atk / 18 Def / 3 SpA / 24 SpD / 23 Spe
       Golurk = Golurk.clone({ curHP: 0 });
       let state = new BattleFieldState(
         'singles',
-        new Trainer([new PokemonPosition(player1)], []),
-        new Trainer([new PokemonPosition(Golurk)], [Flapple, Vikavolt]),
+        new PlayerTrainer([new PokemonPosition(player1)], []),
+        new CpuTrainer([new PokemonPosition(Golurk)], [Flapple, Vikavolt]),
         new Field(),
         new Field(),
       );

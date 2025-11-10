@@ -479,6 +479,22 @@ export function getDamageRanges(attackerResults: Result[], expectedHits?: number
 	});
 }
 
+export function toMoveResult(result: Result): MoveResult {
+    let resultDamage = result.damage as number[];
+    let lowestHitDamage = resultDamage[0] ? resultDamage[0] : result.damage as number;
+    let highestHitDamage = (result.damage as number[])[15] ? resultDamage[15] : result.damage as number;
+    let getDamagePct = (hitDamage: number) => hitDamage * (createMove(result.attacker, result.move).hits / result.defender.stats.hp * 100);
+    return {
+        attacker: result.attacker,
+        defender: result.defender,
+        move: result.move,
+        lowestRollDamage: lowestHitDamage,
+        lowestRollHpPercentage: getDamagePct(lowestHitDamage),
+        highestRollDamage: highestHitDamage,
+        highestRollHpPercentage: getDamagePct(highestHitDamage),
+    };
+    }
+
 export function savedFromKO(pokemon: A.Pokemon): boolean {
 	return hasLifeSavingAbility(pokemon) || hasLifeSavingItem(pokemon);
 }

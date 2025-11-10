@@ -1,5 +1,5 @@
-import { Field, Side } from "@smogon/calc";
-import { ActivePokemon, BattleFieldState } from "./moveScoring.contracts";
+import { Field, Pokemon, Side } from "@smogon/calc";
+import { ActivePokemon, BattleFieldState, PokemonPosition, Trainer } from "./moveScoring.contracts";
 
 export interface IBattleFieldStateVisitor {
     visitActivePokemon?(state: BattleFieldState, pokemon: ActivePokemon, side: Side, field: Field): void;
@@ -22,4 +22,82 @@ export function visitActivePokemonInSpeedOrder(state: BattleFieldState, visitor:
 
     for (let visit of toVisit)
         visitor.visitActivePokemon(state, visit.active, visit.side, visit.field);
+}
+
+export interface IBattleFieldStateVisitorWithRewrite {
+    visitState(state: BattleFieldState): BattleFieldState;
+    visitTrainer(trainer: Trainer): Trainer;
+    visitActivePokemon(pokemon: PokemonPosition): PokemonPosition;
+    visitPartyPokemon(pokemon: Pokemon): Pokemon;
+    visitPlayerField(field: Field): Field;
+    visitCpuField(field: Field): Field;
+    visitField(field: Field): Field;
+}
+
+export class BattleFieldStateRewriter implements IBattleFieldStateVisitorWithRewrite {
+
+    public visitState(state: BattleFieldState): BattleFieldState {
+        return new BattleFieldState(
+            state.battleFormat,
+            this.visitTrainer(state.cpu),
+            this.visitTrainer(state.player),
+            this.visitPlayerField(state.playerField),
+            this.visitCpuField(state.cpuField)
+        );
+    }
+
+    public visitTrainer(trainer: Trainer): Trainer {
+        return new Trainer(
+            trainer.name,
+            trainer.active.map(active => this.visitActivePokemon(active)),
+            trainer.party.map(p => this.visitPartyPokemon(p))
+        );
+    }
+
+    public visitActivePokemon(pokemon: PokemonPosition): PokemonPosition {
+        return pokemon.clone();
+    }
+
+    public visitPartyPokemon(pokemon: Pokemon): Pokemon {
+        return pokemon.clone();
+    }
+
+    public visitPlayerField(field: Field): Field {
+        return this.visitField(field);
+    }
+
+    public visitCpuField(field: Field): Field {
+        return this.visitField(field);
+    }
+
+    public visitField(field: Field): Field {
+        return field.clone();
+    }
+}
+
+export class PokemonReplacer extends BattleFieldStateRewriter {
+    private readonly _from: Pokemon;
+    private readonly _to: Pokemon;
+
+    constructor(replacement: Pokemon);
+    constructor(from: Pokemon, to: Pokemon);
+    constructor(from: Pokemon, to?: Pokemon) {
+        super();
+        this._from = from;
+        this._to = to || from;
+    }
+
+    public static replace(state: BattleFieldState, from: Pokemon, to?: Pokemon): BattleFieldState {
+        const replacer = new PokemonReplacer(from, to || from);
+        return replacer.visitState(state);
+    }
+
+    public override visitActivePokemon(pokemon: PokemonPosition): PokemonPosition {
+        if (pokemon.pokemon.equals(this._from)) {
+            return new PokemonPosition(this._to, this._from.equals(this._to) ? pokemon.firstTurnOut : true)
+        }
+
+        return pokemon;
+    
+    }
 }

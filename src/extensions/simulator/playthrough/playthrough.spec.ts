@@ -1,6 +1,6 @@
 import { Field } from '@smogon/calc';
 import { getAllPlayerAndCpuPossibleTurns } from '../phases/battle/determine-move-order-and-execute';
-import { BattleFieldState, PokemonPosition, Trainer } from '../moveScoring.contracts';
+import { BattleFieldState, CpuTrainer, PlayerTrainer, PokemonPosition, Trainer } from '../moveScoring.contracts';
 import { importTeam } from '../helper';
 import { usingHeuristics } from '../test-helper';
 import { BasicScoring, IntuitionScoring } from '../phases/battle/player-move-selection-strategy';
@@ -30,8 +30,8 @@ IVs: 20 HP / 27 Atk / 8 SpA
 `);
         const state = new BattleFieldState(
           'singles', 
-          new Trainer([ new PokemonPosition(Turtwig, true) ], []),
-          new Trainer([ new PokemonPosition(Torchic, true) ], []),
+          new PlayerTrainer([ new PokemonPosition(Turtwig, true) ], []),
+          new CpuTrainer([ new PokemonPosition(Torchic, true) ], []),
           new Field(), 
           new Field());
         

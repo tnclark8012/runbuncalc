@@ -1,5 +1,5 @@
 import { Generations, Pokemon } from "@smogon/calc";
-import { ActivePokemon, BattleFieldState, PokemonPosition, Trainer } from "../../moveScoring.contracts";
+import { ActivePokemon, BattleFieldState, PlayerTrainer, PokemonPosition, Trainer } from "../../moveScoring.contracts";
 import { calculateAllMoves, findHighestDamageMove, getCpuMoveConsiderations, getDamageRanges } from "../../moveScoring";
 import { isFainted } from "../../utils";
 
@@ -112,7 +112,7 @@ function initializeActivePokemon(state: BattleFieldState): BattleFieldState {
 
     return new BattleFieldState(
         state.battleFormat,
-        new Trainer(playerActive, state.player.party, state.player.switchStrategy),
+        new PlayerTrainer(playerActive, state.player.party, state.player.switchStrategy),
         state.cpu,
         state.playerField,
         state.cpuField);

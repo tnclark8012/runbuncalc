@@ -1,30 +1,33 @@
 import { Move, Pokemon } from "@smogon/calc";
-import { ActivePokemon } from "../../moveScoring.contracts";
+import { ActivePokemon, Trainer } from "../../moveScoring.contracts";
 
-export interface PossiblePokemonActions {
-    pokemon: ActivePokemon;
-    possibleActions: PossibleAction[];
-}
+// export interface PossiblePokemonActions {
+//     pokemon: ActivePokemon;
+//     possibleActions: PossibleAction[];
+// }
 
-export interface PossiblePokemonAction {
+export interface PossibleTrainerAction {
+    trainer: Trainer;
     pokemon: ActivePokemon;
     action: PossibleAction;
+    slot: Slot;
 }
 
-export interface PossibleAction {
-    action: Action;
+export type PossibleAction = Action &  {
     probability: number;
-}
+};
 
 export type Action = SwitchAction | MoveAction;
 
 export interface SwitchAction {
     type: 'switch';
-    switchIn: Pokemon;
+    switchIn: Pokemon | undefined;
+    target: Slot;
 }
 
 export interface MoveAction {
     type: 'move';
+    pokemon: Pokemon;
     move: TargetedMove;
 }
 
@@ -33,9 +36,12 @@ export interface TargetedMove {
     target: TargetSlot;
 }
 
-export interface TargetSlot {
-    type: 'self' | 'ally' | 'opponent';
+export interface Slot {
     slot: number;
+}
+
+export interface TargetSlot extends Slot {
+    type: 'self' | 'ally' | 'opponent';
 }
 
 export type ScoredPossibleAction = PossibleAction & { score: number };

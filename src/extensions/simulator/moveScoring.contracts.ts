@@ -70,6 +70,7 @@ export interface SwitchStrategy {
 
 export class Trainer {
 	constructor(
+		public readonly name: string,
 		public readonly active: PokemonPosition[],
 		public readonly party: Pokemon[],
 		public readonly switchStrategy?: SwitchStrategy)
@@ -79,9 +80,40 @@ export class Trainer {
 
 	public clone(): Trainer {
 		return new Trainer(
+			this.name,
 			this.active.map(p => p.clone()),
 			this.party.map(p => p.clone()),
 			this.switchStrategy);
+	}
+}
+
+export class CpuTrainer extends Trainer {
+	constructor(name: string, active: PokemonPosition[], party: Pokemon[], switchStrategy?: SwitchStrategy);
+	constructor(
+		active: PokemonPosition[],
+		party: Pokemon[],
+		switchStrategy?: SwitchStrategy);
+	constructor(
+		nameOrActive: string | PokemonPosition[],
+		activeOrParty: PokemonPosition[] | Pokemon[],
+		partyOrSwitchStrategy?: Pokemon[] | SwitchStrategy,
+		switchStrategy?: SwitchStrategy)
+	{
+		if (typeof nameOrActive === 'string') {
+			super(nameOrActive, activeOrParty as PokemonPosition[], partyOrSwitchStrategy as Pokemon[], switchStrategy);
+		} else {
+			super('CPU', nameOrActive as PokemonPosition[], activeOrParty as Pokemon[], partyOrSwitchStrategy as SwitchStrategy);
+		}
+	}
+}
+
+export class PlayerTrainer extends Trainer {
+	constructor(
+		active: PokemonPosition[],
+		party: Pokemon[],
+		switchStrategy?: SwitchStrategy)
+	{
+		super('Player', active, party, switchStrategy);
 	}
 }
 

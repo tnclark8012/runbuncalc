@@ -2,10 +2,10 @@ import { Generations, Result } from "@smogon/calc";
 import { MoveScore } from "../../moveScore";
 import { calculateAllMoves, findHighestDamageMove, getDamageRanges, moveKillsAttacker, moveWillFail, savedFromKO } from "../../moveScoring";
 import { ActivePokemon, BattleFieldState, PlayerMoveConsideration } from "../../moveScoring.contracts";
-import { PossibleAction, PossiblePokemonActions, ScoredPossibleAction, TargetSlot } from "./move-selection.contracts";
+import { PossibleAction, ScoredPossibleAction, TargetSlot } from "./move-selection.contracts";
 import { gen, Heuristics } from "../../../configuration";
 
-export function getPlayerPossibleActions(state: BattleFieldState, playerPokemon: ActivePokemon, cpuActive: ActivePokemon[], playerActive: ActivePokemon[], cpuPossibleActions: PossiblePokemonActions[] | undefined): PossibleAction[] {
+export function getPlayerPossibleActions(state: BattleFieldState, playerPokemon: ActivePokemon, cpuActive: ActivePokemon[]): PossibleAction[] {
     let actions: PossibleAction[] = [];
     for (let targetSlot = 0; targetSlot < cpuActive.length; targetSlot++) {
         let target = cpuActive[targetSlot];
@@ -20,11 +20,15 @@ function getPlayerPossibleActionsAgainstTarget(state: BattleFieldState, playerPo
     let scores = getMoveScoresAgainstTarget(state, playerPokemon, target, targetSlot)
     .filter(ms => ms.finalScore > 0);
 
-    return scores.map((score: MoveScore) => {
+    return scores.map<ScoredPossibleAction>((score: MoveScore) => {
         return ({
-            action: { type: 'move', move: { move: score.move.move, target: targetSlot } }, // TODO - status, protect, etc target self?
+            move: { move: score.move.move, target: targetSlot },
+            pokemon: playerPokemon.pokemon,
+            
+            // action: { type: 'move', move: { move: score.move.move, target: targetSlot } }, // TODO - status, protect, etc target self?
             probability: 1/scores.length,
-            score: score.finalScore
+            score: score.finalScore,
+            type: 'move',
         });
     });
 }
