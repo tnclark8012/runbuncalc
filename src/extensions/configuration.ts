@@ -1,5 +1,5 @@
 import { Generations } from "@smogon/calc";
-import { IMoveScoringStrategy, IntuitionScoring } from "./simulator/phases/battle/player-move-selection-strategy";
+import { BasicScoring, IMoveScoringStrategy, IntuitionScoring } from "./simulator/phases/battle/player-move-selection-strategy";
 import type { MoveResult } from "./simulator/moveScoring.contracts";
 
 export const gen = Generations.get(8);
@@ -9,7 +9,7 @@ export type ConfiguredHeuristics = {
 }
 
 export const Heuristics: ConfiguredHeuristics = {
-    playerMoveScoringStrategy: IntuitionScoring
+    playerMoveScoringStrategy: BasicScoring
 }
 
 export interface RNGStrategy {

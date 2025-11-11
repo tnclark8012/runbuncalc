@@ -17,6 +17,14 @@ export type PossibleAction = Action &  {
     probability: number;
 };
 
+export type PossibleMoveAction = MoveAction & {
+    probability: number;
+};
+
+export type PossibleSwitchAction = SwitchAction & {
+    probability: number;
+};
+
 export type Action = SwitchAction | MoveAction;
 
 export interface SwitchAction {
@@ -45,3 +53,7 @@ export interface TargetSlot extends Slot {
 }
 
 export type ScoredPossibleAction = PossibleAction & { score: number };
+
+export function isMoveAction(action: PossibleAction): action is PossibleMoveAction {
+    return action.type === 'move';
+}

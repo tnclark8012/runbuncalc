@@ -151,7 +151,7 @@ function getPossibleActionsForAllSlots(state: BattleFieldState): Array<PossibleT
 
     let cpuPossibleActions = [...possibleActionsByPokemon];
     for (let i = 0; i < state.player.active.length; i++) {
-        let possibleActions: PossibleAction[] = getPlayerPossibleActions(state, state.player.active[i], state.cpu.active);
+        let possibleActions: PossibleAction[] = getPlayerPossibleActions(state, state.player.active[i]);
          possibleActionsByPokemon.push(possibleActions.map<PossibleTrainerAction>(action => ({
             pokemon: state.player.active[i],
             action,

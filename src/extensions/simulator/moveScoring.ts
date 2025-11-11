@@ -540,8 +540,46 @@ export function createMove(pokemon: A.Pokemon, moveName: string | A.Move): Move 
  */
 export function calculateAllMoves(gen: I.Generation, attacker: Pokemon, defender: Pokemon, attackerField: Field): Result[] {
 	var results = [];
-	for (var i = 0; i < 4; i++) {
+	for (var i = 0; i < attacker.moves.length; i++) {
 		results[i] = calculate(gen, attacker, defender, createMove(attacker, attacker.moves[i]), attackerField);
 	}
 	return results;
+}
+
+export function hasMegaStone(pokemon: Pokemon): boolean {
+    return !!(pokemon.item && pokemon.item.endsWith('ite'));
+}
+
+export function canMegaEvolve(pokemon: Pokemon): boolean {
+    return hasMegaStone(pokemon) && !pokemon.name.endsWith("-Mega");
+}
+
+export function megaEvolve(pokemon: Pokemon): Pokemon {
+    if (!canMegaEvolve(pokemon))
+        throw new Error(`${pokemon.name} cannot mega evolve`);
+
+    let megaForme = Pokemon.getForme(pokemon.gen, pokemon.species.name, pokemon.item);
+    return new Pokemon(pokemon.gen, megaForme, {
+        item: pokemon.item,
+        nature: pokemon.nature,
+        moves: pokemon.moves,
+        curHP: pokemon.curHP(),
+        ivs: pokemon.ivs,
+        boosts: pokemon.boosts
+    });
+}
+
+export function getMegaAbility(name: string): string {
+    switch (name) {
+        case 'Beedrill-Mega':
+            return 'Adaptability';
+        case 'Pidgeot-Mega':
+            return 'No Guard';
+        case 'Slowbro-Mega':
+            return 'Shell Armor';
+        case 'Gengar-Mega':
+            return 'Shadow Tag';
+        default:
+            throw new Error(`Unknown mega form ${name}`);
+    }
 }
