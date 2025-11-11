@@ -1,15 +1,15 @@
 import { Field, Pokemon, Side } from "@smogon/calc";
-import { ActivePokemon, BattleFieldState, PokemonPosition, Trainer } from "./moveScoring.contracts";
+import { BattleFieldState, PokemonPosition, Trainer } from "./moveScoring.contracts";
 
 export interface IBattleFieldStateVisitor {
-    visitActivePokemon?(state: BattleFieldState, pokemon: ActivePokemon, side: Side, field: Field): void;
+    visitActivePokemon?(state: BattleFieldState, pokemon: PokemonPosition, side: Side, field: Field): void;
 }
 
 export function visitActivePokemonInSpeedOrder(state: BattleFieldState, visitor: IBattleFieldStateVisitor): void {
     if (!visitor.visitActivePokemon)
         return;
 
-    let toVisit: Array<{ active: ActivePokemon, field: Field, side: Side}> = [];
+    let toVisit: Array<{ active: PokemonPosition, field: Field, side: Side}> = [];
     for (let active of state.player.active) {
         toVisit.push({ active, field: state.playerField, side: state.playerField.attackerSide });
     }

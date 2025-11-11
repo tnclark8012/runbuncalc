@@ -550,6 +550,20 @@ export function hasMegaStone(pokemon: Pokemon): boolean {
     return !!(pokemon.item && pokemon.item.endsWith('ite'));
 }
 
+export function isMegaEvolution(pokemon: Pokemon): boolean {
+    return pokemon.name.endsWith("-Mega");
+}
+
+export function isMegaEvolutionOf(baseForm: Pokemon, megaForm: Pokemon): boolean {
+    if (!isMegaEvolution(megaForm))
+        return false;
+
+    if (!canMegaEvolve(baseForm))
+        return false;
+
+    return baseForm.name === megaForm.name.replace("-Mega", "");
+}
+
 export function canMegaEvolve(pokemon: Pokemon): boolean {
     return hasMegaStone(pokemon) && !pokemon.name.endsWith("-Mega");
 }
@@ -567,19 +581,4 @@ export function megaEvolve(pokemon: Pokemon): Pokemon {
         ivs: pokemon.ivs,
         boosts: pokemon.boosts
     });
-}
-
-export function getMegaAbility(name: string): string {
-    switch (name) {
-        case 'Beedrill-Mega':
-            return 'Adaptability';
-        case 'Pidgeot-Mega':
-            return 'No Guard';
-        case 'Slowbro-Mega':
-            return 'Shell Armor';
-        case 'Gengar-Mega':
-            return 'Shadow Tag';
-        default:
-            throw new Error(`Unknown mega form ${name}`);
-    }
 }

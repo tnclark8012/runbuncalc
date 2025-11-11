@@ -1,6 +1,6 @@
 import { calculate, Field, Move, Pokemon, Result } from "@smogon/calc";
 import { PokemonReplacer, visitActivePokemonInSpeedOrder } from "../../battle-field-state-visitor";
-import { ActivePokemon, BattleFieldState, MoveResult, Trainer } from "../../moveScoring.contracts";
+import { ActivePokemon, BattleFieldState, MoveResult, PokemonPosition, Trainer } from "../../moveScoring.contracts";
 import { PossibleBattleFieldState } from "../../turn-state";
 import { PossibleAction, PossibleTrainerAction, TargetedMove, TargetSlot, SwitchAction, MoveAction } from "./move-selection.contracts";
 import { MoveScore } from "../../moveScore";
@@ -9,8 +9,10 @@ import { getPlayerPossibleActions } from "./player-move-selection";
 import { executeSwitch } from "../switching/execute-switch";
 import { cpuRng, gen, playerRng } from "../../../configuration";
 import { executeMove } from "./execute-move";
-import { toMoveResult } from "../../moveScoring";
+import { isMegaEvolution, toMoveResult } from "../../moveScoring";
 import { TrainerActionPokemonReplacer } from "../../possible-trainer-action-visitor";
+import { executeMegaEvolution } from "./mega-evolve";
+import { Side } from "@smogon/calc/src";
 
 export function determineMoveOrderAndExecute(state: BattleFieldState): PossibleBattleFieldState[] {
     if (state.player.active.every(ap => ap.pokemon.curHP() <= 0) || state.cpu.active.every(ap => ap.pokemon.curHP() <= 0)) {
@@ -23,7 +25,7 @@ export function determineMoveOrderAndExecute(state: BattleFieldState): PossibleB
         let newState = state.clone();
         let log: string[] = [];
         // Separate actions by type
-        const switches = combination.filter(a => a.action.type === 'switch');
+        const switches = combination.filter(a => a.action.type === 'switch').sort((a, b) => a.pokemon.pokemon.stats.spe - b.pokemon.pokemon.stats.spe);
 
         for (let switchAction of switches) {
             const outcome = executeSwitch(newState, switchAction.trainer, switchAction.action as SwitchAction);
@@ -31,19 +33,21 @@ export function determineMoveOrderAndExecute(state: BattleFieldState): PossibleB
             log.push(...outcome.log);
         }
 
-        // const megas = combination.filter(a => a.action.type === 'mega');
         const moves = combination.filter(a => a.action.type === 'move');
+        const megasResult = executeMegaEvolution(newState, moves);
+        for (let i = 0; i < moves.length; i++) {
+            moves[i] = TrainerActionPokemonReplacer.replace(moves[i], moves[i].pokemon.pokemon, (moves[i].action as MoveAction).pokemon);
+        }
 
-        // // Sort switches and megas by speed order
-        // switches.sort((a, b) => a.pokemon.pokemon.stats.spe - b.pokemon.pokemon.stats.spe);
-        // // megas.sort((a, b) => b.pokemon.stats.spe - a.pokemon.stats.spe);
+        newState = megasResult.outcome;
+        log.push(...megasResult.log);
 
         // Sort moves by priority, then speed order for ties
         moves.sort((a, b) => {
             let moveA = a.action as MoveAction;
             let moveB = b.action as MoveAction;
             if (moveA.move.move.priority !== moveB.move.move.priority) return moveB.move.move.priority - moveA.move.move.priority;
-            return b.pokemon.pokemon.stats.spe - a.pokemon.pokemon.stats.spe;
+            return moveB.pokemon.stats.spe - moveA.pokemon.stats.spe;
         });
 
         for (let moveAction of moves) {
@@ -78,7 +82,8 @@ function toHistoryEntry(action: PossibleTrainerAction): string {
     }
     throw new Error('Unknown action type');
 }
-function getPokemon(state: BattleFieldState, action: PossibleTrainerAction): ActivePokemon {
+
+function getPokemon(state: BattleFieldState, action: PossibleTrainerAction): PokemonPosition {
     if (action.trainer.equals(state.player))
         return state.player.getActivePokemon(action.pokemon.pokemon)!;
     return state.cpu.getActivePokemon(action.pokemon.pokemon)!;
@@ -172,8 +177,32 @@ function executeMoveOnState(state: BattleFieldState, trainer: Trainer, action: M
     let calcResult = calculate(gen, actingPokemon, targetActive.pokemon, action.move.move, trainer.name === "Player" ? state.playerField : state.cpuField);
     let moveResult = toMoveResult(calcResult);
     let executionResult = executeMove(gen, action.pokemon, targetActive.pokemon, moveResult, trainer.name === "Player" ? playerRng : cpuRng);
-    let impactOnAttacker = PokemonReplacer.replace(newState, executionResult.attacker);
-    let endingState = PokemonReplacer.replace(impactOnAttacker, executionResult.defender);
+    newState = PokemonReplacer.replace(newState, executionResult.attacker);
+    newState = PokemonReplacer.replace(newState, executionResult.defender);
     let description = `${trainer.name}'s ${actingPokemon.name} (${actingPokemon.curHP()}/${actingPokemon.maxHP()}) used ${action.move.move.name} on ${targetActive.pokemon.name} (${targetActive.pokemon.curHP()}/${targetActive.pokemon.maxHP()})`;
-    return { outcome: endingState, log: [description] };
+    if (trainer.name === "Player") {
+        applyFieldEffects(newState.playerField, newState.cpuField, moveResult);
+    }
+    else {
+        applyFieldEffects(newState.cpuField, newState.playerField, moveResult);
+    }
+    return { outcome: newState, log: [description] };
+}
+
+function applyFieldEffects(attackerField: Field, defenderField: Field, moveResult: MoveResult): void {
+    switch(moveResult.move.name) {
+        case 'Stealth Rock':
+            defenderField.attackerSide.isSR = true;
+            attackerField.defenderSide.isSR = true;
+            break;
+        case 'Spikes':
+            defenderField.attackerSide.spikes = (defenderField.attackerSide.spikes || 0) + 1;
+            attackerField.defenderSide.spikes = (attackerField.defenderSide.spikes || 0) + 1;
+            break;
+        // case 'Toxic Spikes':
+        //     defenderField.defenderSide.toxicSpikes = (defenderField.defenderSide.toxicSpikes || 0) + 1;
+        // //     break;
+        // case 'Sticky Web':
+        //     break;
+    }
 }

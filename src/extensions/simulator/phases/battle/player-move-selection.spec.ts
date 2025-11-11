@@ -2,14 +2,10 @@
 
 import { Dex } from '@pkmn/dex';
 import {
-  I,
-  A,
   Field,
-  Generations,
   Pokemon
 } from '@smogon/calc';
 import { inGen, importTeam } from '../../test-helper';
-import { megaEvolve } from '../../moveScoring';
 import { getPlayerPossibleActions } from './player-move-selection';
 import { isMoveAction, PossibleAction } from './move-selection.contracts';
 import { BattleFieldState, CpuTrainer, PlayerTrainer, PokemonPosition } from '../../moveScoring.contracts';

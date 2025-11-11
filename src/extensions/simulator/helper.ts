@@ -2,6 +2,7 @@
 
 import { I, State, Field, Pokemon, Move, calculate, SPECIES, ABILITIES, PokemonOptions, ITEMS, Side, SpeciesData } from '@smogon/calc';
 import { Result } from '@smogon/calc/src';
+import { BattleFieldState, CpuTrainer, PlayerTrainer, PokemonPosition } from './moveScoring.contracts';
 
 const calc = (gen: I.GenerationNum) => (
   attacker: Pokemon,
@@ -367,4 +368,20 @@ export function importTeam(importText: string): Pokemon[] {
     }
     return moves;
   }
+}
+
+export function create1v1BattleState(playerPokemon: Pokemon, cpuPokemon: Pokemon): BattleFieldState {
+  return new BattleFieldState(
+      'singles',
+      new PlayerTrainer(
+        [new PokemonPosition(playerPokemon)],
+        [],
+      ),
+      new CpuTrainer(
+        [new PokemonPosition(cpuPokemon)],
+        [],
+        ),
+      new Field(),
+      new Field()
+    );
 }
