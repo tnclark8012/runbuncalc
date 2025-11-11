@@ -47,7 +47,7 @@ export function getCpuMoveConsiderations(cpuResults: Result[], playerMove: MoveR
             hightestRollHpPercentage: r.highestRollHpPercentage,
             kos: kos,
             isDamagingMove: r.move.category !== 'Status',
-            isHighestDamagingMove: maxDamageMove === r,
+            isHighestDamagingMove: Math.min(maxDamageMove.highestRollHpPercentage, 100) === Math.min(r.highestRollHpPercentage, 100),
             aiIsFaster,
             aiIsSlower: !aiIsFaster,
             aiWillOHKOPlayer: r.lowestRollDamage >= playerMon.curHP(),

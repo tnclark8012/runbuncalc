@@ -26,7 +26,7 @@ function getPlayerPossibleActionsAgainstTarget(state: BattleFieldState, playerPo
             pokemon: playerPokemon.pokemon,
             
             // action: { type: 'move', move: { move: score.move.move, target: targetSlot } }, // TODO - status, protect, etc target self?
-            probability: 1/scores.length,
+            probability: 1,
             score: score.finalScore,
             type: 'move',
         });

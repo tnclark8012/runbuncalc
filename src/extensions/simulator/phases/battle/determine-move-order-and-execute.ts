@@ -56,12 +56,25 @@ export function determineMoveOrderAndExecute(state: BattleFieldState): PossibleB
         }
         
         let outcome = newState;
-        results.push({ type: 'possible', probability: 1 / allPossibleTurns.length, state: outcome });
+        results.push({ 
+            type: 'possible', 
+            probability: combination.reduce((acc, action) => acc * action.action.probability, 1),
+            state: outcome, 
+            history: [...switches, ...moves].map(a => toHistoryEntry(a)) 
+        });
     }
 
     return results;
 }
 
+function toHistoryEntry(action: PossibleTrainerAction): string {
+    if (action.action.type === 'move') {
+        return `${action.trainer.name}'s ${action.pokemon.pokemon.name} used ${action.action.move.move.name} on slot ${action.action.move.target.slot}`;
+    } else if (action.action.type === 'switch') {
+        return `${action.trainer.name} switched in ${action.action.switchIn?.name || 'an unknown Pokémon'} for ${action.pokemon.pokemon.name}`;
+    }
+    throw new Error('Unknown action type');
+}
 function getPokemon(state: BattleFieldState, action: PossibleTrainerAction): ActivePokemon {
     if (action.trainer.equals(state.player))
         return state.player.getActivePokemon(action.pokemon.pokemon)!;
