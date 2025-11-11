@@ -9,9 +9,13 @@ import { getPlayerPossibleActions } from "./player-move-selection";
 import { executeSwitch } from "../switching/execute-switch";
 import { cpuRng, gen, playerRng } from "../../../configuration";
 import { executeMove } from "./execute-move";
-import { getCpuMoveConsiderations, toMoveResult } from "../../moveScoring";
+import { toMoveResult } from "../../moveScoring";
+import { TrainerActionPokemonReplacer } from "../../possible-trainer-action-visitor";
 
 export function determineMoveOrderAndExecute(state: BattleFieldState): PossibleBattleFieldState[] {
+    if (state.player.active.every(ap => ap.pokemon.curHP() <= 0) || state.cpu.active.every(ap => ap.pokemon.curHP() <= 0)) {
+        return []; // No valid moves if all Pokémon are fainted
+    }
 
     let results: PossibleBattleFieldState[] = [];
     const allPossibleTurns: PossibleTrainerAction[][] = getAllPlayerAndCpuPossibleTurns(state);
@@ -41,19 +45,27 @@ export function determineMoveOrderAndExecute(state: BattleFieldState): PossibleB
         });
 
         for (let moveAction of moves) {
-            let action = moveAction.action as MoveAction;
-            let target = action.move.target;
-            let targetActive = moveAction.trainer.name === "Player" ? newState.cpu.active[target.slot] : newState.player.active[target.slot];
-            let calcResult = calculate(gen, moveAction.pokemon.pokemon, targetActive.pokemon, action.move.move, moveAction.trainer.name === "Player" ? state.playerField : state.cpuField);
-            let executionResult = executeMoveOnState(newState,  moveAction.trainer, action);
+            let actor = getPokemon(newState, moveAction);
+            if (actor.pokemon.curHP() <= 0) {
+                continue; // Skip if the Pokémon has fainted earlier in the turn
+            }
+
+            let updatedAction = TrainerActionPokemonReplacer.replace(moveAction, actor.pokemon);
+            let executionResult = executeMoveOnState(newState,  updatedAction.trainer, updatedAction.action as MoveAction);
             newState = executionResult;
-            
         }
         
-        results.push({ type: 'possible', probability: 1 / allPossibleTurns.length, state: newState });
+        let outcome = newState;
+        results.push({ type: 'possible', probability: 1 / allPossibleTurns.length, state: outcome });
     }
 
     return results;
+}
+
+function getPokemon(state: BattleFieldState, action: PossibleTrainerAction): ActivePokemon {
+    if (action.trainer.equals(state.player))
+        return state.player.getActivePokemon(action.pokemon.pokemon)!;
+    return state.cpu.getActivePokemon(action.pokemon.pokemon)!;
 }
 
 export function getAllPlayerAndCpuPossibleTurns(state: BattleFieldState): PossibleTrainerAction[][] {
@@ -135,14 +147,18 @@ function getPossibleActionsForAllSlots(state: BattleFieldState): Array<PossibleT
     return possibleActionsByPokemon;
 }
 
-function executeMoveOnState(state: BattleFieldState, trainer: Trainer,action: MoveAction): BattleFieldState {
+function executeMoveOnState(state: BattleFieldState, trainer: Trainer, action: MoveAction): BattleFieldState {
     let newState = state.clone();
 
     let target = action.move.target;
     let targetActive = trainer.name === "Player" ? newState.cpu.active[target.slot] : newState.player.active[target.slot];
-    let calcResult = calculate(gen, action.pokemon, targetActive.pokemon, action.move.move, trainer.name === "Player" ? state.playerField : state.cpuField);
+    let actingPokemon = trainer.getActivePokemon(action.pokemon)!.pokemon;
+    let calcResult = calculate(gen, actingPokemon, targetActive.pokemon, action.move.move, trainer.name === "Player" ? state.playerField : state.cpuField);
     let moveResult = toMoveResult(calcResult);
     let executionResult = executeMove(gen, action.pokemon, targetActive.pokemon, moveResult, trainer.name === "Player" ? playerRng : cpuRng);
     let impactOnAttacker = PokemonReplacer.replace(newState, executionResult.attacker);
-    return PokemonReplacer.replace(impactOnAttacker, executionResult.defender);
+    let endingState = PokemonReplacer.replace(impactOnAttacker, executionResult.defender);
+    let description = `${actingPokemon.name} used ${action.move.move.name} on ${targetActive.pokemon.name}`;
+    console.log(description);
+    return endingState;
 }

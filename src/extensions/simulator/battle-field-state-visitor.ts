@@ -39,8 +39,8 @@ export class BattleFieldStateRewriter implements IBattleFieldStateVisitorWithRew
     public visitState(state: BattleFieldState): BattleFieldState {
         return new BattleFieldState(
             state.battleFormat,
-            this.visitTrainer(state.cpu),
             this.visitTrainer(state.player),
+            this.visitTrainer(state.cpu),
             this.visitPlayerField(state.playerField),
             this.visitCpuField(state.cpuField)
         );

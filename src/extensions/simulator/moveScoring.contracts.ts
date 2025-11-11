@@ -85,6 +85,14 @@ export class Trainer {
 			this.party.map(p => p.clone()),
 			this.switchStrategy);
 	}
+
+	public equals(other: Trainer): boolean {
+		return this.name === other.name;
+	}
+
+	public getActivePokemon(pokemon: Pokemon): PokemonPosition | undefined {
+		return this.active.find(p => p.pokemon.equals(pokemon));
+	}
 }
 
 export class CpuTrainer extends Trainer {
@@ -132,6 +140,16 @@ export class BattleFieldState {
 		return this.battleFormat === 'doubles';
 	}
 
+	public getTrainer(trainer: Trainer): Trainer {
+		if (trainer.equals(this.player)) {
+			return this.player;
+		} else if (trainer.equals(this.cpu)) {
+			return this.cpu;
+		} else {
+			throw new Error(`Trainer ${trainer.name} not found in the battle state`);
+		}
+	}
+
 	public clone(): BattleFieldState {
 		return new BattleFieldState(
 			this.battleFormat,
@@ -140,5 +158,27 @@ export class BattleFieldState {
 			this.playerField.clone(),
 			this.cpuField.clone()
 		)
+	}
+
+	public toString(): string {
+		const describePosition = (slot: number, pokemon: PokemonPosition | undefined) => {
+			if (!pokemon) return '';
+
+			return `[${slot}]: ${pokemon.pokemon.name} (${pokemon.pokemon.curHP()}/${pokemon.pokemon.maxHP()})`;
+		};
+
+		const describePartyPokemon = (pokemon: Pokemon) => {
+			return `${pokemon.name} (${pokemon.curHP()}/${pokemon.maxHP()})`;
+		}
+
+		return `BattleFieldState
+			${this.player.name}
+				${describePosition(0, this.player.active[0])}
+				${describePosition(1, this.player.active[1])}
+
+			${this.cpu.name}
+				${describePosition(0, this.cpu.active[0])}
+				${describePosition(1, this.cpu.active[1])}
+`			;
 	}
 }

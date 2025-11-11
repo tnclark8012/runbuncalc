@@ -1,5 +1,5 @@
 import { Move, Pokemon } from "@smogon/calc";
-import { ActivePokemon, Trainer } from "../../moveScoring.contracts";
+import { ActivePokemon, PokemonPosition, Trainer } from "../../moveScoring.contracts";
 
 // export interface PossiblePokemonActions {
 //     pokemon: ActivePokemon;
@@ -8,7 +8,7 @@ import { ActivePokemon, Trainer } from "../../moveScoring.contracts";
 
 export interface PossibleTrainerAction {
     trainer: Trainer;
-    pokemon: ActivePokemon;
+    pokemon: PokemonPosition;
     action: PossibleAction;
     slot: Slot;
 }

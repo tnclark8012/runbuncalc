@@ -4,7 +4,7 @@ import {
   Field,
   Pokemon,
 } from '@smogon/calc';
-import { inGen, importTeam, importPokemon, expectPlayerTeam, expectCpuTeam } from '../../test-helper';
+import { inGen, importTeam } from '../../test-helper';
 import { ActivePokemon, BattleFieldState, PokemonPosition, Trainer } from '../../moveScoring.contracts';
 import { generateAllActionCombinations } from './determine-move-order-and-execute';
 import { MoveAction, PossibleAction, PossibleTrainerAction } from './move-selection.contracts';
@@ -100,7 +100,7 @@ function generateEqualLikelyhoodActions(trainer: Trainer, pokemon: Pokemon, targ
                   },
                   probability: 1 / (pokemon.moves.length * targets.length)
                 },
-                pokemon: { pokemon},
+                pokemon: new PokemonPosition(pokemon),
                 slot: { slot: targetSlot },
                 trainer,
             });
