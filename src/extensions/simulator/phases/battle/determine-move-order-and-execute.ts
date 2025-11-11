@@ -171,7 +171,7 @@ function executeMoveOnState(state: BattleFieldState, trainer: Trainer, action: M
     let executionResult = executeMove(gen, action.pokemon, targetActive.pokemon, moveResult, trainer.name === "Player" ? playerRng : cpuRng);
     let impactOnAttacker = PokemonReplacer.replace(newState, executionResult.attacker);
     let endingState = PokemonReplacer.replace(impactOnAttacker, executionResult.defender);
-    let description = `${actingPokemon.name} used ${action.move.move.name} on ${targetActive.pokemon.name}`;
+    let description = `${actingPokemon.name} used ${action.move.move.name} on ${targetActive.pokemon.name} (${targetActive.pokemon.curHP()}/${targetActive.pokemon.maxHP()})`;
     console.log(description);
     return endingState;
 }

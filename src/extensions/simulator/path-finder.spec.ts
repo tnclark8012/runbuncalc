@@ -28,6 +28,7 @@ IVs: 20 HP / 27 Atk / 8 SpA
 - Growl
 
 `);
+        Torchic = Torchic.clone({ curHP: 1 });
         const state = new BattleFieldState(
           'singles', 
           new PlayerTrainer([ new PokemonPosition(Turtwig, true) ], []),
