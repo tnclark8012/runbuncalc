@@ -4,7 +4,7 @@ import { BattleFieldState, CpuTrainer, PlayerTrainer, PokemonPosition, Trainer }
 import { importTeam } from '../helper';
 import { expectTeam, usingHeuristics } from '../test-helper';
 import { BasicScoring, IntuitionScoring } from '../phases/battle/player-move-selection-strategy';
-import { findPlayerWinningPath } from '../path-finder';
+import { findPlayerWinningPath, printDecisionTree } from '../path-finder';
 
 describe('Actual playthrough tests', () => {
   describe('Museum Split', () => {
@@ -76,6 +76,7 @@ IVs: 20 HP / 27 Atk / 8 SpA
         usingHeuristics({ playerMoveScoringStrategy: BasicScoring }, () => {
           let path = findPlayerWinningPath(state);
           expect(path).not.toBeNull();
+          // expect(printDecisionTree(path!)).toBe('');
         });
     });
   });

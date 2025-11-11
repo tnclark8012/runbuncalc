@@ -2,9 +2,10 @@ import { Pokemon } from "@smogon/calc";
 import { BattleFieldState, PokemonPosition, Trainer } from "../../moveScoring.contracts";
 import { SwitchAction } from "../battle/move-selection.contracts";
 
-export function executeSwitch(state: BattleFieldState, trainer: Trainer, action: SwitchAction): BattleFieldState {
+export function executeSwitch(state: BattleFieldState, trainer: Trainer, action: SwitchAction): { outcome: BattleFieldState, log: string[] } {
     const newState = state.clone();
     const position = action.target.slot;
+    const log: string[] = [];
     const actingTrainer = newState.cpu.name === trainer.name ? newState.cpu : newState.player;
     // Get the active Pokemon to move to party
     const initialActive = actingTrainer.active[position]?.pokemon;
@@ -17,8 +18,8 @@ export function executeSwitch(state: BattleFieldState, trainer: Trainer, action:
     let incoming = action.switchIn && popFromParty(actingTrainer.party, action.switchIn);
     // Replace active Pokemon
     actingTrainer.active[position] = new PokemonPosition(incoming!, true);
-
-    return newState;
+    log.push(`${trainer.name} switched in ${incoming!.name} to position ${position + 1} for ${initialActive ? initialActive.name : 'an empty slot'}`);
+    return { outcome: newState, log };
 }
 
 export function popFromParty(party: Pokemon[], pokemon: Pokemon): Pokemon {

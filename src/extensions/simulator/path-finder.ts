@@ -1,7 +1,14 @@
 import { BattleFieldState } from "./moveScoring.contracts";
 import { PossibleBattleFieldState, runTurn } from "./turn-state";
 
-export function findPlayerWinningPath(state: BattleFieldState): PossibleBattleFieldState[] | null {
+export interface DecisionNode {
+    state: PossibleBattleFieldState;
+    playerAction: string;
+    // Map from CPU outcome to the next decision node
+    cpuOutcomes: Map<string, DecisionNode | 'WIN'>;
+}
+
+export function findPlayerWinningPath(state: BattleFieldState): DecisionNode | null {
     return findPathGuaranteed(state, (s) => {
         const allCpuPokemonFainted = s.cpu.active.every(ap => ap.pokemon.curHP() <= 0) && s.cpu.party.every(pp => pp.curHP() <= 0);
         const anyPlayerPokemonFainted = !s.player.active.every(ap => ap.pokemon.curHP() >= 0) && !s.player.party.every(pp => pp.curHP() >= 0);
@@ -45,25 +52,29 @@ export function findPath(state: BattleFieldState, isGoalState: (state: BattleFie
     return null; // No path found
 }
 
-export function findPathGuaranteed(state: BattleFieldState, isGoalState: (state: BattleFieldState) => boolean | undefined): PossibleBattleFieldState[] | null {
-    let visited = new Map<string, boolean | undefined>();
+export function findPathGuaranteed(state: BattleFieldState, isGoalState: (state: BattleFieldState) => boolean | undefined): DecisionNode | null {
+    let memo = new Map<string, DecisionNode | 'WIN' | 'LOSS'>();
     
-    function search(current: PossibleBattleFieldState, path: PossibleBattleFieldState[], depth: number): PossibleBattleFieldState[] | null {
+    function search(current: PossibleBattleFieldState, depth: number): DecisionNode | 'WIN' | 'LOSS' {
         // Prevent infinite loops
-        if (depth > 20) return null;
+        if (depth > 20) return 'LOSS';
         
         let stateKey = toStateKey(current);
-        if (visited.has(stateKey) && visited.get(stateKey) !== undefined) {
-            return visited.get(stateKey) ? path : null;
+        
+        // Check memoized result
+        if (memo.has(stateKey)) {
+            return memo.get(stateKey)!;
         }
 
-        visited.set(stateKey, undefined);
+        // Mark as being explored (to detect cycles)
+        memo.set(stateKey, 'LOSS');
 
         // Check if we've reached the goal
         let goalCheck = isGoalState(current.state);
         if (goalCheck !== undefined) {
-            visited.set(stateKey, goalCheck);
-            return goalCheck ? path : null;
+            const result = goalCheck ? 'WIN' : 'LOSS';
+            memo.set(stateKey, result);
+            return result;
         }
 
         // Get all possible outcomes for this turn
@@ -76,35 +87,41 @@ export function findPathGuaranteed(state: BattleFieldState, isGoalState: (state:
         for (let [playerAction, outcomes] of actionGroups) {
             // For this player action to guarantee a win, ALL possible CPU responses must lead to a win
             let allPathsWin = true;
-            let longestWinningPath: PossibleBattleFieldState[] | null = null;
+            let cpuOutcomes = new Map<string, DecisionNode | 'WIN'>();
             
             for (let outcome of outcomes) {
-                let subPath = search(outcome, [...path, outcome], depth + 1);
+                let subResult = search(outcome, depth + 1);
                 
-                if (subPath === null) {
+                if (subResult === 'LOSS') {
                     // This CPU response doesn't lead to a win, so this player action doesn't guarantee a win
                     allPathsWin = false;
                     break;
                 }
                 
-                // Track the longest path (in case we want to return the full sequence)
-                if (longestWinningPath === null || subPath.length > longestWinningPath.length) {
-                    longestWinningPath = subPath;
-                }
+                // Store the decision tree for this CPU outcome
+                let cpuActionKey = getCpuActionFromHistory(outcome.history);
+                cpuOutcomes.set(cpuActionKey, subResult);
             }
             
             // If all CPU responses lead to a win, we found a guaranteed winning player action
-            if (allPathsWin && longestWinningPath !== null) {
-                visited.set(stateKey, true);
-                return longestWinningPath;
+            if (allPathsWin) {
+                const decisionNode: DecisionNode = {
+                    state: current,
+                    playerAction,
+                    cpuOutcomes
+                };
+                memo.set(stateKey, decisionNode);
+                return decisionNode;
             }
         }
         
-        visited.set(stateKey, false);
-        return null;
+        // No guaranteed winning action found
+        memo.set(stateKey, 'LOSS');
+        return 'LOSS';
     }
     
-    return search({ type: 'possible', history: [], probability: 1, state: state}, [{ history: [], probability: 1, state, type: 'possible'}], 0);
+    const result = search({ type: 'possible', history: [], probability: 1, state: state}, 0);
+    return result === 'WIN' || result === 'LOSS' ? null : result;
 }
 
 function groupByPlayerAction(outcomes: PossibleBattleFieldState[]): Map<string, PossibleBattleFieldState[]> {
@@ -129,7 +146,62 @@ function getPlayerActionFromHistory(history: string[]): string {
     return playerActions[playerActions.length - 1] || 'unknown';
 }
 
+function getCpuActionFromHistory(history: string[]): string {
+    let cpuActions = history.filter(h => !h.startsWith('Player'));
+    return cpuActions[cpuActions.length - 1] || 'No CPU action';
+}
+
 function toStateKey(state: PossibleBattleFieldState): string {
     // Create a unique string representation of the state for visited checks
     return state.state.toString();
+}
+
+export function printDecisionTree(tree: DecisionNode | null, indent: string = ''): string {
+    if (!tree) {
+        return indent + 'No winning path found';
+    }
+    
+    let output = '';
+    
+    // Print the player action
+    output += indent + tree.playerAction + '\n';
+    
+    // Get CPU outcomes
+    const outcomes = Array.from(tree.cpuOutcomes.entries());
+    
+    if (outcomes.length === 0) {
+        return output;
+    }
+    
+    // If there's only one CPU outcome, don't use if/else
+    if (outcomes.length === 1) {
+        const [cpuAction, nextNode] = outcomes[0];
+        output += indent + cpuAction + '\n';
+        
+        if (nextNode === 'WIN') {
+            output += indent + 'WIN\n';
+        } else {
+            output += printDecisionTree(nextNode, indent);
+        }
+    } else {
+        // Multiple CPU outcomes - use if/else branching
+        // Calculate probabilities (assume equal probability for now)
+        const probability = (100 / outcomes.length).toFixed(1);
+        
+        outcomes.forEach(([cpuAction, nextNode], index) => {
+            if (index === 0) {
+                output += indent + `if ${cpuAction} (${probability}%):\n`;
+            } else {
+                output += indent + `else ${cpuAction} (${probability}%):\n`;
+            }
+            
+            if (nextNode === 'WIN') {
+                output += indent + '  WIN\n';
+            } else {
+                output += printDecisionTree(nextNode, indent + '  ');
+            }
+        });
+    }
+    
+    return output;
 }

@@ -38,7 +38,8 @@ export function applyCpuSwitchIns(state: BattleFieldState): BattleFieldState {
     }
 
     for (let switchAction of switches) {
-        state = executeSwitch(state, state.cpu, switchAction);
+        const outcome = executeSwitch(state, state.cpu, switchAction);
+        state = outcome.outcome;
     }
 
     return state;

@@ -21,12 +21,14 @@ export function determineMoveOrderAndExecute(state: BattleFieldState): PossibleB
     const allPossibleTurns: PossibleTrainerAction[][] = getAllPlayerAndCpuPossibleTurns(state);
     for (const combination of allPossibleTurns) {
         let newState = state.clone();
-
+        let log: string[] = [];
         // Separate actions by type
         const switches = combination.filter(a => a.action.type === 'switch');
 
         for (let switchAction of switches) {
-            newState = executeSwitch(newState, switchAction.trainer, switchAction.action as SwitchAction);
+            const outcome = executeSwitch(newState, switchAction.trainer, switchAction.action as SwitchAction);
+            newState = outcome.outcome;
+            log.push(...outcome.log);
         }
 
         // const megas = combination.filter(a => a.action.type === 'mega');
@@ -52,7 +54,8 @@ export function determineMoveOrderAndExecute(state: BattleFieldState): PossibleB
 
             let updatedAction = TrainerActionPokemonReplacer.replace(moveAction, actor.pokemon);
             let executionResult = executeMoveOnState(newState,  updatedAction.trainer, updatedAction.action as MoveAction);
-            newState = executionResult;
+            newState = executionResult.outcome;
+            log.push(...executionResult.log);
         }
         
         let outcome = newState;
@@ -60,7 +63,7 @@ export function determineMoveOrderAndExecute(state: BattleFieldState): PossibleB
             type: 'possible', 
             probability: combination.reduce((acc, action) => acc * action.action.probability, 1),
             state: outcome, 
-            history: [...switches, ...moves].map(a => toHistoryEntry(a)) 
+            history: log
         });
     }
 
@@ -69,7 +72,7 @@ export function determineMoveOrderAndExecute(state: BattleFieldState): PossibleB
 
 function toHistoryEntry(action: PossibleTrainerAction): string {
     if (action.action.type === 'move') {
-        return `${action.trainer.name}'s ${action.pokemon.pokemon.name} used ${action.action.move.move.name} on slot ${action.action.move.target.slot}`;
+        return `${action.trainer.name}'s ${action.pokemon.pokemon.name} (${action.pokemon.pokemon.curHP()}/${action.pokemon.pokemon.maxHP()}) used ${action.action.move.move.name} on slot ${action.action.move.target.slot}`;
     } else if (action.action.type === 'switch') {
         return `${action.trainer.name} switched in ${action.action.switchIn?.name || 'an unknown Pokémon'} for ${action.pokemon.pokemon.name}`;
     }
@@ -160,7 +163,7 @@ function getPossibleActionsForAllSlots(state: BattleFieldState): Array<PossibleT
     return possibleActionsByPokemon;
 }
 
-function executeMoveOnState(state: BattleFieldState, trainer: Trainer, action: MoveAction): BattleFieldState {
+function executeMoveOnState(state: BattleFieldState, trainer: Trainer, action: MoveAction): { outcome: BattleFieldState, log: string[]} {
     let newState = state.clone();
 
     let target = action.move.target;
@@ -171,7 +174,6 @@ function executeMoveOnState(state: BattleFieldState, trainer: Trainer, action: M
     let executionResult = executeMove(gen, action.pokemon, targetActive.pokemon, moveResult, trainer.name === "Player" ? playerRng : cpuRng);
     let impactOnAttacker = PokemonReplacer.replace(newState, executionResult.attacker);
     let endingState = PokemonReplacer.replace(impactOnAttacker, executionResult.defender);
-    let description = `${actingPokemon.name} used ${action.move.move.name} on ${targetActive.pokemon.name} (${targetActive.pokemon.curHP()}/${targetActive.pokemon.maxHP()})`;
-    console.log(description);
-    return endingState;
+    let description = `${trainer.name}'s ${actingPokemon.name} (${actingPokemon.curHP()}/${actingPokemon.maxHP()}) used ${action.move.move.name} on ${targetActive.pokemon.name} (${targetActive.pokemon.curHP()}/${targetActive.pokemon.maxHP()})`;
+    return { outcome: endingState, log: [description] };
 }
