@@ -2,14 +2,19 @@ import { BattleFieldState } from "./moveScoring.contracts";
 import { PossibleBattleFieldState, runTurn } from "./turn-state";
 
 export function findPlayerWinningPath(state: BattleFieldState): PossibleBattleFieldState[] | null {
-    return findPathGuaranteed(state, (s) => 
-        s.cpu.active.every(p => p.pokemon.curHP() === 0) && 
-        s.cpu.party.every(p => p.curHP() === 0) &&
-        s.player.active.every(p => p.pokemon.curHP() > 0) &&
-        s.player.party.every(p => p.curHP() > 0));
+    return findPathGuaranteed(state, (s) => {
+        const allCpuPokemonFainted = s.cpu.active.every(ap => ap.pokemon.curHP() <= 0) && s.cpu.party.every(pp => pp.curHP() <= 0);
+        const anyPlayerPokemonFainted = !s.player.active.every(ap => ap.pokemon.curHP() >= 0) && !s.player.party.every(pp => pp.curHP() >= 0);
+        if (allCpuPokemonFainted)
+            return !anyPlayerPokemonFainted;
+        if (anyPlayerPokemonFainted)
+            return false;
+
+        return undefined;
+    });
 }
 
-export function findPath(state: BattleFieldState, isGoalState: (state: BattleFieldState) => boolean): PossibleBattleFieldState[] | null {
+export function findPath(state: BattleFieldState, isGoalState: (state: BattleFieldState) => boolean | undefined): PossibleBattleFieldState[] | null {
     let visited = new Set<string>();
     let queue: { state: PossibleBattleFieldState, path: PossibleBattleFieldState[] }[] = [{ 
         state: { history: [], probability: 1, state, type: 'possible'}, 
@@ -40,22 +45,25 @@ export function findPath(state: BattleFieldState, isGoalState: (state: BattleFie
     return null; // No path found
 }
 
-export function findPathGuaranteed(state: BattleFieldState, isGoalState: (state: BattleFieldState) => boolean): PossibleBattleFieldState[] | null {
-    let visited = new Set<string>();
+export function findPathGuaranteed(state: BattleFieldState, isGoalState: (state: BattleFieldState) => boolean | undefined): PossibleBattleFieldState[] | null {
+    let visited = new Map<string, boolean | undefined>();
     
     function search(current: PossibleBattleFieldState, path: PossibleBattleFieldState[], depth: number): PossibleBattleFieldState[] | null {
         // Prevent infinite loops
         if (depth > 20) return null;
         
         let stateKey = toStateKey(current);
-        if (visited.has(stateKey)) {
-            return null;
+        if (visited.has(stateKey) && visited.get(stateKey) !== undefined) {
+            return visited.get(stateKey) ? path : null;
         }
-        visited.add(stateKey);
+
+        visited.set(stateKey, undefined);
 
         // Check if we've reached the goal
-        if (isGoalState(current.state)) {
-            return path;
+        let goalCheck = isGoalState(current.state);
+        if (goalCheck !== undefined) {
+            visited.set(stateKey, goalCheck);
+            return goalCheck ? path : null;
         }
 
         // Get all possible outcomes for this turn
@@ -87,14 +95,13 @@ export function findPathGuaranteed(state: BattleFieldState, isGoalState: (state:
             
             // If all CPU responses lead to a win, we found a guaranteed winning player action
             if (allPathsWin && longestWinningPath !== null) {
+                visited.set(stateKey, true);
                 return longestWinningPath;
             }
         }
         
-        // Remove from visited to allow other paths to explore this state
-        visited.delete(stateKey);
-        
-        return null; // No guaranteed winning action found
+        visited.set(stateKey, false);
+        return null;
     }
     
     return search({ type: 'possible', history: [], probability: 1, state: state}, [{ history: [], probability: 1, state, type: 'possible'}], 0);
