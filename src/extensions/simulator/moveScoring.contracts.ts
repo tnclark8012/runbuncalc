@@ -1,5 +1,6 @@
 import { Field, Move, Pokemon } from '@smogon/calc';
 import { PartyOrderSwitchStrategy } from './switchStrategy.partyOrder';
+import { Side } from '@smogon/calc/src';
 
 export interface MoveConsideration {
 	result: MoveResult;
@@ -125,19 +126,33 @@ export class PlayerTrainer extends Trainer {
 	}
 }
 
-export type BattleFormat = 'singles' | 'doubles';
 export class BattleFieldState {
 	constructor(
-		public readonly battleFormat: BattleFormat,
 		public readonly player: Trainer,
 		public readonly cpu: Trainer,
-		public readonly playerField: Field,
-		public readonly cpuField: Field) {
+		public readonly field: Field,
+		public turnNumber: number = 0) {
 		
 	}
 
+	public get playerField(): Field {
+		return this.field;
+	}
+
+	public get playerSide(): Side {
+		return this.field.attackerSide;
+	}
+
+	public get cpuField(): Field {
+		return this.field.swap();
+	}
+
+	public get cpuSide(): Side {
+		return this.field.defenderSide;
+	}
+
 	public get isDoubles(): boolean {
-		return this.battleFormat === 'doubles';
+		return this.field.gameType === 'Doubles';
 	}
 
 	public getTrainer(trainer: Trainer): Trainer {
@@ -152,12 +167,10 @@ export class BattleFieldState {
 
 	public clone(): BattleFieldState {
 		return new BattleFieldState(
-			this.battleFormat,
 			this.player.clone(),
 			this.cpu.clone(),
-			this.playerField.clone(),
-			this.cpuField.clone()
-		)
+			this.field.clone(),
+			this.turnNumber);
 	}
 
 	public toString(): string {

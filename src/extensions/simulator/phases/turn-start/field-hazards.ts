@@ -7,7 +7,7 @@ import { getTypeEffectiveness } from "../../utils";
 export function applyFieldHazards(state: BattleFieldState): BattleFieldState {
     state = state.clone();   
     visitActivePokemonInSpeedOrder(state, {
-        visitActivePokemon(state, pokemon, side, field) {
+        visitActivePokemon(state, pokemon, field, side) {
             if (!pokemon.firstTurnOut)
                 return;
 

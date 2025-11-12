@@ -30,10 +30,8 @@ IVs: 20 HP / 27 Atk / 8 SpA
 
 `);
         const state = new BattleFieldState(
-          'singles', 
           new PlayerTrainer([ new PokemonPosition(Turtwig, true) ], []),
           new CpuTrainer([ new PokemonPosition(Torchic, true) ], []),
-          new Field(), 
           new Field());
 
         usingHeuristics({ playerMoveScoringStrategy: BasicScoring }, () => {
@@ -67,10 +65,8 @@ IVs: 20 HP / 27 Atk / 8 SpA
 
 `);
         const state = new BattleFieldState(
-          'singles', 
           new PlayerTrainer([ new PokemonPosition(Turtwig, true) ], []),
           new CpuTrainer([ new PokemonPosition(Torchic, true) ], []),
-          new Field(), 
           new Field());
 
         usingHeuristics({ playerMoveScoringStrategy: BasicScoring }, () => {

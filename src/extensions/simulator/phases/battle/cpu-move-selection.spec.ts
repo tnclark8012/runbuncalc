@@ -96,11 +96,9 @@ Ability: Hyper Cutter
 
       // Situation: Krabby is slower than Dragapult and is KOd, but Krabby can KO with priority before it dies.
       const state = new BattleFieldState(
-        'doubles', 
         new PlayerTrainer([ new PokemonPosition(Torkoal), new PokemonPosition(Dragapult)], []), 
         new CpuTrainer([ new PokemonPosition(Krabby) ], []), 
-        new Field(), 
-        new Field());
+        new Field({ gameType: 'Doubles' }));
         
       const scores = getCpuMoveScoresAgainstTarget(state, state.cpu.active[0], state.player.active[0], { slot: 0, type: 'opponent'});
       const torkoalActions = getCpuActionsFor1v1(Krabby, Torkoal);
@@ -133,7 +131,6 @@ Ability: Hyper Cutter
 
 function getCpuActionsFor1v1(cpuPokemon: Pokemon, playerPokemon: Pokemon): PossibleAction[] {
   const state = new BattleFieldState(
-    'singles',
     new PlayerTrainer(
       [new PokemonPosition(playerPokemon)],
       [],
@@ -142,7 +139,6 @@ function getCpuActionsFor1v1(cpuPokemon: Pokemon, playerPokemon: Pokemon): Possi
       [new PokemonPosition(cpuPokemon)],
       [],
       ),
-    new Field(),
     new Field()
   );
   return getCpuPossibleActions(state, state.cpu.active[0], state.player.active, state.cpu.active);
@@ -150,11 +146,9 @@ function getCpuActionsFor1v1(cpuPokemon: Pokemon, playerPokemon: Pokemon): Possi
 
 function getCpuActionsForDoubleBattle(cpuPokemon: Pokemon, playerPokemon: Pokemon[]): PossibleAction[] {
   const state = new BattleFieldState(
-    'doubles',
     new PlayerTrainer(playerPokemon.map(p => new PokemonPosition(p)), []),
     new CpuTrainer([new PokemonPosition(cpuPokemon)], []),
-    new Field(),
-    new Field()
+    new Field({ gameType: 'Doubles' })
   );
   return getCpuPossibleActions(state, state.cpu.active[0], state.player.active, state.cpu.active);
 }

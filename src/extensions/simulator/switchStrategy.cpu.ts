@@ -17,7 +17,7 @@ export class CpuSwitchStrategy implements SwitchStrategy {
 			return;
 
         let partyResults = state.cpu.party.map<SwitchInConsideration>(remainingMon => {
-            let simulator = new BattleSimulator(gen, 'singles', state.player.active[0].pokemon.clone(), remainingMon.clone(), state.playerField.clone(), state.cpuField.clone());
+            let simulator = new BattleSimulator(gen, state.player.active[0].pokemon.clone(), remainingMon.clone(), state.field.clone());
             let result = simulator.getResult({ maxTurns: 1 });
             const resultState = result.turnOutcomes.at(-1)!.endOfTurnState;
             let cpuMonAfterBattle = resultState.cpu.active[0];

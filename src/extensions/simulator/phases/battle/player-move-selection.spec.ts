@@ -37,7 +37,6 @@ Level: 100
 
 function getPlayerActionsFor1v1(playerPokemon: Pokemon, cpuPokemon: Pokemon): PossibleAction[] {
   const state = new BattleFieldState(
-    'singles',
     new PlayerTrainer(
       [new PokemonPosition(playerPokemon)],
       [],
@@ -46,7 +45,6 @@ function getPlayerActionsFor1v1(playerPokemon: Pokemon, cpuPokemon: Pokemon): Po
       [new PokemonPosition(cpuPokemon)],
       [],
       ),
-    new Field(),
     new Field()
   );
   return getPlayerPossibleActions(state, state.player.active[0]);

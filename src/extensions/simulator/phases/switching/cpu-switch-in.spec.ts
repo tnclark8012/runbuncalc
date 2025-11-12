@@ -68,21 +68,17 @@ IVs: 23 HP / 9 Atk / 5 Def / 0 SpA / 29 SpD / 10 Spe
 - Rapid Spin
 `);
       let state = new BattleFieldState(
-        'singles',
         new PlayerTrainer([], [player1, player2, player3]),
         new CpuTrainer([], [cpu1, cpu2, cpu3]),
-        new Field(),
-        new Field(),
+        new Field()
       );
       const newState = applyCpuSwitchIns(state);
       expectCpuTeam([{ pokemon: cpu1, firstTurnOut: true }], [cpu2, cpu3], newState);
     
       const doublesState = new BattleFieldState(
-        'doubles',
         new PlayerTrainer([], [player1, player2, player3]),
         new CpuTrainer([], [cpu1, cpu2, cpu3]),
-        new Field(),
-        new Field(),
+        new Field({ gameType: 'Doubles' }),
       );
 
       const newDoublesState = applyCpuSwitchIns(doublesState);
@@ -144,11 +140,9 @@ IVs: 29 HP / 24 Atk / 18 Def / 3 SpA / 24 SpD / 23 Spe
 `);
       Scrafty = Scrafty.clone({ curHP: 0 });
       let state = new BattleFieldState(
-        'singles',
         new PlayerTrainer([new PokemonPosition(player1)], []),
         new CpuTrainer([new PokemonPosition(Scrafty)], [Bruxish, Gothitelle, Bisharp]),
-        new Field(),
-        new Field(),
+        new Field()
       );
       const newState = applyCpuSwitchIns(state);
       expectCpuTeam([{ pokemon: Bisharp, firstTurnOut: true }], [Bruxish, Gothitelle, Scrafty], newState);
@@ -198,11 +192,9 @@ IVs: 29 HP / 24 Atk / 18 Def / 3 SpA / 24 SpD / 23 Spe
 `);
       Golurk = Golurk.clone({ curHP: 0 });
       let state = new BattleFieldState(
-        'singles',
         new PlayerTrainer([new PokemonPosition(player1)], []),
         new CpuTrainer([new PokemonPosition(Golurk)], [Flapple, Vikavolt]),
-        new Field(),
-        new Field(),
+        new Field()
       );
       const newState = applyCpuSwitchIns(state);
       expectCpuTeam([{ pokemon: Flapple, firstTurnOut: true }], [Vikavolt, Golurk], newState);

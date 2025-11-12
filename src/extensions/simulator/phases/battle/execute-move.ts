@@ -1,7 +1,7 @@
 import { Field, I, StatsTable, Move, Result, Pokemon, MEGA_STONES } from '@smogon/calc';
 import { applyBoost } from '../../utils';
 import { hasLifeSavingItem } from '../../moveScoring';
-import { getRecovery } from '@smogon/calc/dist/desc';
+import { getRecovery, getRecoil } from '@smogon/calc/dist/desc';
 import { MoveResult } from '../../moveScoring.contracts';
 import { RNGStrategy } from '../../../configuration';
 
@@ -11,6 +11,8 @@ export function executeMove(gen: I.Generation, attacker: Pokemon, defender: Poke
 	const defenderLostItem = consumesDefenderItem(defender, moveResult.move);
 
 	const recovery = getRecovery(gen, attacker, defender, moveResult.move, moveResult.highestRollDamage);
+	// TODO: recoil
+	const recoil = getRecoil(gen, attacker, defender, moveResult.move, moveResult.highestRollDamage);
 	
 	attacker = attacker.clone({ 
 		boosts: boosts.attacker,

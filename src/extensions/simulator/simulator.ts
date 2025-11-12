@@ -1,6 +1,6 @@
 import { Field, I, StatsTable, Move, Result, Pokemon, MEGA_STONES } from '@smogon/calc';
 import { MoveScore } from './moveScore';
-import { BattleFieldState, MoveConsideration, MoveResult, PlayerMoveConsideration, ActivePokemon, TurnOutcome, BattleFormat, Trainer, PokemonPosition, CpuTrainer, PlayerTrainer } from './moveScoring.contracts';
+import { BattleFieldState, MoveConsideration, MoveResult, PlayerMoveConsideration, ActivePokemon, TurnOutcome, Trainer, PokemonPosition, CpuTrainer, PlayerTrainer } from './moveScoring.contracts';
 import { calculateAllMoves, canUseDamagingMoves, createMove, findHighestDamageMove, getDamageRanges, hasLifeSavingItem, moveKillsAttacker, moveWillFail, savedFromKO, scoreCPUMoves } from './moveScoring';
 import { applyBoost } from './utils';
 import { CpuSwitchStrategy } from './switchStrategy.cpu';
@@ -29,11 +29,9 @@ export class BattleSimulator {
 	private readonly turns: TurnOutcome[] = [];
 
 	constructor(private readonly gen: I.Generation,
-		public readonly battleFormat: BattleFormat,
 		playerTrainerOrPokemon: Pokemon | Trainer,
 		cpuTrainerOrPokemon: Pokemon | Trainer,
-		playerField: Field, 
-		cpuField: Field
+		field: Field,
 	) {
 		let cpuTrainer = !(cpuTrainerOrPokemon instanceof Trainer) ?
 			new CpuTrainer([new PokemonPosition(cpuTrainerOrPokemon.clone(), true)], [], new CpuSwitchStrategy()) :
@@ -44,11 +42,9 @@ export class BattleSimulator {
 			playerTrainerOrPokemon;
 
 		this.originalState = new BattleFieldState(
-			this.battleFormat,
 			playerTrainer,
 			cpuTrainer,
-			playerField.clone(),
-			cpuField.clone()
+			field.clone()
 		);
 	}
 
@@ -68,7 +64,7 @@ export class BattleSimulator {
 			this.turns.push(turnOutcome);
 			
 			this.currentTurnState = turnOutcome.endOfTurnState.clone();
-			
+			this.currentTurnState.turnNumber++;
 			this.currentTurnState.player.active[0].firstTurnOut = false;
 			this.currentTurnState.cpu.active[0].firstTurnOut = false;
 
@@ -145,11 +141,10 @@ export class BattleSimulator {
 			actions,
 			turnNumber: this.turns.length,
 			endOfTurnState: new BattleFieldState(
-				this.battleFormat,
 				this.currentTurnState.player.clone(),
 				this.currentTurnState.cpu.clone(),
 				this.currentTurnState.playerField.clone(),
-				this.currentTurnState.cpuField.clone(),
+				this.turns.length
 			)
 		};
 	}

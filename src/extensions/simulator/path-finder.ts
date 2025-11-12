@@ -11,10 +11,10 @@ export interface DecisionNode {
 export function findPlayerWinningPath(state: BattleFieldState): DecisionNode | null {
     return findPathGuaranteed(state, (s) => {
         const allCpuPokemonFainted = s.cpu.active.every(ap => ap.pokemon.curHP() <= 0) && s.cpu.party.every(pp => pp.curHP() <= 0);
-        const anyPlayerPokemonFainted = !s.player.active.every(ap => ap.pokemon.curHP() >= 0) && !s.player.party.every(pp => pp.curHP() >= 0);
+        const allPlayerPokemonAlive = s.player.active.every(ap => ap.pokemon.curHP() > 0) && s.player.party.every(pp => pp.curHP() > 0);
         if (allCpuPokemonFainted)
-            return !anyPlayerPokemonFainted;
-        if (anyPlayerPokemonFainted)
+            return allPlayerPokemonAlive;
+        if (!allPlayerPokemonAlive)
             return false;
 
         return undefined;
@@ -57,7 +57,9 @@ export function findPathGuaranteed(state: BattleFieldState, isGoalState: (state:
     
     function search(current: PossibleBattleFieldState, depth: number): DecisionNode | 'WIN' | 'LOSS' {
         // Prevent infinite loops
-        if (depth > 20) return 'LOSS';
+        if (depth > 20) {
+            return 'LOSS';
+        }
         
         let stateKey = toStateKey(current);
         

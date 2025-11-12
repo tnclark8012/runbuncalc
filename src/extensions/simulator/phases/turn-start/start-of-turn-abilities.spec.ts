@@ -55,11 +55,9 @@ IVs: 24 HP / 10 Atk / 21 Def / 16 SpA / 28 SpD / 18 Spe
 
       Gyarados = Gyarados.clone({ abilityOn: true });
       let state = new BattleFieldState(
-        'doubles',
         new PlayerTrainer([new PokemonPosition(Gyarados, true), new PokemonPosition(Armaldo, true)], []),
         new CpuTrainer([new PokemonPosition(Golurk, true), new PokemonPosition(Flapple, true)], []),
-        new Field(),
-        new Field(),
+        new Field({ gameType: 'Doubles' }),
       );
       const newState = applyStartOfTurnAbilities(state);
 

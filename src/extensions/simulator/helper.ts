@@ -372,7 +372,6 @@ export function importTeam(importText: string): Pokemon[] {
 
 export function create1v1BattleState(playerPokemon: Pokemon, cpuPokemon: Pokemon): BattleFieldState {
   return new BattleFieldState(
-      'singles',
       new PlayerTrainer(
         [new PokemonPosition(playerPokemon)],
         [],
@@ -381,7 +380,34 @@ export function create1v1BattleState(playerPokemon: Pokemon, cpuPokemon: Pokemon
         [new PokemonPosition(cpuPokemon)],
         [],
         ),
-      new Field(),
       new Field()
+    );
+}
+
+export function createSingleBattleState(playerPokemon: Pokemon[], cpuPokemon: Pokemon[]): BattleFieldState {
+  return new BattleFieldState(
+      new PlayerTrainer(
+        [],
+        playerPokemon,
+      ),
+      new CpuTrainer(
+        [],
+        cpuPokemon,
+        ),
+      new Field({ gameType: 'Singles' })
+    );
+}
+
+export function createDoubleBattleState(playerPokemon: Pokemon[], cpuPokemon: Pokemon[]): BattleFieldState {
+  return new BattleFieldState(
+      new PlayerTrainer(
+        [],
+        playerPokemon,
+      ),
+      new CpuTrainer(
+        [],
+        cpuPokemon,
+        ),
+      new Field({ gameType: 'Doubles' })
     );
 }

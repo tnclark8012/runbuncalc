@@ -7,7 +7,7 @@ import { visitActivePokemonInSpeedOrder } from "../../battle-field-state-visitor
 export function activateStartOfTurnItems(state: BattleFieldState): BattleFieldState {
     state = state.clone();
     visitActivePokemonInSpeedOrder(state, {
-        visitActivePokemon: (state, activePokemon, side, field) => {
+        visitActivePokemon: (state, activePokemon, field) => {
             applyItem(state, activePokemon, field);
         }
     });

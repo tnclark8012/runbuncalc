@@ -11,7 +11,7 @@ export function executeMegaEvolution(state: BattleFieldState, actions: PossibleT
     let moves = actions.filter(trainerAction => isMoveAction(trainerAction.action) && isMegaEvolution(trainerAction.action.pokemon));
     let megasToApply: MegaEvolutionToApply[] = [];
     visitActivePokemonInSpeedOrder(state, {
-        visitActivePokemon(state, pokemon, side, field) {
+        visitActivePokemon(state, pokemon) {
             if (canMegaEvolve(pokemon.pokemon)) {
                 let megaAction = moves.find(possibleAction => isMoveAction(possibleAction.action) && isMegaEvolutionOf(pokemon.pokemon, possibleAction.action.pokemon));
                 if (megaAction) {

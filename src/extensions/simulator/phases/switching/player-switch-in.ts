@@ -111,11 +111,9 @@ function initializeActivePokemon(state: BattleFieldState): BattleFieldState {
         playerActive.push(new PokemonPosition(popFromParty(state.player.party, state.player.party[0]), true));
 
     return new BattleFieldState(
-        state.battleFormat,
         new PlayerTrainer(playerActive, state.player.party, state.player.switchStrategy),
         state.cpu,
-        state.playerField,
-        state.cpuField);
+        state.field);
 }
 
 function popFromParty(party: Pokemon[], pokemon: Pokemon): Pokemon {

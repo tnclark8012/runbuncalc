@@ -7,7 +7,7 @@ import { MoveScore } from "../../moveScore";
 import { getCpuPossibleActions } from "./cpu-move-selection";
 import { getPlayerPossibleActions } from "./player-move-selection";
 import { executeSwitch } from "../switching/execute-switch";
-import { cpuRng, gen, playerRng } from "../../../configuration";
+import { cpuRng, gen, Heuristics, playerRng } from "../../../configuration";
 import { executeMove } from "./execute-move";
 import { isMegaEvolution, toMoveResult } from "../../moveScoring";
 import { TrainerActionPokemonReplacer } from "../../possible-trainer-action-visitor";
@@ -72,15 +72,6 @@ export function determineMoveOrderAndExecute(state: BattleFieldState): PossibleB
     }
 
     return results;
-}
-
-function toHistoryEntry(action: PossibleTrainerAction): string {
-    if (action.action.type === 'move') {
-        return `${action.trainer.name}'s ${action.pokemon.pokemon.name} (${action.pokemon.pokemon.curHP()}/${action.pokemon.pokemon.maxHP()}) used ${action.action.move.move.name} on slot ${action.action.move.target.slot}`;
-    } else if (action.action.type === 'switch') {
-        return `${action.trainer.name} switched in ${action.action.switchIn?.name || 'an unknown Pokémon'} for ${action.pokemon.pokemon.name}`;
-    }
-    throw new Error('Unknown action type');
 }
 
 function getPokemon(state: BattleFieldState, action: PossibleTrainerAction): PokemonPosition {
@@ -155,14 +146,20 @@ function getPossibleActionsForAllSlots(state: BattleFieldState): Array<PossibleT
     }
 
     let cpuPossibleActions = [...possibleActionsByPokemon];
-    for (let i = 0; i < state.player.active.length; i++) {
-        let possibleActions: PossibleAction[] = getPlayerPossibleActions(state, state.player.active[i]);
-         possibleActionsByPokemon.push(possibleActions.map<PossibleTrainerAction>(action => ({
-            pokemon: state.player.active[i],
-            action,
-            slot: { slot: i },
-            trainer: state.player
-        })));
+    let plannedPlayerActions = Heuristics.playerActionProvider?.getPossibleActions(state);
+    if (plannedPlayerActions) {
+        possibleActionsByPokemon.push(...plannedPlayerActions);
+    }
+    else {
+        for (let i = 0; i < state.player.active.length; i++) {
+            let possibleActions: PossibleAction[] = getPlayerPossibleActions(state, state.player.active[i]);
+            possibleActionsByPokemon.push(possibleActions.map<PossibleTrainerAction>(action => ({
+                pokemon: state.player.active[i],
+                action,
+                slot: { slot: i },
+                trainer: state.player
+            })));
+        }
     }
 
     return possibleActionsByPokemon;
@@ -179,30 +176,27 @@ function executeMoveOnState(state: BattleFieldState, trainer: Trainer, action: M
     let executionResult = executeMove(gen, action.pokemon, targetActive.pokemon, moveResult, trainer.name === "Player" ? playerRng : cpuRng);
     newState = PokemonReplacer.replace(newState, executionResult.attacker);
     newState = PokemonReplacer.replace(newState, executionResult.defender);
-    let description = `${trainer.name}'s ${actingPokemon.name} (${actingPokemon.curHP()}/${actingPokemon.maxHP()}) used ${action.move.move.name} on ${targetActive.pokemon.name} (${targetActive.pokemon.curHP()}/${targetActive.pokemon.maxHP()})`;
+    let description = (() => {
+        let targetInitialHp = `${targetActive.pokemon.curHP()}/${targetActive.pokemon.maxHP()}`;
+        let targetEndingHp = `${executionResult.defender.curHP()}/${executionResult.defender.maxHP()}`;
+        return `${trainer.name}'s ${actingPokemon.name} (${actingPokemon.curHP()}/${actingPokemon.maxHP()}) used ${action.move.move.name} on ${targetActive.pokemon.name} (${targetInitialHp} -> ${targetEndingHp})`;
+    })();
     if (trainer.name === "Player") {
-        applyFieldEffects(newState.playerField, newState.cpuField, moveResult);
+        applyFieldEffects(newState.field, newState.playerSide, newState.cpuSide, moveResult);
     }
     else {
-        applyFieldEffects(newState.cpuField, newState.playerField, moveResult);
+        applyFieldEffects(newState.field, newState.cpuSide, newState.playerSide, moveResult);
     }
     return { outcome: newState, log: [description] };
 }
 
-function applyFieldEffects(attackerField: Field, defenderField: Field, moveResult: MoveResult): void {
+function applyFieldEffects(field: Field, attackerSide: Side, defenderSide: Side, moveResult: MoveResult): void {
     switch(moveResult.move.name) {
         case 'Stealth Rock':
-            defenderField.attackerSide.isSR = true;
-            attackerField.defenderSide.isSR = true;
+            defenderSide.isSR = true;
             break;
         case 'Spikes':
-            defenderField.attackerSide.spikes = (defenderField.attackerSide.spikes || 0) + 1;
-            attackerField.defenderSide.spikes = (attackerField.defenderSide.spikes || 0) + 1;
+            defenderSide.spikes = (defenderSide.spikes || 0) + 1;
             break;
-        // case 'Toxic Spikes':
-        //     defenderField.defenderSide.toxicSpikes = (defenderField.defenderSide.toxicSpikes || 0) + 1;
-        // //     break;
-        // case 'Sticky Web':
-        //     break;
     }
 }

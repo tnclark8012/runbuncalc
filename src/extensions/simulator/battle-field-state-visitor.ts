@@ -2,26 +2,26 @@ import { Field, Pokemon, Side } from "@smogon/calc";
 import { BattleFieldState, PokemonPosition, Trainer } from "./moveScoring.contracts";
 
 export interface IBattleFieldStateVisitor {
-    visitActivePokemon?(state: BattleFieldState, pokemon: PokemonPosition, side: Side, field: Field): void;
+    visitActivePokemon?(state: BattleFieldState, pokemon: PokemonPosition, field: Field, side: Side): void;
 }
 
 export function visitActivePokemonInSpeedOrder(state: BattleFieldState, visitor: IBattleFieldStateVisitor): void {
     if (!visitor.visitActivePokemon)
         return;
 
-    let toVisit: Array<{ active: PokemonPosition, field: Field, side: Side}> = [];
+    let toVisit: Array<{ active: PokemonPosition, field: Field, side: Side }> = [];
     for (let active of state.player.active) {
-        toVisit.push({ active, field: state.playerField, side: state.playerField.attackerSide });
+        toVisit.push({ active, field: state.field, side: state.playerSide });
     }
 
     for (let active of state.cpu.active) {
-        toVisit.push({ active, field: state.cpuField, side: state.cpuField.attackerSide });
+        toVisit.push({ active, field: state.field, side: state.cpuSide });
     }
 
     toVisit.sort((a,b) => b.active.pokemon.stats.spe - a.active.pokemon.stats.spe);
 
     for (let visit of toVisit)
-        visitor.visitActivePokemon(state, visit.active, visit.side, visit.field);
+        visitor.visitActivePokemon(state, visit.active, visit.field, visit.side);
 }
 
 export interface IBattleFieldStateVisitorWithRewrite {
@@ -29,8 +29,6 @@ export interface IBattleFieldStateVisitorWithRewrite {
     visitTrainer(trainer: Trainer): Trainer;
     visitActivePokemon(pokemon: PokemonPosition): PokemonPosition;
     visitPartyPokemon(pokemon: Pokemon): Pokemon;
-    visitPlayerField(field: Field): Field;
-    visitCpuField(field: Field): Field;
     visitField(field: Field): Field;
 }
 
@@ -38,11 +36,10 @@ export class BattleFieldStateRewriter implements IBattleFieldStateVisitorWithRew
 
     public visitState(state: BattleFieldState): BattleFieldState {
         return new BattleFieldState(
-            state.battleFormat,
             this.visitTrainer(state.player),
             this.visitTrainer(state.cpu),
-            this.visitPlayerField(state.playerField),
-            this.visitCpuField(state.cpuField)
+            this.visitField(state.field),
+            state.turnNumber
         );
     }
 
@@ -60,14 +57,6 @@ export class BattleFieldStateRewriter implements IBattleFieldStateVisitorWithRew
 
     public visitPartyPokemon(pokemon: Pokemon): Pokemon {
         return pokemon.clone();
-    }
-
-    public visitPlayerField(field: Field): Field {
-        return this.visitField(field);
-    }
-
-    public visitCpuField(field: Field): Field {
-        return this.visitField(field);
     }
 
     public visitField(field: Field): Field {

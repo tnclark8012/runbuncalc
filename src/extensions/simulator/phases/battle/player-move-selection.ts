@@ -1,11 +1,11 @@
 import { Generations, Pokemon, Result } from "@smogon/calc";
 import { MoveScore } from "../../moveScore";
 import { calculateAllMoves, canMegaEvolve, findHighestDamageMove, getDamageRanges, megaEvolve, moveKillsAttacker, moveWillFail, savedFromKO } from "../../moveScoring";
-import { ActivePokemon, BattleFieldState, PlayerMoveConsideration } from "../../moveScoring.contracts";
+import { BattleFieldState, PlayerMoveConsideration, PokemonPosition } from "../../moveScoring.contracts";
 import { PossibleAction, ScoredPossibleAction, TargetSlot } from "./move-selection.contracts";
 import { gen, Heuristics } from "../../../configuration";
 
-export function getPlayerPossibleActions(state: BattleFieldState, playerPokemon: ActivePokemon): PossibleAction[] {
+export function getPlayerPossibleActions(state: BattleFieldState, playerPokemon: PokemonPosition): PossibleAction[] {
     let actions: PossibleAction[] = [];
     for (let targetSlot = 0; targetSlot < state.cpu.active.length; targetSlot++) {
         let target = state.cpu.active[targetSlot];
@@ -16,7 +16,7 @@ export function getPlayerPossibleActions(state: BattleFieldState, playerPokemon:
     return actions;
 }
 
-function getPlayerPossibleActionsAgainstTarget(state: BattleFieldState, playerPokemon: ActivePokemon, target: ActivePokemon, targetSlot: TargetSlot): Array<ScoredPossibleAction> {
+function getPlayerPossibleActionsAgainstTarget(state: BattleFieldState, playerPokemon: PokemonPosition, target: PokemonPosition, targetSlot: TargetSlot): Array<ScoredPossibleAction> {
     let scores = getMoveScoresAgainstTarget(state, playerPokemon, target, targetSlot)
     .filter(ms => ms.finalScore > 0);
 
@@ -31,7 +31,7 @@ function getPlayerPossibleActionsAgainstTarget(state: BattleFieldState, playerPo
     });
 }
 
-export function getMoveScoresAgainstTarget(state: BattleFieldState, playerPokemon: ActivePokemon, targetCpuPokemon: ActivePokemon, targetSlot: TargetSlot): Array<MoveScore> {
+export function getMoveScoresAgainstTarget(state: BattleFieldState, playerPokemon: PokemonPosition, targetCpuPokemon: PokemonPosition, targetSlot: TargetSlot): Array<MoveScore> {
     let getConsideredMoves = (pokemon: Pokemon): PlayerMoveConsideration[] => {
         let playerDamageResults = calculateAllMoves(gen, pokemon, targetCpuPokemon.pokemon, state.playerField);
         let cpuDamageResults = calculateAllMoves(gen, pokemon, targetCpuPokemon.pokemon, state.cpuField);

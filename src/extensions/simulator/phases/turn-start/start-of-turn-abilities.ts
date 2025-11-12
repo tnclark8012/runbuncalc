@@ -7,7 +7,7 @@ export function applyStartOfTurnAbilities(state: BattleFieldState): BattleFieldS
   state = state.clone();
 
   visitActivePokemonInSpeedOrder(state, {
-    visitActivePokemon(state, pokemon, side, field) {
+    visitActivePokemon(state, pokemon, field) {
       state = applyStartOfTurnAbility(state, pokemon);
     },
   });
@@ -68,39 +68,30 @@ function applyAbilityToField(source: ActivePokemon, state: BattleFieldState): vo
     return;
 
   if (source.pokemon.hasAbility('Drought')) {
-    state.cpuField.weather = "Sun";
-    state.playerField.weather = "Sun";
+    state.field.weather = "Sun";
   }
   else if (source.pokemon.hasAbility('Drizzle')) {
-    state.cpuField.weather = "Rain";
-    state.playerField.weather = "Rain";
+    state.field.weather = "Rain";
   }
   else if (source.pokemon.hasAbility('Sand Stream')) {
-    state.cpuField.weather = "Sand";
-    state.playerField.weather = "Sand";
+    state.field.weather = "Sand";
   }
   else if (source.pokemon.hasAbility('Snow Warning')) {
-    state.cpuField.weather = "Hail";
-    state.playerField.weather = "Hail";
+    state.field.weather = "Hail";
   }
   else if (source.pokemon.hasAbility('Cloud Nine', 'Air Lock')) {
-    state.cpuField.weather = undefined;
-    state.playerField.weather = undefined;
+    state.field.weather = undefined;
   }
   else if (source.pokemon.hasAbility('Electric Surge')) {
-    state.cpuField.terrain = "Electric";
-    state.playerField.terrain = "Electric";
+    state.field.terrain = "Electric";
   }
   else if (source.pokemon.hasAbility('Grassy Surge')) {
-    state.cpuField.terrain = "Grassy";
-    state.playerField.terrain = "Grassy";
+    state.field.terrain = "Grassy";
   }
   else if (source.pokemon.hasAbility('Misty Surge')) {
-    state.cpuField.terrain = "Misty";
-    state.playerField.terrain = "Misty";
+    state.field.terrain = "Misty";
   }
   else if (source.pokemon.hasAbility('Psychic Surge')) {
-    state.cpuField.terrain = "Psychic";
-    state.playerField.terrain = "Psychic";
+    state.field.terrain = "Psychic";
   }
 }

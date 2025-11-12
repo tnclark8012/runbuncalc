@@ -108,9 +108,8 @@ function initializeActivePokemon(state: BattleFieldState): BattleFieldState {
         cpuActive.push(new PokemonPosition(state.cpu.party.shift()!, true));
 
     return new BattleFieldState(
-        state.battleFormat,
         state.player,
         new CpuTrainer(cpuActive, state.cpu.party, state.cpu.switchStrategy),
-        state.playerField,
-        state.cpuField);
+        state.field,
+        state.turnNumber);
 }

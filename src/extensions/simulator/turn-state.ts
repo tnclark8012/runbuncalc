@@ -28,6 +28,9 @@ function isPossibleState(state: BattleFieldState | PossibleBattleFieldState): st
 }
 
 export function runTurn(state: BattleFieldState): PossibleBattleFieldState[] {
+
+    let nextState = state.clone();
+    nextState.turnNumber++;
     const transforms: BattleFieldStateTransform[] = [
         applyPlayerSwitchIns,
         applyCpuSwitchIns,
@@ -38,7 +41,8 @@ export function runTurn(state: BattleFieldState): PossibleBattleFieldState[] {
         // applyEndOfTurnAbilities,
     ];
 
-    return applyTransforms(state, transforms);
+    let turnEnd = applyTransforms(nextState, transforms);
+    return turnEnd;
 }
 
 function applyAbilities(state: BattleFieldState): BattleFieldState {

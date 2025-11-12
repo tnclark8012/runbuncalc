@@ -79,11 +79,9 @@ IVs: 3 Atk / 3 Spe
 
       Aerodactyl = Aerodactyl.clone({ curHP: 0 });
       let state = new BattleFieldState(
-        'singles',
         new PlayerTrainer([new PokemonPosition(Aerodactyl)], [Aggron, Excadrill, Kingler]),
         new CpuTrainer([new PokemonPosition(cpu1)], [cpu2, cpu3]),
-        new Field(),
-        new Field(),
+        new Field()
       );
       const newStates = applyPlayerSwitchIns(state);
       expect(newStates.length).toBe(3);
@@ -166,11 +164,9 @@ IVs: 3 Atk / 3 Spe
       Aerodactyl = Aerodactyl.clone({ curHP: 0 });
       Lopunny = Lopunny.clone({ curHP: 0 });
       let state = new BattleFieldState(
-        'doubles',
         new PlayerTrainer([new PokemonPosition(Aerodactyl), new PokemonPosition(Lopunny)], [Aggron, Excadrill, Kingler]),
         new CpuTrainer([new PokemonPosition(cpu1)], [cpu2, cpu3]),
-        new Field(),
-        new Field(),
+        new Field({ gameType: 'Doubles' })
       );
       const newStates = applyPlayerSwitchIns(state);
       expect(newStates.length).toBe(6);
