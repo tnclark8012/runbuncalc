@@ -2,6 +2,7 @@ import { Field, Move, A, I, Result, Pokemon, calculate } from '@smogon/calc';
 import { MoveScore } from "./moveScore";
 import { notImplemented } from "./notImplementedError";
 import { ActivePokemon, CPUMoveConsideration, MoveConsideration, MoveResult, TurnOutcome } from './moveScoring.contracts';
+import { gen } from '../configuration';
 
 export function scoreCPUMoves(cpuResults: Result[], playerMove: MoveResult, field: Field, lastTurnMoveByCpu: Move | undefined): MoveScore[] {
     // Not quite
@@ -40,23 +41,23 @@ export function getCpuMoveConsiderations(cpuResults: Result[], playerMove: MoveR
 
     // Not quite
     let movesToConsider = damageResults.map<CPUMoveConsideration>(r => {
-        const kos = r.lowestRollDamage >= r.defender.curHP();
+        const kos = r.lowestRollDamage * r.move.hits >= r.defender.curHP();
         return {
             result: r,
-            lowestRollHpPercentage: r.lowestRollHpPercentage,
-            hightestRollHpPercentage: r.highestRollHpPercentage,
+            lowestRollHpPercentage: r.lowestRollHpPercentage * r.move.hits,
+            hightestRollHpPercentage: r.highestRollHpPercentage * r.move.hits,
             kos: kos,
             isDamagingMove: r.move.category !== 'Status',
-            isHighestDamagingMove: maxDamageMove === r,
+            isHighestDamagingMove: Math.min(maxDamageMove.highestRollHpPercentage * maxDamageMove.move.hits, 100) === Math.min(r.highestRollHpPercentage * r.move.hits, 100),
             aiIsFaster,
             aiIsSlower: !aiIsFaster,
-            aiWillOHKOPlayer: r.lowestRollDamage >= playerMon.curHP(),
+            aiWillOHKOPlayer: r.lowestRollDamage * r.move.hits >= playerMon.curHP(),
             playerMon,
             aiMon,
             playerMove,
-            playerWillKOAI: playerMove.highestRollDamage >= aiMon.curHP() && !savedFromKO(aiMon),
-            playerWill2HKOAI: playerMove.highestRollDamage * 2 >= aiMon.curHP(),
-            aiOutdamagesPlayer: r.highestRollHpPercentage > playerMove.highestRollHpPercentage,
+            playerWillKOAI: playerMove.highestRollDamage * playerMove.move.hits >= aiMon.curHP() && !savedFromKO(aiMon),
+            playerWill2HKOAI: playerMove.highestRollDamage * playerMove.move.hits * 2 >= aiMon.curHP(),
+            aiOutdamagesPlayer: r.highestRollHpPercentage * r.move.hits > playerMove.highestRollHpPercentage * playerMove.move.hits,
             aiMonFirstTurnOut: !lastTurnMoveByCPU, // TODO: Not quite right, but probably good enough
             lastTurnCPUMove: lastTurnMoveByCPU,
             field
@@ -411,11 +412,6 @@ export function recovery(moveScore: MoveScore, consideration: CPUMoveConsiderati
     notImplemented();
 }
 
-
-export function isSuperEffective(move: Move, defendingPokemon: A.Pokemon): boolean {
-	notImplemented();
-}
-
 export function hasHighCritChance(move: Move): boolean {
 	notImplemented();
     // return [].includes(move.name);
@@ -443,7 +439,7 @@ function specialExecptionNotHighestDamagingMove(): void {
 export function findHighestDamageMove(moveResults: MoveResult[]): MoveResult {
     let maxDamageMove: MoveResult = moveResults[0];
     for (let result of moveResults) {
-        if (result.highestRollHpPercentage > maxDamageMove.highestRollHpPercentage)
+        if ((result.highestRollHpPercentage * result.move.hits) > (maxDamageMove.highestRollHpPercentage * maxDamageMove.move.hits))
             maxDamageMove = result;
     }
 
@@ -466,11 +462,13 @@ export function getDamageRanges(attackerResults: Result[], expectedHits?: number
 		let resultDamage = result.damage as number[];
 		let lowestHitDamage = resultDamage[0] ? resultDamage[0] : result.damage as number;
 		let highestHitDamage = (result.damage as number[])[15] ? resultDamage[15] : result.damage as number;
-		let getDamagePct = (hitDamage: number) => hitDamage * (createMove(attacker, attacker.moves[i]).hits / defender.stats.hp * 100);
+        let hits = createMove(attacker, attacker.moves[i]).hits;
+		let getDamagePct = (hitDamage: number) => hitDamage  / defender.stats.hp * 100;
 		return {
 			attacker,
 			defender,
 			move: result.move,
+            hits,
 			lowestRollDamage: lowestHitDamage,
 			lowestRollHpPercentage: getDamagePct(lowestHitDamage),
 			highestRollDamage: highestHitDamage,
@@ -478,6 +476,22 @@ export function getDamageRanges(attackerResults: Result[], expectedHits?: number
 		};
 	});
 }
+
+export function toMoveResult(result: Result): MoveResult {
+    let resultDamage = result.damage as number[];
+    let lowestHitDamage = resultDamage[0] ? resultDamage[0] : result.damage as number;
+    let highestHitDamage = (result.damage as number[])[15] ? resultDamage[15] : result.damage as number;
+    let getDamagePct = (hitDamage: number) => hitDamage * (createMove(result.attacker, result.move).hits / result.defender.stats.hp * 100);
+    return {
+        attacker: result.attacker,
+        defender: result.defender,
+        move: result.move,
+        lowestRollDamage: lowestHitDamage,
+        lowestRollHpPercentage: getDamagePct(lowestHitDamage),
+        highestRollDamage: highestHitDamage,
+        highestRollHpPercentage: getDamagePct(highestHitDamage),
+    };
+    }
 
 export function savedFromKO(pokemon: A.Pokemon): boolean {
 	return hasLifeSavingAbility(pokemon) || hasLifeSavingItem(pokemon);
@@ -524,8 +538,50 @@ export function createMove(pokemon: A.Pokemon, moveName: string | A.Move): Move 
  */
 export function calculateAllMoves(gen: I.Generation, attacker: Pokemon, defender: Pokemon, attackerField: Field): Result[] {
 	var results = [];
-	for (var i = 0; i < 4; i++) {
+	for (var i = 0; i < attacker.moves.length; i++) {
 		results[i] = calculate(gen, attacker, defender, createMove(attacker, attacker.moves[i]), attackerField);
 	}
 	return results;
+}
+
+export function calculateMoveResult(attacker: Pokemon, defender: Pokemon, moveName: string, field?: Field): MoveResult {
+    let calcResult = calculate(gen, attacker, defender, createMove(attacker, moveName));
+    return toMoveResult(calcResult);
+}
+
+export function hasMegaStone(pokemon: Pokemon): boolean {
+    return !!(pokemon.item && pokemon.item.endsWith('ite'));
+}
+
+export function isMegaEvolution(pokemon: Pokemon): boolean {
+    return pokemon.name.endsWith("-Mega");
+}
+
+export function isMegaEvolutionOf(baseForm: Pokemon, megaForm: Pokemon): boolean {
+    if (!isMegaEvolution(megaForm))
+        return false;
+
+    if (!canMegaEvolve(baseForm))
+        return false;
+
+    return baseForm.name === megaForm.name.replace("-Mega", "");
+}
+
+export function canMegaEvolve(pokemon: Pokemon): boolean {
+    return hasMegaStone(pokemon) && !pokemon.name.endsWith("-Mega");
+}
+
+export function megaEvolve(pokemon: Pokemon): Pokemon {
+    if (!canMegaEvolve(pokemon))
+        throw new Error(`${pokemon.name} cannot mega evolve`);
+
+    let megaForme = Pokemon.getForme(pokemon.gen, pokemon.species.name, pokemon.item);
+    return new Pokemon(pokemon.gen, megaForme, {
+        item: pokemon.item,
+        nature: pokemon.nature,
+        moves: pokemon.moves,
+        curHP: pokemon.curHP(),
+        ivs: pokemon.ivs,
+        boosts: pokemon.boosts
+    });
 }

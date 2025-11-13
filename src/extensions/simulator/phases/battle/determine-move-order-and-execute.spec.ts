@@ -4,10 +4,10 @@ import {
   Field,
   Pokemon,
 } from '@smogon/calc';
-import { inGen, importTeam, importPokemon, expectPlayerTeam, expectCpuTeam } from '../../test-helper';
-import { ActivePokemon, BattleFieldState } from '../../moveScoring.contracts';
+import { inGen, importTeam } from '../../test-helper';
+import { ActivePokemon, BattleFieldState, PokemonPosition, Trainer } from '../../moveScoring.contracts';
 import { generateAllActionCombinations } from './determine-move-order-and-execute';
-import { MoveAction, PossibleAction, PossiblePokemonAction, PossiblePokemonActions } from './move-selection.contracts';
+import { MoveAction, PossibleAction, PossibleTrainerAction } from './move-selection.contracts';
 import { createMove } from '../../moveScoring';
 
 const RunAndBun = 8;
@@ -54,23 +54,24 @@ IVs: 24 HP / 10 Atk / 21 Def / 16 SpA / 28 SpD / 18 Spe
 - Rock Blast
 - Stone Edge
 `);
-
-      let possibleActionsByPokemon: PossiblePokemonActions[] = [
-        generateEqualLikelyhoodActions(Gyarados, [Golurk, Flapple]),
-        generateEqualLikelyhoodActions(Armaldo, [Golurk, Flapple]),
-        generateEqualLikelyhoodActions(Golurk, [Gyarados, Armaldo]),
-        generateEqualLikelyhoodActions(Flapple, [Gyarados, Armaldo]),
+      let trainer1: Trainer  = new Trainer('Player', [new PokemonPosition(Gyarados), new PokemonPosition(Armaldo)], []);
+      let trainer2: Trainer  = new Trainer('CPU', [new PokemonPosition(Golurk), new PokemonPosition(Flapple)], []);
+      let possibleActionsByPokemon: PossibleTrainerAction[][] = [
+        generateEqualLikelyhoodActions(trainer1, Gyarados, [Golurk, Flapple]),
+        generateEqualLikelyhoodActions(trainer1, Armaldo, [Golurk, Flapple]),
+        generateEqualLikelyhoodActions(trainer2, Golurk, [Gyarados, Armaldo]),
+        generateEqualLikelyhoodActions(trainer2, Flapple, [Gyarados, Armaldo]),
       ];
-      let allPossibleTurns: PossiblePokemonAction[][] = generateAllActionCombinations(possibleActionsByPokemon);
+      let allPossibleTurns: PossibleTrainerAction[][] = generateAllActionCombinations(possibleActionsByPokemon);
       expect(allPossibleTurns.length).toBe(
         (4 /* moves */ * 2 /* possible targets */)**2 /* per pokemon */ **2 /* per side */); // 4 pokemon, each with 16 possible actions
       const gyaradosActions = allPossibleTurns
         .map(turn => turn.find(action => action.pokemon.pokemon === Gyarados)!);
       const gyaradosTargettingFlapple = gyaradosActions.filter(
-        possibleAction => possibleAction?.action.action.type === 'move' &&
-        (possibleAction.action.action.move.target.type === 'opponent' && 
-          possibleAction.action.action.move.target.slot === 1))
-        .map(possibleAction => (possibleAction.action.action as MoveAction).move.move.name);
+        possibleAction => possibleAction?.action.type === 'move' &&
+        (possibleAction.action.move.target.type === 'opponent' && 
+          possibleAction.action.move.target.slot === 1))
+        .map(possibleAction => (possibleAction.action as MoveAction).move.move.name);
       expect(gyaradosTargettingFlapple.length).toBe(allPossibleTurns.length / 2);
       // Each move should be equally represented when targetting Flapple
       const appearingMoves = new Map<string, number>();
@@ -84,21 +85,27 @@ IVs: 24 HP / 10 Atk / 21 Def / 16 SpA / 28 SpD / 18 Spe
   });
 });
 
-function generateEqualLikelyhoodActions(pokemon: Pokemon, targets: Pokemon[]): PossiblePokemonActions {
-    let possibleActions: PossibleAction[] = [];
+function generateEqualLikelyhoodActions(trainer: Trainer, pokemon: Pokemon, targets: Pokemon[]): PossibleTrainerAction[] {
+    let possibleActions: PossibleTrainerAction[] = [];
 
     for (let targetSlot = 0; targetSlot < targets.length; targetSlot++) {
         pokemon.moves.map(moveName => createMove(pokemon, moveName)).forEach(move => {
             possibleActions.push({
-                action: { type: 'move', move: { move: move, target: { type: 'opponent', slot: targetSlot } } },
-                probability: 1 / (pokemon.moves.length * targets.length)
+                action: {
+                  type: 'move',
+                  pokemon,
+                  move: {
+                    move,
+                    target: { type: 'opponent', slot: targetSlot }
+                  },
+                  probability: 1 / (pokemon.moves.length * targets.length)
+                },
+                pokemon: new PokemonPosition(pokemon),
+                slot: { slot: targetSlot },
+                trainer,
             });
         });
     }
 
-    return {
-        pokemon: { pokemon: pokemon },
-        possibleActions
-
-    }
+    return possibleActions;
 }

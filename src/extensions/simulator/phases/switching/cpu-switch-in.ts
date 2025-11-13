@@ -1,6 +1,9 @@
 import { Generations, Pokemon } from "@smogon/calc";
-import { ActivePokemon, BattleFieldState, PokemonPosition, Trainer } from "../../moveScoring.contracts";
+import { ActivePokemon, BattleFieldState, CpuTrainer, PokemonPosition, Trainer } from "../../moveScoring.contracts";
 import { calculateAllMoves, findHighestDamageMove, getCpuMoveConsiderations, getDamageRanges } from "../../moveScoring";
+import { SwitchAction } from "../battle/move-selection.contracts";
+import { executeSwitch, popFromParty } from "./execute-switch";
+import { PokemonReplacer } from "../../battle-field-state-visitor";
 
 const generation = Generations.get(8);
 
@@ -16,17 +19,27 @@ export function applyCpuSwitchIns(state: BattleFieldState): BattleFieldState {
     state = initializeActivePokemon(state);
     const cpuParty = state.cpu.party;
     
+    let switches: SwitchAction[] = [];
+    let availableSwitchIns = [ ...cpuParty];
     for (let i = 0; i < state.cpu.active.length; i++) {
         if (state.cpu.active[i].pokemon.curHP() <= 0) {
-            let faintedPokemon = state.cpu.active[i];
-            let chosen = chooseSwitchIn(cpuParty, state.player.active[0].pokemon, state);
-            if (!chosen)
-                return state;
+            let replacement: Pokemon | undefined = chooseSwitchIn(availableSwitchIns, state.player.active[i].pokemon, state)
+            if (replacement)
+                popFromParty(availableSwitchIns, replacement);
 
-            let newActive = new PokemonPosition(popFromParty(cpuParty, chosen), true);
-            state.cpu.active[i] = newActive;
-            cpuParty.push(faintedPokemon.pokemon);
+            let switchAction: SwitchAction = {
+                type: 'switch',
+                switchIn: replacement,
+                target: { slot: i }
+            };
+
+            switches.push(switchAction);
         }
+    }
+
+    for (let switchAction of switches) {
+        const outcome = executeSwitch(state, state.cpu, switchAction);
+        state = outcome.outcome;
     }
 
     return state;
@@ -95,17 +108,8 @@ function initializeActivePokemon(state: BattleFieldState): BattleFieldState {
         cpuActive.push(new PokemonPosition(state.cpu.party.shift()!, true));
 
     return new BattleFieldState(
-        state.battleFormat,
         state.player,
-        new Trainer(cpuActive, state.cpu.party, state.cpu.switchStrategy),
-        state.playerField,
-        state.cpuField);
-}
-
-function popFromParty(party: Pokemon[], pokemon: Pokemon): Pokemon {
-    const index = party.indexOf(pokemon);
-    if (index === -1)
-        throw new Error("Pokemon not found in party");
-
-    return party.splice(index, 1)[0];
+        new CpuTrainer(cpuActive, state.cpu.party, state.cpu.switchStrategy),
+        state.field,
+        state.turnNumber);
 }

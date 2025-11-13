@@ -7,7 +7,7 @@ import { getTypeEffectiveness } from "../../utils";
 export function applyFieldHazards(state: BattleFieldState): BattleFieldState {
     state = state.clone();   
     visitActivePokemonInSpeedOrder(state, {
-        visitActivePokemon(state, pokemon, side, field) {
+        visitActivePokemon(state, pokemon, field, side) {
             if (!pokemon.firstTurnOut)
                 return;
 
@@ -20,11 +20,7 @@ export function applyFieldHazards(state: BattleFieldState): BattleFieldState {
 
 function applyOrClearHazardOnSide(activePokemon: ActivePokemon, side: Side): void {
     if (side.isSR) {
-        let types = activePokemon.pokemon.types;
-        let type1Effectiveness = getTypeEffectiveness('Rock', types[0]);
-        let type2Effectiveness = types[1] ? getTypeEffectiveness('Rock', types[1]) : 1;
-        
-        let effectiveness = type1Effectiveness * type2Effectiveness;
+        let effectiveness = getTypeEffectiveness('Rock', activePokemon.pokemon);
         let pctLost =  effectiveness * 1/8;
         activePokemon.pokemon = damagePokemonWithPercentageOfMaxHp(activePokemon.pokemon, pctLost);
     }

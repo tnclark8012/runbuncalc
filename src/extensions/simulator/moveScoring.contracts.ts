@@ -1,5 +1,6 @@
 import { Field, Move, Pokemon } from '@smogon/calc';
 import { PartyOrderSwitchStrategy } from './switchStrategy.partyOrder';
+import { Side } from '@smogon/calc/src';
 
 export interface MoveConsideration {
 	result: MoveResult;
@@ -70,6 +71,7 @@ export interface SwitchStrategy {
 
 export class Trainer {
 	constructor(
+		public readonly name: string,
 		public readonly active: PokemonPosition[],
 		public readonly party: Pokemon[],
 		public readonly switchStrategy?: SwitchStrategy)
@@ -79,34 +81,117 @@ export class Trainer {
 
 	public clone(): Trainer {
 		return new Trainer(
+			this.name,
 			this.active.map(p => p.clone()),
 			this.party.map(p => p.clone()),
 			this.switchStrategy);
 	}
+
+	public equals(other: Trainer): boolean {
+		return this.name === other.name;
+	}
+
+	public getActivePokemon(pokemon: Pokemon): PokemonPosition | undefined {
+		return this.active.find(p => p.pokemon.equals(pokemon));
+	}
 }
 
-export type BattleFormat = 'singles' | 'doubles';
+export class CpuTrainer extends Trainer {
+	constructor(name: string, active: PokemonPosition[], party: Pokemon[], switchStrategy?: SwitchStrategy);
+	constructor(
+		active: PokemonPosition[],
+		party: Pokemon[],
+		switchStrategy?: SwitchStrategy);
+	constructor(
+		nameOrActive: string | PokemonPosition[],
+		activeOrParty: PokemonPosition[] | Pokemon[],
+		partyOrSwitchStrategy?: Pokemon[] | SwitchStrategy,
+		switchStrategy?: SwitchStrategy)
+	{
+		if (typeof nameOrActive === 'string') {
+			super(nameOrActive, activeOrParty as PokemonPosition[], partyOrSwitchStrategy as Pokemon[], switchStrategy);
+		} else {
+			super('CPU', nameOrActive as PokemonPosition[], activeOrParty as Pokemon[], partyOrSwitchStrategy as SwitchStrategy);
+		}
+	}
+}
+
+export class PlayerTrainer extends Trainer {
+	constructor(
+		active: PokemonPosition[],
+		party: Pokemon[],
+		switchStrategy?: SwitchStrategy)
+	{
+		super('Player', active, party, switchStrategy);
+	}
+}
+
 export class BattleFieldState {
 	constructor(
-		public readonly battleFormat: BattleFormat,
 		public readonly player: Trainer,
 		public readonly cpu: Trainer,
-		public readonly playerField: Field,
-		public readonly cpuField: Field) {
+		public readonly field: Field,
+		public turnNumber: number = 0) {
 		
 	}
 
+	public get playerField(): Field {
+		return this.field;
+	}
+
+	public get playerSide(): Side {
+		return this.field.attackerSide;
+	}
+
+	public get cpuField(): Field {
+		return this.field.swap();
+	}
+
+	public get cpuSide(): Side {
+		return this.field.defenderSide;
+	}
+
 	public get isDoubles(): boolean {
-		return this.battleFormat === 'doubles';
+		return this.field.gameType === 'Doubles';
+	}
+
+	public getTrainer(trainer: Trainer): Trainer {
+		if (trainer.equals(this.player)) {
+			return this.player;
+		} else if (trainer.equals(this.cpu)) {
+			return this.cpu;
+		} else {
+			throw new Error(`Trainer ${trainer.name} not found in the battle state`);
+		}
 	}
 
 	public clone(): BattleFieldState {
 		return new BattleFieldState(
-			this.battleFormat,
 			this.player.clone(),
 			this.cpu.clone(),
-			this.playerField.clone(),
-			this.cpuField.clone()
-		)
+			this.field.clone(),
+			this.turnNumber);
+	}
+
+	public toString(): string {
+		const describePosition = (slot: number, pokemon: PokemonPosition | undefined) => {
+			if (!pokemon) return '';
+
+			return `[${slot}]: ${pokemon.pokemon.name} (${pokemon.pokemon.curHP()}/${pokemon.pokemon.maxHP()})`;
+		};
+
+		const describePartyPokemon = (pokemon: Pokemon) => {
+			return `${pokemon.name} (${pokemon.curHP()}/${pokemon.maxHP()})`;
+		}
+
+		return `BattleFieldState
+			${this.player.name}
+				${describePosition(0, this.player.active[0])}
+				${describePosition(1, this.player.active[1])}
+
+			${this.cpu.name}
+				${describePosition(0, this.cpu.active[0])}
+				${describePosition(1, this.cpu.active[1])}
+`			;
 	}
 }

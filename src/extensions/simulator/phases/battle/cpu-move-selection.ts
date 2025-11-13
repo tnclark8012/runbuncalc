@@ -1,10 +1,9 @@
-import { Field, Generations, Move, Result } from "@smogon/calc";
 import { MoveScore } from "../../moveScore";
 import { calculateAllMoves, findHighestDamageMove, scoreCPUMoves, getDamageRanges } from "../../moveScoring";
-import { ActivePokemon, BattleFieldState, MoveResult } from "../../moveScoring.contracts";
+import { ActivePokemon, BattleFieldState } from "../../moveScoring.contracts";
 import { PossibleAction, ScoredPossibleAction, TargetSlot } from "./move-selection.contracts";
+import { gen } from "../../../configuration";
 
-const gen = Generations.get(8);
 export function getCpuPossibleActions(state: BattleFieldState, cpuPokemon: ActivePokemon, playerActive: ActivePokemon[], cpuActive: ActivePokemon[]): PossibleAction[] {
     let actions: ScoredPossibleAction[] = [];
     let topScore = -Infinity;
@@ -37,12 +36,17 @@ export function getCpuMoveScoresAgainstTarget(state: BattleFieldState, cpuPokemo
 
 function getCpuPossibleActionsAgainstTarget(state: BattleFieldState, cpuPokemon: ActivePokemon, target: ActivePokemon, targetSlot: TargetSlot): Array<ScoredPossibleAction> {
     const highestScoringCpuMoves = calculateCpuMove(getCpuMoveScoresAgainstTarget(state, cpuPokemon, target, targetSlot));
-    return highestScoringCpuMoves.map((cpuMove: MoveScore) => {
+    return highestScoringCpuMoves.map<ScoredPossibleAction>((cpuMove: MoveScore) => {
         return ({
-            action: { type: 'move', move: { move: cpuMove.move.move, target: targetSlot } }, // TODO - status, protect, etc target self?
-            probability: 1/highestScoringCpuMoves.length,
+            type: 'move',
+            pokemon: cpuPokemon.pokemon,
+            move: {
+                move: cpuMove.move.move,
+                target: targetSlot
+            },
+            probability: 1 / highestScoringCpuMoves.length,
             score: cpuMove.finalScore
-        });
+        } as ScoredPossibleAction);
     });
 }
 
