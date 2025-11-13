@@ -3,6 +3,44 @@ import { State } from '@smogon/calc/src';
 import { BattleFieldState, CpuTrainer, PlayerTrainer, PokemonPosition, Trainer } from './moveScoring.contracts';
 
 /**
+ * BattleFieldState Serialization Module
+ * 
+ * This module provides lightweight serialization/deserialization for BattleFieldState objects,
+ * enabling state snapshots and replay functionality for battle simulations.
+ * 
+ * @example
+ * ```typescript
+ * import { 
+ *   serializeBattleFieldState, 
+ *   deserializeBattleFieldState,
+ *   battleFieldStateToJSON,
+ *   battleFieldStateFromJSON 
+ * } from './battleFieldStateSerializer';
+ * 
+ * // Create a BattleFieldState
+ * const state = new BattleFieldState(player, cpu, field, turnNumber);
+ * 
+ * // Option 1: Serialize to an object
+ * const serialized = serializeBattleFieldState(state);
+ * // ... store or transmit serialized object ...
+ * const restored = deserializeBattleFieldState(serialized);
+ * 
+ * // Option 2: Serialize to a JSON string
+ * const jsonString = battleFieldStateToJSON(state);
+ * // ... store in file, database, or transmit over network ...
+ * const restored = battleFieldStateFromJSON(jsonString);
+ * 
+ * // Specify a different generation when deserializing (default is 9)
+ * const restoredGen8 = deserializeBattleFieldState(serialized, 8);
+ * ```
+ * 
+ * The serialized format is lighter than JSON.stringify(state) because it:
+ * - Excludes computed properties and methods
+ * - Uses State interfaces from @smogon/calc for efficient representation
+ * - Maintains all necessary data for full reconstruction
+ */
+
+/**
  * Serialized representation of a PokemonPosition
  */
 export interface SerializedPokemonPosition {
