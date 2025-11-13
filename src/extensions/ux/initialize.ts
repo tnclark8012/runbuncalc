@@ -1,4 +1,4 @@
-import { getActiveSets, getSetCollection, saveActiveCollectionName, saveSetCollection } from "../core/storage";
+import { getActiveCollectionName, getActiveSets, getSetCollection, saveActiveCollectionName, saveSetCollection } from "../core/storage";
 import { updateSets } from "../simulator/utils";
 import { initializePartyControls, refreshPlayerPokedex } from "./party";
 
@@ -18,9 +18,15 @@ function initializeCollectionSelection() {
   const activeCollection = document.querySelector<HTMLSelectElement>('#activeCollection')!;
   const newCollection = document.querySelector<HTMLButtonElement>('#newCollection')!;
   const collection = getSetCollection();
+  const activeCollectionName = getActiveCollectionName();
+  let activeIndex = 0;
+  let collectionNames = Object.keys(collection);
   for (let collectionName in collection) {
-		activeCollection.options.add(new Option(collectionName));
+	activeCollection.options.add(new Option(collectionName));
+	if (collectionName === activeCollectionName) {
+		activeIndex = activeCollection.options.length - 1;
 	}
+}
 
   activeCollection.addEventListener('change', (e) => {
     console.log(e);
@@ -28,6 +34,8 @@ function initializeCollectionSelection() {
     saveActiveCollectionName(collectionName);
     refreshPlayerPokedex();
   });
+  
+  activeCollection.selectedIndex = activeIndex;
 
   newCollection.addEventListener('click', (e) => {
     const collectionName = prompt('Enter a name for the new collection');
