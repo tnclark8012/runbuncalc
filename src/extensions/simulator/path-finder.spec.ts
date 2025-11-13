@@ -346,6 +346,10 @@ IVs: 13 HP / 2 Atk / 16 Def / 23 SpA / 21 SpD / 14 Spe
           const path = findPlayerWinningPath(state);
           expect(path).not.toBeNull();
         });
+
+        const path = findPlayerWinningPath(state);
+        let pathString = printDecisionTree(path);
+        expect(pathString).not.toBeNull();
       });
     });
   });
