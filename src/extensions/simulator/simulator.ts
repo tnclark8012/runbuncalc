@@ -178,7 +178,7 @@ export class BattleSimulator {
 		let damageResults = getDamageRanges(playerResults);
 		let movesToConsider = damageResults
 			.map<PlayerMoveConsideration>(r => {
-				const kos = r.lowestRollDamage >= r.defender.curHP() && (!savedFromKO(r.defender) || r.move.hits > 1);
+				const kos = (r.lowestRollDamage * r.move.hits) >= r.defender.curHP() && (!savedFromKO(r.defender) || r.move.hits > 1);
 				return {
 					aiMon: r.defender,
 					playerMon: r.attacker,

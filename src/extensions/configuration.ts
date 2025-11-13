@@ -17,6 +17,7 @@ export const Heuristics: ConfiguredHeuristics = {
 
 export interface RNGStrategy {
     getDamageRoll(moveResult: MoveResult): number;
+    getHits(moveResult: MoveResult): number;
 }
 
 export interface ITrainerActionProvider {
@@ -24,8 +25,8 @@ export interface ITrainerActionProvider {
     getPossibleActions(state: BattleFieldState): PossibleTrainerAction[][] | undefined;
 }
 
-export const playerRng: RNGStrategy = { getDamageRoll: (r) => r.lowestRollDamage };
-export const cpuRng: RNGStrategy = { getDamageRoll: (r) => r.highestRollDamage };
+export const playerRng: RNGStrategy = { getDamageRoll: (r) => r.lowestRollDamage, getHits: (r) => r.move.hits };
+export const cpuRng: RNGStrategy = { getDamageRoll: (r) => r.highestRollDamage, getHits: (r) => r.move.hits };
 
 export type PlannedMoveAction = {
     type: 'move';

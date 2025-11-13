@@ -1,14 +1,16 @@
-import { A, toID } from "@smogon/calc";
+import { A, Pokemon, toID } from "@smogon/calc";
 import { StatsTable } from "@smogon/calc/src";
-import { BattleFieldState } from "./moveScoring.contracts";
-import { IBattleFieldStateVisitor } from "./battle-field-state-visitor";
-import { Type, TypeEffectiveness, TypeName } from "@smogon/calc/src/data/interface";
+import { TypeName } from "@smogon/calc/src/data/interface";
 import { getActiveSets, saveActiveSets } from "../core/storage";
 import { CustomSets, PokemonSet } from "../core/storage.contracts";
 import { gen } from "../configuration";
 
 export function curHPPercentage(pokemon: A.Pokemon): number {
     return pokemon.curHP() / pokemon.maxHP();
+}
+
+export function getPercentageOfMaxHP(pokemon: A.Pokemon, percentage: number): number {
+	return Math.floor(pokemon.maxHP() * percentage/100);
 }
 
 export function isFainted(pokemon: A.Pokemon): boolean {
@@ -27,10 +29,19 @@ export function consumeItem(pokemon: A.Pokemon): void {
     }
 }
 
-export function getTypeEffectiveness(attackType: TypeName, type: TypeName): TypeEffectiveness {
-    return gen.types.get(toID(attackType))?.effectiveness[type]!;
+export function getTypeEffectiveness(attackType: TypeName, type: TypeName): number;
+export function getTypeEffectiveness(attackType: TypeName, defender: Pokemon): number;
+export function getTypeEffectiveness(attackType: TypeName, defenderOrType: Pokemon | TypeName): number {
+	let getEffectivenessOnType = (type: TypeName) => gen.types.get(toID(attackType))?.effectiveness[type]!;
+	let types: TypeName[] = typeof defenderOrType === "string" ? [defenderOrType] : defenderOrType.types;
+	let type1Effectiveness = getEffectivenessOnType(types[0]);
+	let type2Effectiveness = types[1] ? getEffectivenessOnType(types[1]) : 1;
+	return type1Effectiveness * type2Effectiveness;
 }
 
+export function isSuperEffective(attackType: TypeName, defender: Pokemon): boolean {
+	return getTypeEffectiveness(attackType, defender) > 1;
+}
 
 function forEachSet(setCallback: (set: PokemonSet, setName: string, pokemonName: string) => void | boolean | undefined): CustomSets | undefined {
 	const sets = getActiveSets();

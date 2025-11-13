@@ -326,10 +326,6 @@ IVs: 13 HP / 2 Atk / 16 Def / 23 SpA / 21 SpD / 14 Spe
 
         const state = createSingleBattleState(playerTeam, cpuTeam);
         state.field.weather = 'Hail';
-        // const possibleTurn1Outcomes = runTurn(state);
-        // expect(possibleTurn1Outcomes.length).toBeGreaterThan(0);
-        // const exampleTurn1 = possibleTurn1Outcomes[0];
-        // const turn2Outcomes = runTurn(exampleTurn1.state);
 
         usingHeuristics({ playerActionProvider: new PlannedPlayerActionProvider(
           [ 
@@ -343,13 +339,12 @@ IVs: 13 HP / 2 Atk / 16 Def / 23 SpA / 21 SpD / 14 Spe
             [attack(Tsareena, 'Power Whip')],
             [switchTo(Corviknight)], // Roserade
             [attack(Corviknight, 'Brave Bird')],
-            [attack(Corviknight, 'Brave Bird')], // There's a single roll that doesn't kill...
             [switchTo(Primarina)], // Samurott
+            [attack(Primarina, 'Draining Kiss')],
             [attack(Primarina, 'Draining Kiss')]
           ]) }, () => {
           const path = findPlayerWinningPath(state);
           expect(path).not.toBeNull();
-          expect(printDecisionTree(path)).toBe(``);
         });
       });
     });
