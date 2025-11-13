@@ -1,14 +1,16 @@
 import { configureStore } from '@reduxjs/toolkit';
 import { persistStore, persistReducer } from 'redux-persist';
-import storage from 'redux-persist/lib/storage'; // defaults to localStorage for web
+import syncStorage from './syncStorage';
 import moveReducer from './moveSlice';
 
 /**
  * Redux persist configuration
+ * Uses sync storage (chrome.storage.sync) when available for cross-device sync,
+ * falls back to localStorage otherwise
  */
 const persistConfig = {
   key: 'root',
-  storage,
+  storage: syncStorage,
 };
 
 const persistedReducer = persistReducer(persistConfig, moveReducer);
