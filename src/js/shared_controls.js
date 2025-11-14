@@ -1656,10 +1656,6 @@ function toggleInfoColorCode() {
 $(document).keydown(function (event) {
 	if (event.which == "17")
 		cntrlIsPressed = true;
-	else if (event.which == 65 && cntrlIsPressed) {
-		// Cntrl+  A
-		selectAllRows();
-	}
 });
 $(document).keyup(function () {
 	cntrlIsPressed = false;

@@ -1,5 +1,5 @@
+import { addToParty, getActiveSets, getParty, removeFromParty, saveActiveSets, getPokemonId, getActiveCollectionName, getSetCollection, saveSetCollection } from "../core/storage";
 import { getTrainerNames } from "../../worker/worker.client";
-import { addToParty, getActiveSets, getParty, removeFromParty, saveActiveSets, getPokemonId } from "../core/storage";
 
 export function initializePartyControls(): void {
   document.querySelector('#trash-pok')?.addEventListener('click', trashPokemon);
@@ -18,6 +18,32 @@ export function initializePartyControls(): void {
 trainerSection.querySelector('.move-to-party')?.addEventListener('click', promoteCurrentPokemonToParty);
 trainerSection.querySelector('.move-to-box')?.addEventListener('click', demoteCurrentPokemonToBox);
 
+}
+
+export function initializeImportExportControls(): void {
+	document.querySelector("#exportAll")!.addEventListener("click", () => {
+		let name = document.querySelector<HTMLInputElement>("#exportAllName")!.value || document.querySelector<HTMLSelectElement>('#levelCap')!.selectedOptions[0].label;
+		const link = document.createElement("a");
+		const allMons = JSON.stringify(getSetCollection());
+		navigator.clipboard.writeText(allMons)
+		const file = new Blob([allMons], { type: 'text/plain' });
+		link.href = URL.createObjectURL(file);
+		link.download = name + ".json";
+		link.click();
+		URL.revokeObjectURL(link.href);
+	});
+
+	const importBoxInput = document.querySelector<HTMLInputElement>("#importBoxInput")!;
+	document.querySelector("#importBox")!.addEventListener("click", () => {
+		importBoxInput.click();
+	});
+
+	importBoxInput.addEventListener('change', (e: any) => {
+		const file = e.target!.files[0];
+		file.text().then((value: string) => {
+			saveSetCollection(JSON.parse(value));
+		});
+	});
 }
 
 export function getCurrentPokemonId(): string {
