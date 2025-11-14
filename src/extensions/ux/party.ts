@@ -1,3 +1,4 @@
+import { getTrainerNames } from "../../worker/worker.client";
 import { addToParty, getActiveSets, getParty, removeFromParty, saveActiveSets, getPokemonId } from "../core/storage";
 
 export function initializePartyControls(): void {
@@ -27,6 +28,7 @@ export function getCurrentPokemonId(): string {
 
 function promoteCurrentPokemonToParty() {
   promotePokemonToParty(getCurrentPokemonId());
+  getTrainerNames().then(console.log);
 }
 
 function promotePokemonToParty(pokemonId: string): void {

@@ -7,6 +7,7 @@ module.exports = {
     extensions: './src/extensions/main.ts',
     core: './src/extensions/core/main.ts',
     sandbox: './src/sandbox/main.ts',
+    worker: './src/worker/impl/worker.ts',
   },
   module: {
     rules: [
@@ -28,6 +29,7 @@ module.exports = {
     new CopyWebpackPlugin({
       patterns: [
         { from: './*.html', to: '[name][ext]', context: 'src' },
+        { from: './js/data/sets/gen8.js', to: 'js/data/sets/gen8.js', context: 'src' },
       ],
     }),
   ],
