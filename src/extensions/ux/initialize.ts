@@ -1,13 +1,14 @@
 import { getActiveCollectionName, getActiveSets, getSetCollection, saveActiveCollectionName, saveSetCollection } from "../core/storage";
 import { updateSets } from "../simulator/utils";
-import { initializePartyControls, refreshPlayerPokedex } from "./party";
+import { initializeImportExportControls, initializePartyControls, refreshPlayerPokedex } from "./party";
 
 export function initializeUx(): void {
   initializeLevelCap();
   initializeCollectionSelection();
   adjustTabOrders(); 
   initializePartyControls();
-	refreshPlayerPokedex();
+  refreshPlayerPokedex();
+  initializeImportExportControls();
 }
 
 function adjustTabOrders() {
