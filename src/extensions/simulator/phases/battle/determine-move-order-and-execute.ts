@@ -2,7 +2,7 @@ import { calculate, Field, Move, Pokemon, Result } from "@smogon/calc";
 import { PokemonReplacer, visitActivePokemonInSpeedOrder } from "../../battle-field-state-visitor";
 import { ActivePokemon, BattleFieldState, MoveResult, PokemonPosition, Trainer } from "../../moveScoring.contracts";
 import { PossibleBattleFieldState } from "../../turn-state";
-import { PossibleAction, PossibleTrainerAction, TargetedMove, TargetSlot, SwitchAction, MoveAction } from "./move-selection.contracts";
+import { PossibleAction, PossibleTrainerAction, TargetedMove, TargetSlot, SwitchAction, MoveAction, ActionLogEntry } from "./move-selection.contracts";
 import { MoveScore } from "../../moveScore";
 import { getCpuPossibleActions } from "./cpu-move-selection";
 import { getPlayerPossibleActions } from "./player-move-selection";
@@ -23,14 +23,14 @@ export function determineMoveOrderAndExecute(state: BattleFieldState): PossibleB
     const allPossibleTurns: PossibleTrainerAction[][] = getAllPlayerAndCpuPossibleTurns(state);
     for (const combination of allPossibleTurns) {
         let newState = state.clone();
-        let log: string[] = [];
+        let log: ActionLogEntry[] = [];
         // Separate actions by type
         const switches = combination.filter(a => a.action.type === 'switch').sort((a, b) => a.pokemon.pokemon.stats.spe - b.pokemon.pokemon.stats.spe);
 
         for (let switchAction of switches) {
             const outcome = executeSwitch(newState, switchAction.trainer, switchAction.action as SwitchAction);
             newState = outcome.outcome;
-            log.push(...outcome.log);
+            log.push({ action: switchAction, description: outcome.description });
         }
 
         const moves = combination.filter(a => a.action.type === 'move');
@@ -157,12 +157,13 @@ function getPossibleActionsForAllSlots(state: BattleFieldState): Array<PossibleT
     return possibleActionsByPokemon;
 }
 
-function executeMoveOnState(state: BattleFieldState, trainer: Trainer, action: MoveAction): { outcome: BattleFieldState, log: string[]} {
+function executeMoveOnState(state: BattleFieldState, trainer: Trainer, action: MoveAction): { outcome: BattleFieldState, log: ActionLogEntry[]} {
     let newState = state.clone();
 
     let target = action.move.target;
     let targetActive = trainer.name === "Player" ? newState.cpu.active[target.slot] : newState.player.active[target.slot];
-    let actingPokemon = trainer.getActivePokemon(action.pokemon)!.pokemon;
+    let actingPosition = trainer.getActivePokemon(action.pokemon);
+    let actingPokemon = actingPosition!.pokemon;
     let calcResult = calculate(gen, actingPokemon, targetActive.pokemon, action.move.move, trainer.name === "Player" ? state.playerField : state.cpuField);
     let moveResult = toMoveResult(calcResult);
     let executionResult = executeMove(gen, action.pokemon, targetActive.pokemon, moveResult, trainer.name === "Player" ? playerRng : cpuRng);
@@ -179,7 +180,7 @@ function executeMoveOnState(state: BattleFieldState, trainer: Trainer, action: M
     else {
         applyFieldEffects(newState.field, newState.cpuSide, newState.playerSide, moveResult);
     }
-    return { outcome: newState, log: [description] };
+    return { outcome: newState, log: [{ action: { trainer, pokemon: actingPosition!, action: { ...action, probability: -1 }, slot: { slot: target.slot }}, description }] };
 }
 
 function applyFieldEffects(field: Field, attackerSide: Side, defenderSide: Side, moveResult: MoveResult): void {

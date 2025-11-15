@@ -3,8 +3,9 @@ import { applyPlayerSwitchIns, applyCpuSwitchIns } from "./phases/switching";
 import { applyStartOfTurnAbilities } from "./phases/turn-start/start-of-turn-abilities";
 import { applyFieldHazards } from "./phases/turn-start/field-hazards";
 import { determineMoveOrderAndExecute } from "./phases/battle/determine-move-order-and-execute";
+import { ActionLogEntry } from "./phases/battle/move-selection.contracts";
 
-export type PossibleBattleFieldState = { type: 'possible', probability: number, state: BattleFieldState, history: string[] };
+export type PossibleBattleFieldState = { type: 'possible', probability: number, state: BattleFieldState, history: ActionLogEntry[] };
 export type BattleFieldStateTransform = (state: BattleFieldState) => BattleFieldState | BattleFieldState[] | PossibleBattleFieldState[];
 
 export function applyTransforms(state: BattleFieldState, transforms: BattleFieldStateTransform[]): PossibleBattleFieldState[] {

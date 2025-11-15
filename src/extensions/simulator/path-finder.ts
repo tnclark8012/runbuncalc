@@ -1,4 +1,5 @@
 import { BattleFieldState } from "./moveScoring.contracts";
+import { ActionLogEntry } from "./phases/battle/move-selection.contracts";
 import { PossibleBattleFieldState, runTurn } from "./turn-state";
 
 export interface DecisionNode {
@@ -143,14 +144,14 @@ function groupByPlayerAction(outcomes: PossibleBattleFieldState[]): Map<string, 
     return groups;
 }
 
-function getPlayerActionFromHistory(history: string[]): string {
-    let playerActions = history.filter(h => h.startsWith('Player'));
-    return playerActions[playerActions.length - 1] || 'unknown';
+function getPlayerActionFromHistory(history: ActionLogEntry[]): string {
+    let playerActions = history.filter(h => h.action.trainer.name === 'Player');
+    return playerActions[playerActions.length - 1]?.description || 'No Player action';
 }
 
-function getCpuActionFromHistory(history: string[]): string {
-    let cpuActions = history.filter(h => !h.startsWith('Player'));
-    return cpuActions[cpuActions.length - 1] || 'No CPU action';
+function getCpuActionFromHistory(history: ActionLogEntry[]): string {
+    let cpuActions = history.filter(h => h.action.trainer.name !== 'Player');
+    return cpuActions[cpuActions.length - 1]?.description || 'No CPU action';
 }
 
 function toStateKey(state: PossibleBattleFieldState): string {
