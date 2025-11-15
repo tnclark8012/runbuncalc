@@ -2,12 +2,12 @@ import { Pokemon } from "@smogon/calc";
 import { PokemonReplacer, visitActivePokemonInSpeedOrder } from "../../battle-field-state-visitor";
 import { canMegaEvolve, isMegaEvolution, isMegaEvolutionOf } from "../../moveScoring";
 import { BattleFieldState, PokemonPosition } from "../../moveScoring.contracts";
-import { isMoveAction, MoveAction, PossibleTrainerAction } from "./move-selection.contracts";
+import { ActionLogEntry, isMoveAction, MoveAction, PossibleTrainerAction } from "./move-selection.contracts";
 import { applyStartOfTurnAbility } from "../turn-start/start-of-turn-abilities";
 
 type MegaEvolutionToApply = { baseForm: PokemonPosition, mega: Pokemon };
 
-export function executeMegaEvolution(state: BattleFieldState, actions: PossibleTrainerAction[]): { outcome: BattleFieldState, log: string[] } {
+export function executeMegaEvolution(state: BattleFieldState, actions: PossibleTrainerAction[]): { outcome: BattleFieldState, log: ActionLogEntry[] } {
     let moves = actions.filter(trainerAction => isMoveAction(trainerAction.action) && isMegaEvolution(trainerAction.action.pokemon));
     let megasToApply: MegaEvolutionToApply[] = [];
     visitActivePokemonInSpeedOrder(state, {
@@ -21,11 +21,10 @@ export function executeMegaEvolution(state: BattleFieldState, actions: PossibleT
         }
     });
 
-    let log: string[] = [];
+    let log: ActionLogEntry[] = [];
     for (let mega of megasToApply) {
         let result = applyMegaEvolution(state, mega);
         state = result.outcome;
-        log.push(...result.log);
     }
 
     return { outcome: state, log };

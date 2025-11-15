@@ -6,6 +6,11 @@ import { ActivePokemon, PokemonPosition, Trainer } from "../../moveScoring.contr
 //     possibleActions: PossibleAction[];
 // }
 
+export interface ActionLogEntry {
+	action: PossibleTrainerAction;
+	description: string;
+}
+
 export interface PossibleTrainerAction {
     trainer: Trainer;
     pokemon: PokemonPosition;
