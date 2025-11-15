@@ -43,12 +43,12 @@
 // If we're not being used as a module we're just going to rely on globals and
 // that the correct loading order being followed.
 
-import { Generations } from './data';
+import {Generations} from './data';
 import {State} from './state';
 import * as I from './data/interface';
 import * as A from './adaptable';
 
-export { A, I };
+export {A, I};
 
 // The loading strategy outlined in the comment above breaks in the browser when we start reusing
 // names as we're doing here with our shim overrides. Because exporting calculate below tramples
@@ -158,4 +158,4 @@ export {SPECIES} from './data/species';
 export {NATURES} from './data/natures';
 export {TYPE_CHART} from './data/types';
 export {STATS, Stats} from './stats';
-export { SpeciesData } from './data/species';
+export {SpeciesData} from './data/species';

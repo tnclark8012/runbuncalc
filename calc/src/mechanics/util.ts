@@ -134,11 +134,10 @@ export function getFinalSpeed(gen: Generation, pokemon: Pokemon, field: Field, s
     speed = Math.floor(OF32(speed * (gen.num < 7 ? 25 : 25)) / 100);
   }
 
-  const maxSpeed = gen.num <= 2 ? 999 : 10000
+  const maxSpeed = gen.num <= 2 ? 999 : 10000;
   speed = Math.min(maxSpeed, speed);
-  speed =  Math.max(0, speed);
-  if (field.isTrickRoom)
-    speed = Math.max(0, maxSpeed - speed);
+  speed = Math.max(0, speed);
+  if (field.isTrickRoom) { speed = Math.max(0, maxSpeed - speed); }
 
   return speed;
 }
@@ -496,7 +495,7 @@ export function handleFixedDamageMoves(attacker: Pokemon, move: Move, defender: 
     return 40;
   } else if (move.named('Sonic Boom')) {
     return 20;
-  } else if (move.named('Super Fang')){
+  } else if (move.named('Super Fang')) {
     return Math.floor(defender.originalCurHP / 2) > 0 ? Math.floor(defender.originalCurHP / 2) : 1;
   }
   return 0;

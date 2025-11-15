@@ -4,9 +4,9 @@ import * as I from '../data/interface';
 import {calculate, Pokemon, Move, Result, SPECIES, ITEMS, ABILITIES, PokemonOptions} from '../index';
 import {State} from '../state';
 import {Field, Side} from '../field';
-import { SpeciesData } from '../data/species';
-import { isNativeError } from 'util/types';
-import { formatWithOptions } from 'util';
+import {SpeciesData} from '../data/species';
+import {isNativeError} from 'util/types';
+import {formatWithOptions} from 'util';
 
 const calc = (gen: I.GenerationNum) => (
   attacker: Pokemon,
@@ -193,7 +193,7 @@ const statToLegacyMap: { [stat: string]: string } = {
   'def': 'df',
   'spa': 'sa',
   'spd': 'sd',
-  'spe': 'sp'
+  'spe': 'sp',
 };
 
 export function importPokemon(importText: string): Pokemon {
@@ -201,57 +201,56 @@ export function importPokemon(importText: string): Pokemon {
 }
 
 export function importTeam(importText: string): Pokemon[] {
-	var rows = importText.trim().split("\n");
+  let rows = importText.trim().split('\n');
   rows = rows.map(r => r.trim());
-	var currentRow;
-	let currentPoke: Pokemon;
-	var addedpokes = 0;
-	var pokelist = []
-	for (var i = 0; i < rows.length; i++) {
-		currentRow = rows[i].split(/[()@]/);
-		for (var j = 0; j < currentRow.length; j++) {
-			currentRow[j] = checkExeptions(currentRow[j].trim());
-			if (SPECIES[9][currentRow[j].trim()] !== undefined) {
-				let speciesData: SpeciesData = SPECIES[9][currentRow[j].trim()];
-				let stats = getStats(rows, i + 1);
-        let moves = getMoves(rows, i);
+  let currentRow;
+  let currentPoke: Pokemon;
+  const addedpokes = 0;
+  const pokelist = [];
+  for (let i = 0; i < rows.length; i++) {
+    currentRow = rows[i].split(/[()@]/);
+    for (let j = 0; j < currentRow.length; j++) {
+      currentRow[j] = checkExeptions(currentRow[j].trim());
+      if (SPECIES[9][currentRow[j].trim()] !== undefined) {
+        const speciesData: SpeciesData = SPECIES[9][currentRow[j].trim()];
+        const stats = getStats(rows, i + 1);
+        const moves = getMoves(rows, i);
         currentPoke = new Pokemon(9, currentRow[j].trim(), {
           item: getItem(currentRow, j + 1),
           name: currentRow[j].trim() as any,
-          ability: getAbility(rows[i + 1].split(":")),
+          ability: getAbility(rows[i + 1].split(':')),
           moves: moves,
           ...stats,
         });
-				pokelist.push(currentPoke);
-				break;
-			}
-		}
-	}
+        pokelist.push(currentPoke);
+        break;
+      }
+    }
+  }
 
   return pokelist;
-  
+
   function getAbility(row: string[]): string | undefined {
-    var ability = row[1] ? row[1].trim() : '';
-    if (ABILITIES[9].indexOf(ability) !== -1) return ability;
+    const ability = row[1] ? row[1].trim() : '';
+    if (ABILITIES[9].includes(ability)) return ability;
     return;
   }
 
   function getStats(rows: string[], offset: number): PokemonOptions {
-    let currentPoke: PokemonOptions = {};
-    currentPoke.nature = "Serious";
-    var currentEV: [string, string];
-    var currentIV: string[];
-    var currentAbility;
-    var currentTeraType;
-    var currentNature;
+    const currentPoke: PokemonOptions = {};
+    currentPoke.nature = 'Serious';
+    let currentEV: [string, string];
+    let currentIV: string[];
+    let currentAbility;
+    let currentTeraType;
+    let currentNature;
     currentPoke.level = 100;
-    for (var x = offset; x < offset + 9; x++) {
-      if (!rows[x] || !rows[x].length)
-        return currentPoke;
-      
-      var currentRow = rows[x] ? rows[x].split(/[/:]/) : '';
-      var evs: Partial<I.StatsTable> = {};
-      var ivs: Partial<I.StatsTable> = {};
+    for (let x = offset; x < offset + 9; x++) {
+      if (!rows[x] || !rows[x].length) { return currentPoke; }
+
+      const currentRow = rows[x] ? rows[x].split(/[/:]/) : '';
+      const evs: Partial<I.StatsTable> = {};
+      const ivs: Partial<I.StatsTable> = {};
       var ev;
       var j;
 
@@ -261,7 +260,7 @@ export function importTeam(importText: string): Pokemon[] {
         continue;
       case 'EVs':
         for (j = 1; j < currentRow.length; j++) {
-          currentEV = currentRow[j].trim().split(" ") as any;
+          currentEV = currentRow[j].trim().split(' ') as any;
           currentEV[1] = statToLegacyStat(currentEV[1].toLowerCase());
           (evs as any)[currentEV[1] as any] = parseInt(currentEV[0]);
         }
@@ -269,20 +268,20 @@ export function importTeam(importText: string): Pokemon[] {
         continue;
       case 'IVs':
         for (j = 1; j < currentRow.length; j++) {
-          currentIV = currentRow[j].trim().split(" ");
-          currentIV[1] = currentIV[1].toLowerCase();//statToLegacyStat(currentIV[1].toLowerCase());
+          currentIV = currentRow[j].trim().split(' ');
+          currentIV[1] = currentIV[1].toLowerCase();// statToLegacyStat(currentIV[1].toLowerCase());
           (ivs as any)[currentIV[1]] = parseInt(currentIV[0]);
         }
         currentPoke.ivs = ivs;
         continue;
       }
-      currentAbility = rows[x] ? rows[x].trim().split(":") : '';
-      if (currentAbility[0] == "Ability") {
+      currentAbility = rows[x] ? rows[x].trim().split(':') : '';
+      if (currentAbility[0] == 'Ability') {
         currentPoke.ability = currentAbility[1].trim();
       }
 
-      currentNature = rows[x] ? rows[x].trim().split(" ") : '';
-      if (currentNature[1] == "Nature") {
+      currentNature = rows[x] ? rows[x].trim().split(' ') : '';
+      if (currentNature[1] == 'Nature') {
         currentPoke.nature = currentNature[0];
       }
     }
@@ -294,9 +293,8 @@ export function importTeam(importText: string): Pokemon[] {
   }
 
   function legacyStatToStat(legacyStat: string): string {
-    for (let stat in statToLegacyMap) {
-      if (statToLegacyMap[stat] === legacyStat)
-        return stat;
+    for (const stat in statToLegacyMap) {
+      if (statToLegacyMap[stat] === legacyStat) { return stat; }
     }
 
     return legacyStat;
@@ -304,49 +302,49 @@ export function importTeam(importText: string): Pokemon[] {
 
   function checkExeptions(poke: string) {
     switch (poke) {
-      case 'Aegislash':
-        poke = "Aegislash-Blade";
-        break;
-      case 'Basculin-Blue-Striped':
-        poke = "Basculin";
-        break;
-      case 'Gastrodon-East':
-        poke = "Gastrodon";
-        break;
-      case 'Mimikyu-Busted-Totem':
-        poke = "Mimikyu-Totem";
-        break;
-      case 'Mimikyu-Busted':
-        poke = "Mimikyu";
-        break;
-      case 'Pikachu-Belle':
-      case 'Pikachu-Cosplay':
-      case 'Pikachu-Libre':
-      case 'Pikachu-Original':
-      case 'Pikachu-Partner':
-      case 'Pikachu-PhD':
-      case 'Pikachu-Pop-Star':
-      case 'Pikachu-Rock-Star':
-        poke = "Pikachu";
-        break;
-      case 'Vivillon-Fancy':
-      case 'Vivillon-Pokeball':
-        poke = "Vivillon";
-        break;
-      case 'Florges-White':
-      case 'Florges-Blue':
-      case 'Florges-Orange':
-      case 'Florges-Yellow':
-        poke = "Florges";
-        break;
+    case 'Aegislash':
+      poke = 'Aegislash-Blade';
+      break;
+    case 'Basculin-Blue-Striped':
+      poke = 'Basculin';
+      break;
+    case 'Gastrodon-East':
+      poke = 'Gastrodon';
+      break;
+    case 'Mimikyu-Busted-Totem':
+      poke = 'Mimikyu-Totem';
+      break;
+    case 'Mimikyu-Busted':
+      poke = 'Mimikyu';
+      break;
+    case 'Pikachu-Belle':
+    case 'Pikachu-Cosplay':
+    case 'Pikachu-Libre':
+    case 'Pikachu-Original':
+    case 'Pikachu-Partner':
+    case 'Pikachu-PhD':
+    case 'Pikachu-Pop-Star':
+    case 'Pikachu-Rock-Star':
+      poke = 'Pikachu';
+      break;
+    case 'Vivillon-Fancy':
+    case 'Vivillon-Pokeball':
+      poke = 'Vivillon';
+      break;
+    case 'Florges-White':
+    case 'Florges-Blue':
+    case 'Florges-Orange':
+    case 'Florges-Yellow':
+      poke = 'Florges';
+      break;
     }
     return poke;
   }
 
   function getItem(currentRow: string[], j: number) {
     for (;j < currentRow.length; j++) {
-      var item = currentRow[j].trim();
-      if (ITEMS[9].indexOf(item) != -1) {
+      const item = currentRow[j].trim();
+      if (ITEMS[9].includes(item)) {
         return item;
       }
     }
@@ -355,13 +353,13 @@ export function importTeam(importText: string): Pokemon[] {
   }
 
   function getMoves(rows: string[], offset: number): string[] {
-    var movesFound = false;
-    var moves = [];
-    for (var x = offset; x < offset + 12; x++) {
+    let movesFound = false;
+    const moves = [];
+    for (let x = offset; x < offset + 12; x++) {
       if (rows[x]) {
-        if (rows[x][0] == "-") {
+        if (rows[x][0] == '-') {
           movesFound = true;
-          var move = rows[x].substr(2, rows[x].length - 2).replace("[", "").replace("]", "").replace("  ", "");
+          const move = rows[x].substr(2, rows[x].length - 2).replace('[', '').replace(']', '').replace('  ', '');
           moves.push(move);
         } else {
           if (movesFound == true) {

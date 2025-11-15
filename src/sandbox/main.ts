@@ -1,4 +1,4 @@
-import { initializeMoveResultGroups } from '../extensions/ux/components/example-usage';
+import { initializeDeveloperTools } from '../extensions/ux/components/developer-tools-usage';
 document.addEventListener('DOMContentLoaded', () => {
-  initializeMoveResultGroups();
+  initializeDeveloperTools();
 });
