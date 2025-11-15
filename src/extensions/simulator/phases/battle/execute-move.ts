@@ -162,8 +162,18 @@ function getBoosts(attacker: Pokemon, defender: Pokemon, move: Move): { attacker
 		case 'Swords Dance':
 			modifyStat(attackerBoosts, 'atk', 2);
 			break;
+		case 'Rock Smash':
+			modifyStat(defenderBoosts, 'def', -1);
+			break;
 	}
 
+	switch(defender.ability) {
+		case 'Cotton Down':
+			modifyStat(attackerBoosts, 'spe', -1);
+			break;
+	}
+
+	/** White herb restores all drops */
 	const checkWhiteHerb = (pokemon: Pokemon, boosts: StatsTable) => { 
 		if (!pokemon.hasItem('White Herb'))
 			return;

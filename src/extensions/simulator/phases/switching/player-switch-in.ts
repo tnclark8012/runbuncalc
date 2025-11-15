@@ -28,6 +28,7 @@ export class SwitchAfterKOStrategy {
         })];
     }
 }
+
 export function applyPlayerSwitchIns(state: BattleFieldState): BattleFieldState[] {
     state = initializeActivePokemon(state);
     

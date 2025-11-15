@@ -5,7 +5,9 @@ import {
 import { inGen, importTeam } from '../../test-helper';
 import { calculateMoveResult } from '../../moveScoring';
 import { executeMove } from './execute-move';
-import { playerRng } from '../../../configuration';
+import { cpuRng, playerRng } from '../../../configuration';
+import { getBox } from '../../playthrough/museum.collection';
+import { Trainers } from '../../../trainer-sets';
 
 const RunAndBun = 8;
 inGen(RunAndBun, ({ gen, calculate, Pokemon, Move }) => {
@@ -13,6 +15,26 @@ inGen(RunAndBun, ({ gen, calculate, Pokemon, Move }) => {
     xtest(`Berries`, () => {
         
     });
+
+    describe(`Defender abilities`, () => {
+      it ('Cotton Down', () => {
+        const { Gossifleur } = getBox();
+        const [_, Clobbopus ] = Trainers['Triathlete Mikey'];
+        let moveResult = calculateMoveResult(Clobbopus, Gossifleur, 'Rock Smash');
+        let executionResult = executeMove(Generations.get(gen), Clobbopus, Gossifleur, moveResult, cpuRng);
+        expect(executionResult.attacker.boosts.spe).toBe(-1);
+      });
+    });
+
+    describe('Move effects', () => {
+      it('Rock smash', () => {
+        const { Gossifleur } = getBox();
+        const [_, Clobbopus ] = Trainers['Triathlete Mikey'];
+        let moveResult = calculateMoveResult(Clobbopus, Gossifleur, 'Rock Smash');
+        let executionResult = executeMove(Generations.get(gen), Clobbopus, Gossifleur, moveResult, cpuRng);
+        expect(executionResult.defender.boosts.def).toBe(-1);
+      })
+    })
 
     test('Life orb', () => {
       const [Urshifu, Dragapult] = importTeam(`

@@ -5,8 +5,10 @@ import { importTeam } from '../helper';
 import { expectTeam, usingHeuristics } from '../test-helper';
 import { BasicScoring, IntuitionScoring } from '../phases/battle/player-move-selection-strategy';
 import { findPlayerWinningPath, printDecisionTree } from '../path-finder';
-import { Box } from './museum.collection';
+import { getBox } from './museum.collection';
 import { Trainers } from '../../trainer-sets';
+import { attack, PlannedPlayerActionProvider, switchTo } from '../../configuration';
+import { ItemName } from '@smogon/calc/dist/data/interface';
 
 describe('Actual playthrough tests', () => {
   describe('Aqua Grunt Split', () => {
@@ -81,12 +83,13 @@ IVs: 20 HP / 27 Atk / 8 SpA
     test('Bug Catcher Rick', () => {
       const cpu = Trainers['Bug Catcher Rick'];
 
+      const { Turtwig, Gossifleur, Poochyena, Starly, Surskit } = getBox();
       const state = new BattleFieldState(
-        new PlayerTrainer([new PokemonPosition(Box.Turtwig, true)], [
-          Box.Gossifleur,
-          Box.Poochyena,
-          Box.Starly,
-          Box.Surskit,
+        new PlayerTrainer([new PokemonPosition(Turtwig, true)], [
+          Gossifleur,
+          Poochyena,
+          Starly,
+          Surskit,
         ]),
         new CpuTrainer([], cpu),
         new Field());
@@ -94,5 +97,42 @@ IVs: 20 HP / 27 Atk / 8 SpA
       let path = findPlayerWinningPath(state);
       expect(path).not.toBeNull();
     });
+
+    test('Triathlete Mikey', () => {
+      const cpu = Trainers['Triathlete Mikey'];
+
+      const { Turtwig, Gossifleur, Poochyena, Starly, Surskit } = getBox();
+      const state = new BattleFieldState(
+        new PlayerTrainer([new PokemonPosition(Turtwig, true)], [
+          Gossifleur,
+          Poochyena,
+          Starly,
+          Surskit,
+        ]),
+        new CpuTrainer([], cpu),
+        new Field());
+
+        Turtwig.item = 'Oran Berry' as any;
+        Gossifleur.item = 'Oran Berry' as any;
+        Poochyena.item = 'Oran Berry' as any;
+        Starly.item = 'Oran Berry' as any;
+        Surskit.item = 'Oran Berry' as any;
+        // usingHeuristics({ playerActionProvider: new PlannedPlayerActionProvider([
+        //   [ attack(Turtwig, 'Bite') ],
+        //   [ attack(Turtwig, 'Absorb') ],
+        //   [ attack(Turtwig, 'Absorb') ],
+        //   [ switchTo(Starly) ],
+        //   [ attack(Starly, 'Aerial Ace') ],
+        //   [ attack(Starly, 'Quick Attack') ],
+        //   [ switchTo(Surskit) ],
+        //   [ attack(Surskit, 'Bubble Beam') ],
+        //   [ attack(Surskit, 'Bubble Beam') ],
+        // ]) }, () => {
+          const path = findPlayerWinningPath(state);
+          expect(path).not.toBeNull();
+          // expect(printDecisionTree(path!)).toBe('');
+        // });
+    });
+
   });
 });

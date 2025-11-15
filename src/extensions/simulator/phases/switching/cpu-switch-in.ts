@@ -16,7 +16,9 @@ export interface CPUSwitchConsideration {
 }
 
 export function applyCpuSwitchIns(state: BattleFieldState): BattleFieldState {
-    state = initializeActivePokemon(state);
+    if (isUninitialized(state))
+        return initializeActivePokemon(state)
+    
     const cpuParty = state.cpu.party;
     
     let switches: SwitchAction[] = [];
@@ -99,9 +101,6 @@ function isUninitialized(state: BattleFieldState): boolean {
 }
 
 function initializeActivePokemon(state: BattleFieldState): BattleFieldState {
-    if (!isUninitialized(state))
-        return state;
-
     state = state.clone();
     let cpuActive: PokemonPosition[] = [new PokemonPosition(state.cpu.party.shift()!, true)];
     if (state.isDoubles && state.cpu.party.length)
