@@ -2,6 +2,7 @@ import { A, I, Field } from '@smogon/calc';
 
 declare global {
   var cntrlIsPressed: boolean;
+  var nextTrainerId: number;
   /**
    * dist\js\shared_controls.js
    */
