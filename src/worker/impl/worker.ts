@@ -1,4 +1,3 @@
-/// <reference lib="webworker" />
 import { BattleFieldStateBuilder } from '../../extensions/simulator/battle-field-state-builder';
 import { findPlayerWinningPath, printDecisionTree } from '../../extensions/simulator/path-finder';
 import { GetTrainerPathRequest, GetTrainerPathResponse, WorkerRequest, WorkerResponseBase } from '../worker.api';
