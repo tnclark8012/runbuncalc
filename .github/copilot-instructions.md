@@ -1,0 +1,1 @@
+This repository is for building a battle simulator for the game Pokemon Run & Bun. This project is not for building the game itself, but rather is a tool to  help a player plan a way for them to beat the game, accounting for known AI logic. Code in the calc folder should not be edited.
