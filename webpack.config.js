@@ -7,6 +7,7 @@ module.exports = [{
     extensions: './src/extensions/main.ts',
     core: './src/extensions/core/main.ts',
     sandbox: './src/sandbox/main.ts',
+    worker: './src/worker/impl/worker.ts',
   },
   module: {
     rules: [
