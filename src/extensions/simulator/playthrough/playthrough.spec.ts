@@ -6,10 +6,10 @@ import { expectTeam, usingHeuristics } from '../test-helper';
 import { BasicScoring, IntuitionScoring } from '../phases/battle/player-move-selection-strategy';
 import { findPlayerWinningPath, printDecisionTree } from '../path-finder';
 import { Box } from './museum.collection';
-import { TrainerSets } from '../../trainer-sets';
+import { Trainers } from '../../trainer-sets';
 
 describe('Actual playthrough tests', () => {
-  describe('Museum Split', () => {
+  describe('Aqua Grunt Split', () => {
     test('Route 103 - Rival May', () => {
       let [Torchic, Turtwig] = importTeam(`
 Torchic
@@ -79,13 +79,13 @@ IVs: 20 HP / 27 Atk / 8 SpA
     });
 
     test('Bug Catcher Rick', () => {
-      const cpu = TrainerSets['Bug Catcher Rick'];
+      const cpu = Trainers['Bug Catcher Rick'];
 
       const state = new BattleFieldState(
-        new PlayerTrainer([new PokemonPosition(Box.Starly, true)], [
+        new PlayerTrainer([new PokemonPosition(Box.Turtwig, true)], [
           Box.Gossifleur,
           Box.Poochyena,
-          Box.Turtwig,
+          Box.Starly,
           Box.Surskit,
         ]),
         new CpuTrainer([], cpu),
@@ -93,7 +93,6 @@ IVs: 20 HP / 27 Atk / 8 SpA
 
       let path = findPlayerWinningPath(state);
       expect(path).not.toBeNull();
-      expect(printDecisionTree(path!)).toBe('');
     });
   });
 });

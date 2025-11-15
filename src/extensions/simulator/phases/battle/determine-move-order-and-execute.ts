@@ -151,15 +151,7 @@ function getPossibleActionsForAllSlots(state: BattleFieldState): Array<PossibleT
         possibleActionsByPokemon.push(...plannedPlayerActions);
     }
     else {
-        for (let i = 0; i < state.player.active.length; i++) {
-            let possibleActions: PossibleAction[] = getPlayerPossibleActions(state, state.player.active[i]);
-            possibleActionsByPokemon.push(possibleActions.map<PossibleTrainerAction>(action => ({
-                pokemon: state.player.active[i],
-                action,
-                slot: { slot: i },
-                trainer: state.player
-            })));
-        }
+        possibleActionsByPokemon.push(...getPlayerPossibleActions(state));
     }
 
     return possibleActionsByPokemon;

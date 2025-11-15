@@ -1,18 +1,33 @@
-import { Generations, Pokemon } from "@smogon/calc";
-import { ActivePokemon, BattleFieldState, PlayerTrainer, PokemonPosition, Trainer } from "../../moveScoring.contracts";
-import { calculateAllMoves, findHighestDamageMove, getCpuMoveConsiderations, getDamageRanges } from "../../moveScoring";
+import { Pokemon } from "@smogon/calc";
+import { BattleFieldState, PlayerTrainer, PokemonPosition, SwitchStrategy } from "../../moveScoring.contracts";
 import { isFainted } from "../../utils";
+import { PossibleTrainerAction } from "../battle/move-selection.contracts";
 
-const generation = Generations.get(8);
+export class SwitchAfterKOStrategy {
+    public getPossibleStartOfTurnSwitches(state: BattleFieldState): PossibleTrainerAction[][] {
+        let switchInCandidates = state.player.party.filter(pokemon => !isFainted(pokemon));
+        if (switchInCandidates.length === 0)
+            return [];
 
-export interface CPUSwitchConsideration {
-    pokemon: Pokemon;
-    aiIsFaster: boolean;
-    aiOHKOs: boolean;
-    playerOHKOs: boolean;
-    aiOutdamagesPlayer: boolean;
+        if (state.field.gameType === 'Doubles')
+            return [];
+
+        return [switchInCandidates.map<PossibleTrainerAction>(pokemon => {
+            return {
+                type: 'switch',
+                trainer: state.player,
+                pokemon: state.player.active[0],
+                slot: { slot: 0 },
+                action: {
+                    type: 'switch',
+                    probability: 1,
+                    switchIn: pokemon,
+                    target: { slot: 0 }
+                }
+            };
+        })];
+    }
 }
-
 export function applyPlayerSwitchIns(state: BattleFieldState): BattleFieldState[] {
     state = initializeActivePokemon(state);
     

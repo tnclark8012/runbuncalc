@@ -9,10 +9,12 @@ import { inGen, importTeam } from '../../test-helper';
 import { getPlayerPossibleActions } from './player-move-selection';
 import { isMoveAction, PossibleAction } from './move-selection.contracts';
 import { BattleFieldState, CpuTrainer, PlayerTrainer, PokemonPosition } from '../../moveScoring.contracts';
+import { Box } from '../../playthrough/museum.collection';
+import { Trainers } from '../../../trainer-sets';
 
 const RunAndBun = 8;
 inGen(RunAndBun, ({ gen, calculate, Pokemon, Move }) => {
-  describe('Player move scoring', () => {
+  describe('Player Move Selection', () => {
     describe('Mega evolution', () => {
       test(`Considers mega evolving`, () => {
         let [Lopunny, Aerodactyl] = importTeam(`
@@ -32,6 +34,27 @@ Level: 100
         expect(possibleActions.filter(action => isMoveAction(action) && action.pokemon.name === "Lopunny").length).toBe(2);
       });
     });
+
+    describe('Switches', () => {
+      test('Post-KO switching', () => {
+        let { Gossifleur, Turtwig, Starly, Poochyena } = Box;
+        let [Grubbin, Pineco, Sizzlipede] = Trainers['Bug Catcher Rick'];
+        
+        // Grubbin = Grubbin.clone({ curHP: 0 });
+        let state = new BattleFieldState(
+          new PlayerTrainer([new PokemonPosition(Turtwig)], [Gossifleur, Starly, Poochyena]),
+          new CpuTrainer([new PokemonPosition(Grubbin, true)], [Pineco, Sizzlipede]),
+          new Field()
+        );
+
+        let actions = getPlayerPossibleActions(state);
+        expect(actions.length).toBe(1);
+        let actionsForTurtwig = actions[0];
+        expect(actionsForTurtwig.filter(action => action.action.type === 'switch' ).length).toBe(3); 
+
+
+      });
+    })
   });
 });
 
@@ -47,5 +70,6 @@ function getPlayerActionsFor1v1(playerPokemon: Pokemon, cpuPokemon: Pokemon): Po
       ),
     new Field()
   );
-  return getPlayerPossibleActions(state, state.player.active[0]);
+  let possibleActions = getPlayerPossibleActions(state);
+  return possibleActions[0].map(p => p.action);
 }
