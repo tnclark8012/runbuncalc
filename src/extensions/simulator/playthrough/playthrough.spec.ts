@@ -5,9 +5,11 @@ import { importTeam } from '../helper';
 import { expectTeam, usingHeuristics } from '../test-helper';
 import { BasicScoring, IntuitionScoring } from '../phases/battle/player-move-selection-strategy';
 import { findPlayerWinningPath, printDecisionTree } from '../path-finder';
+import { Box } from './museum.collection';
+import { Trainers } from '../../trainer-sets';
 
 describe('Actual playthrough tests', () => {
-  describe('Museum Split', () => {
+  describe('Aqua Grunt Split', () => {
     test('Route 103 - Rival May', () => {
       let [Torchic, Turtwig] = importTeam(`
 Torchic
@@ -29,18 +31,18 @@ IVs: 20 HP / 27 Atk / 8 SpA
 - Growl
 
 `);
-        const state = new BattleFieldState(
-          new PlayerTrainer([ new PokemonPosition(Turtwig, true) ], []),
-          new CpuTrainer([ new PokemonPosition(Torchic, true) ], []),
-          new Field());
+      const state = new BattleFieldState(
+        new PlayerTrainer([new PokemonPosition(Turtwig, true)], []),
+        new CpuTrainer([new PokemonPosition(Torchic, true)], []),
+        new Field());
 
-        usingHeuristics({ playerMoveScoringStrategy: BasicScoring }, () => {
-          let allPossibleEndStatesOfTurn1 = determineMoveOrderAndExecute(state);
-          expect(allPossibleEndStatesOfTurn1.length).toBe(4); // 4 possible outcomes based on the 4 moves of Turtwig
+      usingHeuristics({ playerMoveScoringStrategy: BasicScoring }, () => {
+        let allPossibleEndStatesOfTurn1 = determineMoveOrderAndExecute(state);
+        expect(allPossibleEndStatesOfTurn1.length).toBe(4); // 4 possible outcomes based on the 4 moves of Turtwig
 
-          expect(allPossibleEndStatesOfTurn1.filter(outcome => outcome.state.cpu.active[0].pokemon.curHP() === outcome.state.cpu.active[0].pokemon.maxHP()).length).toBe(2); // Turtwig has 2 non-damaging moves
-          expect(allPossibleEndStatesOfTurn1.filter(outcome => outcome.state.cpu.active[0].pokemon.curHP() < outcome.state.cpu.active[0].pokemon.maxHP()).length).toBe(2); // Turtwig has 2 damaging moves
-        });
+        expect(allPossibleEndStatesOfTurn1.filter(outcome => outcome.state.cpu.active[0].pokemon.curHP() === outcome.state.cpu.active[0].pokemon.maxHP()).length).toBe(2); // Turtwig has 2 non-damaging moves
+        expect(allPossibleEndStatesOfTurn1.filter(outcome => outcome.state.cpu.active[0].pokemon.curHP() < outcome.state.cpu.active[0].pokemon.maxHP()).length).toBe(2); // Turtwig has 2 damaging moves
+      });
     });
 
     test('Route 103 - Rival May path', () => {
@@ -64,16 +66,33 @@ IVs: 20 HP / 27 Atk / 8 SpA
 - Growl
 
 `);
-        const state = new BattleFieldState(
-          new PlayerTrainer([ new PokemonPosition(Turtwig, true) ], []),
-          new CpuTrainer([ new PokemonPosition(Torchic, true) ], []),
-          new Field());
+      const state = new BattleFieldState(
+        new PlayerTrainer([new PokemonPosition(Turtwig, true)], []),
+        new CpuTrainer([new PokemonPosition(Torchic, true)], []),
+        new Field());
 
-        usingHeuristics({ playerMoveScoringStrategy: BasicScoring }, () => {
-          let path = findPlayerWinningPath(state);
-          expect(path).not.toBeNull();
-          // expect(printDecisionTree(path!)).toBe('');
-        });
+      usingHeuristics({ playerMoveScoringStrategy: BasicScoring }, () => {
+        let path = findPlayerWinningPath(state);
+        expect(path).not.toBeNull();
+        // expect(printDecisionTree(path!)).toBe('');
+      });
+    });
+
+    test('Bug Catcher Rick', () => {
+      const cpu = Trainers['Bug Catcher Rick'];
+
+      const state = new BattleFieldState(
+        new PlayerTrainer([new PokemonPosition(Box.Turtwig, true)], [
+          Box.Gossifleur,
+          Box.Poochyena,
+          Box.Starly,
+          Box.Surskit,
+        ]),
+        new CpuTrainer([], cpu),
+        new Field());
+
+      let path = findPlayerWinningPath(state);
+      expect(path).not.toBeNull();
     });
   });
 });

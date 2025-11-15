@@ -1,4 +1,5 @@
 import { addToParty, getActiveSets, getParty, removeFromParty, saveActiveSets, getPokemonId, getActiveCollectionName, getSetCollection, saveSetCollection } from "../core/storage";
+import { getTrainerNames } from "../../worker/worker.client";
 
 export function initializePartyControls(): void {
   document.querySelector('#trash-pok')?.addEventListener('click', trashPokemon);
@@ -53,6 +54,7 @@ export function getCurrentPokemonId(): string {
 
 function promoteCurrentPokemonToParty() {
   promotePokemonToParty(getCurrentPokemonId());
+  getTrainerNames().then(console.log);
 }
 
 function promotePokemonToParty(pokemonId: string): void {

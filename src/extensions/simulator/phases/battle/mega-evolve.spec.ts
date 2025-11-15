@@ -52,18 +52,3 @@ inGen(RunAndBun, ({ gen, calculate, Pokemon, Move }) => {
         });
     });
 });
-
-function getPlayerActionsFor1v1(playerPokemon: Pokemon, cpuPokemon: Pokemon): PossibleAction[] {
-  const state = new BattleFieldState(
-    new PlayerTrainer(
-      [new PokemonPosition(playerPokemon)],
-      [],
-    ),
-    new CpuTrainer(
-      [new PokemonPosition(cpuPokemon)],
-      [],
-      ),
-    new Field()
-  );
-  return getPlayerPossibleActions(state, state.player.active[0]);
-}

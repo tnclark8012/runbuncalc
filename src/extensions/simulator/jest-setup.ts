@@ -88,4 +88,18 @@ expect.extend({
   },
 });
 
+// Load gen8.js to populate SETDEX_SS global
+// This is needed because Jest doesn't execute imported JS files the same way browsers do
+const fs = require('fs');
+const path = require('path');
+const gen8Path = path.join(__dirname, '../../js/data/sets/gen8.js');
+const gen8Code = fs.readFileSync(gen8Path, 'utf8');
+
+// Execute in global context to make SETDEX_SS available globally
+(0, eval)(gen8Code);
+// Also ensure it's on the global object
+if (typeof SETDEX_SS !== 'undefined') {
+  (global as any).SETDEX_SS = SETDEX_SS;
+}
+
 export {};

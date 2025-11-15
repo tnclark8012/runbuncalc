@@ -2,15 +2,46 @@ import { Generations, Pokemon, Result } from "@smogon/calc";
 import { MoveScore } from "../../moveScore";
 import { calculateAllMoves, canMegaEvolve, findHighestDamageMove, getDamageRanges, megaEvolve, moveKillsAttacker, moveWillFail, savedFromKO } from "../../moveScoring";
 import { BattleFieldState, PlayerMoveConsideration, PokemonPosition } from "../../moveScoring.contracts";
-import { PossibleAction, ScoredPossibleAction, TargetSlot } from "./move-selection.contracts";
+import { PossibleAction, PossibleTrainerAction, ScoredPossibleAction, TargetSlot } from "./move-selection.contracts";
 import { gen, Heuristics } from "../../../configuration";
+import { SwitchAfterKOStrategy } from "../switching/player-switch-in";
 
-export function getPlayerPossibleActions(state: BattleFieldState, playerPokemon: PokemonPosition): PossibleAction[] {
+const playerSwitchStrategy = new SwitchAfterKOStrategy();
+
+export function getPlayerPossibleActions(state: BattleFieldState): PossibleTrainerAction[][] {
+    let possibleActionsByPokemon: PossibleTrainerAction[][] = state.player.active.map<PossibleTrainerAction[]>(() => []);
+    
+    // Priotize attacking over switching to avoid unnecessary switches.
+    for (let i = 0; i < state.player.active.length; i++) {
+        // attack
+
+        let possibleActions: PossibleAction[] = getPossibleMovesByPokemon(state, state.player.active[i]);
+        possibleActionsByPokemon[i].push(...possibleActions.map<PossibleTrainerAction>(action => ({
+            pokemon: state.player.active[i],
+            action,
+            slot: { slot: i },
+            trainer: state.player
+        })));
+    }
+
+    if (state.field.gameType === 'Singles'){
+        let switchActionsByPokemon = playerSwitchStrategy.getPossibleStartOfTurnSwitches(state);
+        if (switchActionsByPokemon?.length)
+            possibleActionsByPokemon[0].push(...switchActionsByPokemon[0]);
+    }
+
+    return possibleActionsByPokemon;
+}
+
+function getPossibleMovesByPokemon(state: BattleFieldState, playerPokemon: PokemonPosition): PossibleAction[] {
     let actions: PossibleAction[] = [];
-    for (let targetSlot = 0; targetSlot < state.cpu.active.length; targetSlot++) {
-        let target = state.cpu.active[targetSlot];
-        let actionsAgainstTarget = getPlayerPossibleActionsAgainstTarget(state, playerPokemon, target, { type: 'opponent', slot: targetSlot });
-        actions.push(...actionsAgainstTarget);
+    for (let playerSlot = 0; playerSlot < state.player.active.length; playerSlot++) {
+        let playerPokemon = state.player.active[playerSlot];
+        for (let targetSlot = 0; targetSlot < state.cpu.active.length; targetSlot++) {
+            let target = state.cpu.active[targetSlot];
+            let actionsAgainstTarget = getPlayerPossibleActionsAgainstTarget(state, playerPokemon, target, { type: 'opponent', slot: targetSlot });
+            actions.push(...actionsAgainstTarget);
+        }
     }
 
     return actions;
