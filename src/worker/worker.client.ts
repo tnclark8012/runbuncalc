@@ -1,4 +1,5 @@
 import { Deferred } from "../deferred";
+import { SetCollectionData } from "../extensions/core/storage.contracts";
 import { WorkerMessage, WorkerResponse } from "./worker.api";
 
 // Web Worker API
@@ -14,11 +15,11 @@ function initializeWorker(): void {
     calculationWorker = new Worker('/worker.bundle.js');
 
     calculationWorker.addEventListener('message', (event: MessageEvent<WorkerResponse>) => {
-        const { success, error } = event.data;
+        const { success, error, type, payload } = event.data;
 
         if (success) {
             console.log('Worker calculation result:');
-            activeRequest?.resolve(true);
+            activeRequest?.resolve(payload);
             // Handle successful calculation
         } else {
             console.error('Worker calculation error:', error);
@@ -33,8 +34,10 @@ function initializeWorker(): void {
     });
 }
 
-export function getTrainerNames(): Promise<string[]> {
-    return sendMessage({ type: 'GET_TRAINER_NAMES' });
+export function findPathForParty(trainerName: string, setData: SetCollectionData): Promise<string> {
+    return sendMessage({ type: 'GET_TRAINER_PATH', payload: {
+        trainerName, setCollection: setData
+    } });
 }
 
 function sendMessage<T = void>(message: WorkerMessage): Promise<T> {

@@ -1,8 +1,18 @@
 import { Pokemon } from "@smogon/calc";
 import { gen } from "./configuration";
 import { TrainerSets } from "./trainer-sets.data";
+import { PokemonSet } from "./trainer-sets.types";
 
 export const Trainers = initializeTrainerSets();
+export const PokemonIndexToTrainerMap = (() => {
+  const trainerPokemonIndexMap = new Map<number, string>();
+  for (const [pokemonName, trainerSets] of Object.entries(TrainerSets)) {
+    for (const [trainerName, setValue] of Object.entries(trainerSets as {[key: string]: PokemonSet})) {
+      trainerPokemonIndexMap.set(setValue.index, trainerName);
+    }
+  }
+  return trainerPokemonIndexMap;
+})();
 
 function initializeTrainerSets() {
   const trainerParties: {
@@ -37,4 +47,11 @@ function initializeTrainerSets() {
     }
 
   return trainerParties;
+}
+
+export function getTrainerNameByIndex(index: number): string {
+  if (!PokemonIndexToTrainerMap.has(index)) {
+    alert(`No trainer found for Pokemon index ${index}`);
+  }
+  return PokemonIndexToTrainerMap.get(index)!;
 }

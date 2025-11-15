@@ -1,55 +1,39 @@
-/// <reference path="../../extensions/trainer-sets.types.ts" />
-/// <reference lib="webworker" />
-import { WorkerMessage } from '../worker.api';
-import '../../extensions/trainer-sets.types';
-
-// Import the SETDEX_SS data
-// This will be available globally when gen8.js is loaded by the worker
-importScripts('../js/data/sets/gen8.js');
-
-interface CalculationResult {
-  success: boolean;
-  data?: any;
-  error?: string;
-}
+import { BattleFieldStateBuilder } from '../../extensions/simulator/battle-field-state-builder';
+import { findPlayerWinningPath, printDecisionTree } from '../../extensions/simulator/path-finder';
+import { GetTrainerPathRequest, GetTrainerPathResponse, WorkerRequest, WorkerResponseBase } from '../worker.api';
 
 // Listen for messages from the main thread
-self.addEventListener('message', (event: MessageEvent<WorkerMessage>) => {
+self.addEventListener('message', (event: MessageEvent<WorkerRequest>) => {
   const request = event.data;
 
   switch (request.type) {
-    case 'GET_TRAINER_NAMES':
-      handleGetTrainerNames();
+    case 'GET_TRAINER_PATH':
+      handleGetTrainerPath(request.payload);
       break;
     default:
       self.postMessage({
         success: false,
         error: `Unknown message type: ${request.type}`
-      } as CalculationResult);
+      } as WorkerResponseBase);
   }
 });
 
 
-function handleGetTrainerNames(): void {
+function handleGetTrainerPath({ trainerName, setCollection }: GetTrainerPathRequest['payload']): void {
   try {
-    const trainerNames: string[] = [];
-    
-    for (const [pokemonName, trainers] of Object.entries(SETDEX_SS)) {
-      const trainerList = Object.keys(trainers);
-      for (const trainerName of trainerList) {
-        const index = trainers[trainerName].index;
-        trainerNames.push(`[${index}]${pokemonName} (${trainerName})`);
-      }
-    }
-    
+    const state = BattleFieldStateBuilder.buildTrainerBattle(setCollection, trainerName);
+    const path = findPlayerWinningPath(state);
     self.postMessage({
       success: true,
-      data: trainerNames
-    } as CalculationResult);
+      type: 'GET_TRAINER_PATH',
+      payload: path ? printDecisionTree(path) : 'No path found'
+    } as GetTrainerPathResponse);
   } catch (error) {
     self.postMessage({
       success: false,
+      type: 'GET_TRAINER_PATH',
+      payload: JSON.stringify(error),
       error: error instanceof Error ? error.message : 'Unknown error'
-    } as CalculationResult);
+    } as GetTrainerPathResponse);
   }
 }

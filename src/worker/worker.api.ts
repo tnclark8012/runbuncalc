@@ -1,13 +1,24 @@
-export type WorkerMessage = GetTrainersRequest;
+import { SetCollectionData } from "../extensions/core/storage.contracts";
 
-export interface GetTrainersRequest {
-    type: 'GET_TRAINER_NAMES';
+export type WorkerRequest = GetTrainerPathRequest;
+export interface GetTrainerPathRequest extends WorkerRequestBase {
+    type: 'GET_TRAINER_PATH';
+    payload: {
+        trainerName: string;
+        setCollection: SetCollectionData;
+    }
 }
 
-export type WorkerResponse = WorkerResponseBase;
+export type WorkerResponse = GetTrainerPathResponse;
 
-export interface GetTrainersResponse extends WorkerResponseBase {
-    data?: string[];
+export type WorkerMessage = WorkerRequest | WorkerResponse;
+
+export interface GetTrainerPathResponse extends WorkerResponseBase {
+    type: 'GET_TRAINER_PATH';
+    payload: string;
+}
+
+export interface WorkerRequestBase {
 }
 
 export interface WorkerResponseBase {
