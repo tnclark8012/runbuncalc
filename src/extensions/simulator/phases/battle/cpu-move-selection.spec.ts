@@ -141,7 +141,7 @@ function getCpuActionsFor1v1(cpuPokemon: Pokemon, playerPokemon: Pokemon): Possi
       ),
     new Field()
   );
-  return getCpuPossibleActions(state, state.cpu.active[0], state.player.active, state.cpu.active);
+  return getCpuPossibleActions(state, state.cpu.active[0]);
 }
 
 function getCpuActionsForDoubleBattle(cpuPokemon: Pokemon, playerPokemon: Pokemon[]): PossibleAction[] {
@@ -150,5 +150,5 @@ function getCpuActionsForDoubleBattle(cpuPokemon: Pokemon, playerPokemon: Pokemo
     new CpuTrainer([new PokemonPosition(cpuPokemon)], []),
     new Field({ gameType: 'Doubles' })
   );
-  return getCpuPossibleActions(state, state.cpu.active[0], state.player.active, state.cpu.active);
+  return getCpuPossibleActions(state, state.cpu.active[0]);
 }
