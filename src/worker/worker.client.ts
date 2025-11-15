@@ -12,7 +12,7 @@ function initializeWorker(): void {
         return; // Worker already initialized
     }
 
-    calculationWorker = new Worker('/worker.bundle.js');
+    calculationWorker = new Worker('worker.bundle.js');
 
     calculationWorker.addEventListener('message', (event: MessageEvent<WorkerResponse>) => {
         const { success, error, type, payload } = event.data;
