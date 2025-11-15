@@ -7,20 +7,25 @@ const customSets = collection.Simulator.customSets;
 
 type Pokes = keyof typeof customSets;
 
-export const Box: { [pokemon in Pokes]: Pokemon } = {} as any;
-for (const pokemonName in customSets) {
-    const sets = customSets[pokemonName as Pokes];
-    const set: PokemonSet = sets["Custom Set"] as any;
-    Box[pokemonName as Pokes] = new Pokemon(
-        gen,
-        pokemonName,
-        {
-            ability: set.ability,
-            level: set.level,
-            ivs: set.ivs,
-            moves: set.moves,
-            nature: set.nature,
-            item: set.item,
-        }
-    );
+export function getBox(): { [pokemon in Pokes]: Pokemon } {
+    const simulatorSets = JSON.parse(JSON.stringify(collection.Simulator.customSets));
+    const Box: { [pokemon in Pokes]: Pokemon } = {} as any;
+    for (const pokemonName in simulatorSets) {
+        const sets = simulatorSets[pokemonName as Pokes];
+        const set: PokemonSet = sets["Custom Set"] as any;
+        Box[pokemonName as Pokes] = new Pokemon(
+            gen,
+            pokemonName,
+            {
+                ability: set.ability,
+                level: set.level,
+                ivs: set.ivs,
+                moves: set.moves,
+                nature: set.nature,
+                item: set.item,
+            }
+        );
     }
+    
+    return Box;
+}

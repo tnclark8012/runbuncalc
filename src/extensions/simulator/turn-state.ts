@@ -4,6 +4,7 @@ import { applyStartOfTurnAbilities } from "./phases/turn-start/start-of-turn-abi
 import { applyFieldHazards } from "./phases/turn-start/field-hazards";
 import { determineMoveOrderAndExecute } from "./phases/battle/determine-move-order-and-execute";
 import { ActionLogEntry } from "./phases/battle/move-selection.contracts";
+import { applyEndOfTurnAbilities } from "./phases/turn-end/end-of-turn-abilities";
 
 export type PossibleBattleFieldState = { type: 'possible', probability: number, state: BattleFieldState, history: ActionLogEntry[] };
 export type BattleFieldStateTransform = (state: BattleFieldState) => BattleFieldState | BattleFieldState[] | PossibleBattleFieldState[];
@@ -17,7 +18,7 @@ export function applyTransforms(state: BattleFieldState, transforms: BattleField
             if (!Array.isArray(result))
                 result = [result];
             return result.map<PossibleBattleFieldState>(r => isPossibleState(r) ? r : { type: 'possible', probability: 1, state: r, history: [...possibleState.history] })
-            .map(r => ({ ...r, probability: r.probability * possibleState.probability, history: [...possibleState.history, ...r.history] }));
+            .map(r => ({ ...r, probability: r.probability * possibleState.probability, history: [...r.history] }));
         });
     }
 
@@ -39,7 +40,7 @@ export function runTurn(state: BattleFieldState): PossibleBattleFieldState[] {
         applyStartOfTurnAbilities,
         determineMoveOrderAndExecute,
         // applyEndOfTurnEffects,
-        // applyEndOfTurnAbilities,
+        applyEndOfTurnAbilities,
     ];
 
     let turnEnd = applyTransforms(nextState, transforms);
