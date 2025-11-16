@@ -1,10 +1,16 @@
 import { MoveScore } from "../../moveScore";
-import { calculateAllMoves, findHighestDamageMove, scoreCPUMoves, getDamageRanges } from "../../moveScoring";
-import { ActivePokemon, BattleFieldState } from "../../moveScoring.contracts";
+import { calculateAllMoves, findHighestDamageMove, scoreCPUMoves, getDamageRanges, getLockedMoveAction } from "../../moveScoring";
+import { ActivePokemon, BattleFieldState, PokemonPosition } from "../../moveScoring.contracts";
 import { PossibleAction, ScoredPossibleAction, TargetSlot } from "./move-selection.contracts";
 import { gen } from "../../../configuration";
+import { Move } from "@smogon/calc";
 
-export function getCpuPossibleActions(state: BattleFieldState, cpuPokemon: ActivePokemon, playerActive: ActivePokemon[], cpuActive: ActivePokemon[]): PossibleAction[] {
+export function getCpuPossibleActions(state: BattleFieldState, cpuPokemon: PokemonPosition, playerActive: PokemonPosition[], cpuActive: PokemonPosition[]): PossibleAction[] {
+    let lockedMove = getLockedMoveAction(state, state.cpu, state.cpu.active.indexOf(cpuPokemon));
+    if (lockedMove) {
+        return [lockedMove.action];
+    }
+    
     let actions: ScoredPossibleAction[] = [];
     let topScore = -Infinity;
     for (let targetSlot = 0; targetSlot < playerActive.length; targetSlot++) {
@@ -26,7 +32,7 @@ export function getCpuPossibleActions(state: BattleFieldState, cpuPokemon: Activ
     return actions;
 }
 
-export function getCpuMoveScoresAgainstTarget(state: BattleFieldState, cpuPokemon: ActivePokemon, target: ActivePokemon, targetSlot: TargetSlot): Array<MoveScore> {
+export function getCpuMoveScoresAgainstTarget(state: BattleFieldState, cpuPokemon: PokemonPosition, target: PokemonPosition, targetSlot: TargetSlot): Array<MoveScore> {
     let playerDamageResults = calculateAllMoves(gen, target.pokemon, cpuPokemon.pokemon, state.playerField);
     let cpuDamageResults = calculateAllMoves(gen, cpuPokemon.pokemon, target.pokemon, state.cpuField);
     let cpuAssumedPlayerMove = findHighestDamageMove(getDamageRanges(playerDamageResults));
@@ -34,7 +40,7 @@ export function getCpuMoveScoresAgainstTarget(state: BattleFieldState, cpuPokemo
     return moveScores;
 }
 
-function getCpuPossibleActionsAgainstTarget(state: BattleFieldState, cpuPokemon: ActivePokemon, target: ActivePokemon, targetSlot: TargetSlot): Array<ScoredPossibleAction> {
+function getCpuPossibleActionsAgainstTarget(state: BattleFieldState, cpuPokemon: PokemonPosition, target: PokemonPosition, targetSlot: TargetSlot): Array<ScoredPossibleAction> {
     const highestScoringCpuMoves = calculateCpuMove(getCpuMoveScoresAgainstTarget(state, cpuPokemon, target, targetSlot));
     return highestScoringCpuMoves.map<ScoredPossibleAction>((cpuMove: MoveScore) => {
         return ({

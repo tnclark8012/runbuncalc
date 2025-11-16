@@ -12,6 +12,9 @@ export class SwitchAfterKOStrategy {
         if (state.field.gameType === 'Doubles')
             return [];
 
+        if (state.player.active[0].volatileStatus?.chargingMove)
+            return [];
+
         return [switchInCandidates.map<PossibleTrainerAction>(pokemon => {
             return {
                 type: 'switch',
@@ -30,7 +33,8 @@ export class SwitchAfterKOStrategy {
 }
 
 export function applyPlayerSwitchIns(state: BattleFieldState): BattleFieldState[] {
-    state = initializeActivePokemon(state);
+    if (isUninitialized(state))
+        return [initializeActivePokemon(state)];
     
     // Find all fainted active Pokemon positions
     const faintedPositions: number[] = [];
@@ -115,9 +119,6 @@ function isUninitialized(state: BattleFieldState): boolean {
 }
 
 function initializeActivePokemon(state: BattleFieldState): BattleFieldState {
-    if (!isUninitialized(state))
-        return state;
-
     state = state.clone();
 
     let newActive: PokemonPosition = new PokemonPosition(popFromParty(state.player.party, state.player.party[0]), true);
@@ -129,7 +130,8 @@ function initializeActivePokemon(state: BattleFieldState): BattleFieldState {
     return new BattleFieldState(
         new PlayerTrainer(playerActive, state.player.party, state.player.switchStrategy),
         state.cpu,
-        state.field);
+        state.field,
+        state.turnNumber);
 }
 
 function popFromParty(party: Pokemon[], pokemon: Pokemon): Pokemon {

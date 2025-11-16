@@ -29,6 +29,10 @@ export function consumeItem(pokemon: A.Pokemon): void {
     }
 }
 
+export function hasBerry(pokemon: A.Pokemon): boolean {
+	return !!(pokemon.item && pokemon.item.endsWith('Berry'));
+}
+
 export function getTypeEffectiveness(attackType: TypeName, type: TypeName): number;
 export function getTypeEffectiveness(attackType: TypeName, defender: Pokemon): number;
 export function getTypeEffectiveness(attackType: TypeName, defenderOrType: Pokemon | TypeName): number {

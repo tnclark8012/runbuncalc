@@ -1,6 +1,20 @@
 import { Field, Move, Pokemon } from '@smogon/calc';
 import { PartyOrderSwitchStrategy } from './switchStrategy.partyOrder';
 import { Side } from '@smogon/calc/src';
+import { MoveName } from '@smogon/calc/dist/data/interface';
+
+export interface VolatileStatus {
+	/** The move being charged (e.g., Bounce, Fly, Dig, Dive) */
+	chargingMove?: MoveName;
+	/** Whether the Pokemon is invulnerable (semi-invulnerable during charge turn) */
+	invulnerable?: boolean;
+	/** Move that locks the Pokemon in (e.g., Outrage, Petal Dance) */
+	lockedMove?: MoveName;
+	/** Turns remaining for the current volatile status */
+	turnsRemaining?: number;
+	/** Unlocks Belch */
+	berryConsumed?: boolean;
+}
 
 export interface MoveConsideration {
 	result: MoveResult;
@@ -55,13 +69,18 @@ export interface ActivePokemon {
 
 export class PokemonPosition {
 	constructor(public pokemon: Pokemon,
-		public firstTurnOut?: boolean)
+		public firstTurnOut?: boolean,
+		public volatileStatus?: VolatileStatus)
 		{
 
 		}
 
 	public clone(): PokemonPosition {
-		return new PokemonPosition(this.pokemon.clone(), this.firstTurnOut);
+		return new PokemonPosition(
+			this.pokemon.clone(), 
+			this.firstTurnOut,
+			this.volatileStatus ? { ...this.volatileStatus } : undefined
+		);
 	}
 }
 
@@ -165,6 +184,16 @@ export class BattleFieldState {
 		}
 	}
 
+	public getOpponent(trainer: Trainer): Trainer {
+		if (trainer.equals(this.player)) {
+			return this.cpu;
+		} else if (trainer.equals(this.cpu)) {
+			return this.player;
+		} else {
+			throw new Error(`Trainer ${trainer.name} not found in the battle state`);
+		}
+	}
+
 	public clone(): BattleFieldState {
 		return new BattleFieldState(
 			this.player.clone(),
@@ -177,7 +206,8 @@ export class BattleFieldState {
 		const describePosition = (slot: number, pokemon: PokemonPosition | undefined) => {
 			if (!pokemon) return '';
 
-			return `[${slot}]: ${pokemon.pokemon.name} (${pokemon.pokemon.curHP()}/${pokemon.pokemon.maxHP()})`;
+			let status = pokemon.volatileStatus ? JSON.stringify(pokemon.volatileStatus) : '';
+			return `[${slot}]: ${pokemon.pokemon.name} (${pokemon.pokemon.curHP()}/${pokemon.pokemon.maxHP()})${status ? ' ' + status : ''}`;
 		};
 
 		const describePartyPokemon = (pokemon: Pokemon) => {

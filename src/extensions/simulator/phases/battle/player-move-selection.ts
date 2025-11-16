@@ -1,6 +1,6 @@
-import { Generations, Pokemon, Result } from "@smogon/calc";
+import { Generations, Pokemon, Result, Move } from "@smogon/calc";
 import { MoveScore } from "../../moveScore";
-import { calculateAllMoves, canMegaEvolve, findHighestDamageMove, getDamageRanges, megaEvolve, moveKillsAttacker, moveWillFail, savedFromKO } from "../../moveScoring";
+import { calculateAllMoves, canMegaEvolve, findHighestDamageMove, getDamageRanges, megaEvolve, savedFromKO } from "../../moveScoring";
 import { BattleFieldState, PlayerMoveConsideration, PokemonPosition } from "../../moveScoring.contracts";
 import { PossibleAction, PossibleTrainerAction, ScoredPossibleAction, TargetSlot } from "./move-selection.contracts";
 import { gen, Heuristics } from "../../../configuration";
@@ -10,11 +10,17 @@ const playerSwitchStrategy = new SwitchAfterKOStrategy();
 
 export function getPlayerPossibleActions(state: BattleFieldState): PossibleTrainerAction[][] {
     let possibleActionsByPokemon: PossibleTrainerAction[][] = state.player.active.map<PossibleTrainerAction[]>(() => []);
-    
+
     // Priotize attacking over switching to avoid unnecessary switches.
     for (let i = 0; i < state.player.active.length; i++) {
-        // attack
+        // Check if Pokemon is locked into a charging move
+        let lockedMove = getLockedMoveAction(state, i);
+        if (lockedMove) {
+            possibleActionsByPokemon[i].push(lockedMove);
+            continue; // Skip normal move selection for this Pokemon
+        }
 
+        // attack
         let possibleActions: PossibleAction[] = getPossibleMovesByPokemon(state, state.player.active[i]);
         possibleActionsByPokemon[i].push(...possibleActions.map<PossibleTrainerAction>(action => ({
             pokemon: state.player.active[i],
@@ -24,13 +30,39 @@ export function getPlayerPossibleActions(state: BattleFieldState): PossibleTrain
         })));
     }
 
-    if (state.field.gameType === 'Singles'){
+    if (state.field.gameType === 'Singles') {
         let switchActionsByPokemon = playerSwitchStrategy.getPossibleStartOfTurnSwitches(state);
         if (switchActionsByPokemon?.length)
             possibleActionsByPokemon[0].push(...switchActionsByPokemon[0]);
     }
 
     return possibleActionsByPokemon;
+}
+
+function getLockedMoveAction(state: BattleFieldState, playerActiveIndex: number): PossibleTrainerAction | undefined {
+    const playerPokemon = state.player.active[playerActiveIndex];
+    let volatileStatus = playerPokemon.volatileStatus;
+    if (!volatileStatus)
+        return;
+
+    if (!volatileStatus.chargingMove)
+        return;
+
+    const chargingMove = new Move(gen, volatileStatus.chargingMove);
+    return {
+        pokemon: playerPokemon,
+        action: {
+            type: 'move',
+            pokemon: playerPokemon.pokemon,
+            move: {
+                move: chargingMove,
+                target: { type: 'opponent', slot: 0 } // Default to first opponent
+            },
+            probability: 1
+        },
+        slot: { slot: playerActiveIndex },
+        trainer: state.player
+    };
 }
 
 function getPossibleMovesByPokemon(state: BattleFieldState, playerPokemon: PokemonPosition): PossibleAction[] {
@@ -49,7 +81,7 @@ function getPossibleMovesByPokemon(state: BattleFieldState, playerPokemon: Pokem
 
 function getPlayerPossibleActionsAgainstTarget(state: BattleFieldState, playerPokemon: PokemonPosition, target: PokemonPosition, targetSlot: TargetSlot): Array<ScoredPossibleAction> {
     let scores = getMoveScoresAgainstTarget(state, playerPokemon, target, targetSlot)
-    .filter(ms => ms.finalScore > 0);
+        .filter(ms => ms.finalScore > 0);
 
     return scores.map<ScoredPossibleAction>((score: MoveScore) => {
         return ({
@@ -69,7 +101,7 @@ export function getMoveScoresAgainstTarget(state: BattleFieldState, playerPokemo
         let cpuAssumedPlayerMove = findHighestDamageMove(getDamageRanges(playerDamageResults));
         return getPlayerMoveConsiderations(playerDamageResults);
     };
-    
+
     let movesToConsider = getConsideredMoves(playerPokemon.pokemon);
     if (canMegaEvolve(playerPokemon.pokemon)) {
         let megaEvolved = megaEvolve(playerPokemon.pokemon);
@@ -83,20 +115,20 @@ export function getMoveScoresAgainstTarget(state: BattleFieldState, playerPokemo
 
 function getPlayerMoveConsiderations(playerResults: Result[]): PlayerMoveConsideration[] {
     let damageResults = getDamageRanges(playerResults);
-	return damageResults
-			.map<PlayerMoveConsideration>(r => {
-				const kos = r.lowestRollDamage >= r.defender.curHP() && (!savedFromKO(r.defender) || r.move.hits > 1);
-				return {
-					aiMon: r.defender,
-					playerMon: r.attacker,
-					result: r,
-					lowestRollHpPercentage: r.lowestRollHpPercentage,
-					hightestRollHpPercentage: r.highestRollHpPercentage,
-					kos: kos,
-					kosThroughRequiredLifesaver: kos && savedFromKO(r.defender),
-					attackerDiesToRecoil: !!(r.move.recoil && r.attacker.curHP() <= r.move.recoil[0]),
-					guaranteedToFail: false
-				};
+    return damageResults
+        .map<PlayerMoveConsideration>(r => {
+            const kos = r.lowestRollDamage >= r.defender.curHP() && (!savedFromKO(r.defender) || r.move.hits > 1);
+            return {
+                aiMon: r.defender,
+                playerMon: r.attacker,
+                result: r,
+                lowestRollHpPercentage: r.lowestRollHpPercentage,
+                hightestRollHpPercentage: r.highestRollHpPercentage,
+                kos: kos,
+                kosThroughRequiredLifesaver: kos && savedFromKO(r.defender),
+                attackerDiesToRecoil: !!(r.move.recoil && r.attacker.curHP() <= r.move.recoil[0]),
+                guaranteedToFail: false
+            };
         });
 
 }

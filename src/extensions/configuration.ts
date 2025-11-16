@@ -49,12 +49,13 @@ export class PlannedPlayerActionProvider implements ITrainerActionProvider {
     }
 
     public getPossibleActions(state: BattleFieldState): PossibleTrainerAction[][] | undefined {
-        let plannedActions = this.plannedActions[state.turnNumber];
+        let plannedActions = this.plannedActions[state.turnNumber - 1];
         if (!plannedActions) {
             return undefined;
         }
         return [plannedActions.map((action, slot) => {
-            return this.toPossibleTrainerAction(state.player, action, slot);
+            let possible  = this.toPossibleTrainerAction(state.player, action, slot);
+            return possible;
         })];
     }
 
@@ -78,7 +79,7 @@ export class PlannedPlayerActionProvider implements ITrainerActionProvider {
 
         return {
             trainer: player,
-            pokemon: player.getActivePokemon(action.pokemon)!,
+            pokemon: player.active[slot],
             action: <PossibleSwitchAction>{
                 type: 'switch',
                 switchIn: action.pokemon,

@@ -333,6 +333,7 @@ IVs: 13 HP / 2 Atk / 16 Def / 23 SpA / 21 SpD / 14 Spe
             [attack(Excadrill, 'Iron Head')],
             [switchTo(Dragapult)], // Bruxish
             [attack(Dragapult, 'Phantom Force')],
+            [attack(Dragapult, 'Phantom Force')],//2nd turn of phantom force
             [switchTo(Urshifu)], // Dragapult
             [attack(Urshifu, 'Sucker Punch')],
             [switchTo(Tsareena)], // Prim
