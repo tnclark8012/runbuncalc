@@ -4,6 +4,7 @@ import { hasLifeSavingItem } from '../../moveScoring';
 import { getRecovery, getRecoil } from '@smogon/calc/dist/desc';
 import { MoveResult } from '../../moveScoring.contracts';
 import { RNGStrategy } from '../../../configuration';
+import { isContactMove } from '../../move-properties';
 
 export function executeMove(gen: I.Generation, attacker: Pokemon, defender: Pokemon, moveResult: MoveResult, rng: RNGStrategy): { attacker: Pokemon, defender: Pokemon } {
 	let boosts = getBoosts(attacker, defender, moveResult.move);
@@ -18,32 +19,33 @@ export function executeMove(gen: I.Generation, attacker: Pokemon, defender: Poke
 		recoil = Array.isArray(moveRecoil.recoil) ? moveRecoil.recoil.at(-1) ?? 0 : moveRecoil.recoil;
 	}
 
+	let getResultantHP = (pokemon: Pokemon, hitDamages: number[], move?: Move): number => {
+		let currentHP = pokemon.curHP();
+
+		for (let hitDamage of hitDamages) {
+			currentHP = Math.max(0, currentHP - hitDamage);
+			currentHP = consumeBerryAfterHit(defender, currentHP, move);
+		}
+
+		return currentHP;
+	};
+
+	// TODO attacker berry consumption after recoil
 	const itemRecoil = getItemRecoil(attacker)
+	const abilityRecoil = getPerHitAbilityRecoil(attacker, moveResult.move, defender);
 	attacker = attacker.clone({ 
 		boosts: boosts.attacker,
 		item: !attackerLostItem ? attacker.item: undefined,
-		curHP: Math.max(0, Math.min(attacker.maxHP(), attacker.curHP() + recovery.recovery[0] - recoil - itemRecoil)),
+		curHP: getResultantHP(attacker, [recoil, -recovery.recovery[0], ...Array(rng.getHits(moveResult)).fill(abilityRecoil), itemRecoil], moveResult.move),
 		abilityOn: attacker.abilityOn || (attackerLostItem && attacker.hasAbility('Unburden'))
 	});
 
 	if (attacker.hasAbility('Libero') || attacker.hasAbility('Protean'))
 		attacker.types = [moveResult.move.type];
 
-	let getResultantHP = (): number => {
-		let perHitDamage = rng.getDamageRoll(moveResult);
-		let hits = rng.getHits(moveResult);
-		let currentHP = defender.curHP();
-		// TODO doesn't account for multi-hit damage reduction berries.
-		for (let hit = 0; hit < hits; hit++) {
-			currentHP = Math.max(0, currentHP - perHitDamage);
-			currentHP = consumeBerryAfterHit(defender, currentHP, moveResult.move);
-		}
-
-		return currentHP;
-	};
 
 	defender = defender.clone({ 
-		curHP: Math.max(0, getResultantHP(), hasLifeSavingItem(defender) && defenderLostItem && moveResult.move.hits < 2 ? 1 : 0),
+		curHP: Math.max(0, getResultantHP(defender, Array(rng.getHits(moveResult)).fill(rng.getDamageRoll(moveResult))), hasLifeSavingItem(defender) && defenderLostItem && moveResult.move.hits < 2 ? 1 : 0),
 		item: !defenderLostItem ? defender.item: undefined,
 		boosts: boosts.defender,
 		abilityOn: defender.abilityOn || (defenderLostItem && defender.hasAbility('Unburden'))
@@ -53,16 +55,23 @@ export function executeMove(gen: I.Generation, attacker: Pokemon, defender: Poke
 }
 
 /**
- * Returns an amount if the berry should be 
+ * Returns an amount of recovery from berries
  * @param defender 
  * @param currentHP 
+ * @param move The move that caused the damage
  * @returns 
  */
-function consumeBerryAfterHit(defender: Pokemon, currentHP: number, move: Move): number {
+function consumeBerryAfterHit(defender: Pokemon, currentHP: number, move?: Move): number {
 	if (!defender.item || !defender.item.endsWith(' Berry') || currentHP <= 0) return currentHP;
 
 	let recovery = 0;
 	switch (defender.item) {
+		case 'Salac Berry':
+			if (currentHP <= getPercentageOfMaxHP(defender, 25)) {
+				defender.item = undefined;
+				applyBoost(defender.boosts, 'spe', 1);
+			}
+			break;
 		case 'Sitrus Berry':
 			if (currentHP <= getPercentageOfMaxHP(defender, 50)) {
 				defender.item = undefined;
@@ -86,7 +95,7 @@ function consumeBerryAfterHit(defender: Pokemon, currentHP: number, move: Move):
 		break;
 	}
 
-	if (isSuperEffective(move.type, defender)) {
+	if (move && isSuperEffective(move.type, defender)) {
 		if (defender.item === 'Occa Berry' && move.type === 'Fire' ||
 			defender.item === 'Passho Berry' && move.type === 'Water' ||
 			defender.item === 'Wacan Berry' && move.type === 'Electric' ||
@@ -119,6 +128,14 @@ function consumeBerryAfterHit(defender: Pokemon, currentHP: number, move: Move):
 function getItemRecoil(attacker: Pokemon): number {
 	if (attacker.hasItem('Life Orb') && !attacker.hasAbility('Magic Guard')) {
 		return getPercentageOfMaxHP(attacker, 10);
+	}
+
+	return 0;
+}
+
+function getPerHitAbilityRecoil(attacker: Pokemon, move: Move, defender: Pokemon): number {
+	if (defender.hasAbility('Rough Skin', 'Iron Barbs') && isContactMove(move)) {
+		return Math.floor(attacker.maxHP() * 1/8);
 	}
 
 	return 0;
@@ -170,6 +187,11 @@ function getBoosts(attacker: Pokemon, defender: Pokemon, move: Move): { attacker
 	switch(defender.ability) {
 		case 'Cotton Down':
 			modifyStat(attackerBoosts, 'spe', -1);
+			break;
+		case 'Rattled':
+			if (['Bug', 'Ghost', 'Dark'].includes(move.type)) {
+				modifyStat(defenderBoosts, 'spe', 1);
+			}
 			break;
 	}
 

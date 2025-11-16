@@ -1,8 +1,10 @@
 import { Field, Move, A, I, Result, Pokemon, calculate } from '@smogon/calc';
 import { MoveScore } from "./moveScore";
 import { notImplemented } from "./notImplementedError";
-import { ActivePokemon, CPUMoveConsideration, MoveConsideration, MoveResult, TurnOutcome } from './moveScoring.contracts';
+import { ActivePokemon, BattleFieldState, CPUMoveConsideration, MoveConsideration, MoveResult, Trainer, TurnOutcome } from './moveScoring.contracts';
 import { gen } from '../configuration';
+import { PossibleTrainerAction } from './phases/battle/move-selection.contracts';
+import { hasBerry } from './utils';
 
 export function scoreCPUMoves(cpuResults: Result[], playerMove: MoveResult, field: Field, lastTurnMoveByCpu: Move | undefined): MoveScore[] {
     // Not quite
@@ -26,6 +28,11 @@ export function scoreCPUMoves(cpuResults: Result[], playerMove: MoveResult, fiel
         defensiveSetup(moveScore, potentialMove);
         // specificSetup(moveScore, potentialMove);
         // recovery(moveScore, potentialMove);
+
+        if (potentialMove.result.move.name === 'Belch' && hasBerry(potentialMove.aiMon)) {
+            moveScore.setScore(-20);
+        }
+        
         moveScores.push(moveScore);
     }
 
@@ -584,4 +591,30 @@ export function megaEvolve(pokemon: Pokemon): Pokemon {
         ivs: pokemon.ivs,
         boosts: pokemon.boosts
     });
+}
+
+export function getLockedMoveAction(state: BattleFieldState, trainer: Trainer, activeIndex: number): PossibleTrainerAction | undefined {
+    const actingPosition = trainer.active[activeIndex];
+    let volatileStatus = actingPosition.volatileStatus;
+    if (!volatileStatus)
+        return;
+
+    if (!volatileStatus.chargingMove)
+        return;
+
+    const chargingMove = new Move(gen, volatileStatus.chargingMove);
+    return {
+        pokemon: actingPosition,
+        action: {
+            type: 'move',
+            pokemon: actingPosition.pokemon,
+            move: {
+                move: chargingMove,
+                target: { type: 'opponent', slot: 0 } // Default to first opponent
+            },
+            probability: 1
+        },
+        slot: { slot: activeIndex },
+        trainer: trainer
+    };
 }

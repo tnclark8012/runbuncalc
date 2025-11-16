@@ -134,5 +134,40 @@ IVs: 20 HP / 27 Atk / 8 SpA
         // });
     });
 
+    test('Fisherman Darian', () => {
+      const cpu = Trainers['Fisherman Darian'];
+
+      const { Turtwig, Gossifleur, Poochyena, Starly, Surskit } = getBox();
+      const state = new BattleFieldState(
+        new PlayerTrainer([new PokemonPosition(Starly, true)], [
+          Gossifleur,
+          Poochyena,
+          Turtwig,
+          Surskit,
+        ]),
+        new CpuTrainer([], cpu),
+        new Field());
+
+        Turtwig.item = 'Oran Berry' as any;
+        Gossifleur.item = 'Oran Berry' as any;
+        Poochyena.item = 'Oran Berry' as any;
+        Starly.item = 'Oran Berry' as any;
+        Surskit.item = 'Oran Berry' as any;
+        // usingHeuristics({ playerActionProvider: new PlannedPlayerActionProvider([
+        //   [ attack(Starly, 'Quick Attack') ],
+        //   [ attack(Starly, 'Aerial Ace') ],
+        //   [ attack(Starly, 'Quick Attack') ],
+        //   [ attack(Starly, 'Aerial Ace') ],
+        //   [ switchTo(Gossifleur) ],
+        //   [ attack(Gossifleur, 'Leafage') ],
+        //   [ attack(Gossifleur, 'Leafage') ],
+        // ]) }, () => {
+          const path = findPlayerWinningPath(state);
+          expect(path).not.toBeNull();
+          // expect(printDecisionTree(path!)).toBe('');
+        // });
+    });
+
+
   });
 });

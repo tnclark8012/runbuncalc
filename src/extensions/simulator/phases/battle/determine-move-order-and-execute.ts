@@ -1,5 +1,5 @@
 import { calculate, Field, Move, Pokemon, Result } from "@smogon/calc";
-import { PokemonReplacer, visitActivePokemonInSpeedOrder } from "../../battle-field-state-visitor";
+import { PokemonPositionReplacer, PokemonReplacer, visitActivePokemonInSpeedOrder } from "../../battle-field-state-visitor";
 import { ActivePokemon, BattleFieldState, MoveResult, PokemonPosition, Trainer } from "../../moveScoring.contracts";
 import { PossibleBattleFieldState } from "../../turn-state";
 import { PossibleAction, PossibleTrainerAction, TargetedMove, TargetSlot, SwitchAction, MoveAction, ActionLogEntry } from "./move-selection.contracts";
@@ -13,6 +13,8 @@ import { isMegaEvolution, toMoveResult } from "../../moveScoring";
 import { TrainerActionPokemonReplacer } from "../../possible-trainer-action-visitor";
 import { executeMegaEvolution } from "./mega-evolve";
 import { Side } from "@smogon/calc/src";
+import { isTwoTurnMove, makesInvulnerable } from "../../move-properties";
+import { hasBerry } from "../../utils";
 
 export function determineMoveOrderAndExecute(state: BattleFieldState): PossibleBattleFieldState[] {
     if (state.player.active.every(ap => ap.pokemon.curHP() <= 0) || state.cpu.active.every(ap => ap.pokemon.curHP() <= 0)) {
@@ -57,7 +59,7 @@ export function determineMoveOrderAndExecute(state: BattleFieldState): PossibleB
             }
 
             let updatedAction = TrainerActionPokemonReplacer.replace(moveAction, actor.pokemon);
-            let executionResult = executeMoveOnState(newState,  updatedAction.trainer, updatedAction.action as MoveAction);
+            let executionResult = executeMoveOnState(newState,  newState.getTrainer(updatedAction.trainer), updatedAction.action as MoveAction);
             newState = executionResult.outcome;
             log.push(...executionResult.log);
         }
@@ -164,11 +166,76 @@ function executeMoveOnState(state: BattleFieldState, trainer: Trainer, action: M
     let targetActive = trainer.name === "Player" ? newState.cpu.active[target.slot] : newState.player.active[target.slot];
     let actingPosition = trainer.getActivePokemon(action.pokemon);
     let actingPokemon = actingPosition!.pokemon;
+    const moveName = action.move.move.name;
+    
+    // Check if this is a two-turn move
+    if (isTwoTurnMove(moveName)) {
+        // Check if we're on turn 1 (charging) or turn 2 (executing)
+        const isCharging = !actingPosition!.volatileStatus?.chargingMove;
+        
+        if (isCharging && !actingPokemon.hasItem('Power Herb')) {
+            // Turn 1: Set up charging state, no damage
+            const updatedPosition = new PokemonPosition(
+                actingPokemon.clone(),
+                actingPosition!.firstTurnOut,
+                {
+                    chargingMove: moveName,
+                    invulnerable: makesInvulnerable(moveName),
+                    turnsRemaining: 1
+                }
+            );
+
+            newState = PokemonPositionReplacer.replace(newState, actingPosition!, updatedPosition);
+            
+            const description = `${trainer.name}'s ${actingPokemon.name} began charging ${moveName}!`;
+            return { 
+                outcome: newState, 
+                log: [{ 
+                    action: { trainer, pokemon: actingPosition!, action: { ...action, probability: -1 }, slot: { slot: target.slot }}, 
+                    description 
+                }] 
+            };
+        } else {
+            // Turn 2: Execute the move and clear volatile status
+            const updatedPosition = new PokemonPosition(
+                actingPokemon.clone({ item: actingPokemon.item === 'Power Herb' ? undefined : actingPokemon.item }),
+                actingPosition!.firstTurnOut,
+                undefined // Clear volatile status
+            );
+            
+            // Replace the Pokemon position in state before calculating
+            newState = PokemonPositionReplacer.replace(newState, updatedPosition);
+        }
+    }
+    
+    // Check if target is invulnerable
+    if (targetActive.volatileStatus?.invulnerable) {
+        const description = `${trainer.name}'s ${actingPokemon.name} used ${moveName}, but ${targetActive.pokemon.name} avoided it!`;
+        return { 
+            outcome: newState, 
+            log: [{ 
+                action: { trainer, pokemon: actingPosition!, action: { ...action, probability: -1 }, slot: { slot: target.slot }}, 
+                description 
+            }] 
+        };
+    }
+    
+    // Normal move execution
     let calcResult = calculate(gen, actingPokemon, targetActive.pokemon, action.move.move, trainer.name === "Player" ? state.playerField : state.cpuField);
     let moveResult = toMoveResult(calcResult);
+
+    // TODO: Refactor to support dynamic speed similarly, or unburden
+    let defenderHadBerry = hasBerry(targetActive.pokemon);
     let executionResult = executeMove(gen, action.pokemon, targetActive.pokemon, moveResult, trainer.name === "Player" ? playerRng : cpuRng);
     newState = PokemonReplacer.replace(newState, executionResult.attacker);
     newState = PokemonReplacer.replace(newState, executionResult.defender);
+    if (defenderHadBerry && !hasBerry(executionResult.defender)) {
+        let defenderPosition = newState.getOpponent(trainer).getActivePokemon(executionResult.defender)!;
+        defenderPosition.volatileStatus = {
+            ...defenderPosition.volatileStatus,
+            berryConsumed: true
+        };
+    }
     let description = (() => {
         let targetInitialHp = `${targetActive.pokemon.curHP()}/${targetActive.pokemon.maxHP()}`;
         let targetEndingHp = `${executionResult.defender.curHP()}/${executionResult.defender.maxHP()}`;

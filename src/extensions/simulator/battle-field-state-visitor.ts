@@ -64,6 +64,34 @@ export class BattleFieldStateRewriter implements IBattleFieldStateVisitorWithRew
     }
 }
 
+
+export class PokemonPositionReplacer extends BattleFieldStateRewriter {
+    private readonly _from: PokemonPosition;
+    private readonly _to: PokemonPosition;
+
+    constructor(replacement: PokemonPosition);
+    constructor(from: PokemonPosition, to: PokemonPosition);
+    constructor(from: PokemonPosition, to?: PokemonPosition) {
+        super();
+        this._from = from;
+        this._to = to || from;
+    }
+
+    public static replace(state: BattleFieldState, from: PokemonPosition, to?: PokemonPosition): BattleFieldState {
+        const replacer = new PokemonPositionReplacer(from, to || from);
+        return replacer.visitState(state);
+    }
+
+    public override visitActivePokemon(pokemon: PokemonPosition): PokemonPosition {
+        if (pokemon.pokemon.equals(this._from.pokemon)) {
+            return this._to;
+        }
+
+        return pokemon;
+    
+    }
+}
+
 export class PokemonReplacer extends BattleFieldStateRewriter {
     private readonly _from: Pokemon;
     private readonly _to: Pokemon;
