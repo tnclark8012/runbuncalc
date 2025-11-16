@@ -4,11 +4,11 @@ import { ActivePokemon, BattleFieldState } from "../../moveScoring.contracts";
 import { PossibleAction, ScoredPossibleAction, TargetSlot } from "./move-selection.contracts";
 import { gen } from "../../../configuration";
 
-export function getCpuPossibleActions(state: BattleFieldState, cpuPokemon: ActivePokemon, playerActive: ActivePokemon[], cpuActive: ActivePokemon[]): PossibleAction[] {
+export function getCpuPossibleActions(state: BattleFieldState, cpuPokemon: ActivePokemon): PossibleAction[] {
     let actions: ScoredPossibleAction[] = [];
     let topScore = -Infinity;
-    for (let targetSlot = 0; targetSlot < playerActive.length; targetSlot++) {
-        let target = playerActive[targetSlot];
+    for (let targetSlot = 0; targetSlot < state.player.active.length; targetSlot++) {
+        let target = state.player.active[targetSlot];
         let actionsAgainstTarget = getCpuPossibleActionsAgainstTarget(state, cpuPokemon, target, { type: 'opponent', slot: targetSlot });
         if (!actionsAgainstTarget.length)
             continue;
