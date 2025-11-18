@@ -1,9 +1,8 @@
 import { MoveScore } from "../../moveScore";
 import { calculateAllMoves, findHighestDamageMove, scoreCPUMoves, getDamageRanges, getLockedMoveAction } from "../../moveScoring";
-import { ActivePokemon, BattleFieldState, PokemonPosition } from "../../moveScoring.contracts";
+import { BattleFieldState, PokemonPosition } from "../../moveScoring.contracts";
 import { PossibleAction, ScoredPossibleAction, TargetSlot } from "./move-selection.contracts";
 import { gen } from "../../../configuration";
-import { Move } from "@smogon/calc";
 
 export function getCpuPossibleActions(state: BattleFieldState, cpuPokemon: PokemonPosition, playerActive: PokemonPosition[], cpuActive: PokemonPosition[]): PossibleAction[] {
     let lockedMove = getLockedMoveAction(state, state.cpu, state.cpu.active.indexOf(cpuPokemon));
@@ -36,7 +35,7 @@ export function getCpuMoveScoresAgainstTarget(state: BattleFieldState, cpuPokemo
     let playerDamageResults = calculateAllMoves(gen, target.pokemon, cpuPokemon.pokemon, state.playerField);
     let cpuDamageResults = calculateAllMoves(gen, cpuPokemon.pokemon, target.pokemon, state.cpuField);
     let cpuAssumedPlayerMove = findHighestDamageMove(getDamageRanges(playerDamageResults));
-    let moveScores = scoreCPUMoves(cpuDamageResults, cpuAssumedPlayerMove, state.cpuField, /*lastTurnMoveByCpuPokemon*/ undefined);
+    let moveScores = scoreCPUMoves(cpuDamageResults, cpuAssumedPlayerMove, state);
     return moveScores;
 }
 

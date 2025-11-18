@@ -4,6 +4,7 @@ import { TypeName } from "@smogon/calc/src/data/interface";
 import { getActiveSets, saveActiveSets } from "../core/storage";
 import { CustomSets, PokemonSet } from "../core/storage.contracts";
 import { gen } from "../configuration";
+import { hasLifeSavingAbility, hasLifeSavingItem } from "./moveScoring";
 
 export function curHPPercentage(pokemon: A.Pokemon): number {
     return pokemon.curHP() / pokemon.maxHP();
@@ -11,6 +12,13 @@ export function curHPPercentage(pokemon: A.Pokemon): number {
 
 export function getPercentageOfMaxHP(pokemon: A.Pokemon, percentage: number): number {
 	return Math.floor(pokemon.maxHP() * percentage/100);
+}
+
+export function getHPAfterDamage(pokemon: Pokemon, currentHp: number, maxHp: number, damage: number): number {
+	let newHp = Math.max(0, Math.min(maxHp, currentHp - Math.floor(damage)));
+	if (hasLifeSavingItem(pokemon) || hasLifeSavingAbility(pokemon))
+		newHp = Math.max(1, newHp);
+	return newHp;
 }
 
 export function isFainted(pokemon: A.Pokemon): boolean {

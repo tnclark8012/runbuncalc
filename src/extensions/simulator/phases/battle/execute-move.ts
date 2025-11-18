@@ -1,57 +1,70 @@
-import { Field, I, StatsTable, Move, Result, Pokemon, MEGA_STONES } from '@smogon/calc';
-import { applyBoost, getPercentageOfMaxHP, isSuperEffective } from '../../utils';
-import { hasLifeSavingItem } from '../../moveScoring';
+import { Field, StatsTable, Move, Pokemon, MEGA_STONES } from '@smogon/calc';
+import { applyBoost, getHPAfterDamage, getPercentageOfMaxHP, isSuperEffective } from '../../utils';
+import { calculateMoveResult, createMove } from '../../moveScoring';
 import { getRecovery, getRecoil } from '@smogon/calc/dist/desc';
 import { MoveResult } from '../../moveScoring.contracts';
-import { RNGStrategy } from '../../../configuration';
+import { gen, RNGStrategy } from '../../../configuration';
 import { isContactMove } from '../../move-properties';
 
-export function executeMove(gen: I.Generation, attacker: Pokemon, defender: Pokemon, moveResult: MoveResult, rng: RNGStrategy): { attacker: Pokemon, defender: Pokemon } {
-	let boosts = getBoosts(attacker, defender, moveResult.move);
-	const attackerLostItem = consumesAttackerItem(attacker, moveResult.move);
-	const defenderLostItem = consumesDefenderItem(defender, moveResult.move);
+export function executeMove(attacker: Pokemon, defender: Pokemon, move: Move, field: Field, rng: RNGStrategy): { attacker: Pokemon, defender: Pokemon };
+export function executeMove(attacker: Pokemon, defender: Pokemon, move: string, field: Field, rng: RNGStrategy): { attacker: Pokemon, defender: Pokemon };
+export function executeMove(attacker: Pokemon, defender: Pokemon, moveOrMoveName: Move | string, field: Field, rng: RNGStrategy): { attacker: Pokemon, defender: Pokemon } {
+	const move = typeof moveOrMoveName === 'string' ? createMove(attacker, moveOrMoveName) : moveOrMoveName;
 
-	const recovery = getRecovery(gen, attacker, defender, moveResult.move, moveResult.highestRollDamage);
-	// TODO: recoil
-	const moveRecoil = getRecoil(gen, attacker, defender, moveResult.move, moveResult.highestRollDamage);
-	let recoil = 0;
-	if (moveRecoil.recoil) {
-		recoil = Array.isArray(moveRecoil.recoil) ? moveRecoil.recoil.at(-1) ?? 0 : moveRecoil.recoil;
-	}
+	// TODO: Clone is keeping a ref to original object?
+	attacker = attacker.clone({ boosts: { ...attacker.boosts } });
+	defender = defender.clone({ boosts: { ...defender.boosts } });
+	
+	let moveResult = calculateMoveResult(attacker, defender, move, field);
+	let attackerHp = attacker.curHP();
+	let defenderHp = defender.curHP();
+	let defenderMaxHP = defender.maxHP();
+	let attackerMaxHP = attacker.maxHP();
 
-	let getResultantHP = (pokemon: Pokemon, hitDamages: number[], move?: Move): number => {
-		let currentHP = pokemon.curHP();
+	for (let i = 0; i < rng.getHits(moveResult); i++) {
+		if (attacker.hasAbility('Libero') || attacker.hasAbility('Protean'))
+			attacker.types = [moveResult.move.type];
 
-		for (let hitDamage of hitDamages) {
-			currentHP = Math.max(0, currentHP - hitDamage);
-			currentHP = consumeBerryAfterHit(defender, currentHP, move);
+		if (i > 0) {
+			moveResult = calculateMoveResult(attacker, defender, move, field);
 		}
 
-		return currentHP;
-	};
+		const moveRecoveryPerHit = getRecovery(gen, attacker, defender, move, moveResult.highestRollDamage);
+		const recoveryPerHit = Array.isArray(moveRecoveryPerHit.recovery) ? moveRecoveryPerHit.recovery.at(-1) ?? 0 : moveRecoveryPerHit.recovery[0];
+		const moveRecoilPerHit = getPerHitMoveRecoil(attacker, defender, moveResult);
+		const damagePerHit = moveResult.highestRollDamage;
+		const abilityRecoilPerHit = getPerHitAbilityRecoil(attacker, moveResult.move, defender);
 
-	// TODO attacker berry consumption after recoil
-	const itemRecoil = getItemRecoil(attacker)
-	const abilityRecoil = getPerHitAbilityRecoil(attacker, moveResult.move, defender);
-	attacker = attacker.clone({ 
-		boosts: boosts.attacker,
-		item: !attackerLostItem ? attacker.item: undefined,
-		curHP: getResultantHP(attacker, [recoil, -recovery.recovery[0], ...Array(rng.getHits(moveResult)).fill(abilityRecoil), itemRecoil], moveResult.move),
-		abilityOn: attacker.abilityOn || (attackerLostItem && attacker.hasAbility('Unburden'))
-	});
+		defenderHp = getHPAfterDamage(defender, defenderHp, defenderMaxHP, damagePerHit);
+		consumeDefenderItemAfterHit(defender, move);
 
-	if (attacker.hasAbility('Libero') || attacker.hasAbility('Protean'))
-		attacker.types = [moveResult.move.type];
+		consumeAttackerItemBeforeHit(attacker, move);
+		attackerHp = getHPAfterDamage(attacker, attackerHp, attackerMaxHP, moveRecoilPerHit);
+		attackerHp = getHPAfterDamage(attacker, attackerHp, attackerMaxHP, -recoveryPerHit);
+		attackerHp = getHPAfterDamage(attacker, attackerHp, attackerMaxHP, abilityRecoilPerHit);
+		applyBoostsFromMoveHit(attacker, defender, move);
+
+		attackerHp = consumeBerryAfterHit(attacker, attackerHp);
+		defenderHp = consumeBerryAfterHit(defender, defenderHp, move);
+	}
+
+	attackerHp = getHPAfterDamage(attacker, attackerHp, attackerMaxHP, getItemRecoil(attacker));
+	
+	attacker = attacker.clone({ curHP: attackerHp });
 
 
-	defender = defender.clone({ 
-		curHP: Math.max(0, getResultantHP(defender, Array(rng.getHits(moveResult)).fill(rng.getDamageRoll(moveResult))), hasLifeSavingItem(defender) && defenderLostItem && moveResult.move.hits < 2 ? 1 : 0),
-		item: !defenderLostItem ? defender.item: undefined,
-		boosts: boosts.defender,
-		abilityOn: defender.abilityOn || (defenderLostItem && defender.hasAbility('Unburden'))
-	});
-
+	defender = defender.clone({ curHP: defenderHp});
+	
 	return { attacker, defender };
+}
+
+function getPerHitMoveRecoil(attacker: Pokemon, defender: Pokemon, moveResult: MoveResult): number {
+	const moveRecoil = getRecoil(gen, attacker, defender, moveResult.move, moveResult.highestRollDamage);
+	let moveRecoilPerHit = 0;
+	if (moveRecoil.recoil) {
+		moveRecoilPerHit = Array.isArray(moveRecoil.recoil) ? moveRecoil.recoil.at(-1) ?? 0 : moveRecoil.recoil;
+	}
+	return moveRecoilPerHit;
 }
 
 /**
@@ -68,19 +81,19 @@ function consumeBerryAfterHit(defender: Pokemon, currentHP: number, move?: Move)
 	switch (defender.item) {
 		case 'Salac Berry':
 			if (currentHP <= getPercentageOfMaxHP(defender, 25)) {
-				defender.item = undefined;
+				consumeItem(defender);
 				applyBoost(defender.boosts, 'spe', 1);
 			}
 			break;
 		case 'Sitrus Berry':
 			if (currentHP <= getPercentageOfMaxHP(defender, 50)) {
-				defender.item = undefined;
+				consumeItem(defender);
 				recovery = getPercentageOfMaxHP(defender, 25);;
 			}
 		break;
 		case 'Oran Berry':
 			if (currentHP <= getPercentageOfMaxHP(defender, 50)) {
-				defender.item = undefined;
+				consumeItem(defender);
 				recovery = 10;
 			}
 			break;
@@ -89,7 +102,7 @@ function consumeBerryAfterHit(defender: Pokemon, currentHP: number, move?: Move)
 		case 'Mago Berry':
 		case 'Wiki Berry':
 			if (currentHP <= getPercentageOfMaxHP(defender, 25)) {
-				defender.item = undefined;
+				consumeItem(defender);
 				recovery = getPercentageOfMaxHP(defender, 50);
 			}
 		break;
@@ -114,7 +127,7 @@ function consumeBerryAfterHit(defender: Pokemon, currentHP: number, move?: Move)
 			defender.item === 'Babiri Berry' && move.type === 'Steel' ||
 			defender.item === 'Roseli Berry' && move.type === 'Fairy'
 		) {
-			defender.item = undefined;
+			consumeItem(defender);
 		}
 	}
 
@@ -141,9 +154,17 @@ function getPerHitAbilityRecoil(attacker: Pokemon, move: Move, defender: Pokemon
 	return 0;
 }
 
-function getBoosts(attacker: Pokemon, defender: Pokemon, move: Move): { attacker: StatsTable, defender: StatsTable } {
-	let attackerBoosts: StatsTable = { ...attacker.boosts };
-	let defenderBoosts: StatsTable = { ...defender.boosts };
+function consumeItem(pokemon: Pokemon): void {
+	pokemon.item = undefined;
+	if (pokemon.hasAbility('Unburden') && !pokemon.abilityOn) {
+		applyBoost(pokemon.boosts, 'spe', 1);
+		pokemon.abilityOn = true;
+	}
+}
+
+function applyBoostsFromMoveHit(attacker: Pokemon, defender: Pokemon, move: Move): void {
+	let attackerBoosts: StatsTable = { hp: 0, atk: 0, def: 0, spa: 0, spd: 0, spe: 0 };
+	let defenderBoosts: StatsTable = { hp: 0, atk: 0, def: 0, spa: 0, spd: 0, spe: 0 };
 
 	const modifyStat = (stats: StatsTable, kind: keyof StatsTable, modifier: number) => {
 		if (defender.hasAbility('Clear Body'))
@@ -203,7 +224,7 @@ function getBoosts(attacker: Pokemon, defender: Pokemon, move: Move): { attacker
 		for (let [name, value] of Object.entries(boosts)) {
 			if (value < 0) {
 				(boosts as any)[name] = 0;
-				pokemon.item = undefined;
+				consumeItem(pokemon);
 			}
 		}
 	};
@@ -211,34 +232,41 @@ function getBoosts(attacker: Pokemon, defender: Pokemon, move: Move): { attacker
 	checkWhiteHerb(attacker, attackerBoosts);
 	checkWhiteHerb(defender, defenderBoosts);
 
-	return {
-		attacker: attackerBoosts,
-		defender: defenderBoosts
-	};
+	for (let [stat, boost] of Object.entries(attackerBoosts))
+		applyBoost(attacker.boosts, stat as keyof StatsTable, boost);
+
+	for (let [stat, boost] of Object.entries(defenderBoosts))
+		applyBoost(defender.boosts, stat as keyof StatsTable, boost);
 }
 
-function consumesAttackerItem(attacker: Pokemon, move: Move): boolean {
-	if (!attacker.item) return false;
+function consumeAttackerItemBeforeHit(attacker: Pokemon, move: Move): void {
+	if (!attacker.item) return;
 
 	if (attacker.item.endsWith(' Gem')) {
 		let gemType = attacker.item.substring(0, attacker.item.length - ' Gem'.length);
-		return move.type === gemType;
+		if (move.type === gemType) {
+			return consumeItem(attacker);
+		}
 	}
 
-	return move.name === 'Fling';
+	if (move.name === 'Fling')
+		return consumeItem(attacker);
 }
 
-function consumesDefenderItem(defender: Pokemon, move: Move): boolean {
-	if (!defender.item) return false;
+function consumeDefenderItemAfterHit(defender: Pokemon, move: Move): void {
+	if (!defender.item) return;
 
 	switch (defender.item) {
 		case 'Focus Sash':
 		case 'Red Card':
-			return move.category !== 'Status';
+			if (move.category !== 'Status') {
+				consumeItem(defender)
+				return;
+			}
 	}
 	
-	if (move.name === 'Knock Off' && !defender.hasAbility('Sticky Hold') && !(defender.item in MEGA_STONES))
-		return true;
-
-	return false;
+	if (move.name === 'Knock Off' && !defender.hasAbility('Sticky Hold') && !(defender.item in MEGA_STONES)) {
+		consumeItem(defender)
+		return;
+	}
 }

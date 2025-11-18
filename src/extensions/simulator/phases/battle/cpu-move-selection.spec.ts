@@ -11,10 +11,13 @@ import { createMove } from '../../moveScoring';
 import { getCpuMoveScoresAgainstTarget, getCpuPossibleActions } from './cpu-move-selection';
 import { get } from 'jquery';
 import { PartyOrderSwitchStrategy } from '../../switchStrategy.partyOrder';
+import { getBox } from '../../playthrough/museum.collection';
+import { Trainers } from '../../../trainer-sets';
+import { create1v1BattleState } from '../../helper';
 
 const RunAndBun = 8;
 inGen(RunAndBun, ({ gen, calculate, Pokemon, Move }) => {
-  describe('Move selection', () => {
+  describe('CPU Move selection', () => {
     test(`Slower CPU wins with a priority move`, () => {
       let [cpu, player] = importTeam(`
   Lopunny
@@ -126,6 +129,22 @@ Ability: Hyper Cutter
         probability: 1
       });
     });
+  });
+
+  it("Belch isn't used when holding a berry", () => {
+    const [, Croagunk,] = Trainers['Team Aqua Grunt Petalburg Woods'];
+    const { Starly } = getBox();
+
+    let state = create1v1BattleState(Starly, Croagunk);
+    let result = getCpuMoveScoresAgainstTarget(state, state.cpu.active[0], state.player.active[0], { slot: 0, type: 'opponent' });
+    let belch = result.find(r => r.move.move.name === 'Belch');
+    expect(belch?.finalScore).toBeLessThan(0);
+
+    Croagunk.item = undefined;
+    state = create1v1BattleState(Starly, Croagunk);
+    result = getCpuMoveScoresAgainstTarget(state, state.cpu.active[0], state.player.active[0], { slot: 0, type: 'opponent' });
+    belch = result.find(r => r.move.move.name === 'Belch');
+    expect(belch?.finalScore).toBeGreaterThan(0);
   });
 });
 

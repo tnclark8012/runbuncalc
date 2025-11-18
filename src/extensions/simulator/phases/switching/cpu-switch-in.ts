@@ -56,7 +56,7 @@ export function chooseSwitchIn(cpuParty: Pokemon[], seenPlayerMon: Pokemon, stat
         let playerDamageResults = calculateAllMoves(generation, seenPlayerMon, cpuPokemon, state.playerField);
         let cpuDamageResults = calculateAllMoves(generation, cpuPokemon, seenPlayerMon, state.cpuField);
         let cpuAssumedPlayerMove = findHighestDamageMove(getDamageRanges(playerDamageResults));
-        let consideredMoves = getCpuMoveConsiderations(cpuDamageResults, cpuAssumedPlayerMove, state.cpuField, /*last turn outcome*/undefined);
+        let consideredMoves = getCpuMoveConsiderations(cpuDamageResults, cpuAssumedPlayerMove, state);
         
         return {
             pokemon: cpuPokemon,
