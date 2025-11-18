@@ -1,15 +1,13 @@
-import { calculate, Field, Move, Pokemon, Result } from "@smogon/calc";
-import { PokemonPositionReplacer, PokemonReplacer, visitActivePokemonInSpeedOrder } from "../../battle-field-state-visitor";
-import { ActivePokemon, BattleFieldState, MoveResult, PokemonPosition, Trainer } from "../../moveScoring.contracts";
+import { Field, Move } from "@smogon/calc";
+import { PokemonPositionReplacer, PokemonReplacer } from "../../battle-field-state-visitor";
+import { BattleFieldState, PokemonPosition, Trainer } from "../../moveScoring.contracts";
 import { PossibleBattleFieldState } from "../../turn-state";
-import { PossibleAction, PossibleTrainerAction, TargetedMove, TargetSlot, SwitchAction, MoveAction, ActionLogEntry } from "./move-selection.contracts";
-import { MoveScore } from "../../moveScore";
+import { PossibleAction, PossibleTrainerAction, SwitchAction, MoveAction, ActionLogEntry } from "./move-selection.contracts";
 import { getCpuPossibleActions } from "./cpu-move-selection";
 import { getPlayerPossibleActions } from "./player-move-selection";
 import { executeSwitch } from "../switching/execute-switch";
-import { cpuRng, gen, Heuristics, playerRng } from "../../../configuration";
+import { cpuRng, Heuristics, playerRng } from "../../../configuration";
 import { executeMove } from "./execute-move";
-import { isMegaEvolution, toMoveResult } from "../../moveScoring";
 import { TrainerActionPokemonReplacer } from "../../possible-trainer-action-visitor";
 import { executeMegaEvolution } from "./mega-evolve";
 import { Side } from "@smogon/calc/src";
@@ -187,7 +185,7 @@ function executeMoveOnState(state: BattleFieldState, trainer: Trainer, action: M
 
             newState = PokemonPositionReplacer.replace(newState, actingPosition!, updatedPosition);
             
-            const description = `${trainer.name}'s ${actingPokemon.name} began charging ${moveName}!`;
+            const description = `${trainer.name}'s ${actingPosition} began charging ${moveName}!`;
             return { 
                 outcome: newState, 
                 log: [{ 
@@ -210,7 +208,7 @@ function executeMoveOnState(state: BattleFieldState, trainer: Trainer, action: M
     
     // Check if target is invulnerable
     if (targetActive.volatileStatus?.invulnerable) {
-        const description = `${trainer.name}'s ${actingPokemon.name} used ${moveName}, but ${targetActive.pokemon.name} avoided it!`;
+        const description = `${trainer.name}'s ${actingPosition} used ${moveName}, but ${targetActive.pokemon.name} avoided it!`;
         return { 
             outcome: newState, 
             log: [{ 
@@ -219,14 +217,12 @@ function executeMoveOnState(state: BattleFieldState, trainer: Trainer, action: M
             }] 
         };
     }
-    
-    // Normal move execution
-    let calcResult = calculate(gen, actingPokemon, targetActive.pokemon, action.move.move, trainer.name === "Player" ? state.playerField : state.cpuField);
-    let moveResult = toMoveResult(calcResult);
 
+    // Normal move execution
     // TODO: Refactor to support dynamic speed similarly, or unburden
     let defenderHadBerry = hasBerry(targetActive.pokemon);
-    let executionResult = executeMove(gen, action.pokemon, targetActive.pokemon, moveResult, trainer.name === "Player" ? playerRng : cpuRng);
+    const isPlayer = trainer.name === "Player";
+    let executionResult = executeMove(action.pokemon, targetActive.pokemon, action.move.move, isPlayer ? state.playerField : state.cpuField, isPlayer ? playerRng : cpuRng);
     newState = PokemonReplacer.replace(newState, executionResult.attacker);
     newState = PokemonReplacer.replace(newState, executionResult.defender);
     if (defenderHadBerry && !hasBerry(executionResult.defender)) {
@@ -239,19 +235,19 @@ function executeMoveOnState(state: BattleFieldState, trainer: Trainer, action: M
     let description = (() => {
         let targetInitialHp = `${targetActive.pokemon.curHP()}/${targetActive.pokemon.maxHP()}`;
         let targetEndingHp = `${executionResult.defender.curHP()}/${executionResult.defender.maxHP()}`;
-        return `${trainer.name}'s ${actingPokemon.name} (${actingPokemon.curHP()}/${actingPokemon.maxHP()}) used ${action.move.move.name} on ${targetActive.pokemon.name} (${targetInitialHp} -> ${targetEndingHp})`;
+        return `${trainer.name}'s ${actingPosition} (${actingPokemon.curHP()}/${actingPokemon.maxHP()}) used ${action.move.move.name} on ${targetActive} (${targetInitialHp} -> ${targetEndingHp})`;
     })();
     if (trainer.name === "Player") {
-        applyFieldEffects(newState.field, newState.playerSide, newState.cpuSide, moveResult);
+        applyFieldEffects(newState.field, newState.playerSide, newState.cpuSide, action.move.move);
     }
     else {
-        applyFieldEffects(newState.field, newState.cpuSide, newState.playerSide, moveResult);
+        applyFieldEffects(newState.field, newState.cpuSide, newState.playerSide, action.move.move);
     }
     return { outcome: newState, log: [{ action: { trainer, pokemon: actingPosition!, action: { ...action, probability: -1 }, slot: { slot: target.slot }}, description }] };
 }
 
-function applyFieldEffects(field: Field, attackerSide: Side, defenderSide: Side, moveResult: MoveResult): void {
-    switch(moveResult.move.name) {
+function applyFieldEffects(field: Field, attackerSide: Side, defenderSide: Side, move: Move): void {
+    switch(move.name) {
         case 'Stealth Rock':
             defenderSide.isSR = true;
             break;

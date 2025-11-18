@@ -77,10 +77,22 @@ export class PokemonPosition {
 
 	public clone(): PokemonPosition {
 		return new PokemonPosition(
-			this.pokemon.clone(), 
+			this.pokemon.clone(),
 			this.firstTurnOut,
 			this.volatileStatus ? { ...this.volatileStatus } : undefined
 		);
+	}
+
+	public toString(): string {
+		let status = this.volatileStatus ? JSON.stringify(this.volatileStatus) : '';
+			const str = [
+				this.pokemon.name,
+				this.pokemon.status || '',
+				`(${this.pokemon.curHP()}/${this.pokemon.maxHP()})`,
+				this.pokemon.item ? `@ ${this.pokemon.item!}` : '',
+				status
+			].join(' ')
+			return str;
 	}
 }
 
@@ -205,9 +217,7 @@ export class BattleFieldState {
 	public toString(): string {
 		const describePosition = (slot: number, pokemon: PokemonPosition | undefined) => {
 			if (!pokemon) return '';
-
-			let status = pokemon.volatileStatus ? JSON.stringify(pokemon.volatileStatus) : '';
-			return `[${slot}]: ${pokemon.pokemon.name} (${pokemon.pokemon.curHP()}/${pokemon.pokemon.maxHP()})${status ? ' ' + status : ''}`;
+			return [`[${slot}]`, pokemon.toString()].join(' ')
 		};
 
 		const describePartyPokemon = (pokemon: Pokemon) => {

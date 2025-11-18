@@ -1,14 +1,14 @@
 import { Field, Move, A, I, Result, Pokemon, calculate } from '@smogon/calc';
 import { MoveScore } from "./moveScore";
 import { notImplemented } from "./notImplementedError";
-import { ActivePokemon, BattleFieldState, CPUMoveConsideration, MoveConsideration, MoveResult, Trainer, TurnOutcome } from './moveScoring.contracts';
+import { ActivePokemon, BattleFieldState, CPUMoveConsideration, MoveConsideration, MoveResult, PokemonPosition, Trainer } from './moveScoring.contracts';
 import { gen } from '../configuration';
 import { PossibleTrainerAction } from './phases/battle/move-selection.contracts';
 import { hasBerry } from './utils';
 
-export function scoreCPUMoves(cpuResults: Result[], playerMove: MoveResult, field: Field, lastTurnMoveByCpu: Move | undefined): MoveScore[] {
+export function scoreCPUMoves(cpuResults: Result[], playerMove: MoveResult, state: BattleFieldState): MoveScore[] {
     // Not quite
-    let movesToConsider = getCpuMoveConsiderations(cpuResults, playerMove, field, lastTurnMoveByCpu);
+    let movesToConsider = getCpuMoveConsiderations(cpuResults, playerMove, state);
 
     let moveScores = [];
     for (let potentialMove of movesToConsider) {
@@ -28,10 +28,6 @@ export function scoreCPUMoves(cpuResults: Result[], playerMove: MoveResult, fiel
         defensiveSetup(moveScore, potentialMove);
         // specificSetup(moveScore, potentialMove);
         // recovery(moveScore, potentialMove);
-
-        if (potentialMove.result.move.name === 'Belch' && hasBerry(potentialMove.aiMon)) {
-            moveScore.setScore(-20);
-        }
         
         moveScores.push(moveScore);
     }
@@ -39,11 +35,12 @@ export function scoreCPUMoves(cpuResults: Result[], playerMove: MoveResult, fiel
     return moveScores;
 }
 
-export function getCpuMoveConsiderations(cpuResults: Result[], playerMove: MoveResult, field: Field, lastTurnMoveByCPU: Move | undefined): CPUMoveConsideration[] {
+export function getCpuMoveConsiderations(cpuResults: Result[], playerMove: MoveResult, state: BattleFieldState): CPUMoveConsideration[] {
     let damageResults = getDamageRanges(cpuResults);
     let maxDamageMove = findHighestDamageMove(damageResults);
     const aiMon = maxDamageMove.attacker
     const playerMon = maxDamageMove.defender;
+    const aiMonPosition = state.cpu.getActivePokemon(aiMon) || new PokemonPosition(aiMon, true);
     const aiIsFaster: boolean = aiMon.stats.spe >= playerMon.stats.spe;
 
     // Not quite
@@ -65,9 +62,9 @@ export function getCpuMoveConsiderations(cpuResults: Result[], playerMove: MoveR
             playerWillKOAI: playerMove.highestRollDamage * playerMove.move.hits >= aiMon.curHP() && !savedFromKO(aiMon),
             playerWill2HKOAI: playerMove.highestRollDamage * playerMove.move.hits * 2 >= aiMon.curHP(),
             aiOutdamagesPlayer: r.highestRollHpPercentage * r.move.hits > playerMove.highestRollHpPercentage * playerMove.move.hits,
-            aiMonFirstTurnOut: !lastTurnMoveByCPU, // TODO: Not quite right, but probably good enough
-            lastTurnCPUMove: lastTurnMoveByCPU,
-            field
+            aiMonFirstTurnOut: !!aiMonPosition.firstTurnOut,
+            lastTurnCPUMove: undefined, // TODO: Track last move as volatile status?
+            field: state.field
         };
     });
 
@@ -330,6 +327,10 @@ export function specificMoves(moveScore: MoveScore, consideration: CPUMoveConsid
                 moveScore.addScore(1, 0.5);
             }
             break;
+        case 'Belch':
+            if (hasBerry(consideration.aiMon))
+                moveScore.setScore(-20);
+            break;
     }
 }
 
@@ -551,9 +552,13 @@ export function calculateAllMoves(gen: I.Generation, attacker: Pokemon, defender
 	return results;
 }
 
-export function calculateMoveResult(attacker: Pokemon, defender: Pokemon, moveName: string, field?: Field): MoveResult {
-    let calcResult = calculate(gen, attacker, defender, createMove(attacker, moveName));
-    return toMoveResult(calcResult);
+export function calculateMoveResult(attacker: Pokemon, defender: Pokemon, moveName: string, field?: Field): MoveResult;
+export function calculateMoveResult(attacker: Pokemon, defender: Pokemon, move: Move, field?: Field): MoveResult;
+export function calculateMoveResult(attacker: Pokemon, defender: Pokemon, moveOrMoveName: string | Move, field?: Field): MoveResult {
+    const move = typeof moveOrMoveName === 'string' ? createMove(attacker, moveOrMoveName) : moveOrMoveName;
+    let calcResult = calculate(gen, attacker, defender, move, field);
+    let moveResult = toMoveResult(calcResult);
+    return moveResult;
 }
 
 export function hasMegaStone(pokemon: Pokemon): boolean {

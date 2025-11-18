@@ -103,7 +103,7 @@ export class BattleSimulator {
 		const moveCPU = () => {
 			if (cpuPokemon.pokemon.curHP() > 0) {
 				actions.push(cpuMove);
-				let moveResult = executeMove(this.gen, cpuPokemon.pokemon, playerPokemon.pokemon, cpuMove, cpuRng);
+				let moveResult = executeMove(cpuPokemon.pokemon, playerPokemon.pokemon, cpuMove.move, this.currentTurnState.cpuField, cpuRng);
 				cpuPokemon.pokemon = moveResult.attacker;
 				playerPokemon.pokemon = moveResult.defender;
 			}
@@ -111,8 +111,8 @@ export class BattleSimulator {
 
 		const movePlayer = (move: MoveResult) => {
 			if (playerPokemon.pokemon.curHP() > 0) {
-				actions.push(move);
-				let moveResult = executeMove(this.gen, playerPokemon.pokemon, cpuPokemon.pokemon, move, playerRng);
+				actions.push(move); 
+				let moveResult = executeMove(playerPokemon.pokemon, cpuPokemon.pokemon, move.move, this.currentTurnState.playerField, playerRng);
 				playerPokemon.pokemon = moveResult.attacker;
 				cpuPokemon.pokemon = moveResult.defender;
 			}
@@ -151,8 +151,7 @@ export class BattleSimulator {
 
 	private calculateCpuMove(cpuResults: Result[], playerMove: MoveResult): MoveScore {
 		let aiMon = cpuResults[0].attacker;
-        const aiActionLastTurn = this.lastTurn?.actions.find(a => a.attacker.equals(aiMon))
-		let moveScores = scoreCPUMoves(cpuResults, playerMove, this.currentTurnState.cpuField, aiActionLastTurn?.move);
+		let moveScores = scoreCPUMoves(cpuResults, playerMove, this.currentTurnState);
 		
 		let highestScoringMoves: MoveScore[] = [];
 		for (let score of moveScores) {
