@@ -8,14 +8,14 @@ import { calculateMoveResult } from '../../moveScoring';
 import { executeMove } from './execute-move';
 import { cpuRng, playerRng } from '../../../configuration';
 import { getBox } from '../../playthrough/museum.collection';
-import { Trainers } from '../../../trainer-sets';
+import { OpposingTrainer } from '../../../trainer-sets';
 
 const RunAndBun = 8;
 inGen(RunAndBun, ({ gen, calculate, Pokemon, Move }) => {
   describe('executeMove', () => {
     describe(`Berries`, () => {
       it('Salac Berry', () => {
-        const [, Croagunk,] = Trainers['Team Aqua Grunt Petalburg Woods'];
+        const [, Croagunk,] = OpposingTrainer('Team Aqua Grunt Petalburg Woods');
         const { Starly } = getBox();
 
         let result = executeMove(Starly, Croagunk, 'Aerial Ace', new Field(), playerRng);
@@ -27,7 +27,7 @@ inGen(RunAndBun, ({ gen, calculate, Pokemon, Move }) => {
     describe(`Defender abilities`, () => {
       it ('Cotton Down', () => {
         const { Gossifleur } = getBox();
-        const [_, Clobbopus ] = Trainers['Triathlete Mikey'];
+        const [_, Clobbopus ] = OpposingTrainer('Triathlete Mikey');
         let executionResult = executeMove(Clobbopus, Gossifleur, 'Rock Smash', new Field(), cpuRng);
         expect(executionResult.attacker.boosts.spe).toBe(-1);
       });
@@ -36,7 +36,7 @@ inGen(RunAndBun, ({ gen, calculate, Pokemon, Move }) => {
     describe('Move effects', () => {
       it('Rock smash', () => {
         const { Gossifleur } = getBox();
-        const [_, Clobbopus ] = Trainers['Triathlete Mikey'];
+        const [_, Clobbopus ] = OpposingTrainer('Triathlete Mikey');
         let executionResult = executeMove(Clobbopus, Gossifleur, 'Rock Smash', new Field(), cpuRng);
         expect(executionResult.defender.boosts.def).toBe(-1);
       })

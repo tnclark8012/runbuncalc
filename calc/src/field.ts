@@ -82,6 +82,7 @@ export class Side implements State.Side {
   cannonade: boolean;
   volcalith: boolean;
   isSR: boolean;
+  isStickyWebs: boolean;
   isReflect: boolean;
   isLightScreen: boolean;
   isProtected: boolean;
@@ -104,6 +105,7 @@ export class Side implements State.Side {
     this.cannonade = !!side.cannonade;
     this.volcalith = !!side.volcalith;
     this.isSR = !!side.isSR;
+    this.isStickyWebs = !!side.isStickyWebs;
     this.isReflect = !!side.isReflect;
     this.isLightScreen = !!side.isLightScreen;
     this.isProtected = !!side.isProtected;

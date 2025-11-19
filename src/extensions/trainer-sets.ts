@@ -3,7 +3,8 @@ import { gen } from "./configuration";
 import { TrainerSets } from "./trainer-sets.data";
 import { PokemonSet } from "./trainer-sets.types";
 
-export const Trainers = initializeTrainerSets();
+export const OpposingTrainer = (trainerName: keyof ReturnType<typeof initializeTrainerSets>) => initializeTrainerSets()[trainerName];
+
 export const PokemonIndexToTrainerMap = (() => {
   const trainerPokemonIndexMap = new Map<number, string>();
   for (const [pokemonName, trainerSets] of Object.entries(TrainerSets)) {

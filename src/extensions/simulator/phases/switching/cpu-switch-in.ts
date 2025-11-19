@@ -4,6 +4,7 @@ import { calculateAllMoves, findHighestDamageMove, getCpuMoveConsiderations, get
 import { SwitchAction } from "../battle/move-selection.contracts";
 import { executeSwitch, popFromParty } from "./execute-switch";
 import { PokemonReplacer } from "../../battle-field-state-visitor";
+import { getFinalSpeed } from "../../utils";
 
 const generation = Generations.get(8);
 
@@ -57,10 +58,12 @@ export function chooseSwitchIn(cpuParty: Pokemon[], seenPlayerMon: Pokemon, stat
         let cpuDamageResults = calculateAllMoves(generation, cpuPokemon, seenPlayerMon, state.cpuField);
         let cpuAssumedPlayerMove = findHighestDamageMove(getDamageRanges(playerDamageResults));
         let consideredMoves = getCpuMoveConsiderations(cpuDamageResults, cpuAssumedPlayerMove, state);
+        const finalAISpeed = getFinalSpeed(cpuPokemon, state.cpuField, state.cpuSide);
+        const finalPlayerSpeed = getFinalSpeed(seenPlayerMon, state.playerField, state.playerSide);
         
         return {
             pokemon: cpuPokemon,
-            aiIsFaster: cpuPokemon.stats.spe >= seenPlayerMon.stats.spe,
+            aiIsFaster: finalAISpeed >= finalPlayerSpeed,
             aiOHKOs: consideredMoves.some(m => m.aiWillOHKOPlayer),
             playerOHKOs: consideredMoves.some(m => m.playerWillKOAI),
             aiOutdamagesPlayer: consideredMoves.some(m => m.aiOutdamagesPlayer),

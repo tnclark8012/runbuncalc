@@ -6,13 +6,13 @@ import { expectTeam, usingHeuristics } from '../test-helper';
 import { BasicScoring, IntuitionScoring } from '../phases/battle/player-move-selection-strategy';
 import { findPlayerWinningPath, printDecisionTree } from '../path-finder';
 import { getBox } from './museum.collection';
-import { Trainers } from '../../trainer-sets';
+import { OpposingTrainer } from '../../trainer-sets';
 import { attack, PlannedPlayerActionProvider, playerRng, switchTo } from '../../configuration';
 import { ItemName } from '@smogon/calc/dist/data/interface';
 import { executeMove } from '../phases/battle/execute-move';
 
 describe('Actual playthrough tests', () => {
-  describe('Aqua Grunt Split', () => {
+  describe('Team Aqua Grunt Petalburg Woods', () => {
     test('Route 103 - Rival May', () => {
       let [Torchic, Turtwig] = importTeam(`
 Torchic
@@ -82,7 +82,7 @@ IVs: 20 HP / 27 Atk / 8 SpA
     });
 
     test('Bug Catcher Rick', () => {
-      const cpu = Trainers['Bug Catcher Rick'];
+      const cpu = OpposingTrainer('Bug Catcher Rick');
 
       const { Turtwig, Gossifleur, Poochyena, Starly, Surskit } = getBox();
       const state = new BattleFieldState(
@@ -100,7 +100,7 @@ IVs: 20 HP / 27 Atk / 8 SpA
     });
 
     test('Triathlete Mikey', () => {
-      const cpu = Trainers['Triathlete Mikey'];
+      const cpu = OpposingTrainer('Triathlete Mikey');
 
       const { Turtwig, Gossifleur, Poochyena, Starly, Surskit } = getBox();
       const state = new BattleFieldState(
@@ -136,7 +136,41 @@ IVs: 20 HP / 27 Atk / 8 SpA
     });
 
     test('Fisherman Darian', () => {
-      const cpu = Trainers['Fisherman Darian'];
+      const cpu = OpposingTrainer('Fisherman Darian');
+
+      const { Turtwig, Gossifleur, Poochyena, Starly, Surskit } = getBox();
+      const state = new BattleFieldState(
+        new PlayerTrainer([new PokemonPosition(Starly, true)], [
+          Gossifleur,
+          Poochyena,
+          Turtwig,
+          Surskit,
+        ]),
+        new CpuTrainer([], cpu),
+        new Field());
+
+      Turtwig.item = 'Oran Berry' as any;
+      Gossifleur.item = 'Oran Berry' as any;
+      Poochyena.item = 'Oran Berry' as any;
+      Starly.item = 'Oran Berry' as any;
+      Surskit.item = 'Oran Berry' as any;
+      // usingHeuristics({ playerActionProvider: new PlannedPlayerActionProvider([
+      //   [ attack(Starly, 'Quick Attack') ],
+      //   [ attack(Starly, 'Aerial Ace') ],
+      //   [ attack(Starly, 'Quick Attack') ],
+      //   [ attack(Starly, 'Aerial Ace') ],
+      //   [ switchTo(Gossifleur) ],
+      //   [ attack(Gossifleur, 'Leafage') ],
+      //   [ attack(Gossifleur, 'Leafage') ],
+      // ]) }, () => {
+      const path = findPlayerWinningPath(state);
+      expect(path).not.toBeNull();
+      // expect(printDecisionTree(path!)).toBe('');
+      // });
+    });
+
+    test('Team Aqua Grunt Petalburg Woods', () => {
+      const cpu = OpposingTrainer('Team Aqua Grunt Petalburg Woods');
 
       const { Turtwig, Gossifleur, Poochyena, Starly, Surskit } = getBox();
       const state = new BattleFieldState(
