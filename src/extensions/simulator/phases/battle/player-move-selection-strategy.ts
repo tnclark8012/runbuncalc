@@ -29,7 +29,7 @@ export const IntuitionScoring: IMoveScoringStrategy = {
             if (!playerChosenMove)
                 return potentialMove;
 
-            const moreDamage = potentialMove.lowestRollHpPercentage > playerChosenMove.lowestRollHpPercentage;
+            const moreDamage = potentialMove.lowestRollTotalHitsHpPercentage > playerChosenMove.lowestRollTotalHitsHpPercentage;
             const kosWithHigherPriority = potentialMove.kos && playerChosenMove.kos && potentialMove.result.move.priority > playerChosenMove.result.move.priority;
             if ((potentialMove.kos && !playerChosenMove.kos) || kosWithHigherPriority) {
                 score.addScore(10);

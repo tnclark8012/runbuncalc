@@ -177,13 +177,13 @@ export class BattleSimulator {
 		let damageResults = toMoveResults(playerResults);
 		let movesToConsider = damageResults
 			.map<PlayerMoveConsideration>(r => {
-				const kos = (r.lowestRollDamage * r.move.hits) >= r.defender.curHP() && (!savedFromKO(r.defender) || r.move.hits > 1);
+				const kos = (r.lowestRollPerHitDamage * playerRng.getHits(r)) >= r.defender.curHP() && (!savedFromKO(r.defender) || r.move.hits > 1);
 				return {
 					aiMon: r.defender,
 					playerMon: r.attacker,
 					result: r,
-					lowestRollHpPercentage: r.lowestRollHpPercentage,
-					hightestRollHpPercentage: r.highestRollHpPercentage,
+					lowestRollTotalHitsHpPercentage: r.lowestRollPerHitHpPercentage,
+					highestRollTotalHitsHpPercentage: r.highestRollPerHitHpPercentage,
 					kos: kos,
 					kosThroughRequiredLifesaver: kos && savedFromKO(r.defender),
 					attackerDiesToRecoil: moveKillsAttacker(r),
@@ -198,7 +198,7 @@ export class BattleSimulator {
 				playerChosenMove = potentialMove;
 				continue;
 			}
-			const moreDamage = potentialMove.lowestRollHpPercentage > playerChosenMove.lowestRollHpPercentage;
+			const moreDamage = potentialMove.lowestRollTotalHitsHpPercentage > playerChosenMove.lowestRollTotalHitsHpPercentage;
 			const kosWithHigherPriority = potentialMove.kos && playerChosenMove.kos && potentialMove.result.move.priority > playerChosenMove.result.move.priority;
 			if ((potentialMove.kos && !playerChosenMove.kos) || kosWithHigherPriority) {
 				playerChosenMove = potentialMove;

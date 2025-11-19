@@ -21,8 +21,8 @@ export interface VolatileStatus {
 export interface MoveConsideration {
 	result: MoveResult;
 	kos: boolean;
-	lowestRollHpPercentage: number;
-	hightestRollHpPercentage: number;
+	lowestRollTotalHitsHpPercentage: number;
+	highestRollTotalHitsHpPercentage: number;
 	aiMon: Pokemon;
 	playerMon: Pokemon;
 }
@@ -31,10 +31,10 @@ export interface MoveResult {
 	attacker: Pokemon;
 	defender: Pokemon;
 	move: Move;
-	lowestRollDamage: number;
-	lowestRollHpPercentage: number;
-	highestRollDamage: number;
-	highestRollHpPercentage: number;
+	lowestRollPerHitDamage: number;
+	lowestRollPerHitHpPercentage: number;
+	highestRollPerHitDamage: number;
+	highestRollPerHitHpPercentage: number;
 	damageRolls: number[];
 }
 

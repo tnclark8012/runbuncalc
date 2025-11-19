@@ -83,7 +83,7 @@ Ability: Thick Fat
           const [turn1, turn2] = result.turnOutcomes;
           expect(turn1.actions[0].attacker.equals(playerGolisopod)).toBe(true);
           expect(turn1.endOfTurnState.player.active[0].pokemon.curHP()).toBeLessThan(playerGolisopod.maxHP());
-          const goliDamageTaken = turn1.actions[1].lowestRollDamage;
+          const goliDamageTaken = turn1.actions[1].lowestRollPerHitDamage;
           expect(turn2.endOfTurnState.player.active[0].pokemon.curHP()).toBe(playerGolisopod.maxHP()); 
       });
 

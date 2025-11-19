@@ -46,27 +46,29 @@ export function getCpuMoveConsiderations(cpuResults: Result[], playerMove: MoveR
     const finalPlayerSpeed = getFinalSpeed(playerMon, state.playerField, state.playerSide);
     const aiIsFaster: boolean = finalAISpeed >= finalPlayerSpeed;
     const aiIsFasterAfterPlayerParalysis = !playerMon.hasStatus('par') && finalAISpeed > finalPlayerSpeed * 0.25;
-
+    const maxDamageMoveTotalHitsHpPercentage = maxDamageMove.highestRollPerHitHpPercentage * maxDamageMove.move.hits;
     // Not quite
     let movesToConsider = damageResults.map<CPUMoveConsideration>(r => {
-        const kos = r.lowestRollDamage * r.move.hits >= r.defender.curHP();
+        const kos = r.lowestRollPerHitDamage * r.move.hits >= r.defender.curHP();
+        const lowestRollTotalHitsHpPercentage = r.lowestRollPerHitHpPercentage * r.move.hits;
+        const highestRollTotalHitsHpPercentage = r.highestRollPerHitHpPercentage * r.move.hits;
         return {
             result: r,
-            lowestRollHpPercentage: r.lowestRollHpPercentage * r.move.hits,
-            hightestRollHpPercentage: r.highestRollHpPercentage * r.move.hits,
+            lowestRollTotalHitsHpPercentage,
+            highestRollTotalHitsHpPercentage,
             kos: kos,
             isDamagingMove: r.move.category !== 'Status',
-            isHighestDamagingMove: Math.min(maxDamageMove.highestRollHpPercentage * maxDamageMove.move.hits, 100) === Math.min(r.highestRollHpPercentage * r.move.hits, 100),
+            isHighestDamagingMove: Math.min(maxDamageMoveTotalHitsHpPercentage, 100) === Math.min(highestRollTotalHitsHpPercentage, 100),
             aiIsFaster,
             aiIsSlower: !aiIsFaster,
             aiIsFasterAfterPlayerParalysis,
-            aiWillOHKOPlayer: r.lowestRollDamage * r.move.hits >= playerMon.curHP(),
+            aiWillOHKOPlayer: r.lowestRollPerHitDamage * r.move.hits >= playerMon.curHP(),
             playerMon,
             aiMon,
             playerMove,
-            playerWillKOAI: playerMove.highestRollDamage * playerMove.move.hits >= aiMon.curHP() && !savedFromKO(aiMon),
-            playerWill2HKOAI: playerMove.highestRollDamage * playerMove.move.hits * 2 >= aiMon.curHP(),
-            aiOutdamagesPlayer: r.highestRollHpPercentage * r.move.hits > playerMove.highestRollHpPercentage * playerMove.move.hits,
+            playerWillKOAI: playerMove.highestRollPerHitDamage * playerMove.move.hits >= aiMon.curHP() && !savedFromKO(aiMon),
+            playerWill2HKOAI: playerMove.highestRollPerHitDamage * playerMove.move.hits * 2 >= aiMon.curHP(),
+            aiOutdamagesPlayer: r.highestRollPerHitDamage * r.move.hits > playerMove.highestRollPerHitDamage * playerMove.move.hits,
             aiMonFirstTurnOut: !!aiMonPosition.firstTurnOut,
             lastTurnCPUMove: undefined, // TODO: Track last move as volatile status?
             field: state.field
@@ -498,7 +500,7 @@ function specialExecptionNotHighestDamagingMove(): void {
 export function findHighestDamageMove(moveResults: MoveResult[]): MoveResult {
     let maxDamageMove: MoveResult = moveResults[0];
     for (let result of moveResults) {
-        if ((result.highestRollHpPercentage * result.move.hits) > (maxDamageMove.highestRollHpPercentage * maxDamageMove.move.hits))
+        if ((result.highestRollPerHitDamage * result.move.hits) > (maxDamageMove.highestRollPerHitDamage * maxDamageMove.move.hits))
             maxDamageMove = result;
     }
 
@@ -519,10 +521,10 @@ export function toMoveResult(result: Result): MoveResult {
         defender: result.defender,
         move: result.move,
         damageRolls: resultDamage,
-        lowestRollDamage: lowestHitDamage,
-        lowestRollHpPercentage: getDamagePct(lowestHitDamage),
-        highestRollDamage: highestHitDamage,
-        highestRollHpPercentage: getDamagePct(highestHitDamage),
+        lowestRollPerHitDamage: lowestHitDamage,
+        lowestRollPerHitHpPercentage: getDamagePct(lowestHitDamage),
+        highestRollPerHitDamage: highestHitDamage,
+        highestRollPerHitHpPercentage: getDamagePct(highestHitDamage),
     };
 }
 
@@ -659,6 +661,9 @@ export function getLockedMoveAction(state: BattleFieldState, trainer: Trainer, a
  * @returns an array of mapped moveResults where the number in the array is the percent chance that it's damage roll is highest. => [0.8, 0.2, 0]
  */
 export function getHighestDamagingMovePercentChances(moveResults: Array<{ move: { name: string }, damageRolls: number[] }>): number[] {
+    if (moveResults.length === 0) {
+        return [];
+    }
 
     const totalCombos = Math.pow(moveResults[0].damageRolls.length, moveResults.length); // assuming 16 rolls per move
     const moves: Record<string, number[]> = {};
@@ -669,23 +674,24 @@ export function getHighestDamagingMovePercentChances(moveResults: Array<{ move: 
     }
     const moveNames = Object.keys(moves);
 
-    for (const move1Roll of moves[moveNames[0]]) {
-        for (const move2Roll of moves[moveNames[1]]) {
-            // for (const move3Roll of moves[moveNames[2]]) {
-            //     for (const move4Roll of moves[moveNames[3]]) {
-                    const rollSet = {
-                        [moveNames[0]]: move1Roll,
-                        [moveNames[1]]: move2Roll,
-                        // [moveNames[2]]: move3Roll,
-                        // [moveNames[3]]: move4Roll
-                    };
-                    const max = Math.max(...Object.values(rollSet));
-                    const winners = moveNames.filter(name => rollSet[name] === max);
-                    winners.forEach(name => winCounts[name]++);
-                }
-        //     }
-        // }
+    // Generate all combinations of damage rolls recursively
+    function generateCombinations(index: number, currentRolls: Record<string, number>) {
+        if (index === moveNames.length) {
+            // All moves have been assigned a roll, find the winner(s)
+            const max = Math.max(...Object.values(currentRolls));
+            const winners = moveNames.filter(name => currentRolls[name] === max);
+            winners.forEach(name => winCounts[name]++);
+            return;
+        }
+
+        const moveName = moveNames[index];
+        for (const roll of moves[moveName]) {
+            currentRolls[moveName] = roll;
+            generateCombinations(index + 1, currentRolls);
+        }
     }
+
+    generateCombinations(0, {});
 
     return moveNames.map(name => winCounts[name] / totalCombos);
 }

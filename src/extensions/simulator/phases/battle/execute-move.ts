@@ -29,10 +29,10 @@ export function executeMove(attacker: Pokemon, defender: Pokemon, moveOrMoveName
 			moveResult = calculateMoveResult(attacker, defender, move, field, attackerRng);
 		}
 
-		const moveRecoveryPerHit = getRecovery(gen, attacker, defender, move, moveResult.highestRollDamage);
+		const moveRecoveryPerHit = getRecovery(gen, attacker, defender, move, moveResult.highestRollPerHitDamage);
 		const recoveryPerHit = Array.isArray(moveRecoveryPerHit.recovery) ? moveRecoveryPerHit.recovery.at(-1) ?? 0 : moveRecoveryPerHit.recovery[0];
 		const moveRecoilPerHit = getPerHitMoveRecoil(attacker, defender, moveResult);
-		const damagePerHit = moveResult.highestRollDamage;
+		const damagePerHit = moveResult.highestRollPerHitDamage;
 		const abilityRecoilPerHit = getPerHitAbilityRecoil(attacker, moveResult.move, defender);
 		const statusAfterHit = getStatusAfterHit(attacker, defender, moveResult, attackerRng);
 		defenderHp = getHPAfterDamage(defender, defenderHp, defenderMaxHP, damagePerHit);
@@ -59,7 +59,7 @@ export function executeMove(attacker: Pokemon, defender: Pokemon, moveOrMoveName
 }
 
 function getPerHitMoveRecoil(attacker: Pokemon, defender: Pokemon, moveResult: MoveResult): number {
-	const moveRecoil = getRecoil(gen, attacker, defender, moveResult.move, moveResult.highestRollDamage);
+	const moveRecoil = getRecoil(gen, attacker, defender, moveResult.move, moveResult.highestRollPerHitDamage);
 	let moveRecoilPerHit = 0;
 	if (moveRecoil.recoil) {
 		moveRecoilPerHit = Array.isArray(moveRecoil.recoil) ? moveRecoil.recoil.at(-1) ?? 0 : moveRecoil.recoil;

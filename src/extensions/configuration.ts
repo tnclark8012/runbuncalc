@@ -33,7 +33,7 @@ export const playerRng: RNGStrategy = {
     doesAttackingStatusProc: (m) => false,
     doesAttackingAbilityProc: () => false,
     doesAbilityProcAsDefender: () => false,
-    getDamageRoll: (r) => r.lowestRollDamage,
+    getDamageRoll: (r) => r.lowestRollPerHitDamage,
     getHits: (r) => r.move.hits,
     willMoveCrit: (move) => move.isCrit
 };
@@ -42,7 +42,7 @@ export const cpuRng: RNGStrategy = {
     doesAttackingStatusProc: (m) => true,
     doesAttackingAbilityProc: () => true,
     doesAbilityProcAsDefender: (defender, moveResult) => true,
-    getDamageRoll: (r) => r.highestRollDamage,
+    getDamageRoll: (r) => r.highestRollPerHitDamage,
     getHits: (r) => r.move.hits,
     willMoveCrit: (move) => move.isCrit,
 };

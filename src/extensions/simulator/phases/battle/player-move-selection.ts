@@ -1,9 +1,9 @@
 import { Generations, Pokemon, Result, Move } from "@smogon/calc";
 import { MoveScore } from "../../moveScore";
-import { calculateAllMoves, canMegaEvolve, findHighestDamageMove, toMoveResults, megaEvolve, savedFromKO } from "../../moveScoring";
-import { BattleFieldState, PlayerMoveConsideration, PokemonPosition } from "../../moveScoring.contracts";
+import { calculateAllMoves, canMegaEvolve, findHighestDamageMove, toMoveResults, megaEvolve, savedFromKO, createMove } from "../../moveScoring";
+import { BattleFieldState, MoveResult, PlayerMoveConsideration, PokemonPosition } from "../../moveScoring.contracts";
 import { PossibleAction, PossibleTrainerAction, ScoredPossibleAction, TargetSlot } from "./move-selection.contracts";
-import { gen, Heuristics } from "../../../configuration";
+import { gen, Heuristics, playerRng } from "../../../configuration";
 import { SwitchAfterKOStrategy } from "../switching/player-switch-in";
 
 const playerSwitchStrategy = new SwitchAfterKOStrategy();
@@ -114,16 +114,17 @@ export function getMoveScoresAgainstTarget(state: BattleFieldState, playerPokemo
 
 
 function getPlayerMoveConsiderations(playerResults: Result[]): PlayerMoveConsideration[] {
+    let getDamagePct = (moveResult: MoveResult, hitDamage: number) => hitDamage * (createMove(moveResult.attacker, moveResult.move).hits / moveResult.defender.stats.hp * 100);
     let damageResults = toMoveResults(playerResults);
     return damageResults
         .map<PlayerMoveConsideration>(r => {
-            const kos = r.lowestRollDamage >= r.defender.curHP() && (!savedFromKO(r.defender) || r.move.hits > 1);
+            const kos = r.lowestRollPerHitDamage * playerRng.getHits(r) >= r.defender.curHP() && (!savedFromKO(r.defender) || r.move.hits > 1);
             return {
                 aiMon: r.defender,
                 playerMon: r.attacker,
                 result: r,
-                lowestRollHpPercentage: r.lowestRollHpPercentage,
-                hightestRollHpPercentage: r.highestRollHpPercentage,
+                lowestRollTotalHitsHpPercentage: getDamagePct(r, r.lowestRollPerHitDamage),
+                highestRollTotalHitsHpPercentage: getDamagePct(r, r.highestRollPerHitDamage),
                 kos: kos,
                 kosThroughRequiredLifesaver: kos && savedFromKO(r.defender),
                 attackerDiesToRecoil: !!(r.move.recoil && r.attacker.curHP() <= r.move.recoil[0]),
