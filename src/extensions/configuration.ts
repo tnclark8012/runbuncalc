@@ -1,7 +1,7 @@
-import { Generations, Pokemon } from "@smogon/calc";
-import { BasicScoring, IMoveScoringStrategy, IntuitionScoring } from "./simulator/phases/battle/player-move-selection-strategy";
-import type { BattleFieldState, MoveResult, PokemonPosition, Trainer } from "./simulator/moveScoring.contracts";
-import { isMoveAction, PossibleAction, PossibleSwitchAction, PossibleTrainerAction } from "./simulator/phases/battle/move-selection.contracts";
+import { Generations, Move, Pokemon } from "@smogon/calc";
+import { BasicScoring, IMoveScoringStrategy } from "./simulator/phases/battle/player-move-selection-strategy";
+import type { BattleFieldState, MoveResult, Trainer } from "./simulator/moveScoring.contracts";
+import { PossibleSwitchAction, PossibleTrainerAction } from "./simulator/phases/battle/move-selection.contracts";
 import { createMove, megaEvolve } from "./simulator/moveScoring";
 
 export const gen = Generations.get(8);
@@ -16,8 +16,12 @@ export const Heuristics: ConfiguredHeuristics = {
 }
 
 export interface RNGStrategy {
+    doesAttackingStatusProc(moveResult: MoveResult): boolean;
+    doesAttackingAbilityProc(moveResult: MoveResult): boolean;
+    doesAbilityProcAsDefender(defender: Pokemon, moveResult: MoveResult): boolean;
     getDamageRoll(moveResult: MoveResult): number;
     getHits(moveResult: MoveResult): number;
+    willMoveCrit(move: Move): boolean;
 }
 
 export interface ITrainerActionProvider {
@@ -25,8 +29,23 @@ export interface ITrainerActionProvider {
     getPossibleActions(state: BattleFieldState): PossibleTrainerAction[][] | undefined;
 }
 
-export const playerRng: RNGStrategy = { getDamageRoll: (r) => r.lowestRollDamage, getHits: (r) => r.move.hits };
-export const cpuRng: RNGStrategy = { getDamageRoll: (r) => r.highestRollDamage, getHits: (r) => r.move.hits };
+export const playerRng: RNGStrategy = {
+    doesAttackingStatusProc: (m) => false,
+    doesAttackingAbilityProc: () => false,
+    doesAbilityProcAsDefender: () => false,
+    getDamageRoll: (r) => r.lowestRollDamage,
+    getHits: (r) => r.move.hits,
+    willMoveCrit: (move) => move.isCrit
+};
+
+export const cpuRng: RNGStrategy = { 
+    doesAttackingStatusProc: (m) => true,
+    doesAttackingAbilityProc: () => true,
+    doesAbilityProcAsDefender: (defender, moveResult) => true,
+    getDamageRoll: (r) => r.highestRollDamage,
+    getHits: (r) => r.move.hits,
+    willMoveCrit: (move) => move.isCrit,
+};
 
 export type PlannedMoveAction = {
     type: 'move';

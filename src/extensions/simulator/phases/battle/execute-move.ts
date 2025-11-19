@@ -5,28 +5,28 @@ import { getRecovery, getRecoil } from '@smogon/calc/dist/desc';
 import { MoveResult } from '../../moveScoring.contracts';
 import { gen, RNGStrategy } from '../../../configuration';
 import { isContactMove } from '../../move-properties';
+import { notImplemented } from '../../notImplementedError';
 
-export function executeMove(attacker: Pokemon, defender: Pokemon, move: Move, field: Field, rng: RNGStrategy): { attacker: Pokemon, defender: Pokemon };
-export function executeMove(attacker: Pokemon, defender: Pokemon, move: string, field: Field, rng: RNGStrategy): { attacker: Pokemon, defender: Pokemon };
-export function executeMove(attacker: Pokemon, defender: Pokemon, moveOrMoveName: Move | string, field: Field, rng: RNGStrategy): { attacker: Pokemon, defender: Pokemon } {
+export function executeMove(attacker: Pokemon, defender: Pokemon, move: Move, field: Field, attackerRng: RNGStrategy): { attacker: Pokemon, defender: Pokemon };
+export function executeMove(attacker: Pokemon, defender: Pokemon, move: string, field: Field, attackerRng: RNGStrategy): { attacker: Pokemon, defender: Pokemon };
+export function executeMove(attacker: Pokemon, defender: Pokemon, moveOrMoveName: Move | string, field: Field, attackerRng: RNGStrategy): { attacker: Pokemon, defender: Pokemon } {
 	const move = typeof moveOrMoveName === 'string' ? createMove(attacker, moveOrMoveName) : moveOrMoveName;
 
-	// TODO: Clone is keeping a ref to original object?
-	attacker = attacker.clone({ boosts: { ...attacker.boosts } });
-	defender = defender.clone({ boosts: { ...defender.boosts } });
+	attacker = attacker.clone();
+	defender = defender.clone();
 	
-	let moveResult = calculateMoveResult(attacker, defender, move, field);
+	let moveResult = calculateMoveResult(attacker, defender, move, field, attackerRng);
 	let attackerHp = attacker.curHP();
 	let defenderHp = defender.curHP();
 	let defenderMaxHP = defender.maxHP();
 	let attackerMaxHP = attacker.maxHP();
 
-	for (let i = 0; i < rng.getHits(moveResult); i++) {
+	for (let i = 0; i < attackerRng.getHits(moveResult); i++) {
 		if (attacker.hasAbility('Libero') || attacker.hasAbility('Protean'))
 			attacker.types = [moveResult.move.type];
 
 		if (i > 0) {
-			moveResult = calculateMoveResult(attacker, defender, move, field);
+			moveResult = calculateMoveResult(attacker, defender, move, field, attackerRng);
 		}
 
 		const moveRecoveryPerHit = getRecovery(gen, attacker, defender, move, moveResult.highestRollDamage);
@@ -34,8 +34,9 @@ export function executeMove(attacker: Pokemon, defender: Pokemon, moveOrMoveName
 		const moveRecoilPerHit = getPerHitMoveRecoil(attacker, defender, moveResult);
 		const damagePerHit = moveResult.highestRollDamage;
 		const abilityRecoilPerHit = getPerHitAbilityRecoil(attacker, moveResult.move, defender);
-
+		const statusAfterHit = getStatusAfterHit(attacker, defender, moveResult, attackerRng);
 		defenderHp = getHPAfterDamage(defender, defenderHp, defenderMaxHP, damagePerHit);
+		defender.status = statusAfterHit;
 		consumeDefenderItemAfterHit(defender, move);
 
 		consumeAttackerItemBeforeHit(attacker, move);
@@ -49,7 +50,6 @@ export function executeMove(attacker: Pokemon, defender: Pokemon, moveOrMoveName
 	}
 
 	attackerHp = getHPAfterDamage(attacker, attackerHp, attackerMaxHP, getItemRecoil(attacker));
-	
 	attacker = attacker.clone({ curHP: attackerHp });
 
 
@@ -79,6 +79,26 @@ function consumeBerryAfterHit(defender: Pokemon, currentHP: number, move?: Move)
 
 	let recovery = 0;
 	switch (defender.item) {
+		case 'Cheri Berry':
+			defender.status = defender.status === 'par' ? '' : defender.status;
+			consumeItem(defender);
+			break;
+		case 'Chesto Berry':
+			defender.status = defender.status === 'slp' ? '' : defender.status;
+			consumeItem(defender);
+			break;
+		case 'Pecha Berry':
+			defender.status = defender.status === 'psn' || defender.status == 'tox' ? '' : defender.status;
+			consumeItem(defender);
+			break;
+		case 'Rawst Berry':
+			defender.status = defender.status === 'frz' ? '' : defender.status;
+			consumeItem(defender);
+			break;
+		case 'Aspear Berry':
+			defender.status = defender.status === 'brn' ? '' : defender.status;
+			consumeItem(defender);
+			break;
 		case 'Salac Berry':
 			if (currentHP <= getPercentageOfMaxHP(defender, 25)) {
 				consumeItem(defender);
@@ -152,6 +172,33 @@ function getPerHitAbilityRecoil(attacker: Pokemon, move: Move, defender: Pokemon
 	}
 
 	return 0;
+}
+
+function getStatusAfterHit(attacker: Pokemon, defender: Pokemon, moveResult: MoveResult, attackerRng: RNGStrategy): Pokemon['status'] {
+	if (defender.status)
+		return defender.status;
+	
+	switch (moveResult.move.name) {
+		case 'Poison Powder':
+			return 'psn';
+		case 'Toxic':
+			return 'tox';
+		case 'Glare':
+		case 'Stun Spore':
+			return 'par';
+		case 'Thunder Wave':
+			notImplemented();
+	}
+
+	if (moveResult.move.name === 'Toxic') {
+		return 'tox';
+	}
+
+	if (moveResult.move.flags.contact && attacker.hasAbility('Poison Touch') && attackerRng.doesAttackingAbilityProc(moveResult)) {
+		return 'psn';
+	}
+
+	return '';
 }
 
 function consumeItem(pokemon: Pokemon): void {

@@ -1,5 +1,6 @@
 import { Field, Pokemon, Side } from "@smogon/calc";
 import { BattleFieldState, PokemonPosition, Trainer } from "./moveScoring.contracts";
+import { getFinalSpeed } from "./utils";
 
 export interface IBattleFieldStateVisitor {
     visitActivePokemon?(state: BattleFieldState, pokemon: PokemonPosition, field: Field, side: Side): void;
@@ -18,7 +19,11 @@ export function visitActivePokemonInSpeedOrder(state: BattleFieldState, visitor:
         toVisit.push({ active, field: state.field, side: state.cpuSide });
     }
 
-    toVisit.sort((a,b) => b.active.pokemon.stats.spe - a.active.pokemon.stats.spe);
+    toVisit.sort((a,b) => {
+        let aSpeed = getFinalSpeed(a.active.pokemon, a.field, a.side);
+        let bSpeed = getFinalSpeed(b.active.pokemon, b.field, b.side);
+        return bSpeed - aSpeed;
+    });
 
     for (let visit of toVisit)
         visitor.visitActivePokemon(state, visit.active, visit.field, visit.side);

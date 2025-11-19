@@ -1,8 +1,362 @@
 import { Pokemon } from "@smogon/calc";
 import { gen } from "../../configuration";
 import { PokemonSet } from "../../trainer-sets.types";
+import { convertStats } from "../helper";
 
-const collection = { "Default": { "customSets": { "Vivillon": { "Custom Set": { "ability": "Compound Eyes", "level": 91, "ivs": { "hp": 16, "at": 16, "df": 17, "sa": 28, "sd": 0, "sp": 23 }, "moves": ["Hurricane", "Protect", "Sleep Powder", "Powder"], "nature": "Gentle", "isCustomSet": true } }, "Kingdra": { "Custom Set": { "ability": "Swift Swim", "level": 91, "ivs": { "hp": 4, "at": 28, "df": 20, "sa": 15, "sd": 28, "sp": 1 }, "moves": ["Octazooka", "Dragon Pulse", "Ice Beam", "Hydro Pump"], "nature": "Jolly", "isCustomSet": true } }, "Tsareena": { "Custom Set": { "ability": "Sweet Veil", "level": 91, "ivs": { "hp": 12, "at": 27, "df": 20, "sa": 7, "sd": 20, "sp": 30 }, "moves": ["Trop Kick", "Rapid Spin", "Magical Leaf", "Power Whip"], "nature": "Hardy", "isCustomSet": true } }, "Musharna": { "Custom Set": { "ability": "Synchronize", "level": 91, "ivs": { "hp": 3, "at": 24, "df": 3, "sa": 0, "sd": 26, "sp": 26 }, "moves": ["Psychic", "Moonblast", "Psyshock", "Moonlight"], "nature": "Naughty", "isCustomSet": true } }, "Salazzle": { "Custom Set": { "ability": "Corrosion", "level": 91, "ivs": { "hp": 20, "at": 28, "df": 23, "sa": 20, "sd": 11 }, "moves": ["Flamethrower", "Sludge Bomb", "Toxic", "Encore"], "nature": "Hardy", "isCustomSet": true } }, "Ampharos": { "Custom Set": { "ability": "Static", "level": 91, "ivs": { "hp": 8, "at": 3, "df": 28, "sa": 13, "sd": 20, "sp": 10 }, "moves": ["Brick Break", "Dragon Pulse", "Thunderbolt", "Power Gem"], "nature": "Sassy", "isCustomSet": true } }, "Infernape": { "Custom Set": { "ability": "Vital Spirit", "level": 91, "ivs": { "df": 23, "sa": 30, "sd": 16 }, "moves": ["Overheat", "Mach Punch", "Close Combat", "Fake Out"], "nature": "Naive", "item": "Charcoal", "isCustomSet": true } }, "Seismitoad": { "Custom Set": { "ability": "Swift Swim", "level": 91, "ivs": { "hp": 10, "at": 24, "df": 4, "sa": 10, "sd": 19, "sp": 11 }, "moves": ["Mud Shot", "Brick Break", "Liquidation", "Earth Power"], "nature": "Calm", "isCustomSet": true } }, "Carracosta": { "Custom Set": { "ability": "Solid Rock", "level": 76, "ivs": { "hp": 30, "at": 9, "df": 21, "sa": 6, "sd": 14, "sp": 25 }, "moves": ["Rock Slide", "Knock Off", "Aqua Jet", "Protect"], "nature": "Naughty", "isCustomSet": true } }, "Walrein": { "Custom Set": { "ability": "Thick Fat", "level": 91, "ivs": { "hp": 8, "at": 15, "df": 21, "sa": 9, "sd": 14, "sp": 3 }, "moves": ["Frost Breath", "Icy Wind", "Freeze-Dry", "Super Fang"], "nature": "Modest", "isCustomSet": true } }, "Aggron": { "Custom Set": { "ability": "Rock Head", "level": 91, "ivs": { "hp": 29, "at": 24, "df": 18, "sa": 3, "sd": 24, "sp": 23 }, "moves": ["Earthquake", "Rock Tomb", "Head Smash", "Heavy Slam"], "nature": "Hardy", "item": "Wide Lens", "isCustomSet": true } }, "Cloyster": { "Custom Set": { "ability": "Skill Link", "level": 91, "ivs": { "hp": 5, "at": 27, "df": 13, "sa": 21, "sd": 10, "sp": 18 }, "moves": ["Rapid Spin", "Ice Shard", "Icicle Spear", "Rock Blast"], "nature": "Lax", "isCustomSet": true } }, "Gliscor": { "Custom Set": { "ability": "Hyper Cutter", "level": 91, "ivs": { "hp": 23, "at": 20, "df": 16, "sa": 7, "sd": 7, "sp": 2 }, "moves": ["Acrobatics", "Knock Off", "Earthquake", "U-turn"], "nature": "Quiet", "isCustomSet": true } }, "Corviknight": { "Custom Set": { "ability": "Unnerve", "level": 91, "ivs": { "hp": 13, "at": 2, "df": 16, "sa": 23, "sd": 21, "sp": 14 }, "moves": ["Brave Bird", "Roost", "Feather Dance", "Defog"], "nature": "Calm", "isCustomSet": true } }, "Excadrill": { "Custom Set": { "ability": "Sand Force", "level": 91, "ivs": { "hp": 23, "at": 9, "df": 5, "sa": 0, "sd": 29, "sp": 10 }, "moves": ["Earthquake", "Iron Head", "High Horsepower", "Rapid Spin"], "nature": "Naive", "item": "Assault Vest", "isCustomSet": true } }, "Flygon": { "Custom Set": { "ability": "Levitate", "level": 91, "ivs": { "hp": 29, "at": 14, "df": 12, "sa": 4, "sd": 12, "sp": 22 }, "moves": ["Draco Meteor", "First Impression", "U-turn", "Stomping Tantrum"], "nature": "Relaxed", "isCustomSet": true } }, "Tyrantrum": { "Custom Set": { "ability": "Strong Jaw", "level": 91, "ivs": { "df": 17, "sa": 6 }, "moves": ["Dragon Claw", "Rock Slide", "Crunch", "Earthquake"], "nature": "Sassy", "isCustomSet": true } }, "Toxtricity-Low-Key": { "Custom Set": { "ability": "Punk Rock", "level": 91, "ivs": { "hp": 21, "at": 0, "df": 5, "sa": 6, "sd": 11, "sp": 7 }, "moves": ["Overdrive", "Sludge Wave", "Boomburst", "Acid Spray"], "nature": "Impish", "isCustomSet": true } }, "Perrserker": { "Custom Set": { "ability": "Battle Armor", "level": 91, "ivs": { "hp": 7, "at": 2, "df": 8, "sa": 8, "sd": 18, "sp": 3 }, "moves": ["Iron Head", "Bullet Punch", "Foul Play", "Brick Break"], "nature": "Lax", "isCustomSet": true } }, "Torkoal": { "Custom Set": { "ability": "Shell Armor", "level": 91, "ivs": { "hp": 30, "at": 8, "df": 26, "sa": 24, "sd": 21, "sp": 12 }, "moves": ["Heat Wave", "Rapid Spin", "Flamethrower", "Protect"], "nature": "Jolly", "isCustomSet": true } }, "Turtonator": { "Custom Set": { "ability": "Shell Armor", "level": 91, "ivs": { "hp": 22, "at": 18, "df": 2, "sa": 28, "sd": 26, "sp": 18 }, "moves": ["Flamethrower", "Dragon Pulse", "Rapid Spin"], "nature": "Lonely", "isCustomSet": true } }, "Swampert": { "Custom Set": { "ability": "Torrent", "level": 91, "ivs": { "hp": 3, "at": 22, "df": 24, "sa": 7, "sd": 0, "sp": 2 }, "moves": ["Earthquake", "Liquidation", "Protect", "Rock Slide"], "nature": "Naughty", "isCustomSet": true } }, "Araquanid": { "Custom Set": { "ability": "Water Bubble", "level": 91, "ivs": { "hp": 24, "df": 8, "sa": 26, "sd": 19, "sp": 19 }, "moves": ["Liquidation", "Lunge", "Leech Life", "Soak"], "nature": "Naughty", "isCustomSet": true } }, "Muk-Alola": { "Custom Set": { "ability": "Poison Touch", "level": 91, "ivs": { "hp": 12, "at": 9, "df": 24, "sa": 12, "sd": 7, "sp": 28 }, "moves": ["Gunk Shot", "Knock Off", "Earthquake"], "nature": "Gentle", "isCustomSet": true } }, "Barraskewda": { "Custom Set": { "ability": "Swift Swim", "level": 91, "ivs": { "hp": 22, "at": 17, "df": 13, "sa": 21, "sd": 5, "sp": 5 }, "moves": ["Liquidation", "Close Combat", "Flip Turn", "Brick Break"], "nature": "Naive", "isCustomSet": true } }, "Lanturn": { "Custom Set": { "ability": "Volt Absorb", "level": 91, "ivs": { "at": 1, "df": 9, "sa": 5, "sd": 5, "sp": 13 }, "moves": ["Thunderbolt", "Surf", "Hydro Pump", "Ice Beam"], "nature": "Careful", "isCustomSet": true } }, "Basculegion": { "Custom Set": { "ability": "Swift Swim", "level": 91, "ivs": { "hp": 21, "at": 30, "df": 25, "sa": 22, "sd": 22, "sp": 3 }, "moves": ["Poltergeist", "Liquidation", "Psychic Fangs", "Superpower"], "nature": "Mild", "isCustomSet": true } }, "Primarina": { "Custom Set": { "ability": "Torrent", "level": 91, "ivs": { "hp": 19, "df": 5, "sa": 15, "sd": 28, "sp": 4 }, "moves": ["Draining Kiss", "Flip Turn", "Surf", "Encore"], "nature": "Quiet", "isCustomSet": true } }, "Aggron-Mega": { "Custom Set": { "ability": "Filter", "level": 91, "ivs": { "hp": 29, "at": 24, "df": 18, "sa": 3, "sd": 24, "sp": 23 }, "moves": ["Earthquake", "Rock Tomb", "Head Smash", "Heavy Slam"], "nature": "Hardy", "isCustomSet": true } }, "Ampharos-Mega": { "Custom Set": { "ability": "Mold Breaker", "level": 91, "ivs": { "hp": 8, "at": 3, "df": 28, "sa": 13, "sd": 20, "sp": 10 }, "moves": ["Brick Break", "Dragon Pulse", "Thunderbolt", "Power Gem"], "nature": "Sassy", "isCustomSet": true } }, "Gyarados": { "Custom Set": { "ability": "Intimidate", "level": 91, "ivs": { "hp": 24, "at": 24, "df": 24, "sa": 16, "sd": 29, "sp": 23 }, "moves": ["Waterfall", "Ice Fang", "Crunch", "Scale Shot"], "nature": "Serious", "isCustomSet": true } }, "Slowbro": { "Custom Set": { "ability": "Own Tempo", "level": 91, "ivs": { "hp": 0, "at": 0, "sa": 13, "sd": 7, "sp": 8 }, "moves": ["Psychic", "Surf", "Slack Off", "Future Sight"], "nature": "Quirky", "isCustomSet": true } }, "Kingler": { "Custom Set": { "ability": "Shell Armor", "level": 91, "ivs": { "hp": 11, "at": 18, "df": 11, "sa": 6, "sd": 9, "sp": 16 }, "moves": ["Crabhammer", "X-Scissor", "Ice Hammer", "Hammer Arm"], "nature": "Quirky", "isCustomSet": true } }, "Golisopod": { "Custom Set": { "ability": "Emergency Exit", "level": 91, "ivs": { "hp": 14, "at": 0, "df": 12, "sa": 25, "sd": 20, "sp": 6 }, "moves": ["First Impression", "Liquidation", "Leech Life", "Sucker Punch"], "nature": "Careful", "isCustomSet": true } }, "Gardevoir": { "Custom Set": { "ability": "Synchronize", "level": 91, "ivs": { "hp": 13, "at": 15, "df": 10, "sa": 30, "sd": 11, "sp": 18 }, "moves": ["Psychic", "Moonblast", "Dream Eater", "Hypnosis"], "nature": "Quiet", "isCustomSet": true } }, "Crobat": { "Custom Set": { "ability": "Inner Focus", "level": 91, "ivs": { "hp": 5, "at": 19, "df": 5, "sa": 27, "sd": 1, "sp": 13 }, "moves": ["Brave Bird", "Sludge Bomb", "Leech Life", "Cross Poison"], "nature": "Quiet", "isCustomSet": true } }, "Milotic": { "Custom Set": { "ability": "Marvel Scale", "level": 91, "ivs": { "hp": 26, "at": 17, "df": 0, "sa": 17, "sd": 20 }, "moves": ["Surf", "Dragon Pulse", "Hydro Pump", "Recover"], "nature": "Timid", "item": "Flame Orb", "isCustomSet": true } }, "Dragapult": { "Custom Set": { "ability": "Infiltrator", "level": 91, "ivs": { "hp": 26, "at": 25, "df": 28, "sa": 19, "sd": 17, "sp": 6 }, "moves": ["Dragon Darts", "Draco Meteor", "Sucker Punch", "Phantom Force"], "nature": "Adamant", "item": "Dragon Fang", "isCustomSet": true } }, "Blastoise": { "Custom Set": { "ability": "Torrent", "level": 91, "ivs": { "hp": 6, "at": 27, "df": 23, "sa": 9, "sd": 16, "sp": 10 }, "moves": ["Razor Shell", "Ice Beam", "Hydro Pump", "Surf"], "nature": "Bashful", "isCustomSet": true } }, "Dragonite": { "Custom Set": { "ability": "Inner Focus", "level": 91, "ivs": { "hp": 15, "at": 4, "df": 10, "sa": 6, "sd": 16, "sp": 28 }, "moves": ["Draco Meteor", "Dual Wingbeat", "Extreme Speed", "Dragon Claw"], "nature": "Docile", "isCustomSet": true } }, "Overqwil": { "Custom Set": { "ability": "Intimidate", "level": 91, "ivs": { "hp": 5, "at": 9, "df": 9, "sa": 7, "sd": 15, "sp": 29 }, "moves": ["Gunk Shot", "Throat Chop", "Liquidation"], "nature": "Impish", "isCustomSet": true } }, "Sneasler": { "Custom Set": { "ability": "Inner Focus", "level": 91, "ivs": { "hp": 15, "at": 22, "df": 19, "sa": 8, "sd": 4, "sp": 28 }, "moves": ["Fake Out", "Gunk Shot", "Close Combat", "Knock Off"], "nature": "Bold", "isCustomSet": true } }, "Ursaluna": { "Custom Set": { "ability": "Guts", "level": 91, "ivs": { "hp": 17, "df": 21, "sa": 28, "sd": 8, "sp": 8 }, "moves": ["High Horsepower", "Earthquake", "Facade", "Yawn"], "nature": "Careful", "item": "Flame Orb", "isCustomSet": true } }, "Urshifu": { "Custom Set": { "ability": "Unseen Fist", "level": 91, "ivs": { "sa": 21, "sd": 23 }, "moves": ["Wicked Blow", "Sucker Punch", "Close Combat", "Iron Head"], "nature": "Naive", "item": "Life Orb", "isCustomSet": true } }, "Beedrill": { "Custom Set": { "ability": "Sniper", "level": 91, "ivs": { "hp": 26, "at": 11, "df": 19, "sa": 19, "sd": 3, "sp": 14 }, "moves": ["Drill Run", "Leech Life", "Poison Jab", "U-turn"], "nature": "Calm", "isCustomSet": true } }, "Beedrill-Mega": { "Custom Set": { "ability": "Adaptability", "level": 91, "ivs": { "hp": 26, "at": 11, "df": 19, "sa": 19, "sd": 3, "sp": 14 }, "moves": ["Drill Run", "Leech Life", "Poison Jab", "U-turn"], "nature": "Calm", "isCustomSet": true } }, "Cradily": { "Custom Set": { "ability": "Suction Cups", "level": 91, "ivs": { "hp": 12, "at": 3, "df": 25, "sa": 22, "sd": 26, "sp": 20 }, "moves": ["Mirror Coat", "Energy Ball", "Power Whip", "Power Gem"], "nature": "Impish", "isCustomSet": true } }, "Grimmsnarl": { "Custom Set": { "ability": "Prankster", "level": 91, "ivs": { "hp": 25, "at": 9, "df": 12, "sa": 19, "sd": 22, "sp": 23 }, "moves": ["Foul Play", "Spirit Break", "Play Rough", "Hammer Arm"], "nature": "Careful", "item": "Sitrus Berry", "isCustomSet": true } }, "Starmie": { "Custom Set": { "ability": "Natural Cure", "level": 91, "ivs": { "hp": 4, "at": 24, "df": 3, "sa": 19, "sd": 18, "sp": 0 }, "moves": ["Psychic", "Hydro Pump", "Recover", "Ice Beam"], "nature": "Careful", "isCustomSet": true } }, "Aerodactyl": { "Custom Set": { "ability": "Rock Head", "level": 91, "ivs": { "hp": 24, "at": 11, "df": 14, "sa": 9, "sd": 19, "sp": 3 }, "moves": ["Double-Edge", "Dual Wingbeat", "Tailwind", "Stone Edge"], "nature": "Bashful", "isCustomSet": true } }, "Aerodactyl-Mega": { "Custom Set": { "ability": "Tough Claws", "level": 91, "ivs": { "hp": 24, "at": 11, "df": 14, "sa": 9, "sd": 19, "sp": 3 }, "moves": ["Double-Edge", "Dual Wingbeat", "Tailwind", "Stone Edge"], "nature": "Bashful", "isCustomSet": true } }, "Armaldo": { "Custom Set": { "ability": "Battle Armor", "level": 91, "ivs": { "hp": 24, "at": 10, "df": 21, "sa": 16, "sd": 28, "sp": 18 }, "moves": ["Rapid Spin", "Leech Life", "Rock Blast", "Stone Edge"], "nature": "Hardy", "isCustomSet": true } } }, "party": ["Tsareena (Custom Set)", "Aggron-Mega (Custom Set)"] }, "Simulator": { "customSets": { "Turtwig": { "Custom Set": { "ability": "Shell Armor", "level": 12, "ivs": { "sa": 8 }, "moves": ["Absorb", "Bite", "Growl", "Confide"], "nature": "Hardy", "isCustomSet": true } }, "Starly": { "Custom Set": { "ability": "Keen Eye", "level": 12, "ivs": { "hp": 25, "at": 15, "df": 15, "sa": 14, "sd": 5, "sp": 28 }, "moves": ["Tackle", "Growl", "Quick Attack", "Aerial Ace"], "nature": "Jolly", "isCustomSet": true } }, "Surskit": { "Custom Set": { "ability": "Swift Swim", "level": 12, "ivs": { "hp": 29, "at": 4, "df": 8, "sa": 2, "sd": 4, "sp": 9 }, "moves": ["Bubble Beam", "Quick Attack"], "nature": "Bashful", "isCustomSet": true } }, "Gossifleur": { "Custom Set": { "ability": "Cotton Down", "level": 12, "ivs": { "hp": 3, "at": 9, "df": 13, "sa": 8, "sd": 30, "sp": 6 }, "moves": ["Leafage", "Magical Leaf"], "nature": "Modest", "isCustomSet": true } }, "Poochyena": { "Custom Set": { "ability": "Run Away", "level": 12, "ivs": { "hp": 15, "at": 17, "df": 18, "sa": 16, "sd": 1, "sp": 30 }, "moves": ["Bite", "Tackle", "Sand Attack", "Baby-Doll Eyes"], "nature": "Adamant", "isCustomSet": true } } }, "party": [] } }
+const collection = {
+    "Default": {
+        "customSets": {
+            "Vivillon": {
+                "Custom Set": {
+                    "ability": "Compound Eyes", "level": 91, "ivs": { "hp": 16, "at": 16, "df": 17, "sa": 28, "sd": 0, "sp": 23 },
+                    "moves": ["Hurricane", "Protect", "Sleep Powder", "Powder"], "nature": "Gentle", "isCustomSet": true
+                }
+            },
+            "Kingdra": {
+                "Custom Set": {
+                    "ability": "Swift Swim", "level": 91, "ivs": { "hp": 4, "at": 28, "df": 20, "sa": 15, "sd": 28, "sp": 1 },
+                    "moves": ["Octazooka", "Dragon Pulse", "Ice Beam", "Hydro Pump"], "nature": "Jolly", "isCustomSet": true
+                }
+            },
+            "Tsareena": {
+                "Custom Set": {
+                    "ability": "Sweet Veil", "level": 91, "ivs": { "hp": 12, "at": 27, "df": 20, "sa": 7, "sd": 20, "sp": 30 },
+                    "moves": ["Trop Kick", "Rapid Spin", "Magical Leaf", "Power Whip"], "nature": "Hardy", "isCustomSet": true
+                }
+            },
+            "Musharna": {
+                "Custom Set": {
+                    "ability": "Synchronize", "level": 91, "ivs": { "hp": 3, "at": 24, "df": 3, "sa": 0, "sd": 26, "sp": 26 },
+                    "moves": ["Psychic", "Moonblast", "Psyshock", "Moonlight"], "nature": "Naughty", "isCustomSet": true
+                }
+            },
+            "Salazzle": {
+                "Custom Set": {
+                    "ability": "Corrosion", "level": 91, "ivs": { "hp": 20, "at": 28, "df": 23, "sa": 20, "sd": 11 },
+                    "moves": ["Flamethrower", "Sludge Bomb", "Toxic", "Encore"], "nature": "Hardy", "isCustomSet": true
+                }
+            },
+            "Ampharos": {
+                "Custom Set": {
+                    "ability": "Static", "level": 91, "ivs": { "hp": 8, "at": 3, "df": 28, "sa": 13, "sd": 20, "sp": 10 },
+                    "moves": ["Brick Break", "Dragon Pulse", "Thunderbolt", "Power Gem"], "nature": "Sassy", "isCustomSet": true
+                }
+            },
+            "Infernape": {
+                "Custom Set": {
+                    "ability": "Vital Spirit", "level": 91, "ivs": { "df": 23, "sa": 30, "sd": 16 },
+                    "moves": ["Overheat", "Mach Punch", "Close Combat", "Fake Out"], "nature": "Naive", "item": "Charcoal", "isCustomSet": true
+                }
+            },
+            "Seismitoad": {
+                "Custom Set": {
+                    "ability": "Swift Swim", "level": 91, "ivs": { "hp": 10, "at": 24, "df": 4, "sa": 10, "sd": 19, "sp": 11 },
+                    "moves": ["Mud Shot", "Brick Break", "Liquidation", "Earth Power"], "nature": "Calm", "isCustomSet": true
+                }
+            },
+            "Carracosta": {
+                "Custom Set": {
+                    "ability": "Solid Rock", "level": 76, "ivs": { "hp": 30, "at": 9, "df": 21, "sa": 6, "sd": 14, "sp": 25 },
+                    "moves": ["Rock Slide", "Knock Off", "Aqua Jet", "Protect"], "nature": "Naughty", "isCustomSet": true
+                }
+            },
+            "Walrein": {
+                "Custom Set": {
+                    "ability": "Thick Fat", "level": 91, "ivs": { "hp": 8, "at": 15, "df": 21, "sa": 9, "sd": 14, "sp": 3 },
+                    "moves": ["Frost Breath", "Icy Wind", "Freeze-Dry", "Super Fang"], "nature": "Modest", "isCustomSet": true
+                }
+            },
+            "Aggron": {
+                "Custom Set": {
+                    "ability": "Rock Head", "level": 91, "ivs": { "hp": 29, "at": 24, "df": 18, "sa": 3, "sd": 24, "sp": 23 },
+                    "moves": ["Earthquake", "Rock Tomb", "Head Smash", "Heavy Slam"], "nature": "Hardy", "item": "Wide Lens", "isCustomSet": true
+                }
+            },
+            "Cloyster": {
+                "Custom Set": {
+                    "ability": "Skill Link", "level": 91, "ivs": { "hp": 5, "at": 27, "df": 13, "sa": 21, "sd": 10, "sp": 18 },
+                    "moves": ["Rapid Spin", "Ice Shard", "Icicle Spear", "Rock Blast"], "nature": "Lax", "isCustomSet": true
+                }
+            },
+            "Gliscor": {
+                "Custom Set": {
+                    "ability": "Hyper Cutter", "level": 91, "ivs": { "hp": 23, "at": 20, "df": 16, "sa": 7, "sd": 7, "sp": 2 },
+                    "moves": ["Acrobatics", "Knock Off", "Earthquake", "U-turn"], "nature": "Quiet", "isCustomSet": true
+                }
+            },
+            "Corviknight": {
+                "Custom Set": {
+                    "ability": "Unnerve", "level": 91, "ivs": { "hp": 13, "at": 2, "df": 16, "sa": 23, "sd": 21, "sp": 14 },
+                    "moves": ["Brave Bird", "Roost", "Feather Dance", "Defog"], "nature": "Calm", "isCustomSet": true
+                }
+            },
+            "Excadrill": {
+                "Custom Set": {
+                    "ability": "Sand Force", "level": 91, "ivs": { "hp": 23, "at": 9, "df": 5, "sa": 0, "sd": 29, "sp": 10 },
+                    "moves": ["Earthquake", "Iron Head", "High Horsepower", "Rapid Spin"], "nature": "Naive", "item": "Assault Vest", "isCustomSet": true
+                }
+            },
+            "Flygon": {
+                "Custom Set": {
+                    "ability": "Levitate", "level": 91, "ivs": { "hp": 29, "at": 14, "df": 12, "sa": 4, "sd": 12, "sp": 22 },
+                    "moves": ["Draco Meteor", "First Impression", "U-turn", "Stomping Tantrum"], "nature": "Relaxed", "isCustomSet": true
+                }
+            },
+            "Tyrantrum": {
+                "Custom Set": {
+                    "ability": "Strong Jaw", "level": 91, "ivs": { "df": 17, "sa": 6 },
+                    "moves": ["Dragon Claw", "Rock Slide", "Crunch", "Earthquake"], "nature": "Sassy", "isCustomSet": true
+                }
+            },
+            "Toxtricity-Low-Key": {
+                "Custom Set": {
+                    "ability": "Punk Rock", "level": 91, "ivs": { "hp": 21, "at": 0, "df": 5, "sa": 6, "sd": 11, "sp": 7 },
+                    "moves": ["Overdrive", "Sludge Wave", "Boomburst", "Acid Spray"], "nature": "Impish", "isCustomSet": true
+                }
+            },
+            "Perrserker": {
+                "Custom Set": {
+                    "ability": "Battle Armor", "level": 91, "ivs": { "hp": 7, "at": 2, "df": 8, "sa": 8, "sd": 18, "sp": 3 },
+                    "moves": ["Iron Head", "Bullet Punch", "Foul Play", "Brick Break"], "nature": "Lax", "isCustomSet": true
+                }
+            },
+            "Torkoal": {
+                "Custom Set": {
+                    "ability": "Shell Armor", "level": 91, "ivs": { "hp": 30, "at": 8, "df": 26, "sa": 24, "sd": 21, "sp": 12 },
+                    "moves": ["Heat Wave", "Rapid Spin", "Flamethrower", "Protect"], "nature": "Jolly", "isCustomSet": true
+                }
+            },
+            "Turtonator": {
+                "Custom Set": {
+                    "ability": "Shell Armor", "level": 91, "ivs": { "hp": 22, "at": 18, "df": 2, "sa": 28, "sd": 26, "sp": 18 },
+                    "moves": ["Flamethrower", "Dragon Pulse", "Rapid Spin"], "nature": "Lonely", "isCustomSet": true
+                }
+            },
+            "Swampert": {
+                "Custom Set": {
+                    "ability": "Torrent", "level": 91, "ivs": { "hp": 3, "at": 22, "df": 24, "sa": 7, "sd": 0, "sp": 2 },
+                    "moves": ["Earthquake", "Liquidation", "Protect", "Rock Slide"], "nature": "Naughty", "isCustomSet": true
+                }
+            },
+            "Araquanid": {
+                "Custom Set": {
+                    "ability": "Water Bubble", "level": 91, "ivs": { "hp": 24, "df": 8, "sa": 26, "sd": 19, "sp": 19 },
+                    "moves": ["Liquidation", "Lunge", "Leech Life", "Soak"], "nature": "Naughty", "isCustomSet": true
+                }
+            },
+            "Muk-Alola": {
+                "Custom Set": {
+                    "ability": "Poison Touch", "level": 91, "ivs": { "hp": 12, "at": 9, "df": 24, "sa": 12, "sd": 7, "sp": 28 },
+                    "moves": ["Gunk Shot", "Knock Off", "Earthquake"], "nature": "Gentle", "isCustomSet": true
+                }
+            },
+            "Barraskewda": {
+                "Custom Set": {
+                    "ability": "Swift Swim", "level": 91, "ivs": { "hp": 22, "at": 17, "df": 13, "sa": 21, "sd": 5, "sp": 5 },
+                    "moves": ["Liquidation", "Close Combat", "Flip Turn", "Brick Break"], "nature": "Naive", "isCustomSet": true
+                }
+            },
+            "Lanturn": {
+                "Custom Set": {
+                    "ability": "Volt Absorb", "level": 91, "ivs": { "at": 1, "df": 9, "sa": 5, "sd": 5, "sp": 13 },
+                    "moves": ["Thunderbolt", "Surf", "Hydro Pump", "Ice Beam"], "nature": "Careful", "isCustomSet": true
+                }
+            },
+            "Basculegion": {
+                "Custom Set": {
+                    "ability": "Swift Swim", "level": 91, "ivs": { "hp": 21, "at": 30, "df": 25, "sa": 22, "sd": 22, "sp": 3 },
+                    "moves": ["Poltergeist", "Liquidation", "Psychic Fangs", "Superpower"], "nature": "Mild", "isCustomSet": true
+                }
+            },
+            "Primarina": {
+                "Custom Set": {
+                    "ability": "Torrent", "level": 91, "ivs": { "hp": 19, "df": 5, "sa": 15, "sd": 28, "sp": 4 },
+                    "moves": ["Draining Kiss", "Flip Turn", "Surf", "Encore"], "nature": "Quiet", "isCustomSet": true
+                }
+            },
+            "Aggron-Mega": {
+                "Custom Set": {
+                    "ability": "Filter", "level": 91, "ivs": { "hp": 29, "at": 24, "df": 18, "sa": 3, "sd": 24, "sp": 23 },
+                    "moves": ["Earthquake", "Rock Tomb", "Head Smash", "Heavy Slam"], "nature": "Hardy", "isCustomSet": true
+                }
+            },
+            "Ampharos-Mega": {
+                "Custom Set": {
+                    "ability": "Mold Breaker", "level": 91, "ivs": { "hp": 8, "at": 3, "df": 28, "sa": 13, "sd": 20, "sp": 10 },
+                    "moves": ["Brick Break", "Dragon Pulse", "Thunderbolt", "Power Gem"], "nature": "Sassy", "isCustomSet": true
+                }
+            },
+            "Gyarados": {
+                "Custom Set": {
+                    "ability": "Intimidate", "level": 91, "ivs": { "hp": 24, "at": 24, "df": 24, "sa": 16, "sd": 29, "sp": 23 },
+                    "moves": ["Waterfall", "Ice Fang", "Crunch", "Scale Shot"], "nature": "Serious", "isCustomSet": true
+                }
+            },
+            "Slowbro": {
+                "Custom Set": {
+                    "ability": "Own Tempo", "level": 91, "ivs": { "hp": 0, "at": 0, "sa": 13, "sd": 7, "sp": 8 },
+                    "moves": ["Psychic", "Surf", "Slack Off", "Future Sight"], "nature": "Quirky", "isCustomSet": true
+                }
+            },
+            "Kingler": {
+                "Custom Set": {
+                    "ability": "Shell Armor", "level": 91, "ivs": { "hp": 11, "at": 18, "df": 11, "sa": 6, "sd": 9, "sp": 16 },
+                    "moves": ["Crabhammer", "X-Scissor", "Ice Hammer", "Hammer Arm"], "nature": "Quirky", "isCustomSet": true
+                }
+            },
+            "Golisopod": {
+                "Custom Set": {
+                    "ability": "Emergency Exit", "level": 91, "ivs": { "hp": 14, "at": 0, "df": 12, "sa": 25, "sd": 20, "sp": 6 },
+                    "moves": ["First Impression", "Liquidation", "Leech Life", "Sucker Punch"], "nature": "Careful", "isCustomSet": true
+                }
+            },
+            "Gardevoir": {
+                "Custom Set": {
+                    "ability": "Synchronize", "level": 91, "ivs": { "hp": 13, "at": 15, "df": 10, "sa": 30, "sd": 11, "sp": 18 },
+                    "moves": ["Psychic", "Moonblast", "Dream Eater", "Hypnosis"], "nature": "Quiet", "isCustomSet": true
+                }
+            },
+            "Crobat": {
+                "Custom Set": {
+                    "ability": "Inner Focus", "level": 91, "ivs": { "hp": 5, "at": 19, "df": 5, "sa": 27, "sd": 1, "sp": 13 },
+                    "moves": ["Brave Bird", "Sludge Bomb", "Leech Life", "Cross Poison"], "nature": "Quiet", "isCustomSet": true
+                }
+            },
+            "Milotic": {
+                "Custom Set": {
+                    "ability": "Marvel Scale", "level": 91, "ivs": { "hp": 26, "at": 17, "df": 0, "sa": 17, "sd": 20 },
+                    "moves": ["Surf", "Dragon Pulse", "Hydro Pump", "Recover"], "nature": "Timid", "item": "Flame Orb", "isCustomSet": true
+                }
+            },
+            "Dragapult": {
+                "Custom Set": {
+                    "ability": "Infiltrator", "level": 91, "ivs": { "hp": 26, "at": 25, "df": 28, "sa": 19, "sd": 17, "sp": 6 },
+                    "moves": ["Dragon Darts", "Draco Meteor", "Sucker Punch", "Phantom Force"], "nature": "Adamant", "item": "Dragon Fang", "isCustomSet": true
+                }
+            },
+            "Blastoise": {
+                "Custom Set": {
+                    "ability": "Torrent", "level": 91, "ivs": { "hp": 6, "at": 27, "df": 23, "sa": 9, "sd": 16, "sp": 10 },
+                    "moves": ["Razor Shell", "Ice Beam", "Hydro Pump", "Surf"], "nature": "Bashful", "isCustomSet": true
+                }
+            },
+            "Dragonite": {
+                "Custom Set": {
+                    "ability": "Inner Focus", "level": 91, "ivs": { "hp": 15, "at": 4, "df": 10, "sa": 6, "sd": 16, "sp": 28 },
+                    "moves": ["Draco Meteor", "Dual Wingbeat", "Extreme Speed", "Dragon Claw"], "nature": "Docile", "isCustomSet": true
+                }
+            },
+            "Overqwil": {
+                "Custom Set": {
+                    "ability": "Intimidate", "level": 91, "ivs": { "hp": 5, "at": 9, "df": 9, "sa": 7, "sd": 15, "sp": 29 },
+                    "moves": ["Gunk Shot", "Throat Chop", "Liquidation"], "nature": "Impish", "isCustomSet": true
+                }
+            },
+            "Sneasler": {
+                "Custom Set": {
+                    "ability": "Inner Focus", "level": 91, "ivs": { "hp": 15, "at": 22, "df": 19, "sa": 8, "sd": 4, "sp": 28 },
+                    "moves": ["Fake Out", "Gunk Shot", "Close Combat", "Knock Off"], "nature": "Bold", "isCustomSet": true
+                }
+            },
+            "Ursaluna": {
+                "Custom Set": {
+                    "ability": "Guts", "level": 91, "ivs": { "hp": 17, "df": 21, "sa": 28, "sd": 8, "sp": 8 },
+                    "moves": ["High Horsepower", "Earthquake", "Facade", "Yawn"], "nature": "Careful", "item": "Flame Orb", "isCustomSet": true
+                }
+            },
+            "Urshifu": {
+                "Custom Set": {
+                    "ability": "Unseen Fist", "level": 91, "ivs": { "sa": 21, "sd": 23 },
+                    "moves": ["Wicked Blow", "Sucker Punch", "Close Combat", "Iron Head"], "nature": "Naive", "item": "Life Orb", "isCustomSet": true
+                }
+            },
+            "Beedrill": {
+                "Custom Set": {
+                    "ability": "Sniper", "level": 91, "ivs": { "hp": 26, "at": 11, "df": 19, "sa": 19, "sd": 3, "sp": 14 },
+                    "moves": ["Drill Run", "Leech Life", "Poison Jab", "U-turn"], "nature": "Calm", "isCustomSet": true
+                }
+            },
+            "Beedrill-Mega": {
+                "Custom Set": {
+                    "ability": "Adaptability", "level": 91, "ivs": { "hp": 26, "at": 11, "df": 19, "sa": 19, "sd": 3, "sp": 14 },
+                    "moves": ["Drill Run", "Leech Life", "Poison Jab", "U-turn"], "nature": "Calm", "isCustomSet": true
+                }
+            },
+            "Cradily": {
+                "Custom Set": {
+                    "ability": "Suction Cups", "level": 91, "ivs": { "hp": 12, "at": 3, "df": 25, "sa": 22, "sd": 26, "sp": 20 },
+                    "moves": ["Mirror Coat", "Energy Ball", "Power Whip", "Power Gem"], "nature": "Impish", "isCustomSet": true
+                }
+            },
+            "Grimmsnarl": {
+                "Custom Set": {
+                    "ability": "Prankster", "level": 91, "ivs": { "hp": 25, "at": 9, "df": 12, "sa": 19, "sd": 22, "sp": 23 },
+                    "moves": ["Foul Play", "Spirit Break", "Play Rough", "Hammer Arm"], "nature": "Careful", "item": "Sitrus Berry", "isCustomSet": true
+                }
+            },
+            "Starmie": {
+                "Custom Set": {
+                    "ability": "Natural Cure", "level": 91, "ivs": { "hp": 4, "at": 24, "df": 3, "sa": 19, "sd": 18, "sp": 0 },
+                    "moves": ["Psychic", "Hydro Pump", "Recover", "Ice Beam"], "nature": "Careful", "isCustomSet": true
+                }
+            },
+            "Aerodactyl": {
+                "Custom Set": {
+                    "ability": "Rock Head", "level": 91, "ivs": { "hp": 24, "at": 11, "df": 14, "sa": 9, "sd": 19, "sp": 3 },
+                    "moves": ["Double-Edge", "Dual Wingbeat", "Tailwind", "Stone Edge"], "nature": "Bashful", "isCustomSet": true
+                }
+            },
+            "Aerodactyl-Mega": {
+                "Custom Set": {
+                    "ability": "Tough Claws", "level": 91, "ivs": { "hp": 24, "at": 11, "df": 14, "sa": 9, "sd": 19, "sp": 3 },
+                    "moves": ["Double-Edge", "Dual Wingbeat", "Tailwind", "Stone Edge"], "nature": "Bashful", "isCustomSet": true
+                }
+            },
+            "Armaldo": {
+                "Custom Set": {
+                    "ability": "Battle Armor", "level": 91, "ivs": { "hp": 24, "at": 10, "df": 21, "sa": 16, "sd": 28, "sp": 18 },
+                    "moves": ["Rapid Spin", "Leech Life", "Rock Blast", "Stone Edge"], "nature": "Hardy", "isCustomSet": true
+                }
+            }
+        },
+        "party": ["Tsareena (Custom Set)", "Aggron-Mega (Custom Set)"]
+    },
+    "Simulator": {
+        "customSets": {
+            "Turtwig": {
+                "Custom Set": {
+                    "ability": "Shell Armor", "level": 12, "ivs": { "sa": 8 },
+                    "moves": ["Absorb", "Bite", "Growl", "Confide"], "nature": "Hardy", "isCustomSet": true
+                }
+            },
+            "Starly": {
+                "Custom Set": {
+                    "ability": "Keen Eye", "level": 12, "ivs": { "hp": 25, "at": 15, "df": 15, "sa": 14, "sd": 5, "sp": 28 },
+                    "moves": ["Tackle", "Growl", "Quick Attack", "Aerial Ace"], "nature": "Jolly", "isCustomSet": true
+                }
+            },
+            "Surskit": {
+                "Custom Set": {
+                    "ability": "Swift Swim", "level": 12, "ivs": { "hp": 29, "at": 4, "df": 8, "sa": 2, "sd": 4, "sp": 9 },
+                    "moves": ["Bubble Beam", "Quick Attack"], "nature": "Bashful", "isCustomSet": true
+                }
+            },
+            "Gossifleur": {
+                "Custom Set": {
+                    "ability": "Cotton Down", "level": 12, "ivs": { "hp": 3, "at": 9, "df": 13, "sa": 8, "sd": 30, "sp": 6 },
+                    "moves": ["Leafage", "Magical Leaf"], "nature": "Modest", "isCustomSet": true
+                }
+            },
+            "Poochyena": {
+                "Custom Set": {
+                    "ability": "Run Away", "level": 12, "ivs": { "hp": 15, "at": 17, "df": 18, "sa": 16, "sd": 1, "sp": 30 },
+                    "moves": ["Bite", "Tackle", "Sand Attack", "Baby-Doll Eyes"], "nature": "Adamant", "isCustomSet": true
+                }
+            }
+        },
+        "party": []
+    }
+}
 const customSets = collection.Simulator.customSets;
 
 type Pokes = keyof typeof customSets;
@@ -19,13 +373,13 @@ export function getBox(): { [pokemon in Pokes]: Pokemon } {
             {
                 ability: set.ability,
                 level: set.level,
-                ivs: set.ivs,
+                ivs: convertStats(set.ivs),
                 moves: set.moves,
                 nature: set.nature,
                 item: set.item,
             }
         );
     }
-    
+
     return Box;
 }

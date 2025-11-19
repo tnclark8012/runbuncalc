@@ -2,6 +2,7 @@ import { Pokemon } from "@smogon/calc";
 import { BattleFieldState, SwitchStrategy } from "./moveScoring.contracts";
 import { BattleSimulator } from "./simulator";
 import { gen } from "../configuration";
+import { getFinalSpeed } from "./utils";
 
 interface SwitchInConsideration {
     pokemon: Pokemon;
@@ -24,13 +25,13 @@ export class CpuSwitchStrategy implements SwitchStrategy {
             let playerMonAfterBattle = resultState.player.active[0];
             let cpuDamage = result.turnOutcomes[0].actions.find(a => a.attacker.equals(remainingMon))!.highestRollDamage;
             let playerDamage = result.turnOutcomes[0].actions.find(a => !a.attacker.equals(remainingMon))!.highestRollDamage;
-            
+            let playerSpeed = getFinalSpeed(playerMonAfterBattle.pokemon, state.playerField, state.playerSide);
             return {
                 pokemon: remainingMon,
                 getsKOd: cpuMonAfterBattle.pokemon.curHP() === 0,
                 kosOpponent: playerMonAfterBattle.pokemon.curHP() === 0,
                 outDamages: cpuDamage > playerDamage,
-                isFaster: remainingMon.stats.spe >= state.player.active[0].pokemon.stats.spe
+                isFaster: remainingMon.stats.spe >= playerSpeed // TODO: Does the AI see things like tailwind?
             };
         });
 

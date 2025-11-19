@@ -12,7 +12,7 @@ import { TrainerActionPokemonReplacer } from "../../possible-trainer-action-visi
 import { executeMegaEvolution } from "./mega-evolve";
 import { Side } from "@smogon/calc/src";
 import { isTwoTurnMove, makesInvulnerable } from "../../move-properties";
-import { hasBerry } from "../../utils";
+import { getFinalSpeed, hasBerry } from "../../utils";
 
 export function determineMoveOrderAndExecute(state: BattleFieldState): PossibleBattleFieldState[] {
     if (state.player.active.every(ap => ap.pokemon.curHP() <= 0) || state.cpu.active.every(ap => ap.pokemon.curHP() <= 0)) {
@@ -25,7 +25,11 @@ export function determineMoveOrderAndExecute(state: BattleFieldState): PossibleB
         let newState = state.clone();
         let log: ActionLogEntry[] = [];
         // Separate actions by type
-        const switches = combination.filter(a => a.action.type === 'switch').sort((a, b) => a.pokemon.pokemon.stats.spe - b.pokemon.pokemon.stats.spe);
+        const switches = combination.filter(a => a.action.type === 'switch').sort((a, b) => {
+            let aSpeed = getFinalSpeed(a.pokemon.pokemon, newState.getfield(a.pokemon), newState.getSide(a.pokemon));
+            let bSpeed = getFinalSpeed(b.pokemon.pokemon, newState.getfield(b.pokemon), newState.getSide(b.pokemon));
+            return aSpeed - bSpeed;
+        });
 
         for (let switchAction of switches) {
             const outcome = executeSwitch(newState, switchAction.trainer, switchAction.action as SwitchAction);
@@ -43,23 +47,35 @@ export function determineMoveOrderAndExecute(state: BattleFieldState): PossibleB
         log.push(...megasResult.log);
 
         // Sort moves by priority, then speed order for ties
-        moves.sort((a, b) => {
-            let moveA = a.action as MoveAction;
-            let moveB = b.action as MoveAction;
-            if (moveA.move.move.priority !== moveB.move.move.priority) return moveB.move.move.priority - moveA.move.move.priority;
-            return moveB.pokemon.stats.spe - moveA.pokemon.stats.spe;
-        });
+        const sortMovesByExecutionOrder = () => {
+            return moves.sort((a, b) => {
+                let moveA = a.action as MoveAction;
+                let moveB = b.action as MoveAction;
+                if (moveA.move.move.priority !== moveB.move.move.priority) return moveB.move.move.priority - moveA.move.move.priority;
+                let aSpeed = getFinalSpeed(a.pokemon.pokemon, newState.getfield(a.pokemon), newState.getSide(a.pokemon));
+                let bSpeed = getFinalSpeed(b.pokemon.pokemon, newState.getfield(b.pokemon), newState.getSide(b.pokemon));
+                return bSpeed - aSpeed;
+            });
+        };
 
-        for (let moveAction of moves) {
+        let moveAction: PossibleTrainerAction | undefined;
+        // Dynamic speed
+        while (moveAction = sortMovesByExecutionOrder().shift()) {
             let actor = getPokemon(newState, moveAction);
             if (actor.pokemon.curHP() <= 0) {
                 continue; // Skip if the Pokémon has fainted earlier in the turn
             }
 
             let updatedAction = TrainerActionPokemonReplacer.replace(moveAction, actor.pokemon);
-            let executionResult = executeMoveOnState(newState,  newState.getTrainer(updatedAction.trainer), updatedAction.action as MoveAction);
-            newState = executionResult.outcome;
-            log.push(...executionResult.log);
+            if (actor.volatileStatus?.flinched) {
+                delete actor.volatileStatus.flinched;
+                log.push({ action: updatedAction, description: `${actor} flinched and couldn't move!` });
+            }
+            else {
+                let executionResult = executeMoveOnState(newState,  newState.getTrainer(updatedAction.trainer), updatedAction.action as MoveAction);
+                newState = executionResult.outcome;
+                log.push(...executionResult.log);
+            }
         }
         
         let outcome = newState;
@@ -225,17 +241,25 @@ function executeMoveOnState(state: BattleFieldState, trainer: Trainer, action: M
     let executionResult = executeMove(action.pokemon, targetActive.pokemon, action.move.move, isPlayer ? state.playerField : state.cpuField, isPlayer ? playerRng : cpuRng);
     newState = PokemonReplacer.replace(newState, executionResult.attacker);
     newState = PokemonReplacer.replace(newState, executionResult.defender);
+    let defenderPosition = newState.getOpponent(trainer).getActivePokemon(executionResult.defender)!;
     if (defenderHadBerry && !hasBerry(executionResult.defender)) {
-        let defenderPosition = newState.getOpponent(trainer).getActivePokemon(executionResult.defender)!;
         defenderPosition.volatileStatus = {
             ...defenderPosition.volatileStatus,
             berryConsumed: true
         };
     }
+    if (action.move.move.name === 'Fake Out') {
+        defenderPosition.volatileStatus = {
+            ...defenderPosition.volatileStatus,
+            flinched: true
+        };
+    }
+
     let description = (() => {
         let targetInitialHp = `${targetActive.pokemon.curHP()}/${targetActive.pokemon.maxHP()}`;
         let targetEndingHp = `${executionResult.defender.curHP()}/${executionResult.defender.maxHP()}`;
-        return `${trainer.name}'s ${actingPosition} (${actingPokemon.curHP()}/${actingPokemon.maxHP()}) used ${action.move.move.name} on ${targetActive} (${targetInitialHp} -> ${targetEndingHp})`;
+        let moveDescription = action.move.move.isCrit ? `a CRIT ${action.move.move.name}` : action.move.move.name;
+        return `${trainer.name}'s ${actingPosition} (${actingPokemon.curHP()}/${actingPokemon.maxHP()}) used ${moveDescription} on ${targetActive} (${targetInitialHp} -> ${targetEndingHp})`;
     })();
     if (trainer.name === "Player") {
         applyFieldEffects(newState.field, newState.playerSide, newState.cpuSide, action.move.move);
