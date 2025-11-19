@@ -1,6 +1,6 @@
 import { Generations, Pokemon, Result, Move } from "@smogon/calc";
 import { MoveScore } from "../../moveScore";
-import { calculateAllMoves, canMegaEvolve, findHighestDamageMove, getDamageRanges, megaEvolve, savedFromKO } from "../../moveScoring";
+import { calculateAllMoves, canMegaEvolve, findHighestDamageMove, toMoveResults, megaEvolve, savedFromKO } from "../../moveScoring";
 import { BattleFieldState, PlayerMoveConsideration, PokemonPosition } from "../../moveScoring.contracts";
 import { PossibleAction, PossibleTrainerAction, ScoredPossibleAction, TargetSlot } from "./move-selection.contracts";
 import { gen, Heuristics } from "../../../configuration";
@@ -98,7 +98,7 @@ export function getMoveScoresAgainstTarget(state: BattleFieldState, playerPokemo
     let getConsideredMoves = (pokemon: Pokemon): PlayerMoveConsideration[] => {
         let playerDamageResults = calculateAllMoves(gen, pokemon, targetCpuPokemon.pokemon, state.playerField);
         let cpuDamageResults = calculateAllMoves(gen, pokemon, targetCpuPokemon.pokemon, state.cpuField);
-        let cpuAssumedPlayerMove = findHighestDamageMove(getDamageRanges(playerDamageResults));
+        let cpuAssumedPlayerMove = findHighestDamageMove(toMoveResults(playerDamageResults));
         return getPlayerMoveConsiderations(playerDamageResults);
     };
 
@@ -114,7 +114,7 @@ export function getMoveScoresAgainstTarget(state: BattleFieldState, playerPokemo
 
 
 function getPlayerMoveConsiderations(playerResults: Result[]): PlayerMoveConsideration[] {
-    let damageResults = getDamageRanges(playerResults);
+    let damageResults = toMoveResults(playerResults);
     return damageResults
         .map<PlayerMoveConsideration>(r => {
             const kos = r.lowestRollDamage >= r.defender.curHP() && (!savedFromKO(r.defender) || r.move.hits > 1);

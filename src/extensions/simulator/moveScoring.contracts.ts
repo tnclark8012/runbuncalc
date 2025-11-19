@@ -35,6 +35,7 @@ export interface MoveResult {
 	lowestRollHpPercentage: number;
 	highestRollDamage: number;
 	highestRollHpPercentage: number;
+	damageRolls: number[];
 }
 
 export interface CPUMoveConsideration extends MoveConsideration {

@@ -8,12 +8,14 @@ import {
   Generations,
   Pokemon
 } from '@smogon/calc';
-import { inGen, importTeam } from './test-helper';
-import { megaEvolve } from './moveScoring';
+import { inGen, importTeam, importPokemon } from './test-helper';
+import { calculateAllMoves, getHighestDamagingMovePercentChances, megaEvolve, toMoveResult } from './moveScoring';
 import { OpposingTrainer } from '../trainer-sets';
+import { getBox } from './playthrough/museum.collection';
+import { gen } from '../configuration';
 
 const RunAndBun = 8;
-inGen(RunAndBun, ({ gen, calculate, Pokemon, Move }) => {
+inGen(RunAndBun, ({ }) => {
   describe('Move Scoring', () => {
     describe('Mega evolution', () => {
       test(`Mega evolve`, () => {
@@ -30,5 +32,33 @@ Level: 1
         expect(mega.moves).toEqual(Lopunny.moves);
       });
     });
+  });
+
+  it('getHighestDamagingMovePercentChances', () => {
+    let { Starly } = getBox();
+    // let [Carvanha] = OpposingTrainer('Team Aqua Grunt Petalburg Woods');
+    let Carvanha = importPokemon(`
+      Carvanha @ Oran Berry
+Level: 11
+Naive Nature
+Ability: Rough Skin
+- Bite
+- Water Pulse
+`);
+    let cpuMoveResults = calculateAllMoves(gen, Carvanha, Starly, new Field()).map(toMoveResult);
+    const highestDamagingMovePercentChances = getHighestDamagingMovePercentChances([
+      { move: { name: 'Bite' }, damageRolls: [10, 20] },
+      { move: { name: 'Water Pulse' }, damageRolls: [20, 30] }
+    ]);
+    const expectedPcts = {
+      'Bite': 0.25,
+      'Water Pulse': 1, // No matter what bite rolls, Water Pulse should always consider itself the highest damage
+    };
+    const actual: any = {};
+    for (let i = 0; i < cpuMoveResults.length; i++) {
+      let moveResult = cpuMoveResults[i];
+      actual[moveResult.move.name] = highestDamagingMovePercentChances[i];
+    }
+    expect(actual).toEqual(expectedPcts);
   });
 });
