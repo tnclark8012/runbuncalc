@@ -47,6 +47,9 @@ export const LEVEL_CAP_CHECKPOINTS: LevelCapCheckpoint[] = [
 /**
  * Recommended movesets for each Pokémon at different level caps
  * Format: { pokemonName: { levelCapName: [move1, move2, move3, move4] } }
+ * 
+ * Note: Move names are strings to maintain consistency with the rest of the codebase.
+ * Users can expand this mapping with additional Pokémon and their recommended movesets.
  */
 export const RECOMMENDED_MOVESETS: PokemonMovesetsByLevelCap = {
   // Example entries - these can be populated with actual recommended movesets
