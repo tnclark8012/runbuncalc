@@ -3,7 +3,7 @@
  * This file contains the mapping of recommended moves for each Pokémon at different level caps
  */
 
-import { CustomSets, PokemonSet } from './core/storage.contracts';
+import { CustomSets } from './core/storage.contracts';
 
 export interface LevelCapCheckpoint {
   name: string;
