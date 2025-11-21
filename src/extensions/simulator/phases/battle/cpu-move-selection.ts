@@ -58,7 +58,7 @@ function getCpuPossibleActionsAgainstTarget(state: BattleFieldState, cpuPokemon:
     });
 }
 
-interface MoveProbability {
+export interface MoveProbability {
     moveScore: MoveScore;
     probability: number;
     score: number;
@@ -68,7 +68,31 @@ interface MoveProbability {
 // This helps avoid floating point errors and prunes branches unlikely to affect decision-making
 const PROBABILITY_THRESHOLD = 0.00001;
 
-function calculateCpuMove(moveScores: MoveScore[]): MoveProbability[] {
+/**
+ * Calculates which moves have a chance of being the highest scoring move and their probabilities.
+ * 
+ * For moves with multiple possible score outcomes, this function evaluates all possible combinations
+ * to determine which moves could be highest scoring in at least one scenario. Each move is assigned
+ * a probability representing its chance of being selected (the highest or tied for highest).
+ * 
+ * @param moveScores - Array of MoveScore objects, each potentially having multiple score outcomes
+ * @returns Array of MoveProbability objects containing:
+ *   - moveScore: The original MoveScore object
+ *   - probability: The chance this move is highest or tied for highest (0 to 1)
+ *   - score: The maximum score this move can achieve
+ * 
+ * @example
+ * Given moves with score distributions:
+ * - score1: [{modifier: 6, percentChance: 0.9}, {modifier: 8, percentChance: 0.1}]
+ * - score2: [{modifier: 6, percentChance: 1}]
+ * - score3: [{modifier: 2, percentChance: 0.9}, {modifier: 3, percentChance: 0.1}]
+ * 
+ * Returns:
+ * - score1: probability=0.55 (10% unique highest + 50% of 90% tied), score=8
+ * - score2: probability=0.45 (50% of 90% tied), score=6
+ * - score3: not returned (never highest)
+ */
+export function calculateCpuMove(moveScores: MoveScore[]): MoveProbability[] {
     // For each move, get all possible score outcomes
     const moveOutcomes = moveScores.map(moveScore => ({
         moveScore,
