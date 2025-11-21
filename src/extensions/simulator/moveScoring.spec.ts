@@ -1,12 +1,7 @@
 /* eslint-disable max-len */
 
-import { Dex } from '@pkmn/dex';
 import {
-  I,
-  A,
-  Field,
-  Generations,
-  Pokemon
+  Field
 } from '@smogon/calc';
 import { inGen, importTeam, importPokemon } from './test-helper';
 import { calculateAllMoves, getHighestDamagingMovePercentChances, megaEvolve, toMoveResult } from './moveScoring';
@@ -45,20 +40,14 @@ Ability: Rough Skin
 - Bite
 - Water Pulse
 `);
-      let cpuMoveResults = calculateAllMoves(gen, Carvanha, Starly, new Field()).map(toMoveResult);
-      const highestDamagingMovePercentChances = getHighestDamagingMovePercentChances([
+      const actual = getHighestDamagingMovePercentChances([
         { move: { name: 'Bite' }, damageRolls: [10, 20] },
         { move: { name: 'Water Pulse' }, damageRolls: [20, 30] }
       ]);
-      const expectedPcts = {
+      const expectedPcts = new Map(Object.entries({
         'Bite': 0.25,
         'Water Pulse': 1, // No matter what bite rolls, Water Pulse should always consider itself the highest damage
-      };
-      const actual: any = {};
-      for (let i = 0; i < cpuMoveResults.length; i++) {
-        let moveResult = cpuMoveResults[i];
-        actual[moveResult.move.name] = highestDamagingMovePercentChances[i];
-      }
+      }));
       expect(actual).toEqual(expectedPcts);
     });
 
@@ -66,18 +55,14 @@ Ability: Rough Skin
       let { Starly } = getBox();
       let [Carvanha] = OpposingTrainer('Team Aqua Grunt Petalburg Woods');
       let cpuMoveResults = calculateAllMoves(gen, Carvanha, Starly, new Field()).map(toMoveResult);
-      const highestDamagingMovePercentChances = getHighestDamagingMovePercentChances(cpuMoveResults);
-      const expectedPcts = {
+      const actual = getHighestDamagingMovePercentChances(cpuMoveResults);
+      const expectedPcts = new Map(Object.entries({
         "Aqua Jet": 0,
         "Bite": 0.89453125,
         "Poison Fang": 0,
         "Water Pulse": 0.3515625,
-      };
-      const actual: any = {};
-      for (let i = 0; i < cpuMoveResults.length; i++) {
-        let moveResult = cpuMoveResults[i];
-        actual[moveResult.move.name] = highestDamagingMovePercentChances[i];
-      }
+      }));
+      
       expect(actual).toEqual(expectedPcts);
     });
   });

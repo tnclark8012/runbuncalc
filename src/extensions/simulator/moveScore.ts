@@ -3,8 +3,27 @@ import { MoveResult } from "./moveScoring.contracts";
 export class MoveScore {
     private readonly potentialScores: ScoreModifier[] = [];
     private fixedScore?: ScoreModifier;
+    private score: ScoreModifier;
     
     constructor(public readonly move: MoveResult) {
+        this.score = new ScoreModifier(0, 1);
+    }
+
+    public getScores(): ScoreModifier[] {
+        let finalScores: Map<number, number> = new Map();
+        let toVisit: ScoreModifier[] = [this.score];
+        while (toVisit.length > 0) {
+            let current = toVisit.pop()!;
+            if (current.branches.length === 0) {
+                const existing = finalScores.get(current.modifier) || 0;
+                finalScores.set(current.modifier, existing + current.percentChance);
+            }
+            else {
+                toVisit.push(...current.branches);
+            }
+        }
+
+        return Array.from(finalScores.entries()).map(([modifier, percentChance]) => new ScoreModifier(modifier, percentChance));
     }
 
     public get finalScore(): number {
@@ -46,24 +65,27 @@ export class MoveScore {
      * @param modifier 
      * @param percentChance 
      */
-    public addPotentialScore(potentialChance: number, modifier: number, percentChance: number = 1): void {
-        this.potentialScores.push(new ScoreModifier(modifier, percentChance * potentialChance));
-    }
+    // public addPotentialScore(potentialChance: number, modifier: number, percentChance: number = 1): void {
+    //     this.potentialScores.push(new ScoreModifier(modifier, percentChance * potentialChance));
+    // }
 
     public addScore(modifier: number, percentChance: number = 1): void {
         this.potentialScores.push(new ScoreModifier(modifier, percentChance));
+        this.score.addBranch(modifier, percentChance);
     }
 
     public addAlternativeScores(modifier1: number, modifier1Chance: number, modifier2: number): void {
-        this.addScore(modifier1Chance >= 0.5 ? modifier1 : modifier2);
+        this.potentialScores.push(new ScoreModifier(modifier1Chance >= 0.5 ? modifier1 : modifier2, 1));
+        this.score.addAlternativeBranches(modifier1, modifier1Chance, modifier2);
     }
 
     public never(percentChance?: number): void {
-        this.setScore(-50, percentChance);
+        this.addScore(-50, percentChance);
     }
 
     public setScore(newScore: number, percentChance: number = 1): void {
-        this.fixedScore = { modifier: newScore, percentChance };
+        this.fixedScore = new ScoreModifier(newScore, percentChance);
+        this.addScore(-this.score.modifier + newScore, percentChance);
     }
 
     public setAlternativeScores(modifier1: number, modifier1Chance: number, modifier2: number): void {
@@ -72,6 +94,34 @@ export class MoveScore {
 }
 
 export class ScoreModifier {
+    public readonly branches: ScoreModifier[] = [];
     constructor(public readonly modifier: number, public readonly percentChance: number) {
+    }
+
+    public addBranch(modifier: number, percentChance: number): void { // really, this is meaning total score
+        if (this.branches.length === 0) {
+            this.addAlternativeBranches(modifier, percentChance, 0);
+        }
+        else {
+            for (let branch of this.branches) {
+                branch.addBranch(modifier, percentChance);
+            }
+        }
+    }
+
+    public addAlternativeBranches(modifier1: number, modifier1Chance: number, modifier2: number): void {
+        if (this.branches.length === 0) {
+            if (modifier1Chance === 1 || modifier1Chance === 0) {
+                this.branches.push(new ScoreModifier(this.modifier + (modifier1Chance ? modifier1 : modifier2), this.percentChance));
+            }
+            else {
+                this.branches.push(new ScoreModifier(this.modifier + modifier1, this.percentChance * modifier1Chance), new ScoreModifier(this.modifier + modifier2, this.percentChance * (1 - modifier1Chance)));
+            }
+        }
+        else {
+            for (let branch of this.branches) {
+                branch.addAlternativeBranches(modifier1, modifier1Chance, modifier2);
+            }
+        }
     }
 }

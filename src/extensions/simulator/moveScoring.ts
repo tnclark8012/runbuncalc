@@ -47,6 +47,7 @@ export function getCpuMoveConsiderations(cpuResults: Result[], playerMove: MoveR
     const aiIsFaster: boolean = finalAISpeed >= finalPlayerSpeed;
     const aiIsFasterAfterPlayerParalysis = !playerMon.hasStatus('par') && finalAISpeed > finalPlayerSpeed * 0.25;
     const maxDamageMoveTotalHitsHpPercentage = maxDamageMove.highestRollPerHitHpPercentage * maxDamageMove.move.hits;
+    const highestDamagingMovePercentChances = getHighestDamagingMovePercentChances(damageResults);
     // Not quite
     let movesToConsider = damageResults.map<CPUMoveConsideration>(r => {
         const kos = r.lowestRollPerHitDamage * r.move.hits >= r.defender.curHP();
@@ -58,6 +59,7 @@ export function getCpuMoveConsiderations(cpuResults: Result[], playerMove: MoveR
             highestRollTotalHitsHpPercentage,
             kos: kos,
             isDamagingMove: r.move.category !== 'Status',
+            percentChanceOfBeingHighestDamagingMove: highestDamagingMovePercentChances.get(r.move.name)!,
             isHighestDamagingMove: Math.min(maxDamageMoveTotalHitsHpPercentage, 100) === Math.min(highestRollTotalHitsHpPercentage, 100),
             aiIsFaster,
             aiIsSlower: !aiIsFaster,
@@ -190,7 +192,7 @@ export function specificMoves(moveScore: MoveScore, consideration: CPUMoveConsid
                 moveScore.addScore(10);
             }
             else {
-                moveScore.setScore(-20);
+                moveScore.addScore(-20);
             }
             break;
         case 'Sucker Punch':
@@ -223,7 +225,8 @@ export function specificMoves(moveScore: MoveScore, consideration: CPUMoveConsid
             }
             break;
         case 'Rollout':
-            moveScore.setScore(7);
+            moveScore = new MoveScore(consideration.result);
+            moveScore.addScore(7);
             break;
         case 'Stealth Rock':
             if (consideration.field.defenderSide.isSR)
@@ -286,7 +289,8 @@ export function specificMoves(moveScore: MoveScore, consideration: CPUMoveConsid
         case 'Ice Shard':
             if (consideration.field.gameType == 'Doubles' && consideration.aiPartner && consideration.aiPartner.hasItem('Weakness Policy') &&
                 isSuperEffective(moveScore.move.move.type, consideration.aiPartner)) {
-                moveScore.setScore(12); // "these get a score of +12 total."
+                moveScore = new MoveScore(consideration.result);
+                moveScore.addScore(12); // "these get a score of +12 total."
             }
             break;
         case 'Magnitude':
@@ -296,7 +300,8 @@ export function specificMoves(moveScore: MoveScore, consideration: CPUMoveConsid
                 moveScore.addScore(9);
             }
             else {
-                moveScore.setScore(-20);
+                moveScore = new MoveScore(consideration.result);
+                moveScore.addScore(-20);
             }
             break;
         case 'Baton Pass':
@@ -307,8 +312,10 @@ export function specificMoves(moveScore: MoveScore, consideration: CPUMoveConsid
         // moveScore.addScore(consideration.aiIsSlower ? 9 : 5);
         case 'Trick Room':
             moveScore.addScore(consideration.aiIsSlower ? 10 : 5);
-            if (consideration.field.isTrickRoom)
-                moveScore.setScore(-20);
+            if (consideration.field.isTrickRoom) {
+                moveScore = new MoveScore(consideration.result);
+                moveScore.addScore(-20);
+            }
             break;
         case 'Fake Out':
             if (!consideration.aiMonFirstTurnOut || consideration.playerMon.hasAbility('Inner Focus'))
@@ -381,8 +388,10 @@ export function specificMoves(moveScore: MoveScore, consideration: CPUMoveConsid
             moveScore.addAlternativeScores(-1, 0.5, 0)
             break;
         case 'Belch':
-            if (hasBerry(consideration.aiMon))
-                moveScore.setScore(-20);
+            if (hasBerry(consideration.aiMon)) {
+                moveScore = new MoveScore(consideration.result);
+                moveScore.addScore(-20);
+            }
             break;
     }
 }
@@ -512,7 +521,7 @@ export function toMoveResults(results: Result[]): MoveResult[] {
 }
 
 export function toMoveResult(result: Result): MoveResult {
-    let resultDamage = result.damage as number[];
+    let resultDamage = typeof result.damage === 'number' ? [result.damage] : result.damage as number[];
     let lowestHitDamage = resultDamage[0] ? resultDamage[0] : result.damage as number;
     let highestHitDamage = (result.damage as number[])[15] ? resultDamage[15] : result.damage as number;
     let getDamagePct = (hitDamage: number) => hitDamage * (createMove(result.attacker, result.move).hits / result.defender.stats.hp * 100);
@@ -660,27 +669,29 @@ export function getLockedMoveAction(state: BattleFieldState, trainer: Trainer, a
  * @param moveResults 
  * @returns an array of mapped moveResults where the number in the array is the percent chance that it's damage roll is highest. => [0.8, 0.2, 0]
  */
-export function getHighestDamagingMovePercentChances(moveResults: Array<{ move: { name: string }, damageRolls: number[] }>): number[] {
+export function getHighestDamagingMovePercentChances(moveResults: Array<{ move: { name: string }, damageRolls: number[] }>): Map<string, number> {
     if (moveResults.length === 0) {
-        return [];
+        return new Map();
     }
 
-    const totalCombos = Math.pow(moveResults[0].damageRolls.length, moveResults.length); // assuming 16 rolls per move
     const moves: Record<string, number[]> = {};
-    const winCounts: Record<string, number> = {};
+    const winCounts: Map<string, number> = new Map();
     for (const result of moveResults) {
         moves[result.move.name] = result.damageRolls;
-        winCounts[result.move.name] = 0;
+        winCounts.set(result.move.name, 0);
     }
     const moveNames = Object.keys(moves);
 
+    let totalRollCount = 0;
     // Generate all combinations of damage rolls recursively
     function generateCombinations(index: number, currentRolls: Record<string, number>) {
         if (index === moveNames.length) {
             // All moves have been assigned a roll, find the winner(s)
-            const max = Math.max(...Object.values(currentRolls));
+            const rolls = Object.values(currentRolls);
+            const max = Math.max(...rolls);
             const winners = moveNames.filter(name => currentRolls[name] === max);
-            winners.forEach(name => winCounts[name]++);
+            winners.forEach(name => winCounts.set(name, winCounts.get(name)! + 1));
+            totalRollCount++;
             return;
         }
 
@@ -692,6 +703,9 @@ export function getHighestDamagingMovePercentChances(moveResults: Array<{ move: 
     }
 
     generateCombinations(0, {});
-
-    return moveNames.map(name => winCounts[name] / totalCombos);
+    // Convert winCounts to percentages
+    for (const [move, count] of winCounts.entries()) {
+        winCounts.set(move, count / totalRollCount);
+    }
+    return winCounts;
 }
