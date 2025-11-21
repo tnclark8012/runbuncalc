@@ -1,12 +1,15 @@
 import { Field, Move, A, I, Result, Pokemon, calculate } from '@smogon/calc';
 import { MoveScore } from "./moveScore";
 import { notImplemented } from "./notImplementedError";
-import { ActivePokemon, CPUMoveConsideration, MoveConsideration, MoveResult, TurnOutcome } from './moveScoring.contracts';
-import { gen } from '../configuration';
+import { ActivePokemon, BattleFieldState, CPUMoveConsideration, MoveConsideration, MoveResult, PokemonPosition, Trainer } from './moveScoring.contracts';
+import { gen, RNGStrategy } from '../configuration';
+import { PossibleTrainerAction } from './phases/battle/move-selection.contracts';
+import { canFlinch, getFinalSpeed, hasBerry, isSuperEffective } from './utils';
+import { MoveName } from '@smogon/calc/dist/data/interface';
 
-export function scoreCPUMoves(cpuResults: Result[], playerMove: MoveResult, field: Field, lastTurnMoveByCpu: Move | undefined): MoveScore[] {
+export function scoreCPUMoves(cpuResults: Result[], playerMove: MoveResult, state: BattleFieldState): MoveScore[] {
     // Not quite
-    let movesToConsider = getCpuMoveConsiderations(cpuResults, playerMove, field, lastTurnMoveByCpu);
+    let movesToConsider = getCpuMoveConsiderations(cpuResults, playerMove, state);
 
     let moveScores = [];
     for (let potentialMove of movesToConsider) {
@@ -26,18 +29,23 @@ export function scoreCPUMoves(cpuResults: Result[], playerMove: MoveResult, fiel
         defensiveSetup(moveScore, potentialMove);
         // specificSetup(moveScore, potentialMove);
         // recovery(moveScore, potentialMove);
+        
         moveScores.push(moveScore);
     }
 
     return moveScores;
 }
 
-export function getCpuMoveConsiderations(cpuResults: Result[], playerMove: MoveResult, field: Field, lastTurnMoveByCPU: Move | undefined): CPUMoveConsideration[] {
+export function getCpuMoveConsiderations(cpuResults: Result[], playerMove: MoveResult, state: BattleFieldState): CPUMoveConsideration[] {
     let damageResults = getDamageRanges(cpuResults);
     let maxDamageMove = findHighestDamageMove(damageResults);
     const aiMon = maxDamageMove.attacker
     const playerMon = maxDamageMove.defender;
-    const aiIsFaster: boolean = aiMon.stats.spe >= playerMon.stats.spe;
+    const aiMonPosition = state.cpu.getActivePokemon(aiMon) || new PokemonPosition(aiMon, true);
+    const finalAISpeed = getFinalSpeed(aiMon, state.cpuField, state.cpuSide);
+    const finalPlayerSpeed = getFinalSpeed(playerMon, state.playerField, state.playerSide);
+    const aiIsFaster: boolean = finalAISpeed >= finalPlayerSpeed;
+    const aiIsFasterAfterPlayerParalysis = !playerMon.hasStatus('par') && finalAISpeed > finalPlayerSpeed * 0.25;
 
     // Not quite
     let movesToConsider = damageResults.map<CPUMoveConsideration>(r => {
@@ -51,6 +59,7 @@ export function getCpuMoveConsiderations(cpuResults: Result[], playerMove: MoveR
             isHighestDamagingMove: Math.min(maxDamageMove.highestRollHpPercentage * maxDamageMove.move.hits, 100) === Math.min(r.highestRollHpPercentage * r.move.hits, 100),
             aiIsFaster,
             aiIsSlower: !aiIsFaster,
+            aiIsFasterAfterPlayerParalysis,
             aiWillOHKOPlayer: r.lowestRollDamage * r.move.hits >= playerMon.curHP(),
             playerMon,
             aiMon,
@@ -58,9 +67,9 @@ export function getCpuMoveConsiderations(cpuResults: Result[], playerMove: MoveR
             playerWillKOAI: playerMove.highestRollDamage * playerMove.move.hits >= aiMon.curHP() && !savedFromKO(aiMon),
             playerWill2HKOAI: playerMove.highestRollDamage * playerMove.move.hits * 2 >= aiMon.curHP(),
             aiOutdamagesPlayer: r.highestRollHpPercentage * r.move.hits > playerMove.highestRollHpPercentage * playerMove.move.hits,
-            aiMonFirstTurnOut: !lastTurnMoveByCPU, // TODO: Not quite right, but probably good enough
-            lastTurnCPUMove: lastTurnMoveByCPU,
-            field
+            aiMonFirstTurnOut: !!aiMonPosition.firstTurnOut,
+            lastTurnCPUMove: undefined, // TODO: Track last move as volatile status?
+            field: state.field
         };
     });
 
@@ -237,6 +246,11 @@ export function specificMoves(moveScore: MoveScore, consideration: CPUMoveConsid
                 moveScore.addScore(-1);
             break;
         case 'Sticky Web':
+            if (consideration.field.defenderSide.isStickyWebs) {
+                moveScore.never();
+                break;
+            }
+
             if (consideration.aiMonFirstTurnOut) {
                 moveScore.addAlternativeScores(9, 0.25, 12);
             }
@@ -261,6 +275,20 @@ export function specificMoves(moveScore: MoveScore, consideration: CPUMoveConsid
             // TODO:    If AI used protect last 2 turns, never uses protect this turn.
             
             break;
+        case 'Fling':
+            notImplemented(moveName);
+        case 'Role Play':
+            notImplemented(moveName);
+        case 'Shadow Sneak':
+        case 'Aqua Jet':
+        case 'Ice Shard':
+            if (consideration.field.gameType == 'Doubles' && consideration.aiPartner && consideration.aiPartner.hasItem('Weakness Policy') &&
+                isSuperEffective(moveScore.move.move.type, consideration.aiPartner)) {
+                moveScore.setScore(12); // "these get a score of +12 total."
+            }
+            break;
+        case 'Magnitude':
+            notImplemented(moveName);
         case 'Imprison':
             if (consideration.playerMon.moves.some(playerMove => consideration.aiMon.moves.includes(playerMove))) {
                 moveScore.addScore(9);
@@ -273,15 +301,17 @@ export function specificMoves(moveScore: MoveScore, consideration: CPUMoveConsid
             notImplemented();
         case 'Tailwind':
             // TODO: Not quite (doubles)
-            moveScore.addScore(consideration.aiIsSlower ? 9 : 5);
-            break;
+            notImplemented(moveName);
+            // moveScore.addScore(consideration.aiIsSlower ? 9 : 5);
         case 'Trick Room':
             moveScore.addScore(consideration.aiIsSlower ? 10 : 5);
             if (consideration.field.isTrickRoom)
                 moveScore.setScore(-20);
             break;
         case 'Fake Out':
-            if (consideration.aiMonFirstTurnOut && !consideration.playerMon.hasAbility('Inner Focus'))
+            if (!consideration.aiMonFirstTurnOut || consideration.playerMon.hasAbility('Inner Focus'))
+                moveScore.never();
+            else
                 moveScore.addScore(9);
             break;
         case 'Helping Hand':
@@ -322,6 +352,35 @@ export function specificMoves(moveScore: MoveScore, consideration: CPUMoveConsid
                     moveScore.addScore(1);
                 moveScore.addScore(1, 0.5);
             }
+            break;
+        case 'Substitute':
+        case 'Explosion':
+        case 'Misty Explosion':
+        case 'Memento':
+            notImplemented(moveName);
+        case 'Thunder Wave':
+        case 'Stun Spore':
+        case 'Glare':
+        case 'Nuzzle':
+        case 'Zap Cannon':
+            if (consideration.playerMon.hasStatus('par'))
+                return moveScore.never();
+            
+            if (consideration.aiIsSlower && consideration.aiIsFasterAfterPlayerParalysis ||
+                consideration.aiMon.moves.includes('Hex' as MoveName) || 
+                consideration.aiMon.moves.some(m => canFlinch(m))
+                // consideration.playerMon.isInfatuated || confused
+            ) {
+                moveScore.addScore(8);
+            }
+            else {
+                moveScore.addScore(7);
+            }
+            moveScore.addAlternativeScores(-1, 0.5, 0)
+            break;
+        case 'Belch':
+            if (hasBerry(consideration.aiMon))
+                moveScore.setScore(-20);
             break;
     }
 }
@@ -544,9 +603,17 @@ export function calculateAllMoves(gen: I.Generation, attacker: Pokemon, defender
 	return results;
 }
 
-export function calculateMoveResult(attacker: Pokemon, defender: Pokemon, moveName: string, field?: Field): MoveResult {
-    let calcResult = calculate(gen, attacker, defender, createMove(attacker, moveName));
-    return toMoveResult(calcResult);
+export function calculateMoveResult(attacker: Pokemon, defender: Pokemon, moveName: string, field: Field, attackerRng: RNGStrategy): MoveResult;
+export function calculateMoveResult(attacker: Pokemon, defender: Pokemon, move: Move, field: Field, attackerRng: RNGStrategy): MoveResult;
+export function calculateMoveResult(attacker: Pokemon, defender: Pokemon, moveOrMoveName: string | Move, field: Field, attackerRng: RNGStrategy): MoveResult {
+    let move = typeof moveOrMoveName === 'string' ? createMove(attacker, moveOrMoveName) : moveOrMoveName;
+    if (attackerRng.willMoveCrit(move)) {
+        move = move.clone();
+        move.isCrit = true;
+    }
+    let calcResult = calculate(gen, attacker, defender, move, field);
+    let moveResult = toMoveResult(calcResult);
+    return moveResult;
 }
 
 export function hasMegaStone(pokemon: Pokemon): boolean {
@@ -584,4 +651,30 @@ export function megaEvolve(pokemon: Pokemon): Pokemon {
         ivs: pokemon.ivs,
         boosts: pokemon.boosts
     });
+}
+
+export function getLockedMoveAction(state: BattleFieldState, trainer: Trainer, activeIndex: number): PossibleTrainerAction | undefined {
+    const actingPosition = trainer.active[activeIndex];
+    let volatileStatus = actingPosition.volatileStatus;
+    if (!volatileStatus)
+        return;
+
+    if (!volatileStatus.chargingMove)
+        return;
+
+    const chargingMove = new Move(gen, volatileStatus.chargingMove);
+    return {
+        pokemon: actingPosition,
+        action: {
+            type: 'move',
+            pokemon: actingPosition.pokemon,
+            move: {
+                move: chargingMove,
+                target: { type: 'opponent', slot: 0 } // Default to first opponent
+            },
+            probability: 1
+        },
+        slot: { slot: activeIndex },
+        trainer: trainer
+    };
 }

@@ -1,14 +1,30 @@
 import { Field, Move, Pokemon } from '@smogon/calc';
 import { PartyOrderSwitchStrategy } from './switchStrategy.partyOrder';
 import { Side } from '@smogon/calc/src';
+import { MoveName } from '@smogon/calc/dist/data/interface';
+
+export interface VolatileStatus {
+	/** The move being charged (e.g., Bounce, Fly, Dig, Dive) */
+	chargingMove?: MoveName;
+	/** Whether the Pokemon is invulnerable (semi-invulnerable during charge turn) */
+	invulnerable?: boolean;
+	/** Move that locks the Pokemon in (e.g., Outrage, Petal Dance) */
+	lockedMove?: MoveName;
+	/** Turns remaining for the current volatile status */
+	turnsRemaining?: number;
+	/** Unlocks Belch */
+	berryConsumed?: boolean;
+	/** Flinched */
+	flinched?: boolean;
+}
 
 export interface MoveConsideration {
 	result: MoveResult;
 	kos: boolean;
 	lowestRollHpPercentage: number;
 	hightestRollHpPercentage: number;
-    aiMon: Pokemon;
-    playerMon: Pokemon;
+	aiMon: Pokemon;
+	playerMon: Pokemon;
 }
 
 export interface MoveResult {
@@ -22,18 +38,20 @@ export interface MoveResult {
 }
 
 export interface CPUMoveConsideration extends MoveConsideration {
-    isHighestDamagingMove?: boolean;
-    isDamagingMove: boolean;
-    aiIsFaster: boolean;
-    aiIsSlower: boolean;
-    playerMove: MoveResult;
-    playerWillKOAI: boolean;
-    playerWill2HKOAI: boolean;
+	isHighestDamagingMove?: boolean;
+	isDamagingMove: boolean;
+	aiIsFaster: boolean;
+	aiIsSlower: boolean;
+	aiIsFasterAfterPlayerParalysis: boolean;
+	aiPartner?: Pokemon;
+	playerMove: MoveResult;
+	playerWillKOAI: boolean;
+	playerWill2HKOAI: boolean;
 	aiWillOHKOPlayer: boolean;
 	aiOutdamagesPlayer: boolean;
-    lastTurnCPUMove: Move | undefined;
-    aiMonFirstTurnOut: boolean;
-    field: Field
+	lastTurnCPUMove: Move | undefined;
+	aiMonFirstTurnOut: boolean;
+	field: Field
 }
 
 export interface PlayerMoveConsideration extends MoveConsideration {
@@ -55,13 +73,33 @@ export interface ActivePokemon {
 
 export class PokemonPosition {
 	constructor(public pokemon: Pokemon,
-		public firstTurnOut?: boolean)
-		{
+		public firstTurnOut?: boolean,
+		public volatileStatus?: VolatileStatus) {
 
-		}
+	}
 
 	public clone(): PokemonPosition {
-		return new PokemonPosition(this.pokemon.clone(), this.firstTurnOut);
+		return new PokemonPosition(
+			this.pokemon.clone(),
+			this.firstTurnOut,
+			this.volatileStatus ? { ...this.volatileStatus } : undefined
+		);
+	}
+
+	public isSamePokemon(other: PokemonPosition): boolean {
+		return this.pokemon.equals(other.pokemon);
+	}
+
+	public toString(): string {
+		let status = this.volatileStatus && Object.keys(this.volatileStatus).length > 0 ? JSON.stringify(this.volatileStatus) : '';
+		const str = [
+			this.pokemon.name,
+			this.pokemon.status || '',
+			`(${this.pokemon.curHP()}/${this.pokemon.maxHP()})`,
+			this.pokemon.item ? `@ ${this.pokemon.item!}` : '',
+			status
+		].join(' ')
+		return str;
 	}
 }
 
@@ -74,8 +112,7 @@ export class Trainer {
 		public readonly name: string,
 		public readonly active: PokemonPosition[],
 		public readonly party: Pokemon[],
-		public readonly switchStrategy?: SwitchStrategy)
-	{
+		public readonly switchStrategy?: SwitchStrategy) {
 		this.switchStrategy = new PartyOrderSwitchStrategy(() => this);
 	}
 
@@ -106,8 +143,7 @@ export class CpuTrainer extends Trainer {
 		nameOrActive: string | PokemonPosition[],
 		activeOrParty: PokemonPosition[] | Pokemon[],
 		partyOrSwitchStrategy?: Pokemon[] | SwitchStrategy,
-		switchStrategy?: SwitchStrategy)
-	{
+		switchStrategy?: SwitchStrategy) {
 		if (typeof nameOrActive === 'string') {
 			super(nameOrActive, activeOrParty as PokemonPosition[], partyOrSwitchStrategy as Pokemon[], switchStrategy);
 		} else {
@@ -120,8 +156,7 @@ export class PlayerTrainer extends Trainer {
 	constructor(
 		active: PokemonPosition[],
 		party: Pokemon[],
-		switchStrategy?: SwitchStrategy)
-	{
+		switchStrategy?: SwitchStrategy) {
 		super('Player', active, party, switchStrategy);
 	}
 }
@@ -132,7 +167,7 @@ export class BattleFieldState {
 		public readonly cpu: Trainer,
 		public readonly field: Field,
 		public turnNumber: number = 0) {
-		
+
 	}
 
 	public get playerField(): Field {
@@ -155,11 +190,42 @@ export class BattleFieldState {
 		return this.field.gameType === 'Doubles';
 	}
 
+	public getfield(pokemonPosition: PokemonPosition): Field {
+		if (this.player.active.some(position => position.isSamePokemon(pokemonPosition))) {
+			return this.playerField;
+		}
+		if (this.cpu.active.some(position => position.isSamePokemon(pokemonPosition))) {
+			return this.cpuField;
+		}
+		throw new Error('Pokemon not found in the battle state');
+	}
+
+	public getSide(pokemonPosition: PokemonPosition): Side {
+		if (this.player.active.some(position => position.isSamePokemon(pokemonPosition))) {
+			return this.playerSide;
+		}
+		else if (this.cpu.active.some(position => position.isSamePokemon(pokemonPosition))) {
+			return this.cpuSide;
+		}
+
+		throw new Error('Pokemon not found in the battle state');
+	}
+
 	public getTrainer(trainer: Trainer): Trainer {
 		if (trainer.equals(this.player)) {
 			return this.player;
 		} else if (trainer.equals(this.cpu)) {
 			return this.cpu;
+		} else {
+			throw new Error(`Trainer ${trainer.name} not found in the battle state`);
+		}
+	}
+
+	public getOpponent(trainer: Trainer): Trainer {
+		if (trainer.equals(this.player)) {
+			return this.cpu;
+		} else if (trainer.equals(this.cpu)) {
+			return this.player;
 		} else {
 			throw new Error(`Trainer ${trainer.name} not found in the battle state`);
 		}
@@ -176,8 +242,7 @@ export class BattleFieldState {
 	public toString(): string {
 		const describePosition = (slot: number, pokemon: PokemonPosition | undefined) => {
 			if (!pokemon) return '';
-
-			return `[${slot}]: ${pokemon.pokemon.name} (${pokemon.pokemon.curHP()}/${pokemon.pokemon.maxHP()})`;
+			return [`[${slot}]`, pokemon.toString()].join(' ')
 		};
 
 		const describePartyPokemon = (pokemon: Pokemon) => {

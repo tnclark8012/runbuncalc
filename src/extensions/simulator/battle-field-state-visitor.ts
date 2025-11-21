@@ -1,5 +1,6 @@
 import { Field, Pokemon, Side } from "@smogon/calc";
 import { BattleFieldState, PokemonPosition, Trainer } from "./moveScoring.contracts";
+import { getFinalSpeed } from "./utils";
 
 export interface IBattleFieldStateVisitor {
     visitActivePokemon?(state: BattleFieldState, pokemon: PokemonPosition, field: Field, side: Side): void;
@@ -18,7 +19,11 @@ export function visitActivePokemonInSpeedOrder(state: BattleFieldState, visitor:
         toVisit.push({ active, field: state.field, side: state.cpuSide });
     }
 
-    toVisit.sort((a,b) => b.active.pokemon.stats.spe - a.active.pokemon.stats.spe);
+    toVisit.sort((a,b) => {
+        let aSpeed = getFinalSpeed(a.active.pokemon, a.field, a.side);
+        let bSpeed = getFinalSpeed(b.active.pokemon, b.field, b.side);
+        return bSpeed - aSpeed;
+    });
 
     for (let visit of toVisit)
         visitor.visitActivePokemon(state, visit.active, visit.field, visit.side);
@@ -61,6 +66,34 @@ export class BattleFieldStateRewriter implements IBattleFieldStateVisitorWithRew
 
     public visitField(field: Field): Field {
         return field.clone();
+    }
+}
+
+
+export class PokemonPositionReplacer extends BattleFieldStateRewriter {
+    private readonly _from: PokemonPosition;
+    private readonly _to: PokemonPosition;
+
+    constructor(replacement: PokemonPosition);
+    constructor(from: PokemonPosition, to: PokemonPosition);
+    constructor(from: PokemonPosition, to?: PokemonPosition) {
+        super();
+        this._from = from;
+        this._to = to || from;
+    }
+
+    public static replace(state: BattleFieldState, from: PokemonPosition, to?: PokemonPosition): BattleFieldState {
+        const replacer = new PokemonPositionReplacer(from, to || from);
+        return replacer.visitState(state);
+    }
+
+    public override visitActivePokemon(pokemon: PokemonPosition): PokemonPosition {
+        if (pokemon.pokemon.equals(this._from.pokemon)) {
+            return this._to;
+        }
+
+        return pokemon;
+    
     }
 }
 

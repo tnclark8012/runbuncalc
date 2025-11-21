@@ -9,8 +9,8 @@ import { inGen, importTeam } from '../../test-helper';
 import { getPlayerPossibleActions } from './player-move-selection';
 import { isMoveAction, PossibleAction } from './move-selection.contracts';
 import { BattleFieldState, CpuTrainer, PlayerTrainer, PokemonPosition } from '../../moveScoring.contracts';
-import { Box } from '../../playthrough/museum.collection';
-import { Trainers } from '../../../trainer-sets';
+import { getBox } from '../../playthrough/museum.collection';
+import { OpposingTrainer } from '../../../trainer-sets';
 
 describe('Player Move Selection', () => {
   describe('Mega evolution', () => {
@@ -35,8 +35,8 @@ Level: 100
 
   describe('Switches', () => {
     test('Any time switching', () => {
-      let { Gossifleur, Turtwig, Starly, Poochyena } = Box;
-      let [Grubbin, Pineco, Sizzlipede] = Trainers['Bug Catcher Rick'];
+      let { Gossifleur, Turtwig, Starly, Poochyena } = getBox();
+      let [Grubbin, Pineco, Sizzlipede] = OpposingTrainer('Bug Catcher Rick');
 
       // Grubbin = Grubbin.clone({ curHP: 0 });
       let state = new BattleFieldState(

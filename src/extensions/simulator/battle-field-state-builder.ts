@@ -2,7 +2,7 @@ import { Field, Pokemon } from "@smogon/calc";
 import type { SetCollectionData } from "../core/storage.contracts";
 import { BattleFieldState, CpuTrainer, PlayerTrainer } from "./moveScoring.contracts";
 import { gen } from "../configuration";
-import { Trainers } from "../trainer-sets";
+import { OpposingTrainer } from "../trainer-sets";
 
 export class BattleFieldStateBuilder {
     public static buildTrainerBattle(player: SetCollectionData, cpu: string): BattleFieldState {
@@ -23,7 +23,7 @@ export class BattleFieldStateBuilder {
 
         return new BattleFieldState(
             new PlayerTrainer([], playerPokes),
-            new CpuTrainer([], Trainers[cpu]),
+            new CpuTrainer([], OpposingTrainer(cpu]),
             new Field());
     }
 }

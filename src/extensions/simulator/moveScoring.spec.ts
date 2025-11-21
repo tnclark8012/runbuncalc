@@ -10,6 +10,7 @@ import {
 } from '@smogon/calc';
 import { inGen, importTeam } from './test-helper';
 import { megaEvolve } from './moveScoring';
+import { OpposingTrainer } from '../trainer-sets';
 
 const RunAndBun = 8;
 inGen(RunAndBun, ({ gen, calculate, Pokemon, Move }) => {

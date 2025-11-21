@@ -1,18 +1,46 @@
 /* eslint-disable max-len */
 import {
+  Field,
   Generations,
 } from '@smogon/calc';
 import { inGen, importTeam } from '../../test-helper';
 import { calculateMoveResult } from '../../moveScoring';
 import { executeMove } from './execute-move';
-import { playerRng } from '../../../configuration';
+import { cpuRng, playerRng } from '../../../configuration';
+import { getBox } from '../../playthrough/museum.collection';
+import { OpposingTrainer } from '../../../trainer-sets';
 
 const RunAndBun = 8;
 inGen(RunAndBun, ({ gen, calculate, Pokemon, Move }) => {
   describe('executeMove', () => {
-    xtest(`Berries`, () => {
-        
+    describe(`Berries`, () => {
+      it('Salac Berry', () => {
+        const [, Croagunk,] = OpposingTrainer('Team Aqua Grunt Petalburg Woods');
+        const { Starly } = getBox();
+
+        let result = executeMove(Starly, Croagunk, 'Aerial Ace', new Field(), playerRng);
+        expect(result.defender.item).toBeUndefined();
+        expect(result.defender.boosts.spe).toBe(1);
+      });
     });
+
+    describe(`Defender abilities`, () => {
+      it ('Cotton Down', () => {
+        const { Gossifleur } = getBox();
+        const [_, Clobbopus ] = OpposingTrainer('Triathlete Mikey');
+        let executionResult = executeMove(Clobbopus, Gossifleur, 'Rock Smash', new Field(), cpuRng);
+        expect(executionResult.attacker.boosts.spe).toBe(-1);
+      });
+    });
+
+    describe('Move effects', () => {
+      it('Rock smash', () => {
+        const { Gossifleur } = getBox();
+        const [_, Clobbopus ] = OpposingTrainer('Triathlete Mikey');
+        let executionResult = executeMove(Clobbopus, Gossifleur, 'Rock Smash', new Field(), cpuRng);
+        expect(executionResult.defender.boosts.def).toBe(-1);
+      })
+    })
 
     test('Life orb', () => {
       const [Urshifu, Dragapult] = importTeam(`
@@ -36,8 +64,7 @@ Ability: Clear Body
 - Infestation
       `);
 
-      let moveResult = calculateMoveResult(Urshifu, Dragapult, 'Sucker Punch');
-      let executionResult = executeMove(Generations.get(gen), Urshifu, Dragapult, moveResult, playerRng);
+      let executionResult = executeMove(Urshifu, Dragapult, 'Sucker Punch', new Field(), playerRng);
       expect(executionResult.attacker.curHP()).toBeLessThan(Urshifu.maxHP());
       expect(executionResult.defender.curHP()).toBe(0);
     });

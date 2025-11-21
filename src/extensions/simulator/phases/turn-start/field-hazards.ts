@@ -2,7 +2,7 @@ import { Side } from "@smogon/calc/src/field";
 import { ActivePokemon, BattleFieldState } from "../../moveScoring.contracts";
 import { visitActivePokemonInSpeedOrder } from "../../battle-field-state-visitor";
 import { Pokemon } from "@smogon/calc";
-import { getTypeEffectiveness } from "../../utils";
+import { applyBoost, applyExternalBoost, damagePokemonWithPercentageOfMaxHp, getTypeEffectiveness } from "../../utils";
 
 export function applyFieldHazards(state: BattleFieldState): BattleFieldState {
     state = state.clone();   
@@ -23,6 +23,10 @@ function applyOrClearHazardOnSide(activePokemon: ActivePokemon, side: Side): voi
         let effectiveness = getTypeEffectiveness('Rock', activePokemon.pokemon);
         let pctLost =  effectiveness * 1/8;
         activePokemon.pokemon = damagePokemonWithPercentageOfMaxHp(activePokemon.pokemon, pctLost);
+    }
+
+    if (side.isStickyWebs && !activePokemon.pokemon.hasType('Flying')) {
+        applyExternalBoost(activePokemon.pokemon, 'spe', -1);
     }
 
     if (side.spikes && !(activePokemon.pokemon.hasAbility('Levitate') || activePokemon.pokemon.hasType('Flying'))) {
@@ -49,9 +53,4 @@ function applyOrClearHazardOnSide(activePokemon: ActivePokemon, side: Side): voi
     //             activePokemon.pokemon.toxicCounter = 1;
     //     }
     // }
-}
-
-function damagePokemonWithPercentageOfMaxHp(pokemon: Pokemon, percentage: number): Pokemon {
-    let damageToTake = Math.floor(pokemon.maxHP() * percentage);
-    return pokemon.clone({ curHP: Math.max(pokemon.curHP() - damageToTake) });
 }

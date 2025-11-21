@@ -30,7 +30,7 @@ export class MoveScore {
     }
 
     public never(percentChance?: number): void {
-        this.setScore(-999, percentChance);
+        this.setScore(-50, percentChance);
     }
 
     public setScore(newScore: number, percentChance: number = 1): void {

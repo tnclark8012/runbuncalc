@@ -167,23 +167,25 @@ export function printDecisionTree(tree: DecisionNode | null, indent: string = ''
     let output = '';
     
     // Print the player action
-    output += indent + tree.playerAction + '\n';
+    // output += indent + tree.playerAction + '\n';
     
     // Get CPU outcomes
     const outcomes = Array.from(tree.cpuOutcomes.entries());
     
     if (outcomes.length === 0) {
+        output += indent + tree.playerAction + '\n';
         return output;
     }
     
     // If there's only one CPU outcome, don't use if/else
     if (outcomes.length === 1) {
         const [cpuAction, nextNode] = outcomes[0];
-        output += indent + cpuAction + '\n';
         
         if (nextNode === 'WIN') {
+            output += indent + tree.playerAction + '\n';
             output += indent + 'WIN\n';
         } else {
+            output += indent + nextNode.state.history.map(h => h.description).join(`\n${indent}`) + '\n';
             output += printDecisionTree(nextNode, indent);
         }
     } else {
@@ -192,6 +194,7 @@ export function printDecisionTree(tree: DecisionNode | null, indent: string = ''
         const probability = (100 / outcomes.length).toFixed(1);
         
         outcomes.forEach(([cpuAction, nextNode], index) => {
+            output += indent + `${tree.playerAction}\n`;
             if (index === 0) {
                 output += indent + `if ${cpuAction} (${probability}%):\n`;
             } else {

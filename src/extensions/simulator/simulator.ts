@@ -2,7 +2,7 @@ import { Field, I, StatsTable, Move, Result, Pokemon, MEGA_STONES } from '@smogo
 import { MoveScore } from './moveScore';
 import { BattleFieldState, MoveConsideration, MoveResult, PlayerMoveConsideration, ActivePokemon, TurnOutcome, Trainer, PokemonPosition, CpuTrainer, PlayerTrainer } from './moveScoring.contracts';
 import { calculateAllMoves, canUseDamagingMoves, createMove, findHighestDamageMove, getDamageRanges, hasLifeSavingItem, moveKillsAttacker, moveWillFail, savedFromKO, scoreCPUMoves } from './moveScoring';
-import { applyBoost } from './utils';
+import { applyBoost, getFinalSpeed } from './utils';
 import { CpuSwitchStrategy } from './switchStrategy.cpu';
 import { PartyOrderSwitchStrategy } from './switchStrategy.partyOrder';
 import { getRecovery } from '@smogon/calc/dist/desc';
@@ -97,13 +97,13 @@ export class BattleSimulator {
 		// Not currently accounting for the fact that the player can predict the CPU
 		let naivePlayerMoveBasedOnStartingTurnState = this.calculatePlayerMove(playerDamageResults);
 
-		let firstMove = BattleSimulator.resolveTurnOrder(naivePlayerMoveBasedOnStartingTurnState, cpuMove);
+		let firstMove = BattleSimulator.resolveTurnOrder(naivePlayerMoveBasedOnStartingTurnState, cpuMove, this.currentTurnState);
 		let actions: MoveResult[] = [];
 
 		const moveCPU = () => {
 			if (cpuPokemon.pokemon.curHP() > 0) {
 				actions.push(cpuMove);
-				let moveResult = executeMove(this.gen, cpuPokemon.pokemon, playerPokemon.pokemon, cpuMove, cpuRng);
+				let moveResult = executeMove(cpuPokemon.pokemon, playerPokemon.pokemon, cpuMove.move, this.currentTurnState.cpuField, cpuRng);
 				cpuPokemon.pokemon = moveResult.attacker;
 				playerPokemon.pokemon = moveResult.defender;
 			}
@@ -111,8 +111,8 @@ export class BattleSimulator {
 
 		const movePlayer = (move: MoveResult) => {
 			if (playerPokemon.pokemon.curHP() > 0) {
-				actions.push(move);
-				let moveResult = executeMove(this.gen, playerPokemon.pokemon, cpuPokemon.pokemon, move, playerRng);
+				actions.push(move); 
+				let moveResult = executeMove(playerPokemon.pokemon, cpuPokemon.pokemon, move.move, this.currentTurnState.playerField, playerRng);
 				playerPokemon.pokemon = moveResult.attacker;
 				cpuPokemon.pokemon = moveResult.defender;
 			}
@@ -151,8 +151,7 @@ export class BattleSimulator {
 
 	private calculateCpuMove(cpuResults: Result[], playerMove: MoveResult): MoveScore {
 		let aiMon = cpuResults[0].attacker;
-        const aiActionLastTurn = this.lastTurn?.actions.find(a => a.attacker.equals(aiMon))
-		let moveScores = scoreCPUMoves(cpuResults, playerMove, this.currentTurnState.cpuField, aiActionLastTurn?.move);
+		let moveScores = scoreCPUMoves(cpuResults, playerMove, this.currentTurnState);
 		
 		let highestScoringMoves: MoveScore[] = [];
 		for (let score of moveScores) {
@@ -214,11 +213,11 @@ export class BattleSimulator {
 		return playerChosenMove.result;
 	}
 
-	private static resolveTurnOrder(playerMove: MoveResult, cpuMove: MoveResult): MoveResult {
+	private static resolveTurnOrder(playerMove: MoveResult, cpuMove: MoveResult, state: BattleFieldState): MoveResult {
 		const playerPriority = playerMove.move.priority,
 			cpuPriority = cpuMove.move.priority,
-			playerSpeed = playerMove.attacker.stats.spe,
-			cpuSpeed = cpuMove.attacker.stats.spe;
+			playerSpeed = getFinalSpeed(playerMove.attacker, state.playerField, state.playerSide),
+			cpuSpeed = getFinalSpeed(cpuMove.attacker, state.cpuField, state.cpuSide);
 		
 		if (playerPriority == cpuPriority)
 			return playerSpeed > cpuSpeed ? playerMove : cpuMove;

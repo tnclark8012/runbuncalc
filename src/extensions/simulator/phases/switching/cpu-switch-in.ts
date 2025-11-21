@@ -4,6 +4,7 @@ import { calculateAllMoves, findHighestDamageMove, getCpuMoveConsiderations, get
 import { SwitchAction } from "../battle/move-selection.contracts";
 import { executeSwitch, popFromParty } from "./execute-switch";
 import { PokemonReplacer } from "../../battle-field-state-visitor";
+import { getFinalSpeed } from "../../utils";
 
 const generation = Generations.get(8);
 
@@ -16,7 +17,9 @@ export interface CPUSwitchConsideration {
 }
 
 export function applyCpuSwitchIns(state: BattleFieldState): BattleFieldState {
-    state = initializeActivePokemon(state);
+    if (isUninitialized(state))
+        return initializeActivePokemon(state)
+    
     const cpuParty = state.cpu.party;
     
     let switches: SwitchAction[] = [];
@@ -54,11 +57,13 @@ export function chooseSwitchIn(cpuParty: Pokemon[], seenPlayerMon: Pokemon, stat
         let playerDamageResults = calculateAllMoves(generation, seenPlayerMon, cpuPokemon, state.playerField);
         let cpuDamageResults = calculateAllMoves(generation, cpuPokemon, seenPlayerMon, state.cpuField);
         let cpuAssumedPlayerMove = findHighestDamageMove(getDamageRanges(playerDamageResults));
-        let consideredMoves = getCpuMoveConsiderations(cpuDamageResults, cpuAssumedPlayerMove, state.cpuField, /*last turn outcome*/undefined);
+        let consideredMoves = getCpuMoveConsiderations(cpuDamageResults, cpuAssumedPlayerMove, state);
+        const finalAISpeed = getFinalSpeed(cpuPokemon, state.cpuField, state.cpuSide);
+        const finalPlayerSpeed = getFinalSpeed(seenPlayerMon, state.playerField, state.playerSide);
         
         return {
             pokemon: cpuPokemon,
-            aiIsFaster: cpuPokemon.stats.spe >= seenPlayerMon.stats.spe,
+            aiIsFaster: finalAISpeed >= finalPlayerSpeed,
             aiOHKOs: consideredMoves.some(m => m.aiWillOHKOPlayer),
             playerOHKOs: consideredMoves.some(m => m.playerWillKOAI),
             aiOutdamagesPlayer: consideredMoves.some(m => m.aiOutdamagesPlayer),
@@ -99,9 +104,6 @@ function isUninitialized(state: BattleFieldState): boolean {
 }
 
 function initializeActivePokemon(state: BattleFieldState): BattleFieldState {
-    if (!isUninitialized(state))
-        return state;
-
     state = state.clone();
     let cpuActive: PokemonPosition[] = [new PokemonPosition(state.cpu.party.shift()!, true)];
     if (state.isDoubles && state.cpu.party.length)

@@ -47,6 +47,26 @@ interface Gen {
   Side: typeof side;
 }
 
+export type LegacyStatsTable = {
+  hp?: number;
+  at?: number;
+  df?: number;
+  sa?: number;
+  sd?: number;
+  sp?: number;
+};
+
+export function convertStats(legacyStatsFromSet?: LegacyStatsTable): I.StatsTable {
+  return {
+    hp: legacyStatsFromSet?.hp || 31,
+    atk: legacyStatsFromSet?.at || 31,
+    def: legacyStatsFromSet?.df || 31,
+    spa: legacyStatsFromSet?.sa || 31,
+    spd: legacyStatsFromSet?.sd || 31,
+    spe: legacyStatsFromSet?.sp || 31,
+  }
+}
+
 export function inGen(gen: I.GenerationNum, fn: (gen: Gen) => void) {
   fn({
     gen,
