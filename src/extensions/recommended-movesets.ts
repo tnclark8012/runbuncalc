@@ -3,15 +3,11 @@
  * This file contains the mapping of recommended moves for each Pokémon at different level caps
  */
 
+import { CustomSets, PokemonSet } from './core/storage.contracts';
+
 export interface LevelCapCheckpoint {
   name: string;
   level: number;
-}
-
-export interface PokemonMovesetsByLevelCap {
-  [pokemonName: string]: {
-    [levelCapName: string]: string[];
-  };
 }
 
 /**
@@ -46,29 +42,17 @@ export const LEVEL_CAP_CHECKPOINTS: LevelCapCheckpoint[] = [
 
 /**
  * Recommended movesets for each Pokémon at different level caps
- * Format: { pokemonName: { levelCapName: [move1, move2, move3, move4] } }
+ * Uses the CustomSets interface where set name is the level cap name
  * 
  * Note: Move names are strings to maintain consistency with the rest of the codebase.
  * Users can expand this mapping with additional Pokémon and their recommended movesets.
  */
-export const RECOMMENDED_MOVESETS: PokemonMovesetsByLevelCap = {
-  // Example entries - these can be populated with actual recommended movesets
-  'Blaziken': {
-    'Leader Brawly': ['Ember', 'Double Kick', 'Peck'],
-    'Leader Roxanne': ['Ember', 'Double Kick', 'Peck', 'Quick Attack'],
-    'Leader Wattson': ['Blaze Kick', 'Double Kick', 'Peck', 'Bulk Up'],
-    'Leader Norman': ['Blaze Kick', 'Sky Uppercut', 'Aerial Ace', 'Bulk Up'],
-    'Leader Flannery': ['Blaze Kick', 'Sky Uppercut', 'Aerial Ace', 'Earthquake'],
-    'Leader Winona': ['Blaze Kick', 'Sky Uppercut', 'Rock Slide', 'Earthquake'],
-    'Champion Wallace': ['Blaze Kick', 'Sky Uppercut', 'Rock Slide', 'Earthquake']
-  },
-  'Swampert': {
-    'Leader Brawly': ['Water Gun', 'Mud Shot', 'Tackle'],
-    'Leader Roxanne': ['Water Gun', 'Mud Shot', 'Rock Smash'],
-    'Leader Wattson': ['Surf', 'Mud Shot', 'Rock Smash', 'Ice Beam'],
-    'Leader Norman': ['Surf', 'Earthquake', 'Ice Beam', 'Rock Slide'],
-    'Leader Flannery': ['Surf', 'Earthquake', 'Ice Beam', 'Rock Slide'],
-    'Champion Wallace': ['Surf', 'Earthquake', 'Ice Beam', 'Rock Slide']
+export const RECOMMENDED_MOVESETS: CustomSets = {
+  // Initial recommended set
+  'Piplup': {
+    'Route 104 Aqua Grunt': {
+      moves: ['Pluck', 'Pound', 'Bubble', 'Growl']
+    }
   }
 };
 
@@ -83,7 +67,8 @@ export function getRecommendedMoves(pokemonName: string, levelCapName: string): 
   if (!pokemonMovesets) {
     return undefined;
   }
-  return pokemonMovesets[levelCapName];
+  const moveset = pokemonMovesets[levelCapName];
+  return moveset?.moves;
 }
 
 /**

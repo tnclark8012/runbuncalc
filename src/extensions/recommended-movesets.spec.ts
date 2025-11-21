@@ -36,30 +36,24 @@ describe('Recommended Movesets', () => {
   });
 
   describe('getRecommendedMoves', () => {
-    test('should return moves for Blaziken at Leader Brawly', () => {
-      const moves = getRecommendedMoves('Blaziken', 'Leader Brawly');
+    test('should return moves for Piplup at Route 104 Aqua Grunt', () => {
+      const moves = getRecommendedMoves('Piplup', 'Route 104 Aqua Grunt');
       expect(moves).toBeDefined();
-      expect(moves).toEqual(['Ember', 'Double Kick', 'Peck']);
-    });
-
-    test('should return moves for Swampert at Leader Norman', () => {
-      const moves = getRecommendedMoves('Swampert', 'Leader Norman');
-      expect(moves).toBeDefined();
-      expect(moves).toEqual(['Surf', 'Earthquake', 'Ice Beam', 'Rock Slide']);
+      expect(moves).toEqual(['Pluck', 'Pound', 'Bubble', 'Growl']);
     });
 
     test('should return undefined for non-existent Pokémon', () => {
-      const moves = getRecommendedMoves('NonExistentPokemon', 'Leader Brawly');
+      const moves = getRecommendedMoves('NonExistentPokemon', 'Route 104 Aqua Grunt');
       expect(moves).toBeUndefined();
     });
 
     test('should return undefined for Pokémon without moveset at specific level cap', () => {
-      const moves = getRecommendedMoves('Blaziken', 'Museum Aqua Grunts');
+      const moves = getRecommendedMoves('Piplup', 'Leader Brawly');
       expect(moves).toBeUndefined();
     });
 
     test('should return array of strings', () => {
-      const moves = getRecommendedMoves('Blaziken', 'Leader Roxanne');
+      const moves = getRecommendedMoves('Piplup', 'Route 104 Aqua Grunt');
       expect(moves).toBeDefined();
       expect(Array.isArray(moves)).toBe(true);
       if (moves) {
@@ -71,11 +65,9 @@ describe('Recommended Movesets', () => {
   });
 
   describe('getLevelCapsWithMovesets', () => {
-    test('should return all level caps for Blaziken', () => {
-      const levelCaps = getLevelCapsWithMovesets('Blaziken');
-      expect(levelCaps).toContain('Leader Brawly');
-      expect(levelCaps).toContain('Leader Roxanne');
-      expect(levelCaps).toContain('Champion Wallace');
+    test('should return all level caps for Piplup', () => {
+      const levelCaps = getLevelCapsWithMovesets('Piplup');
+      expect(levelCaps).toContain('Route 104 Aqua Grunt');
     });
 
     test('should return empty array for non-existent Pokémon', () => {
@@ -83,20 +75,16 @@ describe('Recommended Movesets', () => {
       expect(levelCaps).toEqual([]);
     });
 
-    test('should return all defined level caps for Swampert', () => {
-      const levelCaps = getLevelCapsWithMovesets('Swampert');
-      const expectedLevelCaps = Object.keys(RECOMMENDED_MOVESETS['Swampert']);
+    test('should return all defined level caps for Piplup', () => {
+      const levelCaps = getLevelCapsWithMovesets('Piplup');
+      const expectedLevelCaps = Object.keys(RECOMMENDED_MOVESETS['Piplup']);
       expect(levelCaps).toEqual(expectedLevelCaps);
     });
   });
 
   describe('hasRecommendedMovesets', () => {
-    test('should return true for Blaziken', () => {
-      expect(hasRecommendedMovesets('Blaziken')).toBe(true);
-    });
-
-    test('should return true for Swampert', () => {
-      expect(hasRecommendedMovesets('Swampert')).toBe(true);
+    test('should return true for Piplup', () => {
+      expect(hasRecommendedMovesets('Piplup')).toBe(true);
     });
 
     test('should return false for non-existent Pokémon', () => {
@@ -110,12 +98,15 @@ describe('Recommended Movesets', () => {
         expect(typeof pokemonName).toBe('string');
         expect(typeof movesets).toBe('object');
         
-        Object.entries(movesets).forEach(([levelCapName, moves]) => {
+        Object.entries(movesets).forEach(([levelCapName, moveset]) => {
           expect(typeof levelCapName).toBe('string');
-          expect(Array.isArray(moves)).toBe(true);
-          moves.forEach(move => {
-            expect(typeof move).toBe('string');
-          });
+          expect(typeof moveset).toBe('object');
+          expect(Array.isArray(moveset.moves)).toBe(true);
+          if (moveset.moves) {
+            moveset.moves.forEach(move => {
+              expect(typeof move).toBe('string');
+            });
+          }
         });
       });
     });
