@@ -18,7 +18,8 @@ export function getCpuPossibleActions(state: BattleFieldState, cpuPokemon: Pokem
         if (!actionsAgainstTarget.length)
             continue;
         
-        let batchScore = actionsAgainstTarget[0].score;
+        // Find the maximum score among all actions against this target
+        let batchScore = Math.max(...actionsAgainstTarget.map(a => a.score));
         if (batchScore > topScore) {
             topScore = batchScore;
             actions = actionsAgainstTarget;
@@ -40,43 +41,137 @@ export function getCpuMoveScoresAgainstTarget(state: BattleFieldState, cpuPokemo
 }
 
 function getCpuPossibleActionsAgainstTarget(state: BattleFieldState, cpuPokemon: PokemonPosition, target: PokemonPosition, targetSlot: TargetSlot): Array<ScoredPossibleAction> {
-    const highestScoringCpuMoves = calculateCpuMove(getCpuMoveScoresAgainstTarget(state, cpuPokemon, target, targetSlot));
-    return highestScoringCpuMoves.map<ScoredPossibleAction>((cpuMove: MoveScore) => {
+    const moveScores = getCpuMoveScoresAgainstTarget(state, cpuPokemon, target, targetSlot);
+    const moveProbabilities = calculateCpuMove(moveScores);
+    
+    return moveProbabilities.map<ScoredPossibleAction>((moveProb) => {
         return ({
             type: 'move',
             pokemon: cpuPokemon.pokemon,
             move: {
-                move: cpuMove.move.move,
+                move: moveProb.moveScore.move.move,
                 target: targetSlot
             },
-            probability: 1 / highestScoringCpuMoves.length,
-            score: calculateExpectedScore(cpuMove)
+            probability: moveProb.probability,
+            score: moveProb.score
         } as ScoredPossibleAction);
     });
 }
 
-function calculateCpuMove(moveScores: MoveScore[]): MoveScore[] {
-    let highestScoringMoves: MoveScore[] = [];
-    let highestExpectedScore = -Infinity;
-    
-    for (let score of moveScores) {
-        const expectedScore = calculateExpectedScore(score);
-        
-        if (expectedScore > highestExpectedScore) {
-            highestExpectedScore = expectedScore;
-            highestScoringMoves = [score];
-        }
-        else if (expectedScore === highestExpectedScore) {
-            highestScoringMoves.push(score);
-        }
-    }
-
-    return highestScoringMoves;
+interface MoveProbability {
+    moveScore: MoveScore;
+    probability: number;
+    score: number;
 }
 
-function calculateExpectedScore(moveScore: MoveScore): number {
-    const scores = moveScore.getScores();
-    return scores.reduce((sum, scoreModifier) => {
-        return sum + (scoreModifier.modifier * scoreModifier.percentChance);
-    }, 0);
+function calculateCpuMove(moveScores: MoveScore[]): MoveProbability[] {
+    // For each move, get all possible score outcomes
+    const moveOutcomes = moveScores.map(moveScore => ({
+        moveScore,
+        scores: moveScore.getScores()
+    }));
+    
+    // Check if all moves have single outcomes (common case, fast path)
+    const allSingleOutcome = moveOutcomes.every(mo => mo.scores.length === 1);
+    if (allSingleOutcome) {
+        // Fast path: use simple comparison like the original code
+        let highestScoringMoves: MoveProbability[] = [];
+        let highestScore = -Infinity;
+        
+        for (const outcome of moveOutcomes) {
+            const score = outcome.scores[0].modifier;
+            
+            if (score > highestScore) {
+                highestScore = score;
+                highestScoringMoves = [{
+                    moveScore: outcome.moveScore,
+                    probability: 1,
+                    score: score
+                }];
+            } else if (score === highestScore) {
+                highestScoringMoves.push({
+                    moveScore: outcome.moveScore,
+                    probability: 1,
+                    score: score
+                });
+            }
+        }
+        
+        // Distribute probability equally among tied moves
+        const prob = 1 / highestScoringMoves.length;
+        return highestScoringMoves.map(m => ({ ...m, probability: prob }));
+    }
+    
+    // Slow path: handle multiple outcomes per move
+    // Map to track the probability each move is the highest
+    const moveProbabilities = new Map<MoveScore, number>();
+    const moveMaxScores = new Map<MoveScore, number>();
+    
+    // Initialize probabilities to 0
+    for (const move of moveScores) {
+        moveProbabilities.set(move, 0);
+        moveMaxScores.set(move, -Infinity);
+    }
+    
+    // Generate all possible combinations of score outcomes
+    // For each combination, determine which move(s) have the highest score
+    function evaluateAllCombinations(index: number, currentScores: Map<MoveScore, number>, currentProbability: number) {
+        // Early termination: if probability is negligible, skip
+        if (currentProbability < 0.0001) {
+            return;
+        }
+        
+        if (index === moveOutcomes.length) {
+            // Find the highest score in this combination
+            let maxScore = -Infinity;
+            for (const score of currentScores.values()) {
+                maxScore = Math.max(maxScore, score);
+            }
+            
+            // Find all moves with the max score (ties)
+            const movesWithMaxScore: MoveScore[] = [];
+            for (const [move, score] of currentScores.entries()) {
+                if (score === maxScore) {
+                    movesWithMaxScore.push(move);
+                    // Track the maximum score this move can achieve
+                    moveMaxScores.set(move, Math.max(moveMaxScores.get(move)!, score));
+                }
+            }
+            
+            // Distribute probability among tied moves
+            const probPerMove = currentProbability / movesWithMaxScore.length;
+            for (const move of movesWithMaxScore) {
+                moveProbabilities.set(move, moveProbabilities.get(move)! + probPerMove);
+            }
+            return;
+        }
+        
+        // Recursively try each possible score for the current move
+        const outcome = moveOutcomes[index];
+        for (const scoreModifier of outcome.scores) {
+            const newScores = new Map(currentScores);
+            newScores.set(outcome.moveScore, scoreModifier.modifier);
+            evaluateAllCombinations(
+                index + 1,
+                newScores,
+                currentProbability * scoreModifier.percentChance
+            );
+        }
+    }
+    
+    evaluateAllCombinations(0, new Map(), 1);
+    
+    // Return only moves that have a non-zero probability of being highest
+    const result: MoveProbability[] = [];
+    for (const [moveScore, probability] of moveProbabilities.entries()) {
+        if (probability > 0.001) {  // Use higher threshold to filter out negligible probabilities
+            result.push({
+                moveScore,
+                probability,
+                score: moveMaxScores.get(moveScore)!
+            });
+        }
+    }
+    
+    return result;
 }
