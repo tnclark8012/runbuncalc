@@ -143,8 +143,8 @@ Ability: Hyper Cutter
     Croagunk.item = undefined;
     state = create1v1BattleState(Starly, Croagunk);
     result = getCpuMoveScoresAgainstTarget(state, state.cpu.active[0], state.player.active[0], { slot: 0, type: 'opponent' });
-    belch = result.find(r => r.move.move.name === 'Belch');
-    expect(belch?.finalScore).toBeGreaterThan(0);
+    belch = result.find(r => r.move.move.name === 'Belch')!;
+    expect(belch.finalScore).toBeGreaterThan(0);
   });
 
   it("Fake out", () => {

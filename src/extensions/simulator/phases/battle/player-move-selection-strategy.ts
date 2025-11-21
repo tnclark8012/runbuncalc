@@ -11,9 +11,9 @@ export const BasicScoring: IMoveScoringStrategy = {
         return consideredMoves.map(cm => {
             let score = new MoveScore(cm.result);
             if(cm.attackerDiesToRecoil || cm.guaranteedToFail)
-                score.setScore(-1);
+                score.addScore(-1);
             else
-                score.setScore(1);
+                score.addScore(1);
             return score;
         });
     }
@@ -39,7 +39,7 @@ export const IntuitionScoring: IMoveScoringStrategy = {
                 score.addScore(1);
 
             if (potentialMove.attackerDiesToRecoil || potentialMove.guaranteedToFail)
-                score.setScore(-Infinity);
+                score.addScore(-Infinity);
 
             return potentialMove;
         }, undefined);

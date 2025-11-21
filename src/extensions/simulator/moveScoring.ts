@@ -225,8 +225,7 @@ export function specificMoves(moveScore: MoveScore, consideration: CPUMoveConsid
             }
             break;
         case 'Rollout':
-            moveScore = new MoveScore(consideration.result);
-            moveScore.addScore(7);
+            moveScore.setScore(7);
             break;
         case 'Stealth Rock':
             if (consideration.field.defenderSide.isSR)
@@ -289,8 +288,7 @@ export function specificMoves(moveScore: MoveScore, consideration: CPUMoveConsid
         case 'Ice Shard':
             if (consideration.field.gameType == 'Doubles' && consideration.aiPartner && consideration.aiPartner.hasItem('Weakness Policy') &&
                 isSuperEffective(moveScore.move.move.type, consideration.aiPartner)) {
-                moveScore = new MoveScore(consideration.result);
-                moveScore.addScore(12); // "these get a score of +12 total."
+                moveScore.setScore(12); // "these get a score of +12 total."
             }
             break;
         case 'Magnitude':
@@ -300,8 +298,7 @@ export function specificMoves(moveScore: MoveScore, consideration: CPUMoveConsid
                 moveScore.addScore(9);
             }
             else {
-                moveScore = new MoveScore(consideration.result);
-                moveScore.addScore(-20);
+                moveScore.setScore(-20);
             }
             break;
         case 'Baton Pass':
@@ -312,10 +309,8 @@ export function specificMoves(moveScore: MoveScore, consideration: CPUMoveConsid
         // moveScore.addScore(consideration.aiIsSlower ? 9 : 5);
         case 'Trick Room':
             moveScore.addScore(consideration.aiIsSlower ? 10 : 5);
-            if (consideration.field.isTrickRoom) {
-                moveScore = new MoveScore(consideration.result);
-                moveScore.addScore(-20);
-            }
+            if (consideration.field.isTrickRoom)
+                moveScore.setScore(-20);
             break;
         case 'Fake Out':
             if (!consideration.aiMonFirstTurnOut || consideration.playerMon.hasAbility('Inner Focus'))
@@ -388,10 +383,8 @@ export function specificMoves(moveScore: MoveScore, consideration: CPUMoveConsid
             moveScore.addAlternativeScores(-1, 0.5, 0)
             break;
         case 'Belch':
-            if (hasBerry(consideration.aiMon)) {
-                moveScore = new MoveScore(consideration.result);
-                moveScore.addScore(-20);
-            }
+            if (hasBerry(consideration.aiMon))
+                moveScore.setScore(-20);
             break;
     }
 }
@@ -664,6 +657,9 @@ export function getLockedMoveAction(state: BattleFieldState, trainer: Trainer, a
     };
 }
 
+// Memoization cache for getHighestDamagingMovePercentChances
+const movePercentChancesCache = new Map<string, Map<string, number>>();
+
 /**
  * Looks at all each move result's damageRolls and compares it to the others.
  * @param moveResults 
@@ -672,6 +668,18 @@ export function getLockedMoveAction(state: BattleFieldState, trainer: Trainer, a
 export function getHighestDamagingMovePercentChances(moveResults: Array<{ move: { name: string }, damageRolls: number[] }>): Map<string, number> {
     if (moveResults.length === 0) {
         return new Map();
+    }
+
+    // Create a cache key from move names and their damage rolls
+    const cacheKey = moveResults
+        .map(r => `${r.move.name}:${r.damageRolls.join(',')}`)
+        .sort()
+        .join('|');
+    
+    // Check cache
+    const cached = movePercentChancesCache.get(cacheKey);
+    if (cached) {
+        return cached;
     }
 
     const moves: Record<string, number[]> = {};
@@ -707,5 +715,9 @@ export function getHighestDamagingMovePercentChances(moveResults: Array<{ move: 
     for (const [move, count] of winCounts.entries()) {
         winCounts.set(move, count / totalRollCount);
     }
+    
+    // Store in cache
+    movePercentChancesCache.set(cacheKey, winCounts);
+    
     return winCounts;
 }

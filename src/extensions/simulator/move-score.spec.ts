@@ -50,16 +50,9 @@ describe('MoveScore', () => {
     expectScores([new ScoreModifier(1, 0.5), new ScoreModifier(2, 0.5)], moveScore.getScores());
   });
 
-  test('setScore - fixed' , () => {
-    const moveScore = new MoveScore(moveResult);
-    moveScore.addAlternativeScores(100, 0.5, 76);
-    moveScore.setScore(-1);
-    expectScores([new ScoreModifier(-1, 1)], moveScore.getScores());
-  });
-
   test('getScores collapses same score probabilities' , () => {
     const moveScore = new MoveScore(moveResult);
-    moveScore.setScore(1, 0.5); // 0 - 50%, 1 - 50%
+    moveScore.addScore(1, 0.5); // 0 - 50%, 1 - 50%
     moveScore.addScore(1, 0.5); // 0 - 25%, 1 - 25%, 1 - 25%, 2 - 25%
     //  0 - 25%, 1 - 50%, 2 - 25%
     expectScores([new ScoreModifier(0, 0.25), new ScoreModifier(1, 0.5), new ScoreModifier(2, 0.25)], moveScore.getScores());

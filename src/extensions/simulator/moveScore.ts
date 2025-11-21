@@ -2,7 +2,7 @@ import { MoveResult } from "./moveScoring.contracts";
 
 export class MoveScore {
     private readonly potentialScores: ScoreModifier[] = [];
-    private fixedScore?: ScoreModifier;
+    private fixedScores: ScoreModifier[] = [];
     private score: ScoreModifier;
     
     constructor(public readonly move: MoveResult) {
@@ -10,6 +10,9 @@ export class MoveScore {
     }
 
     public getScores(): ScoreModifier[] {
+        if (this.fixedScores.length) 
+            return this.fixedScores;
+
         let finalScores: Map<number, number> = new Map();
         let toVisit: ScoreModifier[] = [this.score];
         while (toVisit.length > 0) {
@@ -27,8 +30,8 @@ export class MoveScore {
     }
 
     public get finalScore(): number {
-        if (this.fixedScore) {
-            return this.fixedScore.modifier;
+        if (this.fixedScores?.length) {
+            return this.fixedScores[0].modifier;
         }
 
         return this.potentialScores.reduce((soFar: number, current: ScoreModifier) => {
@@ -84,12 +87,11 @@ export class MoveScore {
     }
 
     public setScore(newScore: number, percentChance: number = 1): void {
-        this.fixedScore = new ScoreModifier(newScore, percentChance);
-        this.addScore(-this.score.modifier + newScore, percentChance);
+        this.fixedScores = [new ScoreModifier(newScore, percentChance)];
     }
 
     public setAlternativeScores(modifier1: number, modifier1Chance: number, modifier2: number): void {
-        this.setScore(modifier1Chance >= 0.5 ? modifier1 : modifier2);
+        this.fixedScores = [new ScoreModifier(modifier1, modifier1Chance), new ScoreModifier(modifier2, 1 - modifier1Chance)];
     }
 }
 
