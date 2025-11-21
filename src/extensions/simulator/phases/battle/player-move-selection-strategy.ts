@@ -11,9 +11,9 @@ export const BasicScoring: IMoveScoringStrategy = {
         return consideredMoves.map(cm => {
             let score = new MoveScore(cm.result);
             if(cm.attackerDiesToRecoil || cm.guaranteedToFail)
-                score.setScore(-1);
+                score.addScore(-1);
             else
-                score.setScore(1);
+                score.addScore(1);
             return score;
         });
     }
@@ -29,7 +29,7 @@ export const IntuitionScoring: IMoveScoringStrategy = {
             if (!playerChosenMove)
                 return potentialMove;
 
-            const moreDamage = potentialMove.lowestRollHpPercentage > playerChosenMove.lowestRollHpPercentage;
+            const moreDamage = potentialMove.lowestRollTotalHitsHpPercentage > playerChosenMove.lowestRollTotalHitsHpPercentage;
             const kosWithHigherPriority = potentialMove.kos && playerChosenMove.kos && potentialMove.result.move.priority > playerChosenMove.result.move.priority;
             if ((potentialMove.kos && !playerChosenMove.kos) || kosWithHigherPriority) {
                 score.addScore(10);
@@ -39,7 +39,7 @@ export const IntuitionScoring: IMoveScoringStrategy = {
                 score.addScore(1);
 
             if (potentialMove.attackerDiesToRecoil || potentialMove.guaranteedToFail)
-                score.setScore(-Infinity);
+                score.addScore(-Infinity);
 
             return potentialMove;
         }, undefined);

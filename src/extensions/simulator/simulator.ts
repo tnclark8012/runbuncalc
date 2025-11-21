@@ -1,7 +1,7 @@
 import { Field, I, StatsTable, Move, Result, Pokemon, MEGA_STONES } from '@smogon/calc';
 import { MoveScore } from './moveScore';
 import { BattleFieldState, MoveConsideration, MoveResult, PlayerMoveConsideration, ActivePokemon, TurnOutcome, Trainer, PokemonPosition, CpuTrainer, PlayerTrainer } from './moveScoring.contracts';
-import { calculateAllMoves, canUseDamagingMoves, createMove, findHighestDamageMove, getDamageRanges, hasLifeSavingItem, moveKillsAttacker, moveWillFail, savedFromKO, scoreCPUMoves } from './moveScoring';
+import { calculateAllMoves, canUseDamagingMoves, createMove, findHighestDamageMove, toMoveResults, hasLifeSavingItem, moveKillsAttacker, moveWillFail, savedFromKO, scoreCPUMoves } from './moveScoring';
 import { applyBoost, getFinalSpeed } from './utils';
 import { CpuSwitchStrategy } from './switchStrategy.cpu';
 import { PartyOrderSwitchStrategy } from './switchStrategy.partyOrder';
@@ -91,7 +91,7 @@ export class BattleSimulator {
 		let cpuPokemon = this.currentTurnState.cpu.active[0];
 		let playerDamageResults = calculateAllMoves(this.gen, playerPokemon.pokemon, cpuPokemon.pokemon, this.currentTurnState.playerField);
 		let cpuDamageResults = calculateAllMoves(this.gen, cpuPokemon.pokemon, playerPokemon.pokemon, this.currentTurnState.cpuField);
-		let cpuAssumedPlayerMove = findHighestDamageMove(getDamageRanges(playerDamageResults));
+		let cpuAssumedPlayerMove = findHighestDamageMove(toMoveResults(playerDamageResults));
 		let cpuMove = this.calculateCpuMove(cpuDamageResults, cpuAssumedPlayerMove).move;
 		
 		// Not currently accounting for the fact that the player can predict the CPU
@@ -174,16 +174,16 @@ export class BattleSimulator {
 
 	private calculatePlayerMove(playerResults: Result[]): MoveResult {
 		
-		let damageResults = getDamageRanges(playerResults);
+		let damageResults = toMoveResults(playerResults);
 		let movesToConsider = damageResults
 			.map<PlayerMoveConsideration>(r => {
-				const kos = (r.lowestRollDamage * r.move.hits) >= r.defender.curHP() && (!savedFromKO(r.defender) || r.move.hits > 1);
+				const kos = (r.lowestRollPerHitDamage * playerRng.getHits(r)) >= r.defender.curHP() && (!savedFromKO(r.defender) || r.move.hits > 1);
 				return {
 					aiMon: r.defender,
 					playerMon: r.attacker,
 					result: r,
-					lowestRollHpPercentage: r.lowestRollHpPercentage,
-					hightestRollHpPercentage: r.highestRollHpPercentage,
+					lowestRollTotalHitsHpPercentage: r.lowestRollPerHitHpPercentage,
+					highestRollTotalHitsHpPercentage: r.highestRollPerHitHpPercentage,
 					kos: kos,
 					kosThroughRequiredLifesaver: kos && savedFromKO(r.defender),
 					attackerDiesToRecoil: moveKillsAttacker(r),
@@ -198,7 +198,7 @@ export class BattleSimulator {
 				playerChosenMove = potentialMove;
 				continue;
 			}
-			const moreDamage = potentialMove.lowestRollHpPercentage > playerChosenMove.lowestRollHpPercentage;
+			const moreDamage = potentialMove.lowestRollTotalHitsHpPercentage > playerChosenMove.lowestRollTotalHitsHpPercentage;
 			const kosWithHigherPriority = potentialMove.kos && playerChosenMove.kos && potentialMove.result.move.priority > playerChosenMove.result.move.priority;
 			if ((potentialMove.kos && !playerChosenMove.kos) || kosWithHigherPriority) {
 				playerChosenMove = potentialMove;
