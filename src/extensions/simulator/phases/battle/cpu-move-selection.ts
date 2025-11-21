@@ -50,27 +50,33 @@ function getCpuPossibleActionsAgainstTarget(state: BattleFieldState, cpuPokemon:
                 target: targetSlot
             },
             probability: 1 / highestScoringCpuMoves.length,
-            score: cpuMove.finalScore
+            score: calculateExpectedScore(cpuMove)
         } as ScoredPossibleAction);
     });
 }
 
 function calculateCpuMove(moveScores: MoveScore[]): MoveScore[] {
     let highestScoringMoves: MoveScore[] = [];
+    let highestExpectedScore = -Infinity;
+    
     for (let score of moveScores) {
-        let soFar = highestScoringMoves[highestScoringMoves.length - 1];
-        if (!soFar) {
-            highestScoringMoves.push(score);
-            continue;
-        }
-
-        if (score.finalScore > soFar.finalScore) {
+        const expectedScore = calculateExpectedScore(score);
+        
+        if (expectedScore > highestExpectedScore) {
+            highestExpectedScore = expectedScore;
             highestScoringMoves = [score];
         }
-        else if (score.finalScore === soFar.finalScore) {
+        else if (expectedScore === highestExpectedScore) {
             highestScoringMoves.push(score);
         }
     }
 
     return highestScoringMoves;
+}
+
+function calculateExpectedScore(moveScore: MoveScore): number {
+    const scores = moveScore.getScores();
+    return scores.reduce((sum, scoreModifier) => {
+        return sum + (scoreModifier.modifier * scoreModifier.percentChance);
+    }, 0);
 }
