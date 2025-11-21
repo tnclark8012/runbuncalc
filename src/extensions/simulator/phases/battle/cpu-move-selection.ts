@@ -150,19 +150,16 @@ function calculateCpuMove(moveScores: MoveScore[]): MoveProbability[] {
             return;
         }
         
-        // Recursively try each possible score for the current move using backtracking
+        // Recursively try each possible score for the current move
         const outcome = moveOutcomes[index];
         for (const scoreModifier of outcome.scores) {
-            // Set current move's score
-            currentScores.set(outcome.moveScore, scoreModifier.modifier);
-            // Recurse
+            const newScores = new Map(currentScores);
+            newScores.set(outcome.moveScore, scoreModifier.modifier);
             evaluateAllCombinations(
                 index + 1,
-                currentScores,
+                newScores,
                 currentProbability * scoreModifier.percentChance
             );
-            // Note: No need to unset since we'll overwrite in the next iteration
-            // and the map is only used at leaf nodes (index === moveOutcomes.length)
         }
     }
     
