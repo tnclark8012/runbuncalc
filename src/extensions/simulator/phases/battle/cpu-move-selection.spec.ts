@@ -8,7 +8,8 @@ import { inGen, importTeam, importPokemon, expectPlayerTeam, expectCpuTeam } fro
 import { ActivePokemon, BattleFieldState, CpuTrainer, PlayerTrainer, PokemonPosition, Trainer } from '../../moveScoring.contracts';
 import { MoveAction, PossibleAction, PossibleTrainerAction } from './move-selection.contracts';
 import { createMove } from '../../moveScoring';
-import { getCpuMoveScoresAgainstTarget, getCpuPossibleActions } from './cpu-move-selection';
+import { getCpuMoveScoresAgainstTarget, getCpuPossibleActions, calculateCpuMove } from './cpu-move-selection';
+import { MoveScore } from '../../moveScore';
 import { get } from 'jquery';
 import { PartyOrderSwitchStrategy } from '../../switchStrategy.partyOrder';
 import { getBox } from '../../playthrough/museum.collection';
@@ -162,6 +163,49 @@ Ability: Hyper Cutter
         },
         probability: 1
       });
+  });
+
+  it("calculateCpuMove with probabilistic scoring", () => {
+    // Create mock move results for testing
+    const mockMoveResult1: any = { move: { name: 'Move1' } };
+    const mockMoveResult2: any = { move: { name: 'Move2' } };
+    const mockMoveResult3: any = { move: { name: 'Move3' } };
+
+    // Create test scores based on the example from the PR:
+    // score1: [{modifier: 6, probability: 0.9}, {modifier: 8, probability: 0.1}]
+    // score2: [{modifier: 6, probability: 1}]
+    // score3: [{modifier: 2, probability: 0.9}, {modifier: 3, probability: 0.1}]
+    const score1 = new MoveScore(mockMoveResult1);
+    score1.setAlternativeScores(6, 0.9, 8); // 90% chance of 6, 10% chance of 8
+
+    const score2 = new MoveScore(mockMoveResult2);
+    score2.setScore(6, 1); // 100% chance of 6
+
+    const score3 = new MoveScore(mockMoveResult3);
+    score3.setAlternativeScores(2, 0.9, 3); // 90% chance of 2, 10% chance of 3
+
+    // Calculate the CPU move probabilities
+    const result = calculateCpuMove([score1, score2, score3]);
+
+    // Expected results:
+    // score1: probability=0.55 (10% unique highest + 50% of 90% tied), score=8
+    // score2: probability=0.45 (50% of 90% tied), score=6
+    // score3: not returned (never highest)
+    
+    expect(result.length).toBe(2); // Only score1 and score2 should be returned
+    
+    const result1 = result.find(r => r.moveScore === score1);
+    expect(result1).toBeDefined();
+    expect(result1!.probability).toBeCloseTo(0.55, 5); // 0.1 + 0.5 * 0.9
+    expect(result1!.score).toBe(8); // Maximum achievable score
+
+    const result2 = result.find(r => r.moveScore === score2);
+    expect(result2).toBeDefined();
+    expect(result2!.probability).toBeCloseTo(0.45, 5); // 0.5 * 0.9
+    expect(result2!.score).toBe(6); // Maximum achievable score
+
+    const result3 = result.find(r => r.moveScore === score3);
+    expect(result3).toBeUndefined(); // score3 is never highest
   });
 });
 
