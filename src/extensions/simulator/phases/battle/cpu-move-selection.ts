@@ -64,6 +64,10 @@ interface MoveProbability {
     score: number;
 }
 
+// Threshold for filtering moves with negligible probability of being highest
+// This helps avoid floating point errors and prunes branches unlikely to affect decision-making
+const PROBABILITY_THRESHOLD = 0.00001;
+
 function calculateCpuMove(moveScores: MoveScore[]): MoveProbability[] {
     // For each move, get all possible score outcomes
     const moveOutcomes = moveScores.map(moveScore => ({
@@ -113,11 +117,11 @@ function calculateCpuMove(moveScores: MoveScore[]): MoveProbability[] {
         moveMaxScores.set(move, -Infinity);
     }
     
-    // Generate all possible combinations of score outcomes
+    // Generate all possible combinations of score outcomes using backtracking
     // For each combination, determine which move(s) have the highest score
     function evaluateAllCombinations(index: number, currentScores: Map<MoveScore, number>, currentProbability: number) {
-        // Early termination: if probability is negligible, skip
-        if (currentProbability < 0.00001) {
+        // Early termination: if probability is negligible, skip this branch
+        if (currentProbability < PROBABILITY_THRESHOLD) {
             return;
         }
         
@@ -146,16 +150,19 @@ function calculateCpuMove(moveScores: MoveScore[]): MoveProbability[] {
             return;
         }
         
-        // Recursively try each possible score for the current move
+        // Recursively try each possible score for the current move using backtracking
         const outcome = moveOutcomes[index];
         for (const scoreModifier of outcome.scores) {
-            const newScores = new Map(currentScores);
-            newScores.set(outcome.moveScore, scoreModifier.modifier);
+            // Set current move's score
+            currentScores.set(outcome.moveScore, scoreModifier.modifier);
+            // Recurse
             evaluateAllCombinations(
                 index + 1,
-                newScores,
+                currentScores,
                 currentProbability * scoreModifier.percentChance
             );
+            // Note: No need to unset since we'll overwrite in the next iteration
+            // and the map is only used at leaf nodes (index === moveOutcomes.length)
         }
     }
     
@@ -164,7 +171,7 @@ function calculateCpuMove(moveScores: MoveScore[]): MoveProbability[] {
     // Return only moves that have a non-zero probability of being highest
     const result: MoveProbability[] = [];
     for (const [moveScore, probability] of moveProbabilities.entries()) {
-        if (probability > 0.00001) {  // Very small threshold to account for floating point errors
+        if (probability > PROBABILITY_THRESHOLD) {
             result.push({
                 moveScore,
                 probability,
