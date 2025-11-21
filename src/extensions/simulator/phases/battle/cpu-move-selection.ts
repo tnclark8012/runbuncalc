@@ -117,7 +117,7 @@ function calculateCpuMove(moveScores: MoveScore[]): MoveProbability[] {
     // For each combination, determine which move(s) have the highest score
     function evaluateAllCombinations(index: number, currentScores: Map<MoveScore, number>, currentProbability: number) {
         // Early termination: if probability is negligible, skip
-        if (currentProbability < 0.0001) {
+        if (currentProbability < 0.00001) {
             return;
         }
         
@@ -164,7 +164,7 @@ function calculateCpuMove(moveScores: MoveScore[]): MoveProbability[] {
     // Return only moves that have a non-zero probability of being highest
     const result: MoveProbability[] = [];
     for (const [moveScore, probability] of moveProbabilities.entries()) {
-        if (probability > 0.001) {  // Use higher threshold to filter out negligible probabilities
+        if (probability > 0.00001) {  // Very small threshold to account for floating point errors
             result.push({
                 moveScore,
                 probability,
