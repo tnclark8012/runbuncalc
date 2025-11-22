@@ -1,6 +1,6 @@
 import { MoveScore } from "../../moveScore";
 import { calculateAllMoves, findHighestDamageMove, scoreCPUMoves, toMoveResults, getLockedMoveAction } from "../../moveScoring";
-import { BattleFieldState, PokemonPosition } from "../../moveScoring.contracts";
+import { BattleFieldState, MoveResult, PokemonPosition } from "../../moveScoring.contracts";
 import { PossibleAction, ScoredPossibleAction, TargetSlot } from "./move-selection.contracts";
 import { gen } from "../../../configuration";
 
@@ -49,19 +49,17 @@ function getCpuPossibleActionsAgainstTarget(state: BattleFieldState, cpuPokemon:
             type: 'move',
             pokemon: cpuPokemon.pokemon,
             move: {
-                move: moveProb.moveScore.move.move,
+                move: moveProb.move.move,
                 target: targetSlot
             },
             probability: moveProb.probability,
-            score: moveProb.score
         } as ScoredPossibleAction);
     });
 }
 
 export interface MoveProbability {
-    moveScore: MoveScore;
+    move: MoveResult;
     probability: number;
-    score: number;
 }
 
 // Threshold for filtering moves with negligible probability of being highest
@@ -112,15 +110,13 @@ export function calculateCpuMove(moveScores: MoveScore[]): MoveProbability[] {
             if (score > highestScore) {
                 highestScore = score;
                 highestScoringMoves = [{
-                    moveScore: outcome.moveScore,
+                    move: outcome.moveScore.move,
                     probability: 1,
-                    score: score
                 }];
             } else if (score === highestScore) {
                 highestScoringMoves.push({
-                    moveScore: outcome.moveScore,
+                    move: outcome.moveScore.move,
                     probability: 1,
-                    score: score
                 });
             }
         }
@@ -194,9 +190,8 @@ export function calculateCpuMove(moveScores: MoveScore[]): MoveProbability[] {
     for (const [moveScore, probability] of moveProbabilities.entries()) {
         if (probability > PROBABILITY_THRESHOLD) {
             result.push({
-                moveScore,
+                move: moveScore.move,
                 probability,
-                score: moveMaxScores.get(moveScore)!
             });
         }
     }

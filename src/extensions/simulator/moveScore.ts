@@ -77,9 +77,10 @@ export class MoveScore {
         this.score.addBranch(modifier, percentChance);
     }
 
-    public addAlternativeScores(modifier1: number, modifier1Chance: number, modifier2: number): void {
+    public addAlternativeScores(modifier1: number, modifier1Chance: number, modifier2: number, modifier2Chance?: number): void {
+        modifier2Chance = modifier2Chance == null ? 1 - modifier1Chance : modifier2Chance;
         this.potentialScores.push(new ScoreModifier(modifier1Chance >= 0.5 ? modifier1 : modifier2, 1));
-        this.score.addAlternativeBranches(modifier1, modifier1Chance, modifier2);
+        this.score.addAlternativeBranches(modifier1, modifier1Chance, modifier2, modifier2Chance);
     }
 
     public never(percentChance?: number): void {
@@ -111,18 +112,22 @@ export class ScoreModifier {
         }
     }
 
-    public addAlternativeBranches(modifier1: number, modifier1Chance: number, modifier2: number): void {
+    public addAlternativeBranches(modifier1: number, modifier1Chance: number, modifier2: number, modifier2Chance?: number): void {
+        modifier2Chance = modifier2Chance == null ? 1 - modifier1Chance : modifier2Chance;
         if (this.branches.length === 0) {
             if (modifier1Chance === 1 || modifier1Chance === 0) {
                 this.branches.push(new ScoreModifier(this.modifier + (modifier1Chance ? modifier1 : modifier2), this.percentChance));
             }
             else {
-                this.branches.push(new ScoreModifier(this.modifier + modifier1, this.percentChance * modifier1Chance), new ScoreModifier(this.modifier + modifier2, this.percentChance * (1 - modifier1Chance)));
+                this.branches.push(new ScoreModifier(this.modifier + modifier1, this.percentChance * modifier1Chance), new ScoreModifier(this.modifier + modifier2, this.percentChance * (modifier2Chance)));
+                let remainingChance = (1 - modifier1Chance - modifier2Chance);
+                if (remainingChance)
+                    this.branches.push(new ScoreModifier(this.modifier, this.percentChance * remainingChance));
             }
         }
         else {
             for (let branch of this.branches) {
-                branch.addAlternativeBranches(modifier1, modifier1Chance, modifier2);
+                branch.addAlternativeBranches(modifier1, modifier1Chance, modifier2, modifier2Chance);
             }
         }
     }

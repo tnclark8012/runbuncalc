@@ -165,6 +165,16 @@ Ability: Hyper Cutter
       });
   });
 
+  it("calculateCpuMove doesn't give a chance to moves that are never the highest", () => {
+    const { Starly } = getBox();
+    const [Carvanha,,] = OpposingTrainer('Team Aqua Grunt Petalburg Woods');
+    const state = create1v1BattleState(Starly, Carvanha);
+    const moveScores = getCpuMoveScoresAgainstTarget(state, state.cpu.active[0], state.player.active[0], { slot: 0, type: 'opponent' });
+    const result = calculateCpuMove(moveScores);
+    // Aquat Jet and Poison fang are never the highest, so they always get filtered out.
+    expect(result.map(m => m.move.move.name).sort()).toEqual(['Bite', 'Water Pulse']);
+  });
+
   it("calculateCpuMove with probabilistic scoring", () => {
     // Create mock move results for testing
     const mockMoveResult1: any = { move: { name: 'Move1' } };
@@ -193,18 +203,16 @@ Ability: Hyper Cutter
     // score3: not returned (never highest)
     
     expect(result.length).toBe(2); // Only score1 and score2 should be returned
-    
-    const result1 = result.find(r => r.moveScore === score1);
+
+    const result1 = result.find(r => r.move === score1.move);
     expect(result1).toBeDefined();
     expect(result1!.probability).toBeCloseTo(0.55, 5); // 0.1 + 0.5 * 0.9
-    expect(result1!.score).toBe(8); // Maximum achievable score
 
-    const result2 = result.find(r => r.moveScore === score2);
+    const result2 = result.find(r => r.move === score2.move);
     expect(result2).toBeDefined();
     expect(result2!.probability).toBeCloseTo(0.45, 5); // 0.5 * 0.9
-    expect(result2!.score).toBe(6); // Maximum achievable score
 
-    const result3 = result.find(r => r.moveScore === score3);
+    const result3 = result.find(r => r.move === score3.move);
     expect(result3).toBeUndefined(); // score3 is never highest
   });
 });

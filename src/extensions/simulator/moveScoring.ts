@@ -46,8 +46,9 @@ export function getCpuMoveConsiderations(cpuResults: Result[], playerMove: MoveR
     const finalPlayerSpeed = getFinalSpeed(playerMon, state.playerField, state.playerSide);
     const aiIsFaster: boolean = finalAISpeed >= finalPlayerSpeed;
     const aiIsFasterAfterPlayerParalysis = !playerMon.hasStatus('par') && finalAISpeed > finalPlayerSpeed * 0.25;
-    const maxDamageMoveTotalHitsHpPercentage = maxDamageMove.highestRollPerHitHpPercentage * maxDamageMove.move.hits;
-    const highestDamagingMovePercentChances = getHighestDamagingMovePercentChances(damageResults);
+    const maxDamageMoveTotalHitsHpPercentage = Math.min(maxDamageMove.highestRollPerHitHpPercentage * maxDamageMove.move.hits, playerMon.curHP() / playerMon.maxHP() * 100);
+    const damageCappedAtDefenderHp = damageResults.map(r => { return { ...r, damageRolls: r.damageRolls.map(d => Math.min(d, playerMon.curHP())) } });
+    const highestDamagingMovePercentChances = getHighestDamagingMovePercentChances(damageCappedAtDefenderHp);
     // Not quite
     let movesToConsider = damageResults.map<CPUMoveConsideration>(r => {
         const kos = r.lowestRollPerHitDamage * r.move.hits >= r.defender.curHP();
@@ -81,7 +82,7 @@ export function getCpuMoveConsiderations(cpuResults: Result[], playerMove: MoveR
 }
 
 export function damagingAttackSpAttackReductionWithGuarnateedEffect(moveScore: MoveScore, considerations: CPUMoveConsideration): void {
-    if (!considerations.isHighestDamagingMove)
+    if (!considerations.percentChanceOfBeingHighestDamagingMove)
         return;
 
     const attackDroppingMoves = ['Trop Kick'];
@@ -89,10 +90,10 @@ export function damagingAttackSpAttackReductionWithGuarnateedEffect(moveScore: M
     const defenderIsAffected = !moveScore.move.defender.hasAbility('Contrary', 'Clear Body', 'White Smoke');
 
     if (attackDroppingMoves.includes(moveScore.move.move.name)) {
-        moveScore.addScore(defenderIsAffected && hasPhysicalMoves(considerations.playerMon) ? 6 : 5);
+        moveScore.addScore(defenderIsAffected && hasPhysicalMoves(considerations.playerMon) ? 6 : 5, considerations.percentChanceOfBeingHighestDamagingMove);
     }
     else if (specialAttackDroppingMoves.includes(moveScore.move.move.name)) {
-        moveScore.addScore(defenderIsAffected && hasSpecialMoves(considerations.playerMon) ? 6 : 5);
+        moveScore.addScore(defenderIsAffected && hasSpecialMoves(considerations.playerMon) ? 6 : 5, considerations.percentChanceOfBeingHighestDamagingMove);
     }
 
     // If it is a Double battle and the move is spread:
@@ -119,12 +120,12 @@ export function damagingTrappingMoves(moveScore: MoveScore): void {
 }
 
 export function damagingSpeedReductionMoves(moveScore: MoveScore, considerations: CPUMoveConsideration): void {
-    if (considerations.isHighestDamagingMove)
+    if (considerations.percentChanceOfBeingHighestDamagingMove)
         return;
 
     const defenderIsAffected = !moveScore.move.defender.hasAbility('Contrary', 'Clear Body', 'White Smoke');
     if (['Icy Wind', 'Rock Tomb', 'Mud Shot', 'Low Sweep'].includes(moveScore.move.move.name)) {
-        moveScore.addScore(defenderIsAffected && considerations.aiIsSlower ? 6 : 5);
+        moveScore.addScore(defenderIsAffected && considerations.aiIsSlower ? 6 : 5, considerations.percentChanceOfBeingHighestDamagingMove);
     }
     //     If it is a Double battle and the move is Icy Wind or Electroweb:
     //    Additional +1
@@ -150,8 +151,8 @@ export function allDamagingMoves(moveScore: MoveScore, considerations: CPUMoveCo
             If multiple moves kill, then they are all considered the highest damaging move and 
             all get this score.
             */
-    if (considerations.isHighestDamagingMove || considerations.kos) {
-        moveScore.addAlternativeScores(6, 0.8, 8);
+    if (considerations.percentChanceOfBeingHighestDamagingMove || considerations.kos) {
+        moveScore.addAlternativeScores(6, 0.8 * considerations.percentChanceOfBeingHighestDamagingMove, 8, 0.2 * considerations.percentChanceOfBeingHighestDamagingMove);
     }
 
     // If a damaging move kills:
