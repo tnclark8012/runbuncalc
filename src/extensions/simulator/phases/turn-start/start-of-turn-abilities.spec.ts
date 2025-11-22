@@ -5,7 +5,7 @@ import {
   Pokemon,
 } from '@smogon/calc';
 import { inGen, importTeam, importPokemon, expectPlayerTeam, expectCpuTeam } from '../../test-helper';
-import { ActivePokemon, BattleFieldState, PokemonPosition, Trainer } from '../../moveScoring.contracts';
+import { ActivePokemon, BattleFieldState, CpuTrainer, PlayerTrainer, PokemonPosition, Trainer } from '../../moveScoring.contracts';
 import { applyStartOfTurnAbilities } from './start-of-turn-abilities';
 
 const RunAndBun = 8;
@@ -55,11 +55,9 @@ IVs: 24 HP / 10 Atk / 21 Def / 16 SpA / 28 SpD / 18 Spe
 
       Gyarados = Gyarados.clone({ abilityOn: true });
       let state = new BattleFieldState(
-        'doubles',
-        new Trainer([new PokemonPosition(Gyarados, true), new PokemonPosition(Armaldo, true)], []),
-        new Trainer([new PokemonPosition(Golurk, true), new PokemonPosition(Flapple, true)],[]),
-        new Field(),
-        new Field(),
+        new PlayerTrainer([new PokemonPosition(Gyarados, true), new PokemonPosition(Armaldo, true)], []),
+        new CpuTrainer([new PokemonPosition(Golurk, true), new PokemonPosition(Flapple, true)], []),
+        new Field({ gameType: 'Doubles' }),
       );
       const newState = applyStartOfTurnAbilities(state);
 

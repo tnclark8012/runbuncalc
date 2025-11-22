@@ -1,13 +1,15 @@
-import { getActiveSets, getSetCollection, saveActiveCollectionName, saveSetCollection } from "../core/storage";
+import { getActiveCollectionName, getActiveSets, getSetCollection, saveActiveCollectionName, saveSetCollection } from "../core/storage";
 import { updateSets } from "../simulator/utils";
-import { initializePartyControls, refreshPlayerPokedex } from "./party";
+import { initializeImportExportControls, initializePartyControls, refreshPlayerPokedex } from "./party";
+import { LEVEL_CAP_CHECKPOINTS } from "../recommended-movesets";
 
 export function initializeUx(): void {
   initializeLevelCap();
   initializeCollectionSelection();
   adjustTabOrders(); 
   initializePartyControls();
-	refreshPlayerPokedex();
+  refreshPlayerPokedex();
+  initializeImportExportControls();
 }
 
 function adjustTabOrders() {
@@ -18,9 +20,15 @@ function initializeCollectionSelection() {
   const activeCollection = document.querySelector<HTMLSelectElement>('#activeCollection')!;
   const newCollection = document.querySelector<HTMLButtonElement>('#newCollection')!;
   const collection = getSetCollection();
+  const activeCollectionName = getActiveCollectionName();
+  let activeIndex = 0;
+  let collectionNames = Object.keys(collection);
   for (let collectionName in collection) {
-		activeCollection.options.add(new Option(collectionName));
+	activeCollection.options.add(new Option(collectionName));
+	if (collectionName === activeCollectionName) {
+		activeIndex = activeCollection.options.length - 1;
 	}
+}
 
   activeCollection.addEventListener('change', (e) => {
     console.log(e);
@@ -28,6 +36,8 @@ function initializeCollectionSelection() {
     saveActiveCollectionName(collectionName);
     refreshPlayerPokedex();
   });
+  
+  activeCollection.selectedIndex = activeIndex;
 
   newCollection.addEventListener('click', (e) => {
     const collectionName = prompt('Enter a name for the new collection');
@@ -60,31 +70,9 @@ function initializeLevelCap() {
 function populateLevelCap() {
 	const levelCap = document.querySelector<HTMLSelectElement>('#levelCap')!;
 
-	const options = [
-		new Option('Route 104 Aqua Grunt', '12'),
-		new Option('Museum Aqua Grunts', '17'),
-		new Option('Leader Brawly', '21'),
-		new Option('Leader Roxanne', '25'),
-		new Option('Route 117 Chelle', '32'),
-		new Option('Leader Wattson', '35'),
-		new Option('Cycling Road Rival', '38'),
-		new Option('Leader Norman', '42'),
-		new Option('Fallarbor Town Vito', '48'),
-		new Option('Mt. Chimney Maxie', '54'),
-		new Option('Leader Flannery', '57'),
-		new Option('Weather Institute Shelly', '65'),
-		new Option('Route 119 Rival', '66'),
-		new Option('Leader Winona', '69'),
-		new Option('Lilycove City Rival', '73'),
-		new Option('Mt. Pyre Archie', '76'),
-		new Option('Magma Hideout Maxie', '79'),
-		new Option('Aqua Hideout Matt', '81'),
-		new Option('Leaders Tate & Liza', '85'),
-		new Option('Seafloor Cavern Archie', '89'),
-		new Option('Leader Juan', '91'),
-		new Option('Victory Road Vito', '95'),
-		new Option('Champion Wallace', '99')
-	];
+	const options = LEVEL_CAP_CHECKPOINTS.map(checkpoint =>
+		new Option(checkpoint.name, checkpoint.level.toString())
+	);
 	for (let option of options) {
 		levelCap.options.add(option);
 	}

@@ -1,12 +1,18 @@
 import { Field } from '@smogon/calc';
-import { getAllPlayerAndCpuPossibleTurns } from '../phases/battle/determine-move-order-and-execute';
-import { BattleFieldState, PokemonPosition, Trainer } from '../moveScoring.contracts';
-import { importTeam } from '../helper';
-import { usingHeuristics } from '../test-helper';
+import { determineMoveOrderAndExecute, getAllPlayerAndCpuPossibleTurns } from '../phases/battle/determine-move-order-and-execute';
+import { BattleFieldState, CpuTrainer, PlayerTrainer, PokemonPosition, Trainer } from '../moveScoring.contracts';
+import { create1v1BattleState, importTeam } from '../helper';
+import { expectTeam, usingHeuristics } from '../test-helper';
 import { BasicScoring, IntuitionScoring } from '../phases/battle/player-move-selection-strategy';
+import { findPlayerWinningPath, printDecisionTree } from '../path-finder';
+import { getBox } from './museum.collection';
+import { OpposingTrainer } from '../../trainer-sets';
+import { attack, PlannedPlayerActionProvider, playerRng, switchTo } from '../../configuration';
+import { ItemName } from '@smogon/calc/dist/data/interface';
+import { executeMove } from '../phases/battle/execute-move';
 
 describe('Actual playthrough tests', () => {
-  describe('Museum Split', () => {
+  describe('Team Aqua Grunt Petalburg Woods', () => {
     test('Route 103 - Rival May', () => {
       let [Torchic, Turtwig] = importTeam(`
 Torchic
@@ -28,22 +34,173 @@ IVs: 20 HP / 27 Atk / 8 SpA
 - Growl
 
 `);
-        const state = new BattleFieldState(
-          'singles', 
-          new Trainer([ new PokemonPosition(Turtwig, true) ], []),
-          new Trainer([ new PokemonPosition(Torchic, true) ], []),
-          new Field(), 
-          new Field());
-        
-        usingHeuristics({ playerMoveScoringStrategy: BasicScoring }, () => {
-          let possibleTurns = getAllPlayerAndCpuPossibleTurns(state);
-          expect(possibleTurns.length).toBe(4); // Turtwig has 4 moves, Torchic has 1 move
-        });
+      const state = new BattleFieldState(
+        new PlayerTrainer([new PokemonPosition(Turtwig, true)], []),
+        new CpuTrainer([new PokemonPosition(Torchic, true)], []),
+        new Field());
 
-        usingHeuristics({ playerMoveScoringStrategy: IntuitionScoring }, () => {
-          let possibleTurns = getAllPlayerAndCpuPossibleTurns(state);
-          expect(possibleTurns.length).toBe(1); // Turtwig has 1 best move, Torchic has 1 move
-        });
+      usingHeuristics({ playerMoveScoringStrategy: BasicScoring }, () => {
+        let allPossibleEndStatesOfTurn1 = determineMoveOrderAndExecute(state);
+        expect(allPossibleEndStatesOfTurn1.length).toBe(4); // 4 possible outcomes based on the 4 moves of Turtwig
+
+        expect(allPossibleEndStatesOfTurn1.filter(outcome => outcome.state.cpu.active[0].pokemon.curHP() === outcome.state.cpu.active[0].pokemon.maxHP()).length).toBe(2); // Turtwig has 2 non-damaging moves
+        expect(allPossibleEndStatesOfTurn1.filter(outcome => outcome.state.cpu.active[0].pokemon.curHP() < outcome.state.cpu.active[0].pokemon.maxHP()).length).toBe(2); // Turtwig has 2 damaging moves
+      });
+    });
+
+    test('Route 103 - Rival May path', () => {
+      let [Torchic, Turtwig] = importTeam(`
+Torchic
+Level: 5
+Bashful Nature
+Ability: Blaze
+- Ember
+- Scratch
+- Growl
+
+Turtwig
+Level: 12
+Hardy Nature
+Ability: Shell Armor
+IVs: 20 HP / 27 Atk / 8 SpA
+- Absorb
+- Bite
+- Confide
+- Growl
+
+`);
+      const state = new BattleFieldState(
+        new PlayerTrainer([new PokemonPosition(Turtwig, true)], []),
+        new CpuTrainer([new PokemonPosition(Torchic, true)], []),
+        new Field());
+
+      usingHeuristics({ playerMoveScoringStrategy: BasicScoring }, () => {
+        let path = findPlayerWinningPath(state);
+        expect(path).not.toBeNull();
+        // expect(printDecisionTree(path!)).toBe('');
+      });
+    });
+
+    test('Bug Catcher Rick', () => {
+      const cpu = OpposingTrainer('Bug Catcher Rick');
+
+      const { Turtwig, Gossifleur, Poochyena, Starly, Surskit } = getBox();
+      const state = new BattleFieldState(
+        new PlayerTrainer([new PokemonPosition(Turtwig, true)], [
+          Gossifleur,
+          Poochyena,
+          Starly,
+          Surskit,
+        ]),
+        new CpuTrainer([], cpu),
+        new Field());
+
+      let path = findPlayerWinningPath(state);
+      expect(path).not.toBeNull();
+    });
+
+    test('Triathlete Mikey', () => {
+      const cpu = OpposingTrainer('Triathlete Mikey');
+
+      const { Turtwig, Gossifleur, Poochyena, Starly, Surskit } = getBox();
+      const state = new BattleFieldState(
+        new PlayerTrainer([new PokemonPosition(Turtwig, true)], [
+          Gossifleur,
+          Poochyena,
+          Starly,
+          Surskit,
+        ]),
+        new CpuTrainer([], cpu),
+        new Field());
+
+      Turtwig.item = 'Oran Berry' as any;
+      Gossifleur.item = 'Oran Berry' as any;
+      Poochyena.item = 'Oran Berry' as any;
+      Starly.item = 'Oran Berry' as any;
+      Surskit.item = 'Oran Berry' as any;
+      // usingHeuristics({ playerActionProvider: new PlannedPlayerActionProvider([
+      //   [ attack(Turtwig, 'Bite') ],
+      //   [ attack(Turtwig, 'Absorb') ],
+      //   [ attack(Turtwig, 'Absorb') ],
+      //   [ switchTo(Starly) ],
+      //   [ attack(Starly, 'Aerial Ace') ],
+      //   [ attack(Starly, 'Quick Attack') ],
+      //   [ switchTo(Surskit) ],
+      //   [ attack(Surskit, 'Bubble Beam') ],
+      //   [ attack(Surskit, 'Bubble Beam') ],
+      // ]) }, () => {
+      const path = findPlayerWinningPath(state);
+      expect(path).not.toBeNull();
+      // expect(printDecisionTree(path!)).toBe('');
+      // });
+    });
+
+    test('Fisherman Darian', () => {
+      const cpu = OpposingTrainer('Fisherman Darian');
+
+      const { Turtwig, Gossifleur, Poochyena, Starly, Surskit } = getBox();
+      const state = new BattleFieldState(
+        new PlayerTrainer([new PokemonPosition(Starly, true)], [
+          Gossifleur,
+          Poochyena,
+          Turtwig,
+          Surskit,
+        ]),
+        new CpuTrainer([], cpu),
+        new Field());
+
+      Turtwig.item = 'Oran Berry' as any;
+      Gossifleur.item = 'Oran Berry' as any;
+      Poochyena.item = 'Oran Berry' as any;
+      Starly.item = 'Oran Berry' as any;
+      Surskit.item = 'Oran Berry' as any;
+      // usingHeuristics({ playerActionProvider: new PlannedPlayerActionProvider([
+      //   [ attack(Starly, 'Quick Attack') ],
+      //   [ attack(Starly, 'Aerial Ace') ],
+      //   [ attack(Starly, 'Quick Attack') ],
+      //   [ attack(Starly, 'Aerial Ace') ],
+      //   [ switchTo(Gossifleur) ],
+      //   [ attack(Gossifleur, 'Leafage') ],
+      //   [ attack(Gossifleur, 'Leafage') ],
+      // ]) }, () => {
+      const path = findPlayerWinningPath(state);
+      expect(path).not.toBeNull();
+      // expect(printDecisionTree(path!)).toBe('');
+      // });
+    });
+
+    test('Team Aqua Grunt Petalburg Woods', () => {
+      const cpu = OpposingTrainer('Team Aqua Grunt Petalburg Woods');
+
+      const { Turtwig, Gossifleur, Poochyena, Starly, Surskit } = getBox();
+      const state = new BattleFieldState(
+        new PlayerTrainer([new PokemonPosition(Starly, true)], [
+          Gossifleur,
+          Poochyena,
+          Turtwig,
+          Surskit,
+        ]),
+        new CpuTrainer([], cpu),
+        new Field());
+
+      Turtwig.item = 'Oran Berry' as any;
+      Gossifleur.item = 'Oran Berry' as any;
+      Poochyena.item = 'Oran Berry' as any;
+      Starly.item = 'Oran Berry' as any;
+      Surskit.item = 'Oran Berry' as any;
+      // usingHeuristics({ playerActionProvider: new PlannedPlayerActionProvider([
+      //   [ attack(Starly, 'Quick Attack') ],
+      //   [ attack(Starly, 'Aerial Ace') ],
+      //   [ attack(Starly, 'Quick Attack') ],
+      //   [ attack(Starly, 'Aerial Ace') ],
+      //   [ switchTo(Gossifleur) ],
+      //   [ attack(Gossifleur, 'Leafage') ],
+      //   [ attack(Gossifleur, 'Leafage') ],
+      // ]) }, () => {
+      const path = findPlayerWinningPath(state);
+      expect(path).not.toBeNull();
+      // expect(printDecisionTree(path!)).toBe('');
+      // });
     });
   });
 });

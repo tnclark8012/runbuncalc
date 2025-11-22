@@ -8,8 +8,8 @@ export type ExpectedMoveAction = Omit<MoveAction, 'move'> & {
 
 export type ExpectedAction = SwitchAction | ExpectedMoveAction;
 
-export type ExpectedPossibleAction = Omit<PossibleAction, 'action'> & {
-  action: ExpectedAction;
+export type ExpectedPossibleAction = ExpectedAction & {
+  probability: number;
 };
 
 declare global {
@@ -32,19 +32,19 @@ expect.extend({
     }
 
     // Check action type
-    if (received.action.type !== expected.action.type) {
+    if (received.type !== expected.type) {
       return {
         message: () =>
-          `expected action type ${this.utils.printReceived(received.action.type)} to equal ${this.utils.printExpected(expected.action.type)}`,
+          `expected action type ${this.utils.printReceived(received.type)} to equal ${this.utils.printExpected(expected.type)}`,
         pass: false,
       };
     }
 
     // For move actions, compare move name
-    if (received.action.type === 'move' && expected.action.type === 'move') {
-      const receivedMoveName = received.action.move.move.name;
-      const expectedMoveName = expected.action.move.move;
-      
+    if (received.type === 'move' && expected.type === 'move') {
+      const receivedMoveName = received.move.move.name;
+      const expectedMoveName = expected.move.move;
+
       if (receivedMoveName !== expectedMoveName) {
         return {
           message: () =>
@@ -54,8 +54,8 @@ expect.extend({
       }
       
       // Also check target
-      const receivedTarget = JSON.stringify(received.action.move.target);
-      const expectedTarget = JSON.stringify(expected.action.move.target);
+      const receivedTarget = JSON.stringify(received.move.target);
+      const expectedTarget = JSON.stringify(expected.move.target);
       
       if (receivedTarget !== expectedTarget) {
         return {
@@ -67,10 +67,10 @@ expect.extend({
     }
 
     // For switch actions, compare Pokemon name
-    if (received.action.type === 'switch' && expected.action.type === 'switch') {
-      const receivedPokemon = received.action.switchIn.name;
-      const expectedPokemon = expected.action.switchIn.name;
-      
+    if (received.type === 'switch' && expected.type === 'switch') {
+      const receivedPokemon = received.switchIn?.name;
+      const expectedPokemon = expected.switchIn?.name;
+
       if (receivedPokemon !== expectedPokemon) {
         return {
           message: () =>
@@ -87,5 +87,19 @@ expect.extend({
     };
   },
 });
+
+// Load gen8.js to populate SETDEX_SS global
+// This is needed because Jest doesn't execute imported JS files the same way browsers do
+const fs = require('fs');
+const path = require('path');
+const gen8Path = path.join(__dirname, '../../js/data/sets/gen8.js');
+const gen8Code = fs.readFileSync(gen8Path, 'utf8');
+
+// Execute in global context to make SETDEX_SS available globally
+(0, eval)(gen8Code);
+// Also ensure it's on the global object
+if (typeof SETDEX_SS !== 'undefined') {
+  (global as any).SETDEX_SS = SETDEX_SS;
+}
 
 export {};

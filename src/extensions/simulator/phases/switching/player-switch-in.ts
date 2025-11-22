@@ -1,20 +1,40 @@
-import { Generations, Pokemon } from "@smogon/calc";
-import { ActivePokemon, BattleFieldState, PokemonPosition, Trainer } from "../../moveScoring.contracts";
-import { calculateAllMoves, findHighestDamageMove, getCpuMoveConsiderations, getDamageRanges } from "../../moveScoring";
+import { Pokemon } from "@smogon/calc";
+import { BattleFieldState, PlayerTrainer, PokemonPosition, SwitchStrategy } from "../../moveScoring.contracts";
 import { isFainted } from "../../utils";
+import { PossibleTrainerAction } from "../battle/move-selection.contracts";
 
-const generation = Generations.get(8);
+export class SwitchAfterKOStrategy {
+    public getPossibleStartOfTurnSwitches(state: BattleFieldState): PossibleTrainerAction[][] {
+        let switchInCandidates = state.player.party.filter(pokemon => !isFainted(pokemon));
+        if (switchInCandidates.length === 0)
+            return [];
 
-export interface CPUSwitchConsideration {
-    pokemon: Pokemon;
-    aiIsFaster: boolean;
-    aiOHKOs: boolean;
-    playerOHKOs: boolean;
-    aiOutdamagesPlayer: boolean;
+        if (state.field.gameType === 'Doubles')
+            return [];
+
+        if (state.player.active[0].volatileStatus?.chargingMove)
+            return [];
+
+        return [switchInCandidates.map<PossibleTrainerAction>(pokemon => {
+            return {
+                type: 'switch',
+                trainer: state.player,
+                pokemon: state.player.active[0],
+                slot: { slot: 0 },
+                action: {
+                    type: 'switch',
+                    probability: 1,
+                    switchIn: pokemon,
+                    target: { slot: 0 }
+                }
+            };
+        })];
+    }
 }
 
 export function applyPlayerSwitchIns(state: BattleFieldState): BattleFieldState[] {
-    state = initializeActivePokemon(state);
+    if (isUninitialized(state))
+        return [initializeActivePokemon(state)];
     
     // Find all fainted active Pokemon positions
     const faintedPositions: number[] = [];
@@ -99,9 +119,6 @@ function isUninitialized(state: BattleFieldState): boolean {
 }
 
 function initializeActivePokemon(state: BattleFieldState): BattleFieldState {
-    if (!isUninitialized(state))
-        return state;
-
     state = state.clone();
 
     let newActive: PokemonPosition = new PokemonPosition(popFromParty(state.player.party, state.player.party[0]), true);
@@ -111,11 +128,10 @@ function initializeActivePokemon(state: BattleFieldState): BattleFieldState {
         playerActive.push(new PokemonPosition(popFromParty(state.player.party, state.player.party[0]), true));
 
     return new BattleFieldState(
-        state.battleFormat,
-        new Trainer(playerActive, state.player.party, state.player.switchStrategy),
+        new PlayerTrainer(playerActive, state.player.party, state.player.switchStrategy),
         state.cpu,
-        state.playerField,
-        state.cpuField);
+        state.field,
+        state.turnNumber);
 }
 
 function popFromParty(party: Pokemon[], pokemon: Pokemon): Pokemon {

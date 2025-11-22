@@ -16,7 +16,7 @@ export function getActiveCollectionName(): string {
     return fallbackName;
 }
 
-function getActiveCollection(): SetCollectionData {
+export function getActiveCollection(): SetCollectionData {
     let activeCollectionName = getActiveCollectionName();
     let collection = getSetCollection();
     let result = collection[activeCollectionName];

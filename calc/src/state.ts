@@ -61,6 +61,7 @@ export namespace State {
     cannonade?: boolean;
     volcalith?: boolean;
     isSR?: boolean;
+    isStickyWebs?: boolean;
     isReflect?: boolean;
     isLightScreen?: boolean;
     isProtected?: boolean;

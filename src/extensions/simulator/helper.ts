@@ -2,6 +2,7 @@
 
 import { I, State, Field, Pokemon, Move, calculate, SPECIES, ABILITIES, PokemonOptions, ITEMS, Side, SpeciesData } from '@smogon/calc';
 import { Result } from '@smogon/calc/src';
+import { BattleFieldState, CpuTrainer, PlayerTrainer, PokemonPosition } from './moveScoring.contracts';
 
 const calc = (gen: I.GenerationNum) => (
   attacker: Pokemon,
@@ -44,6 +45,26 @@ interface Gen {
   Move: ReturnType<typeof move>;
   Field: typeof field;
   Side: typeof side;
+}
+
+export type LegacyStatsTable = {
+  hp?: number;
+  at?: number;
+  df?: number;
+  sa?: number;
+  sd?: number;
+  sp?: number;
+};
+
+export function convertStats(legacyStatsFromSet?: LegacyStatsTable): I.StatsTable {
+  return {
+    hp: legacyStatsFromSet?.hp || 31,
+    atk: legacyStatsFromSet?.at || 31,
+    def: legacyStatsFromSet?.df || 31,
+    spa: legacyStatsFromSet?.sa || 31,
+    spd: legacyStatsFromSet?.sd || 31,
+    spe: legacyStatsFromSet?.sp || 31,
+  }
 }
 
 export function inGen(gen: I.GenerationNum, fn: (gen: Gen) => void) {
@@ -367,4 +388,46 @@ export function importTeam(importText: string): Pokemon[] {
     }
     return moves;
   }
+}
+
+export function create1v1BattleState(playerPokemon: Pokemon, cpuPokemon: Pokemon): BattleFieldState {
+  return new BattleFieldState(
+      new PlayerTrainer(
+        [new PokemonPosition(playerPokemon)],
+        [],
+      ),
+      new CpuTrainer(
+        [new PokemonPosition(cpuPokemon)],
+        [],
+        ),
+      new Field()
+    );
+}
+
+export function createSingleBattleState(playerPokemon: Pokemon[], cpuPokemon: Pokemon[]): BattleFieldState {
+  return new BattleFieldState(
+      new PlayerTrainer(
+        [],
+        playerPokemon,
+      ),
+      new CpuTrainer(
+        [],
+        cpuPokemon,
+        ),
+      new Field({ gameType: 'Singles' })
+    );
+}
+
+export function createDoubleBattleState(playerPokemon: Pokemon[], cpuPokemon: Pokemon[]): BattleFieldState {
+  return new BattleFieldState(
+      new PlayerTrainer(
+        [],
+        playerPokemon,
+      ),
+      new CpuTrainer(
+        [],
+        cpuPokemon,
+        ),
+      new Field({ gameType: 'Doubles' })
+    );
 }

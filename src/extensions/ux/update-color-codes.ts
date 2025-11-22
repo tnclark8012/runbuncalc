@@ -76,15 +76,14 @@ export interface SimulatorCalculationColor {
 export type CalculationColor = LegacyCalculationColor | SimulatorCalculationColor;
 
 function getCalculationColors(playerPokemon: A.Pokemon[], cpuPokemon: A.Pokemon): CalculationColor[] {
-	var p1field = createField();
-	var p2field = p1field.clone().swap();
+	var field = createField();
 
 	const result: CalculationColor[] = [];
 	const diff: Array<{ name: string, legacy: MatchupResultCode, simulated: MatchupResultCode }> = [];
 	
 	for (let playerMon of playerPokemon) {
-		let legacy = getLegacyCalculationResult(playerMon, cpuPokemon, p1field, p2field);
-		let simulated = getSimulatedCalculationResult(playerMon, cpuPokemon, p1field, p2field);
+		let legacy = getLegacyCalculationResult(playerMon, cpuPokemon, field);
+		let simulated = getSimulatedCalculationResult(playerMon, cpuPokemon, field);
 		result.push(simulated);
 
 		if (legacy.code !== simulated.code)
@@ -104,13 +103,13 @@ function getCalculationColors(playerPokemon: A.Pokemon[], cpuPokemon: A.Pokemon)
 	return result;
 }
 
-function getSimulatedCalculationResult(p1: A.Pokemon, p2: A.Pokemon, p1Field: Field, p2Field: Field): CalculationColor {
+function getSimulatedCalculationResult(p1: A.Pokemon, p2: A.Pokemon, field: Field): CalculationColor {
 	var p1speed = p1.stats.spe;
 	var p2speed = p2.stats.spe;
 	//Faster Tied Slower
 	var fastest: SpeedTier = p1speed > p2speed ? "F" : p1speed < p2speed ? "S" : p1speed === p2speed ? "T" : "T";
 
-	const simulator = new BattleSimulator(gen, (window as any).isInDoubles ? 'doubles' : 'singles', p1, p2, p1Field, p2Field);
+	const simulator = new BattleSimulator(gen, p1, p2, field);
 	const result = simulator.getResult({ playerSwitchingIn: true });
 	let code: MatchupResultCode;
 	if (result.winner.equals(p1)) {
@@ -127,12 +126,12 @@ function getSimulatedCalculationResult(p1: A.Pokemon, p2: A.Pokemon, p1Field: Fi
 
 		return { type: 'simulator', speed: fastest, code, finalState: result.turnOutcomes.at(-1)!.endOfTurnState };
 	}
-	
-	return getLegacyCalculationResult(p1, p2, p1Field, p2Field);
+
+	return getLegacyCalculationResult(p1, p2, field);
 }
 
-function getLegacyCalculationResult(p1: A.Pokemon, p2: A.Pokemon, p1Field: Field, p2Field: Field): LegacyCalculationColor {
-	let damageResults = calculateAllMoves(gen, p1, p1Field, p2, p2Field);
+function getLegacyCalculationResult(p1: A.Pokemon, p2: A.Pokemon, field: Field): LegacyCalculationColor {
+	let damageResults = calculateAllMoves(gen, p1, field, p2, field.swap());
 	p1 = damageResults[0][0].attacker;
 	p2 = damageResults[1][0].attacker;
 	(p1 as any).maxDamages = [];

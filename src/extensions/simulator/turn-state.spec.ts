@@ -1,7 +1,7 @@
 import { expectCpuTeam, importTeam } from './test-helper';
 import { applyTransforms, BattleFieldStateTransform } from './turn-state';
 import { applyCpuSwitchIns, applyPlayerSwitchIns } from './phases/switching';
-import { BattleFieldState, PokemonPosition, Trainer } from './moveScoring.contracts';
+import { BattleFieldState, CpuTrainer, PlayerTrainer, PokemonPosition, Trainer } from './moveScoring.contracts';
 import { Field } from '@smogon/calc';
 
 describe('Turn state', () => {
@@ -108,13 +108,11 @@ IVs: 30 HP / 9 Atk / 21 Def / 6 SpA / 14 SpD / 25 Spe
       Excadrill = Excadrill.clone({ boosts: { spe: 1 } });
       Aggron = Aggron.clone({ curHP: 152 }); // high roll solar blade in sun
 
-      let sun = new Field({ weather: 'Sun' });
+      let sun = new Field({ gameType: 'Doubles', weather: 'Sun' });
       let state = new BattleFieldState(
-        'doubles',
-        new Trainer([ new PokemonPosition(Excadrill, false), new PokemonPosition(Aggron, true) ], [Carracosta]),
-        new Trainer([ new PokemonPosition(Victreebel, false), new PokemonPosition(Aerodactyl, false) ], [Cinderace, Mimikyu, Ursaluna, Sharpedo]),
-        sun,
-        sun,
+        new PlayerTrainer([ new PokemonPosition(Excadrill, false), new PokemonPosition(Aggron, true) ], [Carracosta]),
+        new CpuTrainer([ new PokemonPosition(Victreebel, false), new PokemonPosition(Aerodactyl, false) ], [Cinderace, Mimikyu, Ursaluna, Sharpedo]),
+        sun
       );
       const newStates = applyTransforms(state, transforms);
       expect(newStates.length).toBe(1);

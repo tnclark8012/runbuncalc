@@ -384,12 +384,16 @@ export function expectTeam(expected: { active: ActivePokemon[], party: Pokemon[]
   expect(actual.party.map(p => p.id)).toEqual(expected.party.map(p => p.id));
 }
 
-export function usingHeuristics(chosenHeuristics: ConfiguredHeuristics, fn: () => any): void {
+export function usingHeuristics(chosenHeuristics: Partial<ConfiguredHeuristics>, fn: () => any): void {
   const originalHeuristics = { ...Heuristics };
   try {
-    Heuristics.playerMoveScoringStrategy = chosenHeuristics.playerMoveScoringStrategy;
+    for (const key in chosenHeuristics) {
+      (Heuristics as any)[key] = (chosenHeuristics as any)[key];
+    }
     fn();
   } finally {
-    Heuristics.playerMoveScoringStrategy = originalHeuristics.playerMoveScoringStrategy;
+    for (const key in originalHeuristics) {
+      (Heuristics as any)[key] = (originalHeuristics as any)[key];
+    }
   }
 }

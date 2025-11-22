@@ -1,11 +1,15 @@
-import { Field, Generations, Move, Result } from "@smogon/calc";
 import { MoveScore } from "../../moveScore";
-import { calculateAllMoves, findHighestDamageMove, scoreCPUMoves, getDamageRanges } from "../../moveScoring";
-import { ActivePokemon, BattleFieldState, MoveResult } from "../../moveScoring.contracts";
+import { calculateAllMoves, findHighestDamageMove, scoreCPUMoves, toMoveResults, getLockedMoveAction } from "../../moveScoring";
+import { BattleFieldState, PokemonPosition } from "../../moveScoring.contracts";
 import { PossibleAction, ScoredPossibleAction, TargetSlot } from "./move-selection.contracts";
+import { gen } from "../../../configuration";
 
-const gen = Generations.get(8);
-export function getCpuPossibleActions(state: BattleFieldState, cpuPokemon: ActivePokemon, playerActive: ActivePokemon[], cpuActive: ActivePokemon[]): PossibleAction[] {
+export function getCpuPossibleActions(state: BattleFieldState, cpuPokemon: PokemonPosition, playerActive: PokemonPosition[], cpuActive: PokemonPosition[]): PossibleAction[] {
+    let lockedMove = getLockedMoveAction(state, state.cpu, state.cpu.active.indexOf(cpuPokemon));
+    if (lockedMove) {
+        return [lockedMove.action];
+    }
+    
     let actions: ScoredPossibleAction[] = [];
     let topScore = -Infinity;
     for (let targetSlot = 0; targetSlot < playerActive.length; targetSlot++) {
@@ -27,22 +31,27 @@ export function getCpuPossibleActions(state: BattleFieldState, cpuPokemon: Activ
     return actions;
 }
 
-export function getCpuMoveScoresAgainstTarget(state: BattleFieldState, cpuPokemon: ActivePokemon, target: ActivePokemon, targetSlot: TargetSlot): Array<MoveScore> {
+export function getCpuMoveScoresAgainstTarget(state: BattleFieldState, cpuPokemon: PokemonPosition, target: PokemonPosition, targetSlot: TargetSlot): Array<MoveScore> {
     let playerDamageResults = calculateAllMoves(gen, target.pokemon, cpuPokemon.pokemon, state.playerField);
     let cpuDamageResults = calculateAllMoves(gen, cpuPokemon.pokemon, target.pokemon, state.cpuField);
-    let cpuAssumedPlayerMove = findHighestDamageMove(getDamageRanges(playerDamageResults));
-    let moveScores = scoreCPUMoves(cpuDamageResults, cpuAssumedPlayerMove, state.cpuField, /*lastTurnMoveByCpuPokemon*/ undefined);
+    let cpuAssumedPlayerMove = findHighestDamageMove(toMoveResults(playerDamageResults));
+    let moveScores = scoreCPUMoves(cpuDamageResults, cpuAssumedPlayerMove, state);
     return moveScores;
 }
 
-function getCpuPossibleActionsAgainstTarget(state: BattleFieldState, cpuPokemon: ActivePokemon, target: ActivePokemon, targetSlot: TargetSlot): Array<ScoredPossibleAction> {
+function getCpuPossibleActionsAgainstTarget(state: BattleFieldState, cpuPokemon: PokemonPosition, target: PokemonPosition, targetSlot: TargetSlot): Array<ScoredPossibleAction> {
     const highestScoringCpuMoves = calculateCpuMove(getCpuMoveScoresAgainstTarget(state, cpuPokemon, target, targetSlot));
-    return highestScoringCpuMoves.map((cpuMove: MoveScore) => {
+    return highestScoringCpuMoves.map<ScoredPossibleAction>((cpuMove: MoveScore) => {
         return ({
-            action: { type: 'move', move: { move: cpuMove.move.move, target: targetSlot } }, // TODO - status, protect, etc target self?
-            probability: 1/highestScoringCpuMoves.length,
+            type: 'move',
+            pokemon: cpuPokemon.pokemon,
+            move: {
+                move: cpuMove.move.move,
+                target: targetSlot
+            },
+            probability: 1 / highestScoringCpuMoves.length,
             score: cpuMove.finalScore
-        });
+        } as ScoredPossibleAction);
     });
 }
 

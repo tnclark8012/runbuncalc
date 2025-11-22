@@ -443,7 +443,7 @@ $(".item").change(function () {
 
 function dexAnalysis(pokemonName) {
 	var generation = ["rb", "gs", "rs", "dp", "bw", "xy", "sm", "ss", "sv"][gen - 1];
-	return "https://dex.runandbun.com/pokemon/" + pokemonName.toLowerCase();
+	return "https://tnclark8012.github.io/pokemon/" + pokemonName.toLowerCase();
 }
 
 function sortmons(a, b) {
@@ -1656,10 +1656,6 @@ function toggleInfoColorCode() {
 $(document).keydown(function (event) {
 	if (event.which == "17")
 		cntrlIsPressed = true;
-	else if (event.which == 65 && cntrlIsPressed) {
-		// Cntrl+  A
-		selectAllRows();
-	}
 });
 $(document).keyup(function () {
 	cntrlIsPressed = false;
