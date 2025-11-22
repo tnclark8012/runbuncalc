@@ -1,7 +1,11 @@
-const path = require('path');
-const CopyWebpackPlugin = require('copy-webpack-plugin');
+import path from 'path';
+import { fileURLToPath } from 'url';
+import CopyWebpackPlugin from 'copy-webpack-plugin';
 
-module.exports = [{
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+export default [{
   mode: 'development',
   entry: {
     extensions: './src/extensions/main.ts',

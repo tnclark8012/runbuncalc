@@ -443,7 +443,7 @@ $(".item").change(function () {
 
 function dexAnalysis(pokemonName) {
 	var generation = ["rb", "gs", "rs", "dp", "bw", "xy", "sm", "ss", "sv"][gen - 1];
-	return "https://dex.runandbun.com/pokemon/" + pokemonName.toLowerCase();
+	return "/RBDex/pokemon/" + pokemonName.toLowerCase();
 }
 
 function sortmons(a, b) {
