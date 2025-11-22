@@ -443,7 +443,7 @@ $(".item").change(function () {
 
 function dexAnalysis(pokemonName) {
 	var generation = ["rb", "gs", "rs", "dp", "bw", "xy", "sm", "ss", "sv"][gen - 1];
-	return "https://tnclark8012.github.io/RBDex/pokemon/" + pokemonName.toLowerCase();
+	return "https://tnclark8012.github.io/pokemon/" + pokemonName.toLowerCase();
 }
 
 function sortmons(a, b) {
