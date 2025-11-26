@@ -1,9 +1,10 @@
 import { Generations, Pokemon } from "@smogon/calc";
-import { calculateAllMoves, findHighestDamageMove, getCpuMoveConsiderations, getDamageRanges } from "../../moveScoring";
-import { BattleFieldState, CpuTrainer, PokemonPosition } from "../../moveScoring.contracts";
-import { getFinalSpeed } from "../../utils";
+import { ActivePokemon, BattleFieldState, CpuTrainer, PokemonPosition, Trainer } from "../../moveScoring.contracts";
+import { calculateAllMoves, DamageRolls, findHighestDamageMove, getCpuMoveConsiderations, toMoveResults } from "../../moveScoring";
 import { SwitchAction } from "../battle/move-selection.contracts";
 import { executeSwitch, popFromParty } from "./execute-switch";
+import { PokemonReplacer } from "../../battle-field-state-visitor";
+import { getFinalSpeed } from "../../utils";
 
 const generation = Generations.get(8);
 
@@ -54,9 +55,9 @@ export function chooseSwitchIn(cpuParty: Pokemon[], seenPlayerMon: Pokemon, stat
 
     let considerations = eligibleSwitchIns.map<CPUSwitchConsideration>(cpuPokemon => {
         let playerDamageResults = calculateAllMoves(generation, seenPlayerMon, cpuPokemon, state.playerField);
-        let cpuDamageResults = calculateAllMoves(generation, cpuPokemon, seenPlayerMon, state.cpuField);
-        let cpuAssumedPlayerMove = findHighestDamageMove(getDamageRanges(playerDamageResults));
-        let consideredMoves = getCpuMoveConsiderations(cpuDamageResults, cpuAssumedPlayerMove, state);
+        let cpuDamageResults = toMoveResults(calculateAllMoves(generation, cpuPokemon, seenPlayerMon, state.cpuField));
+        let cpuAssumedPlayerMove = findHighestDamageMove(toMoveResults(playerDamageResults));
+        let consideredMoves = getCpuMoveConsiderations(cpuDamageResults, cpuAssumedPlayerMove, DamageRolls.fromMaxRolls(cpuDamageResults), state);
         const finalAISpeed = getFinalSpeed(cpuPokemon, state.cpuField, state.cpuSide);
         const finalPlayerSpeed = getFinalSpeed(seenPlayerMon, state.playerField, state.playerSide);
         

@@ -23,7 +23,7 @@ export class BattleFieldStateBuilder {
 
         return new BattleFieldState(
             new PlayerTrainer([], playerPokes),
-            new CpuTrainer([], OpposingTrainer(cpu]),
+            new CpuTrainer([], OpposingTrainer(cpu)),
             new Field());
     }
 }

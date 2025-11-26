@@ -1,11 +1,11 @@
 import { Pokemon } from "@smogon/calc";
-import { BattleFieldState, PlayerTrainer, PokemonPosition } from "../../moveScoring.contracts";
-import { isFainted } from "../../utils";
+import { BattleFieldState, PlayerTrainer, PokemonPosition, SwitchStrategy } from "../../moveScoring.contracts";
+import { curHPPercentage, isFainted } from "../../utils";
 import { PossibleTrainerAction } from "../battle/move-selection.contracts";
 
 export class SwitchAfterKOStrategy {
     public getPossibleStartOfTurnSwitches(state: BattleFieldState): PossibleTrainerAction[][] {
-        let switchInCandidates = state.player.party.filter(pokemon => !isFainted(pokemon));
+        let switchInCandidates = state.player.party.filter(pokemon => !isFainted(pokemon) && curHPPercentage(pokemon) > 0.25);
         if (switchInCandidates.length === 0)
             return [];
 

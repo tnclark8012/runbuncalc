@@ -1,8 +1,8 @@
 import { Field, Pokemon, StatsTable } from "@smogon/calc";
-import { Terrain } from "@smogon/calc/src/data/interface";
-import { visitActivePokemonInSpeedOrder } from "../../battle-field-state-visitor";
 import { ActivePokemon, BattleFieldState } from "../../moveScoring.contracts";
 import { applyBoost, consumeItem } from "../../utils";
+import { Terrain } from "@smogon/calc/src/data/interface";
+import { visitActivePokemonInSpeedOrder } from "../../battle-field-state-visitor";
 
 export function activateStartOfTurnItems(state: BattleFieldState): BattleFieldState {
     state = state.clone();

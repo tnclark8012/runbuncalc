@@ -1,10 +1,16 @@
 /* eslint-disable max-len */
 
-import { megaEvolve } from './moveScoring';
-import { importTeam, inGen } from './test-helper';
+import {
+  Field
+} from '@smogon/calc';
+import { inGen, importTeam, importPokemon } from './test-helper';
+import { calculateAllMoves, megaEvolve, toMoveResult } from './moveScoring';
+import { OpposingTrainer } from '../trainer-sets';
+import { getBox } from './playthrough/museum.collection';
+import { gen } from '../configuration';
 
 const RunAndBun = 8;
-inGen(RunAndBun, ({ gen, calculate, Pokemon, Move }) => {
+inGen(RunAndBun, ({ }) => {
   describe('Move Scoring', () => {
     describe('Mega evolution', () => {
       test(`Mega evolve`, () => {

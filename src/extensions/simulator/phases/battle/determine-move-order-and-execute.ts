@@ -1,18 +1,18 @@
 import { Field, Move } from "@smogon/calc";
-import { Side } from "@smogon/calc/src";
-import { cpuRng, Heuristics, playerRng } from "../../../configuration";
 import { PokemonPositionReplacer, PokemonReplacer } from "../../battle-field-state-visitor";
-import { isTwoTurnMove, makesInvulnerable } from "../../move-properties";
 import { BattleFieldState, PokemonPosition, Trainer } from "../../moveScoring.contracts";
-import { TrainerActionPokemonReplacer } from "../../possible-trainer-action-visitor";
 import { PossibleBattleFieldState } from "../../turn-state";
-import { getFinalSpeed, hasBerry } from "../../utils";
-import { executeSwitch } from "../switching/execute-switch";
+import { PossibleAction, PossibleTrainerAction, SwitchAction, MoveAction, ActionLogEntry } from "./move-selection.contracts";
 import { getCpuPossibleActions } from "./cpu-move-selection";
-import { executeMove } from "./execute-move";
-import { executeMegaEvolution } from "./mega-evolve";
-import { ActionLogEntry, MoveAction, PossibleAction, PossibleTrainerAction, SwitchAction } from "./move-selection.contracts";
 import { getPlayerPossibleActions } from "./player-move-selection";
+import { executeSwitch } from "../switching/execute-switch";
+import { cpuRng, Heuristics, playerRng } from "../../../configuration";
+import { executeMove } from "./execute-move";
+import { TrainerActionPokemonReplacer } from "../../possible-trainer-action-visitor";
+import { executeMegaEvolution } from "./mega-evolve";
+import { Side } from "@smogon/calc/src";
+import { isTwoTurnMove, makesInvulnerable } from "../../move-properties";
+import { getFinalSpeed, hasBerry } from "../../utils";
 
 export function determineMoveOrderAndExecute(state: BattleFieldState): PossibleBattleFieldState[] {
     if (state.player.active.every(ap => ap.pokemon.curHP() <= 0) || state.cpu.active.every(ap => ap.pokemon.curHP() <= 0)) {

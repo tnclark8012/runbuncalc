@@ -1,8 +1,8 @@
 import { Generations, Move, Pokemon } from "@smogon/calc";
-import { createMove, megaEvolve } from "./simulator/moveScoring";
+import { BasicScoring, IMoveScoringStrategy } from "./simulator/phases/battle/player-move-selection-strategy";
 import type { BattleFieldState, MoveResult, Trainer } from "./simulator/moveScoring.contracts";
 import { PossibleSwitchAction, PossibleTrainerAction } from "./simulator/phases/battle/move-selection.contracts";
-import { BasicScoring, IMoveScoringStrategy } from "./simulator/phases/battle/player-move-selection-strategy";
+import { createMove, megaEvolve } from "./simulator/moveScoring";
 
 export const gen = Generations.get(8);
 
@@ -33,7 +33,7 @@ export const playerRng: RNGStrategy = {
     doesAttackingStatusProc: (m) => false,
     doesAttackingAbilityProc: () => false,
     doesAbilityProcAsDefender: () => false,
-    getDamageRoll: (r) => r.lowestRollDamage,
+    getDamageRoll: (r) => r.lowestRollPerHitDamage,
     getHits: (r) => r.move.hits,
     willMoveCrit: (move) => move.isCrit
 };
@@ -42,7 +42,7 @@ export const cpuRng: RNGStrategy = {
     doesAttackingStatusProc: (m) => true,
     doesAttackingAbilityProc: () => true,
     doesAbilityProcAsDefender: (defender, moveResult) => true,
-    getDamageRoll: (r) => r.highestRollDamage,
+    getDamageRoll: (r) => r.highestRollPerHitDamage,
     getHits: (r) => r.move.hits,
     willMoveCrit: (move) => move.isCrit,
 };

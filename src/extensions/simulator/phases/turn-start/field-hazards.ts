@@ -1,7 +1,8 @@
 import { Side } from "@smogon/calc/src/field";
-import { visitActivePokemonInSpeedOrder } from "../../battle-field-state-visitor";
 import { ActivePokemon, BattleFieldState } from "../../moveScoring.contracts";
-import { applyExternalBoost, damagePokemonWithPercentageOfMaxHp, getTypeEffectiveness } from "../../utils";
+import { visitActivePokemonInSpeedOrder } from "../../battle-field-state-visitor";
+import { Pokemon } from "@smogon/calc";
+import { applyBoost, applyExternalBoost, damagePokemonWithPercentageOfMaxHp, getTypeEffectiveness } from "../../utils";
 
 export function applyFieldHazards(state: BattleFieldState): BattleFieldState {
     state = state.clone();   

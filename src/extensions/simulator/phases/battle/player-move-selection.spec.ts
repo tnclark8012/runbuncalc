@@ -1,15 +1,16 @@
 /* eslint-disable max-len */
 
+import { Dex } from '@pkmn/dex';
 import {
   Field,
   Pokemon
 } from '@smogon/calc';
-import { OpposingTrainer } from '../../../trainer-sets';
+import { inGen, importTeam } from '../../test-helper';
+import { getPlayerPossibleActions } from './player-move-selection';
+import { isMoveAction, PossibleAction } from './move-selection.contracts';
 import { BattleFieldState, CpuTrainer, PlayerTrainer, PokemonPosition } from '../../moveScoring.contracts';
 import { getBox } from '../../playthrough/museum.collection';
-import { importTeam } from '../../test-helper';
-import { isMoveAction, PossibleAction } from './move-selection.contracts';
-import { getPlayerPossibleActions } from './player-move-selection';
+import { OpposingTrainer } from '../../../trainer-sets';
 
 describe('Player Move Selection', () => {
   describe('Mega evolution', () => {

@@ -1,6 +1,6 @@
 import { Pokemon } from "@smogon/calc";
 import { PokemonPosition, Trainer } from "./moveScoring.contracts";
-import { MoveAction, PossibleAction, PossibleTrainerAction, Slot, SwitchAction } from "./phases/battle/move-selection.contracts";
+import { MoveAction, PossibleAction, PossibleTrainerAction, Slot, SwitchAction, TargetedMove } from "./phases/battle/move-selection.contracts";
 
 export interface IPossibleTrainerActionVisitorWithRewrite {
     visitAction(action: PossibleTrainerAction): PossibleTrainerAction;

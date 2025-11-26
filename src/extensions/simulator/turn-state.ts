@@ -1,12 +1,13 @@
-import { BattleFieldStateRewriter } from "./battle-field-state-visitor";
 import { BattleFieldState, PokemonPosition } from "./moveScoring.contracts";
+import { applyPlayerSwitchIns, applyCpuSwitchIns } from "./phases/switching";
+import { applyStartOfTurnAbilities } from "./phases/turn-start/start-of-turn-abilities";
+import { applyFieldHazards } from "./phases/turn-start/field-hazards";
 import { determineMoveOrderAndExecute } from "./phases/battle/determine-move-order-and-execute";
 import { ActionLogEntry } from "./phases/battle/move-selection.contracts";
-import { applyCpuSwitchIns, applyPlayerSwitchIns } from "./phases/switching";
 import { applyEndOfTurnAbilities } from "./phases/turn-end/end-of-turn-abilities";
 import { applyEndOfTurnEffects } from "./phases/turn-end/end-of-turn-effects";
-import { applyFieldHazards } from "./phases/turn-start/field-hazards";
-import { applyStartOfTurnAbilities } from "./phases/turn-start/start-of-turn-abilities";
+import { BattleFieldStateRewriter, PokemonPositionReplacer } from "./battle-field-state-visitor";
+import { Pokemon } from "@smogon/calc";
 
 export type PossibleBattleFieldState = { type: 'possible', probability: number, state: BattleFieldState, history: ActionLogEntry[] };
 export type BattleFieldStateTransform = (state: BattleFieldState) => BattleFieldState | BattleFieldState[] | PossibleBattleFieldState[];

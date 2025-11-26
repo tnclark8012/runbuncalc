@@ -1,19 +1,79 @@
-import { A, calculate, Field, I, Move, Pokemon, Result } from '@smogon/calc';
-import { MoveName } from '@smogon/calc/dist/data/interface';
-import { gen, RNGStrategy } from '../configuration';
+import { Field, Move, A, I, Result, Pokemon, calculate } from '@smogon/calc';
 import { MoveScore } from "./moveScore";
-import { ActivePokemon, BattleFieldState, CPUMoveConsideration, MoveConsideration, MoveResult, PokemonPosition, Trainer } from './moveScoring.contracts';
 import { notImplemented } from "./notImplementedError";
+import { ActivePokemon, BattleFieldState, CPUMoveConsideration, MoveConsideration, MoveResult, PokemonPosition, Trainer } from './moveScoring.contracts';
+import { gen, RNGStrategy } from '../configuration';
 import { PossibleTrainerAction } from './phases/battle/move-selection.contracts';
-import { canFlinch, getFinalSpeed, hasBerry, isSuperEffective } from './utils';
+import { canFlinch, getFinalSpeed, hasBerry, isSuperEffective, processCartesianProduct } from './utils';
+import { MoveName } from '@smogon/calc/dist/data/interface';
+import { calculateCpuMove, MoveProbability } from './phases/battle/cpu-move-selection';
 
 export function scoreCPUMoves(cpuResults: Result[], playerMove: MoveResult, state: BattleFieldState): MoveScore[] {
-    // Not quite
-    let movesToConsider = getCpuMoveConsiderations(cpuResults, playerMove, state);
+    let moveResults = toMoveResults(cpuResults);
+    const moveResultsMap = new Map<string, number>();
+    const outcomeMap = new Map<string, number>();
+    let totalCombinationsCountingTiesAsSeparate = 0;
+    const seenRollsMap = new Map<string, MoveProbability[]>();
 
+    const getMaxScoringMoves: (rollDamage: number[]) => MoveProbability[] =([m1RollDamage, m2RollDamage, m3RollDamage, m4RollDamage]): MoveProbability[] => {
+        let map = new Map<MoveResult, number>();
+        
+        if (m1RollDamage !== undefined) map.set(moveResults[0], m1RollDamage);
+        if (m2RollDamage !== undefined) map.set(moveResults[1], m2RollDamage);
+        if (m3RollDamage !== undefined) map.set(moveResults[2], m3RollDamage);
+        if (m4RollDamage !== undefined) map.set(moveResults[3], m4RollDamage);
+
+        let damageRolls = new DamageRolls(map);
+        const considerations = getCpuMoveConsiderations(moveResults, playerMove, damageRolls, state);
+        let results = scoreConsiderations(considerations);
+        return calculateCpuMove(results);
+    };
+
+    const totalCombinationsScored = processCartesianProduct([
+        ...moveResults.map(m => m.damageRolls),
+    ], ([m1RollDamage, m2RollDamage, m3RollDamage, m4RollDamage]) => {
+        const seenRollsKey = JSON.stringify([m1RollDamage, m2RollDamage, m3RollDamage, m4RollDamage]);
+        if (!seenRollsMap.has(seenRollsKey)) {
+            seenRollsMap.set(seenRollsKey, getMaxScoringMoves([m1RollDamage, m2RollDamage, m3RollDamage, m4RollDamage]));
+        }
+
+        const maxScoringMoves = seenRollsMap.get(seenRollsKey)!;
+        const outcomeKey = JSON.stringify(maxScoringMoves.map(m => m.move.move.name));
+        outcomeMap.set(
+            outcomeKey, 
+            (outcomeMap.get(outcomeKey) || 0) + 1);
+
+        for (let maxScoreMove of maxScoringMoves) {
+            totalCombinationsCountingTiesAsSeparate++;
+            moveResultsMap.set(
+                maxScoreMove.move.move.name, 
+                (moveResultsMap.get(maxScoreMove.move.move.name) || 0) + (100-maxScoreMove.probability*100) / 100);
+        }
+    });
+
+    let compressedResults: MoveScore[] = [];
+    for (let [moveName, count] of moveResultsMap.entries()) {
+        let score = new MoveScore(
+            moveResults.find(m => m.move.name === moveName)!);
+            score.addScore(1, count/totalCombinationsScored);
+        compressedResults.push(score);
+    }
+
+    return compressedResults;
+}
+
+function scoreConsiderations(movesToConsider: CPUMoveConsideration[]): MoveScore[] {
     let moveScores = [];
     for (let potentialMove of movesToConsider) {
         let moveScore = new MoveScore(potentialMove.result);
+        moveScores.push(moveScore);
+    }
+
+    // Apply other move-specific scoring
+    for (let i = 0; i < movesToConsider.length; i++) {
+        let potentialMove = movesToConsider[i];
+        let moveScore = moveScores[i];
+        
         if (potentialMove.isDamagingMove) {
             allDamagingMoves(moveScore, potentialMove);
             damagingPriorityMoves(moveScore, potentialMove);
@@ -22,51 +82,82 @@ export function scoreCPUMoves(cpuResults: Result[], playerMove: MoveResult, stat
             damagingAttackSpAttackReductionWithGuarnateedEffect(moveScore, potentialMove);
             damagingMinus2SpDefReductionWithGuaranteedEffect(moveScore);
         }
-        
+
         specificMoves(moveScore, potentialMove);
         generalSetup(moveScore, potentialMove);
         offensiveSetup(moveScore, potentialMove);
         defensiveSetup(moveScore, potentialMove);
         // specificSetup(moveScore, potentialMove);
         // recovery(moveScore, potentialMove);
-        
-        moveScores.push(moveScore);
     }
 
     return moveScores;
 }
 
-export function getCpuMoveConsiderations(cpuResults: Result[], playerMove: MoveResult, state: BattleFieldState): CPUMoveConsideration[] {
-    let damageResults = getDamageRanges(cpuResults);
-    let maxDamageMove = findHighestDamageMove(damageResults);
-    const aiMon = maxDamageMove.attacker
-    const playerMon = maxDamageMove.defender;
+export class DamageRolls {
+    private readonly maxDamagingMove: [MoveResult, number];
+    private readonly moveNameToDamageRollCappedAtDefenderHP: Map<string, number> = new Map();
+
+    constructor(private readonly moveNameToDamageRoll: Map<MoveResult, number>) {
+        this.maxDamagingMove = moveNameToDamageRoll.entries().next().value!;
+        for (let [result, damageRoll] of moveNameToDamageRoll.entries()) {
+            this.moveNameToDamageRollCappedAtDefenderHP.set(
+                result.move.name, 
+                Math.min(damageRoll * result.move.hits, result.defender.curHP()));
+            if (result.move.hits * damageRoll > this.maxDamagingMove[0].move.hits * this.maxDamagingMove[1])
+                this.maxDamagingMove = [result, damageRoll];
+        }
+    }
+
+    public static fromMaxRolls(moveResults: MoveResult[]): DamageRolls {
+        let maxRolls = new Map<MoveResult, number>();
+        for (let result of moveResults) {
+            maxRolls.set(result, result.highestRollPerHitDamage);
+        }
+        return new DamageRolls(maxRolls);
+    }
+
+    public getAllHitDamageCappedAtDefenderHP(moveResult: MoveResult): number {
+        return this.moveNameToDamageRollCappedAtDefenderHP.get(moveResult.move.name)!;
+    }
+
+    public isHighestDamage(moveResult: MoveResult): boolean {
+        return this.getAllHitDamageCappedAtDefenderHP(moveResult) === this.getAllHitDamageCappedAtDefenderHP(this.maxDamagingMove[0]);
+    }
+}
+
+export function getCpuMoveConsiderations(cpuResults: MoveResult[], playerMove: MoveResult, damageRolls: DamageRolls,  state: BattleFieldState): CPUMoveConsideration[] {
+    const aiMon = cpuResults[0].attacker;
+    const playerMon = cpuResults[0].defender;
     const aiMonPosition = state.cpu.getActivePokemon(aiMon) || new PokemonPosition(aiMon, true);
     const finalAISpeed = getFinalSpeed(aiMon, state.cpuField, state.cpuSide);
     const finalPlayerSpeed = getFinalSpeed(playerMon, state.playerField, state.playerSide);
     const aiIsFaster: boolean = finalAISpeed >= finalPlayerSpeed;
-    const aiIsFasterAfterPlayerParalysis = !playerMon.hasStatus('par') && finalAISpeed > finalPlayerSpeed * 0.25;
+    const aiIsFasterAfterPlayerParalysis = !playerMon.hasStatus('par') && finalAISpeed > finalPlayerSpeed * 0.5;
 
     // Not quite
-    let movesToConsider = damageResults.map<CPUMoveConsideration>(r => {
-        const kos = r.lowestRollDamage * r.move.hits >= r.defender.curHP();
+    let movesToConsider = cpuResults.map<CPUMoveConsideration>(r => {
+        const allhitDamageCappedAtDefenderHP = damageRolls.getAllHitDamageCappedAtDefenderHP(r);
+        const kos = allhitDamageCappedAtDefenderHP === r.defender.curHP();
+        const lowestRollTotalHitsHpPercentage = r.lowestRollPerHitHpPercentage * r.move.hits;
+        const highestRollTotalHitsHpPercentage = r.highestRollPerHitHpPercentage * r.move.hits;
         return {
             result: r,
-            lowestRollHpPercentage: r.lowestRollHpPercentage * r.move.hits,
-            hightestRollHpPercentage: r.highestRollHpPercentage * r.move.hits,
+            lowestRollTotalHitsHpPercentage,
+            highestRollTotalHitsHpPercentage,
             kos: kos,
             isDamagingMove: r.move.category !== 'Status',
-            isHighestDamagingMove: Math.min(maxDamageMove.highestRollHpPercentage * maxDamageMove.move.hits, 100) === Math.min(r.highestRollHpPercentage * r.move.hits, 100),
+            isHighestDamagingMove: damageRolls.isHighestDamage(r),
             aiIsFaster,
             aiIsSlower: !aiIsFaster,
             aiIsFasterAfterPlayerParalysis,
-            aiWillOHKOPlayer: r.lowestRollDamage * r.move.hits >= playerMon.curHP(),
+            aiWillOHKOPlayer: kos,
             playerMon,
             aiMon,
             playerMove,
-            playerWillKOAI: playerMove.highestRollDamage * playerMove.move.hits >= aiMon.curHP() && !savedFromKO(aiMon),
-            playerWill2HKOAI: playerMove.highestRollDamage * playerMove.move.hits * 2 >= aiMon.curHP(),
-            aiOutdamagesPlayer: r.highestRollHpPercentage * r.move.hits > playerMove.highestRollHpPercentage * playerMove.move.hits,
+            playerWillKOAI: playerMove.highestRollPerHitDamage * playerMove.move.hits >= aiMon.curHP() && !savedFromKO(aiMon),
+            playerWill2HKOAI: playerMove.highestRollPerHitDamage * playerMove.move.hits * 2 >= aiMon.curHP(),
+            aiOutdamagesPlayer: allhitDamageCappedAtDefenderHP > playerMove.highestRollPerHitDamage * playerMove.move.hits,
             aiMonFirstTurnOut: !!aiMonPosition.firstTurnOut,
             lastTurnCPUMove: undefined, // TODO: Track last move as volatile status?
             field: state.field
@@ -77,9 +168,9 @@ export function getCpuMoveConsiderations(cpuResults: Result[], playerMove: MoveR
 }
 
 export function damagingAttackSpAttackReductionWithGuarnateedEffect(moveScore: MoveScore, considerations: CPUMoveConsideration): void {
-    if (!considerations.isHighestDamagingMove)
+    if (considerations.isHighestDamagingMove)
         return;
-    
+
     const attackDroppingMoves = ['Trop Kick'];
     const specialAttackDroppingMoves = ['Skitter Smack'];
     const defenderIsAffected = !moveScore.move.defender.hasAbility('Contrary', 'Clear Body', 'White Smoke');
@@ -124,7 +215,9 @@ export function damagingSpeedReductionMoves(moveScore: MoveScore, considerations
     }
     //     If it is a Double battle and the move is Icy Wind or Electroweb:
     //    Additional +1
-
+    if (considerations.field.gameType === 'Doubles' && ['Icy Wind', 'Electroweb'].includes(moveScore.move.move.name)) {
+        moveScore.addScore(1);
+    }
 }
 
 export function damagingPriorityMoves(moveScore: MoveScore, considerations: CPUMoveConsideration): void {
@@ -132,47 +225,48 @@ export function damagingPriorityMoves(moveScore: MoveScore, considerations: CPUM
         moveScore.addScore(11);
     }
 }
+
 export function allDamagingMoves(moveScore: MoveScore, considerations: CPUMoveConsideration): void {
     if (considerations.result.move.category === 'Status')
         return;
 
     /*
-			All damaging moves:
+            All damaging moves:
 
-			AI will roll a random damage roll for all of its attacking moves*, and the highest 
-			damaging move gets the following score:
-				+6 (~80%), +8 (~20%)
-			
-			If multiple moves kill, then they are all considered the highest damaging move and 
-			all get this score.
-			*/
-			if (considerations.isHighestDamagingMove || considerations.kos) {
-				moveScore.addAlternativeScores(6, 0.8, 8);
-			}
+            AI will roll a random damage roll for all of its attacking moves*, and the highest 
+            damaging move gets the following score:
+                +6 (~80%), +8 (~20%)
+        	
+            If multiple moves kill, then they are all considered the highest damaging move and 
+            all get this score.
+            */
+    if (considerations.isHighestDamagingMove || considerations.kos) {
+        moveScore.addAlternativeScores(6, 0.8, 8, 0.2);
+    }
 
-			// If a damaging move kills:
-			if (considerations.kos) {
-				// If AI mon is faster, or the move has priority and AI is slower:
-				if (considerations.aiIsFaster || (considerations.aiIsSlower && considerations.result.move.priority > 0)) {
-					moveScore.addScore(6);
-				}
+    // If a damaging move kills:
+    if (considerations.kos) {
+        // If AI mon is faster, or the move has priority and AI is slower:
+        if (considerations.aiIsFaster || (considerations.aiIsSlower && considerations.result.move.priority > 0)) {
+            moveScore.addScore(6);
+        }
 
-				if (!considerations.aiIsFaster) {
-					moveScore.addScore(3);
-				}
+        if (!considerations.aiIsFaster) {
+            moveScore.addScore(3);
+        }
 
-				if (considerations.aiMon.hasAbility('Moxie', 'Beast Boost', 'Chilling Neigh', 'Grim Neigh')) {
-					moveScore.addScore(1);
-				}
-			}
+        if (considerations.aiMon.hasAbility('Moxie', 'Beast Boost', 'Chilling Neigh', 'Grim Neigh')) {
+            moveScore.addScore(1);
+        }
+    }
 
-			/*
-			If a damaging move has a high crit chance and is Super Effective on the target:
-        		Additional +1 (50%), no score boost other 50%
-			*/ 
-			// if (isSuperEffective(potentialMove.result.move, playerMon) || hasHighCritChance(potentialMove.result.move)) {
-			// 	moveScore.addScore(1, 0.5);
-			// }
+    /*
+    If a damaging move has a high crit chance and is Super Effective on the target:
+        Additional +1 (50%), no score boost other 50%
+    */
+    // if (isSuperEffective(potentialMove.result.move, playerMon) || hasHighCritChance(potentialMove.result.move)) {
+    // 	moveScore.addScore(1, 0.5);
+    // }
 }
 
 export function specificMoves(moveScore: MoveScore, consideration: CPUMoveConsideration): void {
@@ -180,15 +274,15 @@ export function specificMoves(moveScore: MoveScore, consideration: CPUMoveConsid
     switch (moveName) {
         case 'Future Sight':
             moveScore.addScore(
-                consideration.aiIsFaster && consideration.playerWillKOAI ? 
-                8 : 6);
+                consideration.aiIsFaster && consideration.playerWillKOAI ?
+                    8 : 6);
             break;
         case 'Relic Song':
             if (moveScore.move.attacker.named('Meloetta')) {
                 moveScore.addScore(10);
             }
             else {
-                moveScore.setScore(-20);
+                moveScore.addScore(-20);
             }
             break;
         case 'Sucker Punch':
@@ -273,7 +367,7 @@ export function specificMoves(moveScore: MoveScore, consideration: CPUMoveConsid
             if (consideration.lastTurnCPUMove?.named('Protect', `King's Shield`))
                 moveScore.never(0.5);
             // TODO:    If AI used protect last 2 turns, never uses protect this turn.
-            
+
             break;
         case 'Fling':
             notImplemented(moveName);
@@ -302,7 +396,7 @@ export function specificMoves(moveScore: MoveScore, consideration: CPUMoveConsid
         case 'Tailwind':
             // TODO: Not quite (doubles)
             notImplemented(moveName);
-            // moveScore.addScore(consideration.aiIsSlower ? 9 : 5);
+        // moveScore.addScore(consideration.aiIsSlower ? 9 : 5);
         case 'Trick Room':
             moveScore.addScore(consideration.aiIsSlower ? 10 : 5);
             if (consideration.field.isTrickRoom)
@@ -322,7 +416,7 @@ export function specificMoves(moveScore: MoveScore, consideration: CPUMoveConsid
                 moveScore.addScore(8);
             else if (consideration.aiIsFaster && consideration.playerWillKOAI)
                 moveScore.addScore(7);
-            else 
+            else
                 moveScore.addScore(6);
             break;
         case 'Electric Terrain':
@@ -343,11 +437,11 @@ export function specificMoves(moveScore: MoveScore, consideration: CPUMoveConsid
                 moveScore.never();
                 break;
             }
-            
+
             moveScore.addScore(6);
-            if (moveName === 'Light Screen' && hasSpecialMoves(consideration.playerMon) || 
+            if (moveName === 'Light Screen' && hasSpecialMoves(consideration.playerMon) ||
                 moveName === 'Reflect' && hasPhysicalMoves(consideration.playerMon)) {
-                
+
                 if (consideration.aiMon.hasItem('Light Clay'))
                     moveScore.addScore(1);
                 moveScore.addScore(1, 0.5);
@@ -365,9 +459,9 @@ export function specificMoves(moveScore: MoveScore, consideration: CPUMoveConsid
         case 'Zap Cannon':
             if (consideration.playerMon.hasStatus('par'))
                 return moveScore.never();
-            
+
             if (consideration.aiIsSlower && consideration.aiIsFasterAfterPlayerParalysis ||
-                consideration.aiMon.moves.includes('Hex' as MoveName) || 
+                consideration.aiMon.moves.includes('Hex' as MoveName) ||
                 consideration.aiMon.moves.some(m => canFlinch(m))
                 // consideration.playerMon.isInfatuated || confused
             ) {
@@ -387,30 +481,30 @@ export function specificMoves(moveScore: MoveScore, consideration: CPUMoveConsid
 
 export function generalSetup(moveScore: MoveScore, consideration: CPUMoveConsideration): void {
     if (![
-        'Power-up Punch', 
-        'Swords Dance', 
-        'Howl', 
-        'Stuff Cheeks', 
-        'Barrier', 
-        'Acid Armor', 
-        'Iron Defense', 
+        'Power-up Punch',
+        'Swords Dance',
+        'Howl',
+        'Stuff Cheeks',
+        'Barrier',
+        'Acid Armor',
+        'Iron Defense',
         'Cotton Guard',
         'Charge Beam',
         'Tail Glow',
         'Nasty Plot',
-        'Cosmic Power', 
-        'Bulk Up', 
-        'Calm Mind', 
-        'Dragon Dance', 
-        'Coil', 
-        'Hone Claws', 
-        'Quiver Dance', 
-        'Shift Gear', 
-        'Shell Smash', 
-        'Growth', 
-        'Work Up', 
-        'Curse', 
-        'Coil', 
+        'Cosmic Power',
+        'Bulk Up',
+        'Calm Mind',
+        'Dragon Dance',
+        'Coil',
+        'Hone Claws',
+        'Quiver Dance',
+        'Shift Gear',
+        'Shell Smash',
+        'Growth',
+        'Work Up',
+        'Curse',
+        'Coil',
         'No Retreat'
     ].includes(moveScore.move.move.name))
         return;
@@ -422,7 +516,7 @@ export function generalSetup(moveScore: MoveScore, consideration: CPUMoveConside
 export function offensiveSetup(moveScore: MoveScore, consideration: CPUMoveConsideration): void {
     if (![
         'Dragon Dance',
-        'Shift Gear', 
+        'Shift Gear',
         'Swords Dance',
         'Howl',
         'Sharpen',
@@ -442,7 +536,7 @@ export function offensiveSetup(moveScore: MoveScore, consideration: CPUMoveConsi
 export function defensiveSetup(moveScore: MoveScore, consideration: CPUMoveConsideration): void {
     if (![
         'Acid Armor',
-        'Barrier', 
+        'Barrier',
         'Cotton Guard',
         'Harden',
         'Iron Defense',
@@ -452,13 +546,13 @@ export function defensiveSetup(moveScore: MoveScore, consideration: CPUMoveConsi
         return;
 
     moveScore.addScore(6);
-    
+
     if (consideration.aiIsSlower && consideration.playerWill2HKOAI)
         moveScore.addScore(-5);
 
     if (consideration.playerMon.hasStatus('frz', 'slp')) // Not quite
         moveScore.addScore(2, 0.95);
-    
+
     //  If the move boosts Defense and Special Defense:
     if (['Stockpile',
         'Cosmic Power'].includes(moveScore.move.move.name) &&
@@ -472,7 +566,7 @@ export function recovery(moveScore: MoveScore, consideration: CPUMoveConsiderati
 }
 
 export function hasHighCritChance(move: Move): boolean {
-	notImplemented();
+    notImplemented();
     // return [].includes(move.name);
 }
 
@@ -490,54 +584,27 @@ export function hasHighCritChance(move: Move): boolean {
     which stacks additively with any score boosts from kills.
 
 	
-	*/
+    */
 function specialExecptionNotHighestDamagingMove(): void {
-	notImplemented();
+    notImplemented();
 }
 
 export function findHighestDamageMove(moveResults: MoveResult[]): MoveResult {
     let maxDamageMove: MoveResult = moveResults[0];
     for (let result of moveResults) {
-        if ((result.highestRollHpPercentage * result.move.hits) > (maxDamageMove.highestRollHpPercentage * maxDamageMove.move.hits))
+        if ((result.highestRollPerHitDamage * result.move.hits) > (maxDamageMove.highestRollPerHitDamage * maxDamageMove.move.hits))
             maxDamageMove = result;
     }
 
     return maxDamageMove;
 }
 
-export function getDamageRanges(attackerResults: Result[], expectedHits?: number): MoveResult[] {
-	/* Returns array of highest damage % inflicted per move
-		[{ lowestRoll: 85.6, higestRoll: 101.5 }, ...x4]
-	*/
-	var attacker = attackerResults[0].attacker;
-	var defender = attackerResults[0].defender;
-	var highestRoll, lowestRoll, damage = 0;
-	//goes from the most optimist to the least optimist
-	var p1KO = 0, p2KO = 0;
-	//Highest damage
-	var p1HD = 0, p2HD = 0;
-
-	return attackerResults.map((result, i) => {
-		let resultDamage = result.damage as number[];
-		let lowestHitDamage = resultDamage[0] ? resultDamage[0] : result.damage as number;
-		let highestHitDamage = (result.damage as number[])[15] ? resultDamage[15] : result.damage as number;
-        let hits = createMove(attacker, attacker.moves[i]).hits;
-		let getDamagePct = (hitDamage: number) => hitDamage  / defender.stats.hp * 100;
-		return {
-			attacker,
-			defender,
-			move: result.move,
-            hits,
-			lowestRollDamage: lowestHitDamage,
-			lowestRollHpPercentage: getDamagePct(lowestHitDamage),
-			highestRollDamage: highestHitDamage,
-			highestRollHpPercentage: getDamagePct(highestHitDamage),
-		};
-	});
+export function toMoveResults(results: Result[]): MoveResult[] {
+    return results.map(toMoveResult);
 }
 
 export function toMoveResult(result: Result): MoveResult {
-    let resultDamage = result.damage as number[];
+    let resultDamage = typeof result.damage === 'number' ? [result.damage] : result.damage as number[];
     let lowestHitDamage = resultDamage[0] ? resultDamage[0] : result.damage as number;
     let highestHitDamage = (result.damage as number[])[15] ? resultDamage[15] : result.damage as number;
     let getDamagePct = (hitDamage: number) => hitDamage * (createMove(result.attacker, result.move).hits / result.defender.stats.hp * 100);
@@ -545,15 +612,16 @@ export function toMoveResult(result: Result): MoveResult {
         attacker: result.attacker,
         defender: result.defender,
         move: result.move,
-        lowestRollDamage: lowestHitDamage,
-        lowestRollHpPercentage: getDamagePct(lowestHitDamage),
-        highestRollDamage: highestHitDamage,
-        highestRollHpPercentage: getDamagePct(highestHitDamage),
+        damageRolls: resultDamage,
+        lowestRollPerHitDamage: lowestHitDamage,
+        lowestRollPerHitHpPercentage: getDamagePct(lowestHitDamage),
+        highestRollPerHitDamage: highestHitDamage,
+        highestRollPerHitHpPercentage: getDamagePct(highestHitDamage),
     };
-    }
+}
 
 export function savedFromKO(pokemon: A.Pokemon): boolean {
-	return hasLifeSavingAbility(pokemon) || hasLifeSavingItem(pokemon);
+    return hasLifeSavingAbility(pokemon) || hasLifeSavingItem(pokemon);
 }
 
 export function moveKillsAttacker(moveResult: MoveResult): boolean {
@@ -561,18 +629,18 @@ export function moveKillsAttacker(moveResult: MoveResult): boolean {
 }
 
 export function moveWillFail(pokemonSide: ActivePokemon, consideration: MoveConsideration): boolean {
-		if (!pokemonSide.firstTurnOut && ['First Impression', 'Fake Out'].includes(consideration.result.move.name))
-			return true;
+    if (!pokemonSide.firstTurnOut && ['First Impression', 'Fake Out'].includes(consideration.result.move.name))
+        return true;
 
-		return false;
-	}
+    return false;
+}
 
 export function hasLifeSavingItem(pokemon: A.Pokemon): boolean {
-	return pokemon.hasItem('Focus Sash') && pokemon.curHP() === pokemon.maxHP();
+    return pokemon.hasItem('Focus Sash') && pokemon.curHP() === pokemon.maxHP();
 }
 
 export function hasLifeSavingAbility(pokemon: A.Pokemon): boolean {
-	return pokemon.hasAbility('Sturdy') && pokemon.curHP() === pokemon.maxHP();
+    return pokemon.hasAbility('Sturdy') && pokemon.curHP() === pokemon.maxHP();
 }
 
 export function canUseDamagingMoves(pokemon: A.Pokemon): boolean {
@@ -596,11 +664,11 @@ export function createMove(pokemon: A.Pokemon, moveName: string | A.Move): Move 
  * @returns 
  */
 export function calculateAllMoves(gen: I.Generation, attacker: Pokemon, defender: Pokemon, attackerField: Field): Result[] {
-	var results = [];
-	for (var i = 0; i < attacker.moves.length; i++) {
-		results[i] = calculate(gen, attacker, defender, createMove(attacker, attacker.moves[i]), attackerField);
-	}
-	return results;
+    var results = [];
+    for (var i = 0; i < attacker.moves.length; i++) {
+        results[i] = calculate(gen, attacker, defender, createMove(attacker, attacker.moves[i]), attackerField);
+    }
+    return results;
 }
 
 export function calculateMoveResult(attacker: Pokemon, defender: Pokemon, moveName: string, field: Field, attackerRng: RNGStrategy): MoveResult;

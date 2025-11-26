@@ -1,4 +1,4 @@
-import { StatsTable } from '@smogon/calc';
+import { Move, StatsTable} from '@smogon/calc';
 import { importPokemon, importTeam } from '@smogon/calc/src/test/helper';
 
 describe('Helper', () => {

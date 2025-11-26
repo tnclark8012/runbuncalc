@@ -2,8 +2,8 @@ import { Pokemon } from "@smogon/calc";
 import { PokemonReplacer, visitActivePokemonInSpeedOrder } from "../../battle-field-state-visitor";
 import { canMegaEvolve, isMegaEvolution, isMegaEvolutionOf } from "../../moveScoring";
 import { BattleFieldState, PokemonPosition } from "../../moveScoring.contracts";
-import { applyStartOfTurnAbility } from "../turn-start/start-of-turn-abilities";
 import { ActionLogEntry, isMoveAction, MoveAction, PossibleTrainerAction } from "./move-selection.contracts";
+import { applyStartOfTurnAbility } from "../turn-start/start-of-turn-abilities";
 
 type MegaEvolutionToApply = { baseForm: PokemonPosition, mega: Pokemon };
 
