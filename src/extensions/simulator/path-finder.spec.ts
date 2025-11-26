@@ -11,6 +11,41 @@ import { PossibleAction, PossibleMoveAction } from './phases/battle/move-selecti
 import { createMove, megaEvolve } from './moveScoring';
 
 describe('Path finding', () => {
+  describe('Win probability threshold', () => {
+    test('finds path when win probability is greater than 50%', () => {
+      // Setup a scenario where not all branches lead to a win, but probability is > 50%
+      let [Torchic, Turtwig] = importTeam(`
+Torchic
+Level: 5
+Bashful Nature
+Ability: Blaze
+- Seismic Toss
+- Night Shade
+
+Turtwig
+Level: 12
+Hardy Nature
+Ability: Shell Armor
+IVs: 20 HP / 27 Atk / 8 SpA
+- Absorb
+- Bite
+- Confide
+- Growl
+
+`);
+      const state = new BattleFieldState(
+        new PlayerTrainer([new PokemonPosition(Turtwig, true)], []),
+        new CpuTrainer([new PokemonPosition(Torchic, true)], []),
+        new Field());
+
+      usingHeuristics({ playerMoveScoringStrategy: BasicScoring }, () => {
+        let path = findPlayerWinningPath(state);
+        // The path should be found if win probability is > 50%
+        expect(path).not.toBeNull();
+      });
+    });
+  });
+
   describe('Branching', () => {
     test('CPU move is 50-50', () => {
       let [Torchic, Turtwig] = importTeam(`
