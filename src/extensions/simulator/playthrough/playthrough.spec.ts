@@ -1,15 +1,12 @@
 import { Field } from '@smogon/calc';
-import { determineMoveOrderAndExecute, getAllPlayerAndCpuPossibleTurns } from '../phases/battle/determine-move-order-and-execute';
-import { BattleFieldState, CpuTrainer, PlayerTrainer, PokemonPosition, Trainer } from '../moveScoring.contracts';
-import { create1v1BattleState, importTeam } from '../helper';
-import { expectTeam, usingHeuristics } from '../test-helper';
-import { BasicScoring, IntuitionScoring } from '../phases/battle/player-move-selection-strategy';
-import { findPlayerWinningPath, printDecisionTree } from '../path-finder';
-import { getBox } from './museum.collection';
 import { OpposingTrainer } from '../../trainer-sets';
-import { attack, PlannedPlayerActionProvider, playerRng, switchTo } from '../../configuration';
-import { ItemName } from '@smogon/calc/dist/data/interface';
-import { executeMove } from '../phases/battle/execute-move';
+import { importTeam } from '../helper';
+import { BattleFieldState, CpuTrainer, PlayerTrainer, PokemonPosition } from '../moveScoring.contracts';
+import { findPlayerWinningPath, printDecisionTree } from '../path-finder';
+import { determineMoveOrderAndExecute } from '../phases/battle/determine-move-order-and-execute';
+import { BasicScoring } from '../phases/battle/player-move-selection-strategy';
+import { usingHeuristics } from '../test-helper';
+import { getBox } from './museum.collection';
 
 describe('Actual playthrough tests', () => {
   describe('Team Aqua Grunt Petalburg Woods', () => {
@@ -118,21 +115,10 @@ IVs: 20 HP / 27 Atk / 8 SpA
       Poochyena.item = 'Oran Berry' as any;
       Starly.item = 'Oran Berry' as any;
       Surskit.item = 'Oran Berry' as any;
-      // usingHeuristics({ playerActionProvider: new PlannedPlayerActionProvider([
-      //   [ attack(Turtwig, 'Bite') ],
-      //   [ attack(Turtwig, 'Absorb') ],
-      //   [ attack(Turtwig, 'Absorb') ],
-      //   [ switchTo(Starly) ],
-      //   [ attack(Starly, 'Aerial Ace') ],
-      //   [ attack(Starly, 'Quick Attack') ],
-      //   [ switchTo(Surskit) ],
-      //   [ attack(Surskit, 'Bubble Beam') ],
-      //   [ attack(Surskit, 'Bubble Beam') ],
-      // ]) }, () => {
+     
       const path = findPlayerWinningPath(state);
       expect(path).not.toBeNull();
-      // expect(printDecisionTree(path!)).toBe('');
-      // });
+      expect(printDecisionTree(path!)).toBe('');
     });
 
     test('Fisherman Darian', () => {
@@ -197,7 +183,7 @@ IVs: 20 HP / 27 Atk / 8 SpA
       //   [ attack(Gossifleur, 'Leafage') ],
       //   [ attack(Gossifleur, 'Leafage') ],
       // ]) }, () => {
-      const path = findPlayerWinningPath(state);
+      const path = findPlayerWinningPath(state, 0.7);
       expect(path).not.toBeNull();
       // expect(printDecisionTree(path!)).toBe('');
       // });

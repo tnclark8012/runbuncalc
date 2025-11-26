@@ -1,12 +1,12 @@
-import { Field, Move, A, I, Result, Pokemon, calculate } from '@smogon/calc';
-import { MoveScore } from "./moveScore";
-import { notImplemented } from "./notImplementedError";
-import { ActivePokemon, BattleFieldState, CPUMoveConsideration, MoveConsideration, MoveResult, PokemonPosition, Trainer } from './moveScoring.contracts';
+import { A, calculate, Field, I, Move, Pokemon, Result } from '@smogon/calc';
+import { MoveName } from '@smogon/calc/dist/data/interface';
 import { gen, RNGStrategy } from '../configuration';
+import { MoveScore } from "./moveScore";
+import { ActivePokemon, BattleFieldState, CPUMoveConsideration, MoveConsideration, MoveResult, PokemonPosition, Trainer } from './moveScoring.contracts';
+import { notImplemented } from "./notImplementedError";
+import { calculateCpuMove, MoveProbability } from './phases/battle/cpu-move-selection';
 import { PossibleTrainerAction } from './phases/battle/move-selection.contracts';
 import { canFlinch, getFinalSpeed, hasBerry, isSuperEffective, processCartesianProduct } from './utils';
-import { MoveName } from '@smogon/calc/dist/data/interface';
-import { calculateCpuMove, MoveProbability } from './phases/battle/cpu-move-selection';
 
 export function scoreCPUMoves(cpuResults: Result[], playerMove: MoveResult, state: BattleFieldState): MoveScore[] {
     let moveResults = toMoveResults(cpuResults);
@@ -47,7 +47,7 @@ export function scoreCPUMoves(cpuResults: Result[], playerMove: MoveResult, stat
             totalCombinationsCountingTiesAsSeparate++;
             moveResultsMap.set(
                 maxScoreMove.move.move.name, 
-                (moveResultsMap.get(maxScoreMove.move.move.name) || 0) + (100-maxScoreMove.probability*100) / 100);
+                (moveResultsMap.get(maxScoreMove.move.move.name) || 0) + maxScoreMove.probability);
         }
     });
 

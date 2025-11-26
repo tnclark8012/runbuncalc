@@ -1,10 +1,10 @@
+import { gen } from "../../../configuration";
 import { MoveScore } from "../../moveScore";
-import { calculateAllMoves, findHighestDamageMove, scoreCPUMoves, toMoveResults, getLockedMoveAction } from "../../moveScoring";
+import { calculateAllMoves, findHighestDamageMove, getLockedMoveAction, scoreCPUMoves, toMoveResults } from "../../moveScoring";
 import { BattleFieldState, MoveResult, PokemonPosition } from "../../moveScoring.contracts";
 import { PossibleAction, ScoredPossibleAction, TargetSlot } from "./move-selection.contracts";
-import { gen } from "../../../configuration";
 
-export function getCpuPossibleActions(state: BattleFieldState, cpuPokemon: PokemonPosition, playerActive: PokemonPosition[], cpuActive: PokemonPosition[]): PossibleAction[] {
+export function getCpuPossibleActions(state: BattleFieldState, cpuPokemon: PokemonPosition): PossibleAction[] {
     let lockedMove = getLockedMoveAction(state, state.cpu, state.cpu.active.indexOf(cpuPokemon));
     if (lockedMove) {
         return [lockedMove.action];
@@ -12,8 +12,8 @@ export function getCpuPossibleActions(state: BattleFieldState, cpuPokemon: Pokem
     
     let actions: ScoredPossibleAction[] = [];
     let topScore = -Infinity;
-    for (let targetSlot = 0; targetSlot < playerActive.length; targetSlot++) {
-        let target = playerActive[targetSlot];
+    for (let targetSlot = 0; targetSlot < state.player.active.length; targetSlot++) {
+        let target = state.player.active[targetSlot];
         let actionsAgainstTarget = getCpuPossibleActionsAgainstTarget(state, cpuPokemon, target, { type: 'opponent', slot: targetSlot });
         if (!actionsAgainstTarget.length)
             continue;
