@@ -169,7 +169,7 @@ IVs: 20 HP / 27 Atk / 8 SpA
       // });
     });
 
-    xtest('Team Aqua Grunt Petalburg Woods', () => {
+    test('Team Aqua Grunt Petalburg Woods', () => {
       const cpu = OpposingTrainer('Team Aqua Grunt Petalburg Woods');
 
       const { Turtwig, Gossifleur, Poochyena, Starly, Surskit } = getBox();
