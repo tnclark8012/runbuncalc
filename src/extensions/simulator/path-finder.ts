@@ -58,6 +58,8 @@ export interface DecisionNodeWithProbability {
     winProbability: number;
 }
 
+const WIN_PROBABILITY_THRESHOLD = 0.5;
+
 export function findPathGuaranteed(state: BattleFieldState, isGoalState: (state: BattleFieldState) => boolean | undefined): DecisionNode | null {
     let memo = new Map<string, DecisionNodeWithProbability | 'LOSS'>();
     
@@ -117,7 +119,7 @@ export function findPathGuaranteed(state: BattleFieldState, isGoalState: (state:
             const normalizedWinProbability = totalProbability > 0 ? winProbability / totalProbability : 0;
             
             // If win probability is > 50%, we found a viable player action
-            if (normalizedWinProbability > 0.5) {
+            if (normalizedWinProbability > WIN_PROBABILITY_THRESHOLD) {
                 const decisionNode: DecisionNode = {
                     state: current,
                     playerAction,
