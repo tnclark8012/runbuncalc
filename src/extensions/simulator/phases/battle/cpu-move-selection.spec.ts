@@ -4,16 +4,13 @@ import {
   Field,
   Pokemon,
 } from '@smogon/calc';
-import { inGen, importTeam, importPokemon, expectPlayerTeam, expectCpuTeam } from '../../test-helper';
-import { ActivePokemon, BattleFieldState, CpuTrainer, PlayerTrainer, PokemonPosition, Trainer } from '../../moveScoring.contracts';
-import { MoveAction, PossibleAction, PossibleTrainerAction } from './move-selection.contracts';
-import { createMove } from '../../moveScoring';
-import { getCpuMoveScoresAgainstTarget, getCpuPossibleActions } from './cpu-move-selection';
-import { get } from 'jquery';
-import { PartyOrderSwitchStrategy } from '../../switchStrategy.partyOrder';
-import { getBox } from '../../playthrough/museum.collection';
 import { OpposingTrainer } from '../../../trainer-sets';
 import { create1v1BattleState } from '../../helper';
+import { BattleFieldState, CpuTrainer, PlayerTrainer, PokemonPosition } from '../../moveScoring.contracts';
+import { getBox } from '../../playthrough/museum.collection';
+import { importTeam, inGen } from '../../test-helper';
+import { getCpuMoveScoresAgainstTarget, getCpuPossibleActions } from './cpu-move-selection';
+import { PossibleAction } from './move-selection.contracts';
 
 const RunAndBun = 8;
 inGen(RunAndBun, ({ gen, calculate, Pokemon, Move }) => {

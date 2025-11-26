@@ -1,10 +1,9 @@
 import { Generations, Pokemon } from "@smogon/calc";
-import { ActivePokemon, BattleFieldState, CpuTrainer, PokemonPosition, Trainer } from "../../moveScoring.contracts";
 import { calculateAllMoves, findHighestDamageMove, getCpuMoveConsiderations, getDamageRanges } from "../../moveScoring";
+import { BattleFieldState, CpuTrainer, PokemonPosition } from "../../moveScoring.contracts";
+import { getFinalSpeed } from "../../utils";
 import { SwitchAction } from "../battle/move-selection.contracts";
 import { executeSwitch, popFromParty } from "./execute-switch";
-import { PokemonReplacer } from "../../battle-field-state-visitor";
-import { getFinalSpeed } from "../../utils";
 
 const generation = Generations.get(8);
 

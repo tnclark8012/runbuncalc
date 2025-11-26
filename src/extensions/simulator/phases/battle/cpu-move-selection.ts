@@ -1,8 +1,8 @@
+import { gen } from "../../../configuration";
 import { MoveScore } from "../../moveScore";
-import { calculateAllMoves, findHighestDamageMove, scoreCPUMoves, getDamageRanges, getLockedMoveAction } from "../../moveScoring";
+import { calculateAllMoves, findHighestDamageMove, getDamageRanges, getLockedMoveAction, scoreCPUMoves } from "../../moveScoring";
 import { BattleFieldState, PokemonPosition } from "../../moveScoring.contracts";
 import { PossibleAction, ScoredPossibleAction, TargetSlot } from "./move-selection.contracts";
-import { gen } from "../../../configuration";
 
 export function getCpuPossibleActions(state: BattleFieldState, cpuPokemon: PokemonPosition, playerActive: PokemonPosition[], cpuActive: PokemonPosition[]): PossibleAction[] {
     let lockedMove = getLockedMoveAction(state, state.cpu, state.cpu.active.indexOf(cpuPokemon));

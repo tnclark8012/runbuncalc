@@ -1,8 +1,8 @@
 import { Generations, Move, Pokemon } from "@smogon/calc";
-import { BasicScoring, IMoveScoringStrategy } from "./simulator/phases/battle/player-move-selection-strategy";
+import { createMove, megaEvolve } from "./simulator/moveScoring";
 import type { BattleFieldState, MoveResult, Trainer } from "./simulator/moveScoring.contracts";
 import { PossibleSwitchAction, PossibleTrainerAction } from "./simulator/phases/battle/move-selection.contracts";
-import { createMove, megaEvolve } from "./simulator/moveScoring";
+import { BasicScoring, IMoveScoringStrategy } from "./simulator/phases/battle/player-move-selection-strategy";
 
 export const gen = Generations.get(8);
 

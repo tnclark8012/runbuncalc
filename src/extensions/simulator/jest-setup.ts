@@ -1,4 +1,4 @@
-import { PossibleAction, MoveAction, SwitchAction } from "./phases/battle/move-selection.contracts";
+import { MoveAction, PossibleAction, SwitchAction } from "./phases/battle/move-selection.contracts";
 
 export type ExpectedMoveAction = Omit<MoveAction, 'move'> & {
   move: Omit<MoveAction['move'], 'move'> & {
@@ -102,4 +102,5 @@ if (typeof SETDEX_SS !== 'undefined') {
   (global as any).SETDEX_SS = SETDEX_SS;
 }
 
-export {};
+export { };
+

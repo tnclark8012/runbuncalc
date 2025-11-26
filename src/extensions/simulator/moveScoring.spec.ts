@@ -1,16 +1,7 @@
 /* eslint-disable max-len */
 
-import { Dex } from '@pkmn/dex';
-import {
-  I,
-  A,
-  Field,
-  Generations,
-  Pokemon
-} from '@smogon/calc';
-import { inGen, importTeam } from './test-helper';
 import { megaEvolve } from './moveScoring';
-import { OpposingTrainer } from '../trainer-sets';
+import { importTeam, inGen } from './test-helper';
 
 const RunAndBun = 8;
 inGen(RunAndBun, ({ gen, calculate, Pokemon, Move }) => {

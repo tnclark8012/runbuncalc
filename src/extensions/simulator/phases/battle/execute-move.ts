@@ -1,11 +1,11 @@
-import { Field, StatsTable, Move, Pokemon, MEGA_STONES } from '@smogon/calc';
-import { applyBoost, getHPAfterDamage, getPercentageOfMaxHP, isSuperEffective } from '../../utils';
-import { calculateMoveResult, createMove } from '../../moveScoring';
-import { getRecovery, getRecoil } from '@smogon/calc/dist/desc';
-import { MoveResult } from '../../moveScoring.contracts';
+import { Field, MEGA_STONES, Move, Pokemon, StatsTable } from '@smogon/calc';
+import { getRecoil, getRecovery } from '@smogon/calc/dist/desc';
 import { gen, RNGStrategy } from '../../../configuration';
 import { isContactMove } from '../../move-properties';
+import { calculateMoveResult, createMove } from '../../moveScoring';
+import { MoveResult } from '../../moveScoring.contracts';
 import { notImplemented } from '../../notImplementedError';
+import { applyBoost, getHPAfterDamage, getPercentageOfMaxHP, isSuperEffective } from '../../utils';
 
 export function executeMove(attacker: Pokemon, defender: Pokemon, move: Move, field: Field, attackerRng: RNGStrategy): { attacker: Pokemon, defender: Pokemon };
 export function executeMove(attacker: Pokemon, defender: Pokemon, move: string, field: Field, attackerRng: RNGStrategy): { attacker: Pokemon, defender: Pokemon };

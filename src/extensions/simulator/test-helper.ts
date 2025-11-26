@@ -1,9 +1,9 @@
 /* eslint-env jest */
 
-import { I, State, Field, Pokemon, Move, calculate, SPECIES, ABILITIES, PokemonOptions, ITEMS, Side, SpeciesData } from '@smogon/calc';
+import { ABILITIES, calculate, Field, I, ITEMS, Move, Pokemon, PokemonOptions, Side, SPECIES, SpeciesData, State } from '@smogon/calc';
 import { Result } from '@smogon/calc/src';
-import { ActivePokemon, BattleFieldState } from './moveScoring.contracts';
 import { ConfiguredHeuristics, Heuristics } from '../configuration';
+import { ActivePokemon, BattleFieldState } from './moveScoring.contracts';
 
 const calc = (gen: I.GenerationNum) => (
   attacker: Pokemon,

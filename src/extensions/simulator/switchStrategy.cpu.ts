@@ -1,7 +1,7 @@
 import { Pokemon } from "@smogon/calc";
+import { gen } from "../configuration";
 import { BattleFieldState, SwitchStrategy } from "./moveScoring.contracts";
 import { BattleSimulator } from "./simulator";
-import { gen } from "../configuration";
 import { getFinalSpeed } from "./utils";
 
 interface SwitchInConsideration {

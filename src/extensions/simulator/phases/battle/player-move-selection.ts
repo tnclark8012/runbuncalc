@@ -1,10 +1,10 @@
-import { Generations, Pokemon, Result, Move } from "@smogon/calc";
+import { Move, Pokemon, Result } from "@smogon/calc";
+import { gen, Heuristics } from "../../../configuration";
 import { MoveScore } from "../../moveScore";
 import { calculateAllMoves, canMegaEvolve, findHighestDamageMove, getDamageRanges, megaEvolve, savedFromKO } from "../../moveScoring";
 import { BattleFieldState, PlayerMoveConsideration, PokemonPosition } from "../../moveScoring.contracts";
-import { PossibleAction, PossibleTrainerAction, ScoredPossibleAction, TargetSlot } from "./move-selection.contracts";
-import { gen, Heuristics } from "../../../configuration";
 import { SwitchAfterKOStrategy } from "../switching/player-switch-in";
+import { PossibleAction, PossibleTrainerAction, ScoredPossibleAction, TargetSlot } from "./move-selection.contracts";
 
 const playerSwitchStrategy = new SwitchAfterKOStrategy();
 

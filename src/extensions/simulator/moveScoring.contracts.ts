@@ -1,7 +1,7 @@
 import { Field, Move, Pokemon } from '@smogon/calc';
-import { PartyOrderSwitchStrategy } from './switchStrategy.partyOrder';
-import { Side } from '@smogon/calc/src';
 import { MoveName } from '@smogon/calc/dist/data/interface';
+import { Side } from '@smogon/calc/src';
+import { PartyOrderSwitchStrategy } from './switchStrategy.partyOrder';
 
 export interface VolatileStatus {
 	/** The move being charged (e.g., Bounce, Fly, Dig, Dive) */

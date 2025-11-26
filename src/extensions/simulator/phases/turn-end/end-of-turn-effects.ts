@@ -1,6 +1,6 @@
-import { ActivePokemon, BattleFieldState, PokemonPosition } from "../../moveScoring.contracts";
-import { applyBoost, damagePokemonWithPercentageOfMaxHp } from "../../utils";
 import { visitActivePokemonInSpeedOrder } from "../../battle-field-state-visitor";
+import { ActivePokemon, BattleFieldState, PokemonPosition } from "../../moveScoring.contracts";
+import { damagePokemonWithPercentageOfMaxHp } from "../../utils";
 
 export function applyEndOfTurnEffects(state: BattleFieldState): BattleFieldState {
   state = state.clone();

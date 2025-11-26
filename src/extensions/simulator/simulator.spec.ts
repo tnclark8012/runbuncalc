@@ -1,16 +1,13 @@
 /* eslint-disable max-len */
 
-import { Dex } from '@pkmn/dex';
 import {
-  I,
-  A,
   Field,
   Generations,
   Pokemon
 } from '@smogon/calc';
-import { inGen, importTeam, importPokemon } from './test-helper';
 import { TurnOutcome } from './moveScoring.contracts';
 import { BattleSimulator } from './simulator';
+import { importTeam, inGen } from './test-helper';
 
 const RunAndBun = 8;
 inGen(RunAndBun, ({gen, calculate, Pokemon, Move}) => {

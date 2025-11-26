@@ -1,6 +1,5 @@
 import { Pokemon } from "@smogon/calc";
 import { BattleFieldState, SwitchStrategy, Trainer } from "./moveScoring.contracts";
-import { BattleSimulator } from "./simulator";
 
 interface SwitchInConsideration {
     pokemon: Pokemon;

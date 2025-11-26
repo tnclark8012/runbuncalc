@@ -1,6 +1,6 @@
 /* eslint-env jest */
 
-import { I, State, Field, Pokemon, Move, calculate, SPECIES, ABILITIES, PokemonOptions, ITEMS, Side, SpeciesData } from '@smogon/calc';
+import { ABILITIES, calculate, Field, I, ITEMS, Move, Pokemon, PokemonOptions, Side, SPECIES, SpeciesData, State } from '@smogon/calc';
 import { Result } from '@smogon/calc/src';
 import { BattleFieldState, CpuTrainer, PlayerTrainer, PokemonPosition } from './moveScoring.contracts';
 

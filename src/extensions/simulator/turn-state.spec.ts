@@ -1,8 +1,8 @@
+import { Field } from '@smogon/calc';
+import { BattleFieldState, CpuTrainer, PlayerTrainer, PokemonPosition } from './moveScoring.contracts';
+import { applyCpuSwitchIns, applyPlayerSwitchIns } from './phases/switching';
 import { expectCpuTeam, importTeam } from './test-helper';
 import { applyTransforms, BattleFieldStateTransform } from './turn-state';
-import { applyCpuSwitchIns, applyPlayerSwitchIns } from './phases/switching';
-import { BattleFieldState, CpuTrainer, PlayerTrainer, PokemonPosition, Trainer } from './moveScoring.contracts';
-import { Field } from '@smogon/calc';
 
 describe('Turn state', () => {
   test('Switch ins - Sis And Bro Reli And Ian', () => {

@@ -1,14 +1,13 @@
 /* eslint-disable max-len */
 
 import {
-  Field,
-  Pokemon,
+  Pokemon
 } from '@smogon/calc';
-import { inGen, importTeam } from '../../test-helper';
-import { ActivePokemon, BattleFieldState, PokemonPosition, Trainer } from '../../moveScoring.contracts';
-import { generateAllActionCombinations } from './determine-move-order-and-execute';
-import { MoveAction, PossibleAction, PossibleTrainerAction } from './move-selection.contracts';
 import { createMove } from '../../moveScoring';
+import { PokemonPosition, Trainer } from '../../moveScoring.contracts';
+import { importTeam, inGen } from '../../test-helper';
+import { generateAllActionCombinations } from './determine-move-order-and-execute';
+import { MoveAction, PossibleTrainerAction } from './move-selection.contracts';
 
 const RunAndBun = 8;
 inGen(RunAndBun, ({gen, calculate, Pokemon, Move}) => {

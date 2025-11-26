@@ -1,6 +1,5 @@
-import { Move } from "@smogon/calc";
-import { PlayerMoveConsideration } from "../../moveScoring.contracts";
 import { MoveScore } from "../../moveScore";
+import { PlayerMoveConsideration } from "../../moveScoring.contracts";
 
 export interface IMoveScoringStrategy {
     scoreMoves(consideredMoves: PlayerMoveConsideration[]): MoveScore[];

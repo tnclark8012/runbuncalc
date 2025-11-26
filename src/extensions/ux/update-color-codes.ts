@@ -1,8 +1,8 @@
-import { A, I, calculate, Field, GenerationNum, Pokemon } from '@smogon/calc';
-import { BattleSimulator } from '../simulator/simulator';
-import { BattleFieldState } from '../simulator/moveScoring.contracts';
-import { curHPPercentage } from '../simulator/utils';
+import { A, calculate, Field, GenerationNum, I } from '@smogon/calc';
 import { gen } from '../configuration';
+import { BattleFieldState } from '../simulator/moveScoring.contracts';
+import { BattleSimulator } from '../simulator/simulator';
+import { curHPPercentage } from '../simulator/utils';
 
 export function updateColorCodes(): void {
 	var speCheck = (document.getElementById("cc-spe-border") as HTMLInputElement).checked;

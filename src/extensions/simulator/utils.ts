@@ -1,12 +1,12 @@
 import { A, Field, Pokemon, Side, toID } from "@smogon/calc";
+import { MoveName } from "@smogon/calc/dist/data/interface";
 import { StatsTable } from "@smogon/calc/src";
 import { TypeName } from "@smogon/calc/src/data/interface";
+import { getFinalSpeed as calcGetFinalSpeed } from "@smogon/calc/src/mechanics/util";
+import { gen } from "../configuration";
 import { getActiveSets, saveActiveSets } from "../core/storage";
 import { CustomSets, PokemonSet } from "../core/storage.contracts";
-import { gen } from "../configuration";
 import { hasLifeSavingAbility, hasLifeSavingItem } from "./moveScoring";
-import { MoveName } from "@smogon/calc/dist/data/interface";
-import { getFinalSpeed as calcGetFinalSpeed } from "@smogon/calc/src/mechanics/util";
 
 export function canFlinch(move: MoveName): boolean {
 	return ['Air Slash', 'Astonish', 'Bite', 'Bone Club', 'Bulldoze', 'Dark Pulse', 'Dragon Rush', 'Extrasensory', 'Fire Fang', 'Headbutt', 'Heart Stamp', 'Ice Fang', 'Iron Head', 'Needle Arm', 'Rock Slide', 'Rock Tomb', 'Rolling Kick', 'Rollout', 'Sky Attack', 'Stomp', 'Waterfall', 'Zen Headbutt'].includes(move);

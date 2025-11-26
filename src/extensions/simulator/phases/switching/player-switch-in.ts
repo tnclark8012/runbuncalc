@@ -1,5 +1,5 @@
 import { Pokemon } from "@smogon/calc";
-import { BattleFieldState, PlayerTrainer, PokemonPosition, SwitchStrategy } from "../../moveScoring.contracts";
+import { BattleFieldState, PlayerTrainer, PokemonPosition } from "../../moveScoring.contracts";
 import { isFainted } from "../../utils";
 import { PossibleTrainerAction } from "../battle/move-selection.contracts";
 
