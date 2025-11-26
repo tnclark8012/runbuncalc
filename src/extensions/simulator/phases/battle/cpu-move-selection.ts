@@ -53,6 +53,7 @@ function getCpuPossibleActionsAgainstTarget(state: BattleFieldState, cpuPokemon:
                 target: targetSlot
             },
             probability: moveProb.probability,
+            score: moveProb.score
         } as ScoredPossibleAction);
     });
 }
@@ -60,6 +61,7 @@ function getCpuPossibleActionsAgainstTarget(state: BattleFieldState, cpuPokemon:
 export interface MoveProbability {
     move: MoveResult;
     probability: number;
+    score: number;
 }
 
 // Threshold for filtering moves with negligible probability of being highest
@@ -111,11 +113,13 @@ export function calculateCpuMove(moveScores: MoveScore[]): MoveProbability[] {
                 highestScore = score;
                 highestScoringMoves = [{
                     move: outcome.moveScore.move,
+                    score: score,
                     probability: 1,
                 }];
             } else if (score === highestScore) {
                 highestScoringMoves.push({
                     move: outcome.moveScore.move,
+                    score: score,
                     probability: 1,
                 });
             }
@@ -191,7 +195,8 @@ export function calculateCpuMove(moveScores: MoveScore[]): MoveProbability[] {
         if (probability > PROBABILITY_THRESHOLD) {
             result.push({
                 move: moveScore.move,
-                probability,
+                probability: probability,
+                score: moveMaxScores.get(moveScore)!
             });
         }
     }

@@ -39,7 +39,6 @@ export interface MoveResult {
 }
 
 export interface CPUMoveConsideration extends MoveConsideration {
-	isHighestDamagingMove?: boolean;
 	/**
 	 * @see MoveScore.addPotentialScore
 	 * 
@@ -67,7 +66,7 @@ export interface CPUMoveConsideration extends MoveConsideration {
    * @param modifier 
    * @param percentChance 
 	 */
-	percentChanceOfBeingHighestDamagingMove: number;
+	isHighestDamagingMove: boolean;
 	isDamagingMove: boolean;
 	aiIsFaster: boolean;
 	aiIsSlower: boolean;

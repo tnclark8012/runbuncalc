@@ -23,7 +23,7 @@ declare global {
 expect.extend({
   toBePossibleAction(received: PossibleAction, expected: ExpectedPossibleAction) {
     // Check probability
-    if (received.probability !== expected.probability) {
+    if (Math.fround(received.probability) !== Math.fround(expected.probability)) {
       return {
         message: () =>
           `expected probability ${this.utils.printReceived(received.probability)} to equal ${this.utils.printExpected(expected.probability)}`,

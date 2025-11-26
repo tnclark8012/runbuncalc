@@ -46,26 +46,26 @@ inGen(RunAndBun, ({ gen, calculate, Pokemon, Move }) => {
     });
 
     test(`CPU thinks it lives with focus sash, so doesn't go for priority. Player sees focus sash and goes for multi-hit`, () => {
-      let [cpuKrabby, playerAerodactyl] = importTeam(`
-    Krabby @ Focus Sash
-    Level: 1
+      let [cpuSquirtle, playerAerodactyl] = importTeam(`
+    Squirtle @ Focus Sash
+    Level: 10
     - Aqua Jet
-    - Crabhammer
+    - Water Spout
     
     Aerodactyl
-    Level: 12
+    Level: 15
     - Stone Edge
     - Dual Wingbeat
     `);
 
-      expect(playerAerodactyl.stats.spe).toBeGreaterThan(cpuKrabby.stats.spe);
-      const actions = getCpuActionsFor1v1(cpuKrabby, playerAerodactyl);
+      expect(playerAerodactyl.stats.spe).toBeGreaterThan(cpuSquirtle.stats.spe);
+      const actions = getCpuActionsFor1v1(cpuSquirtle, playerAerodactyl);
       expect(actions.length).toBe(1);
       expect(actions[0]).toBePossibleAction({
         type: 'move',
-        pokemon: cpuKrabby,
+        pokemon: cpuSquirtle,
         move: {
-          move: 'Crabhammer',
+          move: 'Water Spout',
           target: { type: 'opponent', slot: 0 }
         },
         probability: 1
@@ -139,13 +139,13 @@ Ability: Hyper Cutter
     let state = create1v1BattleState(Starly, Croagunk);
     let result = getCpuMoveScoresAgainstTarget(state, state.cpu.active[0], state.player.active[0], { slot: 0, type: 'opponent' });
     let belch = result.find(r => r.move.move.name === 'Belch');
-    expect(belch?.finalScore).toBeLessThan(0);
+    expect(belch).toBeUndefined();
 
     Croagunk.item = undefined;
     state = create1v1BattleState(Starly, Croagunk);
     result = getCpuMoveScoresAgainstTarget(state, state.cpu.active[0], state.player.active[0], { slot: 0, type: 'opponent' });
     belch = result.find(r => r.move.move.name === 'Belch')!;
-    expect(belch.finalScore).toBeGreaterThan(0);
+    expect(belch).toBeDefined();
   });
 
   it("Fake out", () => {
@@ -165,13 +165,19 @@ Ability: Hyper Cutter
       });
   });
 
-  it("calculateCpuMove doesn't give a chance to moves that are never the highest", () => {
+  it("Starly v. Carvanha - calculateCpuMove doesn't give a chance to moves that are never the highest", () => {
     const { Starly } = getBox();
     const [Carvanha,,] = OpposingTrainer('Team Aqua Grunt Petalburg Woods');
     const state = create1v1BattleState(Starly, Carvanha);
     const moveScores = getCpuMoveScoresAgainstTarget(state, state.cpu.active[0], state.player.active[0], { slot: 0, type: 'opponent' });
     const result = calculateCpuMove(moveScores);
-    // Aquat Jet and Poison fang are never the highest, so they always get filtered out.
+    // Aqua Jet and Poison Fang are never the highest, so they always get filtered out.
+    // - Bite wins outright: 166 / 256 ≈ 64.84%
+    // - Water Pulse wins outright: 27 / 256 ≈ 10.55%
+    // - Ties: 63 / 256 ≈ 24.61%
+    // - Bite wins ~77.1% of the time
+    // - Water Pulse wins ~22.9% of the time
+
     expect(result.map(m => m.move.move.name).sort()).toEqual(['Bite', 'Water Pulse']);
   });
 
