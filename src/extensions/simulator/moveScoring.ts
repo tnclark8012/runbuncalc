@@ -3,10 +3,9 @@ import { MoveName } from '@smogon/calc/dist/data/interface';
 import { gen, RNGStrategy } from '../configuration';
 import { MoveScore } from "./moveScore";
 import { ActivePokemon, BattleFieldState, CPUMoveConsideration, MoveConsideration, MoveResult, PokemonPosition, Trainer } from './moveScoring.contracts';
-import { notImplemented } from "./notImplementedError";
 import { calculateCpuMove, MoveProbability } from './phases/battle/cpu-move-selection';
 import { PossibleTrainerAction } from './phases/battle/move-selection.contracts';
-import { canFlinch, getFinalSpeed, hasBerry, isSuperEffective, processCartesianProduct } from './utils';
+import { canFlinch, curHPPercentage, getFinalSpeed, getTypeEffectiveness, hasAnyBoosts, hasBerry, isGrounded, isSoundBased, isSuperEffective, processCartesianProduct } from './utils';
 
 export function scoreCPUMoves(cpuResults: Result[], playerMove: MoveResult, state: BattleFieldState): MoveScore[] {
     let moveResults = toMoveResults(cpuResults);
@@ -130,9 +129,12 @@ export function getCpuMoveConsiderations(cpuResults: MoveResult[], playerMove: M
     const aiMon = cpuResults[0].attacker;
     const playerMon = cpuResults[0].defender;
     const aiMonPosition = state.cpu.getActivePokemon(aiMon) || new PokemonPosition(aiMon, true);
+    const aiPartner = state.cpu.active.find(p => !p.pokemon.equals(aiMon))?.pokemon;
     const finalAISpeed = getFinalSpeed(aiMon, state.cpuField, state.cpuSide);
+    const finalAIPartnerSpeed = aiPartner && getFinalSpeed(aiPartner, state.cpuField, state.cpuSide);
     const finalPlayerSpeed = getFinalSpeed(playerMon, state.playerField, state.playerSide);
     const aiIsFaster: boolean = finalAISpeed >= finalPlayerSpeed;
+    const aiPartnerIsFaster: boolean | undefined = aiPartner && finalAIPartnerSpeed! >= finalPlayerSpeed;
     const aiIsFasterAfterPlayerParalysis = !playerMon.hasStatus('par') && finalAISpeed > finalPlayerSpeed * 0.5;
 
     // Not quite
@@ -149,6 +151,8 @@ export function getCpuMoveConsiderations(cpuResults: MoveResult[], playerMove: M
             isDamagingMove: r.move.category !== 'Status',
             isHighestDamagingMove: damageRolls.isHighestDamage(r),
             aiIsFaster,
+            aiPartner,
+            aiPartnerIsFaster,
             aiIsSlower: !aiIsFaster,
             aiIsFasterAfterPlayerParalysis,
             aiWillOHKOPlayer: kos,
@@ -240,7 +244,7 @@ export function allDamagingMoves(moveScore: MoveScore, considerations: CPUMoveCo
             If multiple moves kill, then they are all considered the highest damaging move and 
             all get this score.
             */
-    if (considerations.isHighestDamagingMove || considerations.kos) {
+    if ((considerations.isHighestDamagingMove && isQualifiedForHighestDamageMove(considerations.result.move)) || considerations.kos) {
         moveScore.addAlternativeScores(6, 0.8, 8, 0.2);
     }
 
@@ -264,9 +268,9 @@ export function allDamagingMoves(moveScore: MoveScore, considerations: CPUMoveCo
     If a damaging move has a high crit chance and is Super Effective on the target:
         Additional +1 (50%), no score boost other 50%
     */
-    // if (isSuperEffective(potentialMove.result.move, playerMon) || hasHighCritChance(potentialMove.result.move)) {
-    // 	moveScore.addScore(1, 0.5);
-    // }
+    if (isSuperEffective(considerations.result.move.type, considerations.playerMon) && hasHighCritChance(considerations.result.move)) {
+    	moveScore.addScore(1, 0.5);
+    }
 }
 
 export function specificMoves(moveScore: MoveScore, consideration: CPUMoveConsideration): void {
@@ -370,9 +374,29 @@ export function specificMoves(moveScore: MoveScore, consideration: CPUMoveConsid
 
             break;
         case 'Fling':
-            notImplemented(moveName);
+            if (consideration.aiPartner) {
+                if (consideration.aiMon.hasItem('Salac Berry')) {
+                    if (consideration.aiPartner.hasItem('Weakness Policy') &&
+                        isSuperEffective('Dark', consideration.aiPartner)) {
+                        moveScore.addScore(12);
+                    }
+                    else {
+                        moveScore.addScore(9);
+                    }
+                }
+            }
+            break;
         case 'Role Play':
-            notImplemented(moveName);
+            if (consideration.aiPartner) {
+                if (consideration.aiPartner.hasAbility('Huge Power', 'Pure Power', 'Protean', 'Tough Claws') &&
+                    !consideration.aiMon.hasAbility('Huge Power', 'Pure Power', 'Protean', 'Tough Claws')) {
+                        moveScore.addScore(9);
+                }
+                else {
+                    moveScore.addScore(-20);
+                }
+            }
+            break;
         case 'Shadow Sneak':
         case 'Aqua Jet':
         case 'Ice Shard':
@@ -382,7 +406,21 @@ export function specificMoves(moveScore: MoveScore, consideration: CPUMoveConsid
             }
             break;
         case 'Magnitude':
-            notImplemented(moveName);
+            if (consideration.aiPartner) {
+                const partnerGrounded = isGrounded(consideration.aiPartner, consideration.field);
+                if (!partnerGrounded || consideration.aiPartner.moves.includes('Magnet Rise' as MoveName)) {
+                    moveScore.addScore(2);
+                }
+                else if (partnerGrounded) {
+                    if (consideration.aiPartner.hasType('Fire', 'Poison', 'Electric', 'Rock')) {
+                        moveScore.addScore(-10);
+                    }
+                    else {
+                        moveScore.addScore(-3);
+                    }
+                }
+            }
+            break;
         case 'Imprison':
             if (consideration.playerMon.moves.some(playerMove => consideration.aiMon.moves.includes(playerMove))) {
                 moveScore.addScore(9);
@@ -392,11 +430,21 @@ export function specificMoves(moveScore: MoveScore, consideration: CPUMoveConsid
             }
             break;
         case 'Baton Pass':
-            notImplemented();
+            if (hasAnyBoosts(consideration.aiMon)) {
+                moveScore.addScore(15);
+            }
+            break;
         case 'Tailwind':
-            // TODO: Not quite (doubles)
-            notImplemented(moveName);
-        // moveScore.addScore(consideration.aiIsSlower ? 9 : 5);
+            if (consideration.field.attackerSide.isTailwind)
+                break;
+
+            if (consideration.aiIsSlower || !consideration.aiPartnerIsFaster) {
+                moveScore.addScore(9);
+            }
+            else {
+                moveScore.addScore(5);
+            }
+            break;
         case 'Trick Room':
             moveScore.addScore(consideration.aiIsSlower ? 10 : 5);
             if (consideration.field.isTrickRoom)
@@ -410,7 +458,11 @@ export function specificMoves(moveScore: MoveScore, consideration: CPUMoveConsid
             break;
         case 'Helping Hand':
         case 'Follow Me':
-            notImplemented();
+            // TODO:
+            // AI will not use either of these moves if their partner is also using this move, or their partner is   
+            // using a Status move
+            moveScore.addScore(6);
+            break;
         case 'Final Gambit':
             if (consideration.aiIsFaster && consideration.aiMon.curHP() > consideration.playerMon.curHP())
                 moveScore.addScore(8);
@@ -448,10 +500,69 @@ export function specificMoves(moveScore: MoveScore, consideration: CPUMoveConsid
             }
             break;
         case 'Substitute':
+            moveScore.addScore(6);
+            if (consideration.playerMon.hasStatus('slp')) {
+                moveScore.addScore(2);
+            }
+            if (consideration.playerMon.hasStatus('slp')) {
+                // TODO: Leech seeded
+            }
+            moveScore.addScore(-1, 0.5);
+
+            if (consideration.playerMon.moves.some(m => isSoundBased(m))) {
+                moveScore.addScore(-8);
+            }
+            if (curHPPercentage(consideration.aiMon) <= 0.5 || consideration.playerMon.hasAbility('Infiltrator')) {
+                moveScore.addScore(-20);
+            }
+            break;
         case 'Explosion':
-        case 'Misty Explosion':
-        case 'Memento':
-            notImplemented(moveName);
+        case 'Self-Destruct':
+        case 'Misty Explosion': {
+            const currentHpPercentage = curHPPercentage(consideration.aiMon);
+            if (currentHpPercentage < 0.1) {
+                moveScore.addScore(10);
+            }
+            else if (currentHpPercentage < 0.33) {
+                moveScore.addAlternativeScores(8, 0.7, 0, 0.3);
+            }
+            else if (currentHpPercentage < 0.66) {
+                moveScore.addAlternativeScores(7, 0.5, 0, 0.5);
+            }
+            else {
+                moveScore.addAlternativeScores(7, 0.05, 0, 0.95);
+            }
+            
+            if (getTypeEffectiveness(consideration.result.move.type, consideration.playerMon) === 0) {
+                moveScore.never();
+            }
+            /*
+            TODO: 
+            AI will not use a Boom move if the target is immune, or if the AI mon is the last mon   
+    and the player has more than one mon alive.   
+      
+    If both AI and player are on their last mon, then the Boom move will get a -1 applied  
+    to its score
+            */
+            break;
+        }
+        case 'Memento': {
+            const currentHpPercentage = curHPPercentage(consideration.aiMon);
+            if (currentHpPercentage < 0.1) {
+                moveScore.addScore(16);
+            }
+            else if (currentHpPercentage < 0.33) {
+                moveScore.addAlternativeScores(14, 0.7, 6, 0.3);
+            }
+            else if (currentHpPercentage < 0.66) {
+                moveScore.addAlternativeScores(13, 0.5, 6, 0.5);
+            }
+            else {
+                moveScore.addAlternativeScores(13, 0.05, 6, 0.95);
+            }
+            // TODO: AI will not use Memento if the AI is on its last mon.  
+            break;
+        }
         case 'Thunder Wave':
         case 'Stun Spore':
         case 'Glare':
@@ -561,32 +672,41 @@ export function defensiveSetup(moveScore: MoveScore, consideration: CPUMoveConsi
 
 }
 
-export function recovery(moveScore: MoveScore, consideration: CPUMoveConsideration): void {
-    notImplemented();
-}
-
 export function hasHighCritChance(move: Move): boolean {
-    notImplemented();
-    // return [].includes(move.name);
+    return [
+        'Night Slash',
+        'Air Cutter',
+        'Attack Order',
+        'Crabhammer',
+        'Cross Chop',
+        'Karate Chop',
+        'Cross Poison',
+        'Leaf Blade',
+        'Poison Tail',
+        'Psycho Cut',
+        'Razor Leaf',
+        'Razor Wind',
+        'Slash',
+        'Stone Edge',
+    ].includes(move.name);
 }
 
-/**
-     *Note: There are a few specific damaging moves that do not have their damage rolled normally
-    and are thus never considered the "highest damaging move". 
-
-    These moves are Explosion, Final Gambit, Relic Song, Rollout, Meteor Beam,
-    damaging trapping moves (e.g. Whirlpool), and Future Sight.
-
-    All of these moves, with the exceptions of Explosion, Final Gambit, and Rollout,
-    still have a check to see if they kill the target mon. If so, the above boosts
-    for kills still apply. They will just never get the +6 or +8 boost from being the
-    "highest damaging move". They all also have separate AI that is listed later in this file,
-    which stacks additively with any score boosts from kills.
-
-	
-    */
-function specialExecptionNotHighestDamagingMove(): void {
-    notImplemented();
+function isQualifiedForHighestDamageMove(move: Move): boolean {
+    return ![
+        'Explosion', 
+        'Relic Song',
+        'Meteor Beam',
+        'Whirlpool',
+        'Future Sight',
+        'Wrap',
+        'Bind',
+        'Fire Spin',
+        'Sand Tomb',
+        'Magma Storm',
+        'Self-Destruct', 
+        'Misty Explosion', 
+        'Final Gambit'
+    ].includes(move.name);
 }
 
 export function findHighestDamageMove(moveResults: MoveResult[]): MoveResult {
