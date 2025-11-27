@@ -9,7 +9,7 @@ export interface DecisionNode {
     cpuOutcomes: Map<string, DecisionNode | 'WIN'>;
 }
 
-export function findPlayerWinningPath(state: BattleFieldState, winProbabilityThreshold: number = 1): DecisionNode | null {
+export function findPlayerWinningPath(state: BattleFieldState, winProbabilityThreshold: number = 0.5): DecisionNode | null {
     return findPathGuaranteed(state, (s) => {
         const allCpuPokemonFainted = s.cpu.active.every(ap => ap.pokemon.curHP() <= 0) && s.cpu.party.every(pp => pp.curHP() <= 0);
         const allPlayerPokemonAlive = s.player.active.every(ap => ap.pokemon.curHP() > 0) && s.player.party.every(pp => pp.curHP() > 0);
