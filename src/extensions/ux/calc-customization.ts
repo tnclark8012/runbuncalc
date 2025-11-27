@@ -1,10 +1,14 @@
 import { getCpuPossibleActions } from "../simulator/phases/battle/cpu-move-selection";
+import { PerformCalculationsEventName } from "../window";
 import { getBattleFieldState } from "./page-utils";
 
 export function initializeCalcCustomization(): void {
-  $('input.opposing').on('change', () => {
+  document.addEventListener(PerformCalculationsEventName, () => {
     updateCpuMoveSelection();
   });
+  // $('input.opposing').on('change', () => {
+  //   updateCpuMoveSelection();
+  // });
 
   updateCpuMoveSelection();
 }
