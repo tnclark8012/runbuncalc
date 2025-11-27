@@ -1,0 +1,17 @@
+{
+  "name": "Pokémon Damage Calculator",
+  "short_name": "Damage Calc",
+  "description": "Battle simulator and damage calculator for Pokémon Run & Bun",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#1a1a2e",
+  "theme_color": "#1a1a2e",
+  "icons": [
+    {
+      "src": "./img/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}
