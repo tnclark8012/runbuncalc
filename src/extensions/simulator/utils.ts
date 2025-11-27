@@ -1,12 +1,12 @@
 import { A, Field, Pokemon, Side, toID } from "@smogon/calc";
+import { MoveName } from "@smogon/calc/dist/data/interface";
 import { StatsTable } from "@smogon/calc/src";
 import { TypeName } from "@smogon/calc/src/data/interface";
+import { getFinalSpeed as calcGetFinalSpeed } from "@smogon/calc/src/mechanics/util";
+import { gen } from "../configuration";
 import { getActiveSets, saveActiveSets } from "../core/storage";
 import { CustomSets, PokemonSet } from "../core/storage.contracts";
-import { gen } from "../configuration";
 import { hasLifeSavingAbility, hasLifeSavingItem } from "./moveScoring";
-import { MoveName } from "@smogon/calc/dist/data/interface";
-import { getFinalSpeed as calcGetFinalSpeed } from "@smogon/calc/src/mechanics/util";
 
 export function canFlinch(move: MoveName): boolean {
 	return ['Air Slash', 'Astonish', 'Bite', 'Bone Club', 'Bulldoze', 'Dark Pulse', 'Dragon Rush', 'Extrasensory', 'Fire Fang', 'Headbutt', 'Heart Stamp', 'Ice Fang', 'Iron Head', 'Needle Arm', 'Rock Slide', 'Rock Tomb', 'Rolling Kick', 'Rollout', 'Sky Attack', 'Stomp', 'Waterfall', 'Zen Headbutt'].includes(move);
@@ -43,6 +43,10 @@ export function applyExternalBoost(pokemon: Pokemon, kind: keyof StatsTable, mod
 	applyBoost(pokemon.stats, kind, modifier);
 }
 
+export function hasAnyBoosts(pokemon: Pokemon): boolean {
+	return Object.values(pokemon.boosts).some(boost => boost > 0);
+}
+
 export function applyBoost(stats: StatsTable, kind: keyof StatsTable, modifier: number): void {
 	stats[kind] = Math.min(Math.max(-6, stats[kind] + modifier), 6);
 }
@@ -71,6 +75,13 @@ export function getTypeEffectiveness(attackType: TypeName, defenderOrType: Pokem
 
 export function isSuperEffective(attackType: TypeName, defender: Pokemon): boolean {
 	return getTypeEffectiveness(attackType, defender) > 1;
+}
+
+export function isGrounded(pokemon: Pokemon, field: Field): boolean {
+	return (field.isGravity || pokemon.hasItem('Iron Ball') ||
+    (!pokemon.hasType('Flying') &&
+      !pokemon.hasAbility('Levitate') &&
+      !pokemon.hasItem('Air Balloon')));
 }
 
 function forEachSet(setCallback: (set: PokemonSet, setName: string, pokemonName: string) => void | boolean | undefined): CustomSets | undefined {
@@ -123,4 +134,8 @@ export function processCartesianProduct<T>(arrays: T[][], callback: (combination
 	}
 
 	return totalCombinations;
+}
+
+export function isSoundBased(move: MoveName): boolean {
+	return ['Boomburst', 'Clanging Scales', 'Hyper Voice', 'Metal Sound', 'Parting Shot', 'Relic Song', 'Roar of Time', 'Round', 'Snarl', 'Snore', 'Uproar'].includes(move);
 }
