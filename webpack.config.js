@@ -30,6 +30,8 @@ module.exports = [{
       patterns: [
         { from: './*.html', to: '[name][ext]', context: 'src' },
         { from: './js/data/sets/gen8.js', to: 'js/data/sets/gen8.js', context: 'src' },
+        { from: './manifest.json', to: 'manifest.json', context: 'src' },
+        { from: './sw.js', to: 'sw.js', context: 'src' },
       ],
     }),
   ],
