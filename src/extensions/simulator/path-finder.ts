@@ -53,10 +53,17 @@ export function findPath(state: BattleFieldState, isGoalState: (state: BattleFie
     return null; // No path found
 }
 
+export interface DecisionNodeWithProbability {
+    node: DecisionNode | 'WIN';
+    winProbability: number;
+}
+
+const WIN_PROBABILITY_THRESHOLD = 0.5;
+
 export function findPathGuaranteed(state: BattleFieldState, isGoalState: (state: BattleFieldState) => boolean | undefined): DecisionNode | null {
-    let memo = new Map<string, DecisionNode | 'WIN' | 'LOSS'>();
+    let memo = new Map<string, DecisionNodeWithProbability | 'LOSS'>();
     
-    function search(current: PossibleBattleFieldState, depth: number): DecisionNode | 'WIN' | 'LOSS' {
+    function search(current: PossibleBattleFieldState, depth: number): DecisionNodeWithProbability | 'LOSS' {
         // Prevent infinite loops
         if (depth > 20) {
             return 'LOSS';
@@ -75,7 +82,9 @@ export function findPathGuaranteed(state: BattleFieldState, isGoalState: (state:
         // Check if we've reached the goal
         let goalCheck = isGoalState(current.state);
         if (goalCheck !== undefined) {
-            const result = goalCheck ? 'WIN' : 'LOSS';
+            const result: DecisionNodeWithProbability | 'LOSS' = goalCheck 
+                ? { node: 'WIN', winProbability: 1 } 
+                : 'LOSS';
             memo.set(stateKey, result);
             return result;
         }
@@ -88,43 +97,51 @@ export function findPathGuaranteed(state: BattleFieldState, isGoalState: (state:
         
         // Try each player action
         for (let [playerAction, outcomes] of actionGroups) {
-            // For this player action to guarantee a win, ALL possible CPU responses must lead to a win
-            let allPathsWin = true;
+            // Calculate the total probability and win probability for this action
+            let totalProbability = 0;
+            let winProbability = 0;
             let cpuOutcomes = new Map<string, DecisionNode | 'WIN'>();
             
             for (let outcome of outcomes) {
+                totalProbability += outcome.probability;
                 let subResult = search(outcome, depth + 1);
                 
-                if (subResult === 'LOSS') {
-                    // This CPU response doesn't lead to a win, so this player action doesn't guarantee a win
-                    allPathsWin = false;
-                    break;
+                if (subResult !== 'LOSS') {
+                    // This outcome leads to a win (possibly probabilistic)
+                    winProbability += outcome.probability * subResult.winProbability;
+                    // Store the decision tree for this CPU outcome
+                    let cpuActionKey = getCpuActionFromHistory(outcome.history);
+                    cpuOutcomes.set(cpuActionKey, subResult.node);
                 }
-                
-                // Store the decision tree for this CPU outcome
-                let cpuActionKey = getCpuActionFromHistory(outcome.history);
-                cpuOutcomes.set(cpuActionKey, subResult);
             }
             
-            // If all CPU responses lead to a win, we found a guaranteed winning player action
-            if (allPathsWin) {
+            // Normalize win probability relative to total probability
+            const normalizedWinProbability = totalProbability > 0 ? winProbability / totalProbability : 0;
+            
+            // If win probability is > 50%, we found a viable player action
+            if (normalizedWinProbability > WIN_PROBABILITY_THRESHOLD) {
                 const decisionNode: DecisionNode = {
                     state: current,
                     playerAction,
                     cpuOutcomes
                 };
-                memo.set(stateKey, decisionNode);
-                return decisionNode;
+                const result: DecisionNodeWithProbability = { 
+                    node: decisionNode, 
+                    winProbability: normalizedWinProbability 
+                };
+                memo.set(stateKey, result);
+                return result;
             }
         }
         
-        // No guaranteed winning action found
+        // No viable winning action found
         memo.set(stateKey, 'LOSS');
         return 'LOSS';
     }
     
     const result = search({ type: 'possible', history: [], probability: 1, state: state}, 0);
-    return result === 'WIN' || result === 'LOSS' ? null : result;
+    if (result === 'LOSS') return null;
+    return result.node === 'WIN' ? null : result.node;
 }
 
 function groupByPlayerAction(outcomes: PossibleBattleFieldState[]): Map<string, PossibleBattleFieldState[]> {

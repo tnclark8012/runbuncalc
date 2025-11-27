@@ -10,9 +10,11 @@
     "@smogon/calc": "file:calc",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
-    "react-redux": "^9.2.0"
+    "react-redux": "^9.2.0",
+    "redux-persist": "^6.0.0"
   },
   "devDependencies": {
+    "@types/chrome": "^0.1.28",
     "@types/jquery": "^3.5.32",
     "@types/react": "^19.2.2",
     "@types/react-dom": "^19.2.2",

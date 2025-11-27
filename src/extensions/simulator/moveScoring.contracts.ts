@@ -1,7 +1,7 @@
 import { Field, Move, Pokemon } from '@smogon/calc';
-import { PartyOrderSwitchStrategy } from './switchStrategy.partyOrder';
-import { Side } from '@smogon/calc/src';
 import { MoveName } from '@smogon/calc/dist/data/interface';
+import { Side } from '@smogon/calc/src';
+import { PartyOrderSwitchStrategy } from './switchStrategy.partyOrder';
 
 export interface VolatileStatus {
 	/** The move being charged (e.g., Bounce, Fly, Dig, Dive) */
@@ -39,7 +39,6 @@ export interface MoveResult {
 }
 
 export interface CPUMoveConsideration extends MoveConsideration {
-	isHighestDamagingMove?: boolean;
 	/**
 	 * @see MoveScore.addPotentialScore
 	 * 
@@ -67,12 +66,13 @@ export interface CPUMoveConsideration extends MoveConsideration {
    * @param modifier 
    * @param percentChance 
 	 */
-	percentChanceOfBeingHighestDamagingMove: number;
+	isHighestDamagingMove: boolean;
 	isDamagingMove: boolean;
 	aiIsFaster: boolean;
 	aiIsSlower: boolean;
 	aiIsFasterAfterPlayerParalysis: boolean;
 	aiPartner?: Pokemon;
+	aiPartnerIsFaster?: boolean;
 	playerMove: MoveResult;
 	playerWillKOAI: boolean;
 	playerWill2HKOAI: boolean;

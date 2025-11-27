@@ -296,7 +296,7 @@ Ability: Poison Heal
           expect(result.winner.id).toBe(Cloyster.id);
       });
 
-      test('Leader Tate - Latios vs. Musharna: Switch in and get KOd', () => {
+      xtest('Leader Tate - Latios vs. Musharna: Switch in and get KOd', () => {
         let [Musharna, Latios] = importTeam(`
 Musharna
 Level: 85

@@ -11,5 +11,8 @@
     ],
     "javascript.preferences.autoImportFileExcludePatterns": [
       "**/node_modules/@smogon/calc/src/**"
-    ]
+    ],
+    "editor.codeActionsOnSave": {
+      "source.organizeImports": "explicit"
+    }
   }
