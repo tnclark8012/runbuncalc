@@ -46,7 +46,7 @@ export function scoreCPUMoves(cpuResults: Result[], playerMove: MoveResult, stat
             totalCombinationsCountingTiesAsSeparate++;
             moveResultsMap.set(
                 maxScoreMove.move.move.name, 
-                (moveResultsMap.get(maxScoreMove.move.move.name) || 0) + (100-maxScoreMove.probability*100) / 100);
+                (moveResultsMap.get(maxScoreMove.move.move.name) || 0) + maxScoreMove.probability);
         }
     });
 
@@ -592,7 +592,7 @@ export function specificMoves(moveScore: MoveScore, consideration: CPUMoveConsid
 
 export function generalSetup(moveScore: MoveScore, consideration: CPUMoveConsideration): void {
     if (![
-        'Power-up Punch',
+        'Power-Up Punch',
         'Swords Dance',
         'Howl',
         'Stuff Cheeks',
@@ -620,7 +620,7 @@ export function generalSetup(moveScore: MoveScore, consideration: CPUMoveConside
     ].includes(moveScore.move.move.name))
         return;
     if (consideration.playerWillKOAI ||
-        consideration.playerMon.hasAbility('Unaware') && !['Power-up Punch', 'Swords Dance', 'Howl'].includes(moveScore.move.move.name))
+        consideration.playerMon.hasAbility('Unaware') && !['Power-Up Punch', 'Swords Dance', 'Howl'].includes(moveScore.move.move.name))
         return moveScore.addScore(-20);
 }
 

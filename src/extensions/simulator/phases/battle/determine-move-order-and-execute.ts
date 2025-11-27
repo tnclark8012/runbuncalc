@@ -1,18 +1,18 @@
 import { Field, Move } from "@smogon/calc";
-import { PokemonPositionReplacer, PokemonReplacer } from "../../battle-field-state-visitor";
-import { BattleFieldState, PokemonPosition, Trainer } from "../../moveScoring.contracts";
-import { PossibleBattleFieldState } from "../../turn-state";
-import { PossibleAction, PossibleTrainerAction, SwitchAction, MoveAction, ActionLogEntry } from "./move-selection.contracts";
-import { getCpuPossibleActions } from "./cpu-move-selection";
-import { getPlayerPossibleActions } from "./player-move-selection";
-import { executeSwitch } from "../switching/execute-switch";
-import { cpuRng, Heuristics, playerRng } from "../../../configuration";
-import { executeMove } from "./execute-move";
-import { TrainerActionPokemonReplacer } from "../../possible-trainer-action-visitor";
-import { executeMegaEvolution } from "./mega-evolve";
 import { Side } from "@smogon/calc/src";
+import { cpuRng, Heuristics, playerRng } from "../../../configuration";
+import { PokemonPositionReplacer, PokemonReplacer } from "../../battle-field-state-visitor";
 import { isTwoTurnMove, makesInvulnerable } from "../../move-properties";
+import { BattleFieldState, PokemonPosition, Trainer } from "../../moveScoring.contracts";
+import { TrainerActionPokemonReplacer } from "../../possible-trainer-action-visitor";
+import { PossibleBattleFieldState } from "../../turn-state";
 import { getFinalSpeed, hasBerry } from "../../utils";
+import { executeSwitch } from "../switching/execute-switch";
+import { getCpuPossibleActions } from "./cpu-move-selection";
+import { executeMove } from "./execute-move";
+import { executeMegaEvolution } from "./mega-evolve";
+import { ActionLogEntry, MoveAction, PossibleAction, PossibleTrainerAction, SwitchAction } from "./move-selection.contracts";
+import { getPlayerPossibleActions } from "./player-move-selection";
 
 export function determineMoveOrderAndExecute(state: BattleFieldState): PossibleBattleFieldState[] {
     if (state.player.active.every(ap => ap.pokemon.curHP() <= 0) || state.cpu.active.every(ap => ap.pokemon.curHP() <= 0)) {
@@ -152,7 +152,7 @@ function executeActions(state: BattleFieldState, actions: PossibleAction[]): Bat
 function getPossibleActionsForAllSlots(state: BattleFieldState): Array<PossibleTrainerAction[]> {
     let possibleActionsByPokemon: Array<PossibleTrainerAction[]> = [];
     for (let i = 0; i < state.cpu.active.length; i++) {
-        let possibleActions: PossibleAction[] = getCpuPossibleActions(state, state.cpu.active[i], state.player.active, state.cpu.active);
+        let possibleActions: PossibleAction[] = getCpuPossibleActions(state, state.cpu.active[i]);
         possibleActionsByPokemon.push(possibleActions.map<PossibleTrainerAction>(action => ({
             pokemon: state.cpu.active[i],
             action,

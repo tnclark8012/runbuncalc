@@ -9,7 +9,7 @@ export interface DecisionNode {
     cpuOutcomes: Map<string, DecisionNode | 'WIN'>;
 }
 
-export function findPlayerWinningPath(state: BattleFieldState): DecisionNode | null {
+export function findPlayerWinningPath(state: BattleFieldState, winProbabilityThreshold: number = 0.5): DecisionNode | null {
     return findPathGuaranteed(state, (s) => {
         const allCpuPokemonFainted = s.cpu.active.every(ap => ap.pokemon.curHP() <= 0) && s.cpu.party.every(pp => pp.curHP() <= 0);
         const allPlayerPokemonAlive = s.player.active.every(ap => ap.pokemon.curHP() > 0) && s.player.party.every(pp => pp.curHP() > 0);
@@ -19,7 +19,7 @@ export function findPlayerWinningPath(state: BattleFieldState): DecisionNode | n
             return false;
 
         return undefined;
-    });
+    }, winProbabilityThreshold);
 }
 
 export function findPath(state: BattleFieldState, isGoalState: (state: BattleFieldState) => boolean | undefined): PossibleBattleFieldState[] | null {
@@ -58,9 +58,7 @@ export interface DecisionNodeWithProbability {
     winProbability: number;
 }
 
-const WIN_PROBABILITY_THRESHOLD = 0.5;
-
-export function findPathGuaranteed(state: BattleFieldState, isGoalState: (state: BattleFieldState) => boolean | undefined): DecisionNode | null {
+export function findPathGuaranteed(state: BattleFieldState, isGoalState: (state: BattleFieldState) => boolean | undefined, winProbabilityThreshold: number): DecisionNode | null {
     let memo = new Map<string, DecisionNodeWithProbability | 'LOSS'>();
     
     function search(current: PossibleBattleFieldState, depth: number): DecisionNodeWithProbability | 'LOSS' {
@@ -119,7 +117,7 @@ export function findPathGuaranteed(state: BattleFieldState, isGoalState: (state:
             const normalizedWinProbability = totalProbability > 0 ? winProbability / totalProbability : 0;
             
             // If win probability is > 50%, we found a viable player action
-            if (normalizedWinProbability > WIN_PROBABILITY_THRESHOLD) {
+            if (normalizedWinProbability > winProbabilityThreshold) {
                 const decisionNode: DecisionNode = {
                     state: current,
                     playerAction,
