@@ -1,5 +1,6 @@
 {
   "private": true,
+  "type": "module",
   "homepage": "https://calc.pokemonshowdown.com/",
   "repository": "github:smogon/damage-calc",
   "license": "MIT",
@@ -56,9 +57,9 @@
   "scripts": {
     "lint": "subpkg run lint && eslint --cache src --ext js",
     "fix": "subpkg run fix && eslint --fix src --ext js",
-    "compile": "subpkg run compile && node build view",
+    "compile": "subpkg run compile && node build.cjs view",
     "bundle": "subpkg run bundle",
-    "build": "subpkg run build && node build view && webpack",
+    "build": "subpkg run build && node build.cjs view && webpack",
     "init": "npm install && npm run start",
     "watch": "webpack --watch",
     "serve": "node server.js",

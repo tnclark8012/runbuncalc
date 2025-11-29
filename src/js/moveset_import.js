@@ -414,10 +414,10 @@ $(document).ready(function () {
 	var customSets;
 	placeBsBtn();
 	customSets = window.core.storage.getActiveSets();
+	$(allPokemon("#importedSetsOptions")).css("display", "inline");
 	if (Object.keys(customSets).length > 0) {
 		updateDex(customSets);
 		selectFirstMon();
-		$(allPokemon("#importedSetsOptions")).css("display", "inline");
 	} else {
 		loadDefaultLists();
 	}
