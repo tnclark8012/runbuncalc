@@ -118,6 +118,7 @@ function performCalculations(pP2, double) {
 	}
 	bestResult.prop("checked", true);
 	bestResult.change();
+	window.extensions.performCalculations();
 }
 
 function getDamageRanges(attackerResults) {

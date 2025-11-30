@@ -1,7 +1,8 @@
 import { getActiveCollectionName, getActiveSets, getSetCollection, saveActiveCollectionName, saveSetCollection } from "../core/storage";
-import { updateSets } from "../simulator/utils";
-import { initializeImportExportControls, initializePartyControls, refreshPlayerPokedex } from "./party";
 import { LEVEL_CAP_CHECKPOINTS } from "../recommended-movesets";
+import { updateSets } from "../simulator/utils";
+import { initializeCalcCustomization } from "./calc-customization";
+import { initializeImportExportControls, initializePartyControls, refreshPlayerPokedex } from "./party";
 
 export function initializeUx(): void {
   initializeLevelCap();
@@ -10,6 +11,7 @@ export function initializeUx(): void {
   initializePartyControls();
   refreshPlayerPokedex();
   initializeImportExportControls();
+  initializeCalcCustomization();
 }
 
 function adjustTabOrders() {

@@ -4,17 +4,14 @@ import {
   Field,
   Pokemon,
 } from '@smogon/calc';
-import { inGen, importTeam, importPokemon, expectPlayerTeam, expectCpuTeam } from '../../test-helper';
-import { ActivePokemon, BattleFieldState, CpuTrainer, PlayerTrainer, PokemonPosition, Trainer } from '../../moveScoring.contracts';
-import { MoveAction, PossibleAction, PossibleTrainerAction } from './move-selection.contracts';
-import { createMove } from '../../moveScoring';
-import { getCpuMoveScoresAgainstTarget, getCpuPossibleActions, calculateCpuMove } from './cpu-move-selection';
-import { MoveScore } from '../../moveScore';
-import { get } from 'jquery';
-import { PartyOrderSwitchStrategy } from '../../switchStrategy.partyOrder';
-import { getBox } from '../../playthrough/museum.collection';
 import { OpposingTrainer } from '../../../trainer-sets';
 import { create1v1BattleState } from '../../helper';
+import { MoveScore } from '../../moveScore';
+import { BattleFieldState, CpuTrainer, PlayerTrainer, PokemonPosition } from '../../moveScoring.contracts';
+import { getBox } from '../../playthrough/museum.collection';
+import { importTeam, inGen } from '../../test-helper';
+import { calculateCpuMove, getCpuMoveScoresAgainstTarget, getCpuPossibleActions } from './cpu-move-selection';
+import { PossibleAction } from './move-selection.contracts';
 
 const RunAndBun = 8;
 inGen(RunAndBun, ({ gen, calculate, Pokemon, Move }) => {
@@ -179,6 +176,8 @@ Ability: Hyper Cutter
     // - Water Pulse wins ~22.9% of the time
 
     expect(result.map(m => m.move.move.name).sort()).toEqual(['Bite', 'Water Pulse']);
+    expect(result.find(r => r.move.move.name === 'Bite')!.probability).toBeCloseTo(0.771484375, 5);
+    expect(result.find(r => r.move.move.name === 'Water Pulse')!.probability).toBeCloseTo(0.228515625, 5);
   });
 
   it("calculateCpuMove with probabilistic scoring", () => {
@@ -235,7 +234,7 @@ function getCpuActionsFor1v1(cpuPokemon: Pokemon, playerPokemon: Pokemon): Possi
     ),
     new Field()
   );
-  return getCpuPossibleActions(state, state.cpu.active[0], state.player.active, state.cpu.active);
+  return getCpuPossibleActions(state, state.cpu.active[0]);
 }
 
 function getCpuActionsForDoubleBattle(cpuPokemon: Pokemon, playerPokemon: Pokemon[]): PossibleAction[] {
@@ -244,5 +243,5 @@ function getCpuActionsForDoubleBattle(cpuPokemon: Pokemon, playerPokemon: Pokemo
     new CpuTrainer([new PokemonPosition(cpuPokemon)], []),
     new Field({ gameType: 'Doubles' })
   );
-  return getCpuPossibleActions(state, state.cpu.active[0], state.player.active, state.cpu.active);
+  return getCpuPossibleActions(state, state.cpu.active[0]);
 }

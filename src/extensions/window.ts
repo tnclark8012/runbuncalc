@@ -1,4 +1,7 @@
 export * from './ux/update-color-codes';
-export function sayHello() {
-  console.log('hello');
+export const PerformCalculationsEventName = 'performCalculations';
+
+export function performCalculations() {
+  const event = new Event(PerformCalculationsEventName);
+  document.dispatchEvent(event);
 }
