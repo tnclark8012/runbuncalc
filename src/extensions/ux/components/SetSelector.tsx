@@ -1,6 +1,7 @@
 import { DropdownMenuItemType, IComboBox, IComboBoxOption, VirtualizedComboBox } from '@fluentui/react';
 import * as React from 'react';
-import { PokemonSets, SetSelection } from '../store/setSlice';
+import { CustomSets } from '../../core/storage.contracts';
+import { SetSelection } from '../store/setSlice';
 
 export interface SetSelectorProps {
   /**
@@ -14,7 +15,7 @@ export interface SetSelectorProps {
   /**
    * Available sets to choose from
    */
-  availableSets: PokemonSets;
+  availableSets: CustomSets;
   /**
    * Callback when selection changes
    */
