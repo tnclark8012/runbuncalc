@@ -139,3 +139,18 @@ export function processCartesianProduct<T>(arrays: T[][], callback: (combination
 export function isSoundBased(move: MoveName): boolean {
 	return ['Boomburst', 'Clanging Scales', 'Hyper Voice', 'Metal Sound', 'Parting Shot', 'Relic Song', 'Roar of Time', 'Round', 'Snarl', 'Snore', 'Uproar'].includes(move);
 }
+
+export function isTargetImmuneToMoveKind(move: MoveName, target: Pokemon, field: Field): boolean {
+	if (isPowderMove(move) && (target.hasType('Grass') || target.hasAbility('Overcoat') || target.hasItem('Safety Goggles'))) {
+		return true;
+	}
+
+	if (target.hasType('Electric') && ['Thunder Wave', 'Glare'].includes(move))
+		return true;
+
+	return false;
+}
+
+function isPowderMove(move: MoveName): boolean {
+	return ['Cotton Spore', 'Magic Powder', 'Poison Powder', 'Powder', 'Rage Powder', 'Spore', 'Sleep Powder', 'Spore', 'Stun Spore'].includes(move);
+}
