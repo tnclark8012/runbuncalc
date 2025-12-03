@@ -1,4 +1,4 @@
-import { ComboBox, DropdownMenuItemType, IComboBox, IComboBoxOption } from '@fluentui/react';
+import { DropdownMenuItemType, IComboBox, IComboBoxOption, VirtualizedComboBox } from '@fluentui/react';
 import * as React from 'react';
 import { useAppDispatch, useAppSelector } from '../store/hooks';
 import { setCpuSet, setPlayerSet } from '../store/setSlice';
@@ -74,14 +74,16 @@ export const SetSelector: React.FC<SetSelectorProps> = ({ side }) => {
   );
 
   return (
-    <ComboBox
+    <VirtualizedComboBox
       placeholder="Select a Pokemon set"
       label={side === 'player' ? 'Player Set' : 'CPU Set'}
       options={options}
       selectedKey={selectedKey}
       onChange={handleChange}
       autoComplete="on"
-      allowFreeform={false}
+      allowFreeform={true}
+      dropdownMaxWidth={400}
+      useComboBoxAsMenuWidth
       styles={{
         root: { width: 300 },
       }}
