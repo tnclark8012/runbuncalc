@@ -71,12 +71,13 @@ function updateCpuMoveSelection(): void {
   const actions = getCpuPossibleActions(state, state.cpu.active[0]);
   let moveButtons = document.querySelectorAll('[aria-labelledby="resultHeaderR"] label.btn');
   moveButtons.forEach((button) => {
-    let odds = actions.find((action) => action.type === 'move' && action.move.move.name === button.textContent);
+    const moveName = button.textContent.startsWith("HP ") ? button.textContent.replace("HP ", "Hidden Power ") : button.textContent;
+    let odds = actions.find((action) => action.type === 'move' && action.move.move.name === moveName);
     if (odds) {
-      button.textContent = `${button.textContent} (${Math.round(odds.probability * 100)}%)`;
+      button.textContent = `${moveName} (${Math.round(odds.probability * 100)}%)`;
     }
     else {
-      button.textContent = `${button.textContent} (0%)`;
+      button.textContent = `${moveName} (0%)`;
     }
   });
 }

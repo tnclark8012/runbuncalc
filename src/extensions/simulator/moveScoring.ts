@@ -5,7 +5,7 @@ import { MoveScore } from "./moveScore";
 import { ActivePokemon, BattleFieldState, CPUMoveConsideration, MoveConsideration, MoveResult, PokemonPosition, Trainer } from './moveScoring.contracts';
 import { calculateCpuMove, MoveProbability } from './phases/battle/cpu-move-selection';
 import { PossibleTrainerAction } from './phases/battle/move-selection.contracts';
-import { canFlinch, curHPPercentage, getFinalSpeed, getTypeEffectiveness, hasAnyBoosts, hasBerry, isGrounded, isSoundBased, isSuperEffective, processCartesianProduct } from './utils';
+import { canFlinch, curHPPercentage, getFinalSpeed, getTypeEffectiveness, hasAnyBoosts, hasBerry, isGrounded, isSoundBased, isSuperEffective, isTargetImmuneToMoveKind, processCartesianProduct } from './utils';
 
 export function scoreCPUMoves(cpuResults: Result[], playerMove: MoveResult, state: BattleFieldState): MoveScore[] {
     let moveResults = toMoveResults(cpuResults);
@@ -94,16 +94,18 @@ function scoreConsiderations(movesToConsider: CPUMoveConsideration[]): MoveScore
 }
 
 export class DamageRolls {
-    private readonly maxDamagingMove: [MoveResult, number];
+    private readonly maxDamagingMove: [MoveResult, number] = undefined!;
     private readonly moveNameToDamageRollCappedAtDefenderHP: Map<string, number> = new Map();
 
-    constructor(private readonly moveNameToDamageRoll: Map<MoveResult, number>) {
-        this.maxDamagingMove = moveNameToDamageRoll.entries().next().value!;
+    constructor(moveNameToDamageRoll: Map<MoveResult, number>) {
         for (let [result, damageRoll] of moveNameToDamageRoll.entries()) {
             this.moveNameToDamageRollCappedAtDefenderHP.set(
                 result.move.name, 
                 Math.min(damageRoll * result.move.hits, result.defender.curHP()));
-            if (result.move.hits * damageRoll > this.maxDamagingMove[0].move.hits * this.maxDamagingMove[1])
+            if (!isQualifiedForHighestDamageMove(result.move))
+                continue;
+            if (!this.maxDamagingMove || 
+                (result.move.hits * damageRoll > this.maxDamagingMove[0].move.hits * this.maxDamagingMove[1]))
                 this.maxDamagingMove = [result, damageRoll];
         }
     }
@@ -275,6 +277,12 @@ export function allDamagingMoves(moveScore: MoveScore, considerations: CPUMoveCo
 
 export function specificMoves(moveScore: MoveScore, consideration: CPUMoveConsideration): void {
     const moveName = moveScore.move.move.name;
+
+    if (isTargetImmuneToMoveKind(moveScore.move.move.name, consideration.playerMon, consideration.field)) {
+        moveScore.never();
+        return;
+    }
+
     switch (moveName) {
         case 'Future Sight':
             moveScore.addScore(
