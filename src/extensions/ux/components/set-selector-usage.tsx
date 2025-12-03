@@ -74,10 +74,8 @@ export function initializePlayerSetSelector(): void {
 
   if (container) {
     // Load example sets into Redux store
-    const exampleSets = getActiveCollection().customSets;
-    
-    getExampleSets();
-    store.dispatch(loadPlayerSets(exampleSets));
+    const playerSets = getActiveCollection().customSets;
+    store.dispatch(loadPlayerSets(playerSets));
 
     if (!playerSetSelectorRoot) {
       playerSetSelectorRoot = createRoot(container);

@@ -38,7 +38,11 @@ export const SetSelector: React.FC<SetSelectorProps> = ({ side }) => {
         
         // Add each set under this species
         const sets = availableSets[species];
-        Object.keys(sets).forEach((setName) => {
+        const setNames = Object.keys(sets);
+        setNames.sort();
+        if (side === 'player')
+          setNames.push('Blank Set');
+        setNames.forEach((setName) => {
           opts.push({
             key: `${species}|${setName}`,
             text: `${species} (${setName})`,
