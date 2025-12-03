@@ -3,7 +3,7 @@
 
 // TODO: use bundled output in official UI, switch Typescript version to generate modern JS
 
-const Bundler = require('../bundler');
+const Bundler = require('../bundler.cjs');
 const bundler = new Bundler(__dirname);
 
 // calc/data
