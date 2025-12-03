@@ -1,13 +1,12 @@
-import { Field, I, StatsTable, Move, Result, Pokemon, MEGA_STONES } from '@smogon/calc';
+import { Field, I, Pokemon, Result } from '@smogon/calc';
+import { cpuRng, playerRng } from '../configuration';
 import { MoveScore } from './moveScore';
-import { BattleFieldState, MoveConsideration, MoveResult, PlayerMoveConsideration, ActivePokemon, TurnOutcome, Trainer, PokemonPosition, CpuTrainer, PlayerTrainer } from './moveScoring.contracts';
-import { calculateAllMoves, canUseDamagingMoves, createMove, findHighestDamageMove, toMoveResults, hasLifeSavingItem, moveKillsAttacker, moveWillFail, savedFromKO, scoreCPUMoves } from './moveScoring';
-import { applyBoost, getFinalSpeed } from './utils';
+import { calculateAllMoves, canUseDamagingMoves, findHighestDamageMove, moveKillsAttacker, moveWillFail, savedFromKO, scoreCPUMoves, toMoveResults } from './moveScoring';
+import { ActivePokemon, BattleFieldState, CpuTrainer, MoveResult, PlayerMoveConsideration, PlayerTrainer, PokemonPosition, Trainer, TurnOutcome } from './moveScoring.contracts';
+import { executeMove } from './phases/battle/execute-move';
 import { CpuSwitchStrategy } from './switchStrategy.cpu';
 import { PartyOrderSwitchStrategy } from './switchStrategy.partyOrder';
-import { getRecovery } from '@smogon/calc/dist/desc';
-import { executeMove } from './phases/battle/execute-move';
-import { cpuRng, playerRng } from '../configuration';
+import { applyBoost, getFinalSpeed } from './utils';
 
 export interface BattleResult {
 	winner: Pokemon;
@@ -76,7 +75,7 @@ export class BattleSimulator {
 		
 		let outcome = this.lastTurn;
 		let battleState = outcome.endOfTurnState;
-		let firstMover = outcome.actions[0].attacker;
+		let firstMover = outcome.actions[0]?.attacker;
 
 		return {
 			turnOutcomes: this.turns,
