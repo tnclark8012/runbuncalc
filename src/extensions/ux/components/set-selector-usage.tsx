@@ -9,13 +9,64 @@ import { PersistGate } from 'redux-persist/integration/react';
 import { getActiveCollection } from '../../core/storage';
 import { CustomSets } from '../../core/storage.contracts';
 import { TrainerSets } from '../../trainer-sets.data';
-import { loadCpuSets, loadPlayerSets } from '../store/setSlice';
+import { useAppDispatch, useAppSelector } from '../store/hooks';
+import { loadCpuSets, loadPlayerSets, setCpuSet, setPlayerSet } from '../store/setSlice';
 import { persistor, store } from '../store/store';
 import { SetSelector } from './SetSelector';
 
 // Store roots for potential cleanup/updates
 let playerSetSelectorRoot: Root | null = null;
 let cpuSetSelectorRoot: Root | null = null;
+
+/**
+ * Connected wrapper component for Player SetSelector
+ */
+const PlayerSetSelector: React.FC = () => {
+  const dispatch = useAppDispatch();
+  const { selection, availableSets } = useAppSelector((state) => state.set.player);
+
+  const handleSelectionChange = React.useCallback(
+    (newSelection: { species?: string; setName?: string }) => {
+      dispatch(setPlayerSet(newSelection));
+    },
+    [dispatch]
+  );
+
+  return (
+    <SetSelector
+      label="Player Set"
+      selection={selection}
+      availableSets={availableSets}
+      onSelectionChange={handleSelectionChange}
+      showBlankOption={true}
+    />
+  );
+};
+
+/**
+ * Connected wrapper component for CPU SetSelector
+ */
+const CpuSetSelector: React.FC = () => {
+  const dispatch = useAppDispatch();
+  const { selection, availableSets } = useAppSelector((state) => state.set.cpu);
+
+  const handleSelectionChange = React.useCallback(
+    (newSelection: { species?: string; setName?: string }) => {
+      dispatch(setCpuSet(newSelection));
+    },
+    [dispatch]
+  );
+
+  return (
+    <SetSelector
+      label="CPU Set"
+      selection={selection}
+      availableSets={availableSets}
+      onSelectionChange={handleSelectionChange}
+      showBlankOption={false}
+    />
+  );
+};
 
 /**
  * Load example Pokemon sets data
@@ -83,7 +134,7 @@ export function initializePlayerSetSelector(): void {
     playerSetSelectorRoot.render(
       <Provider store={store}>
         <PersistGate loading={null} persistor={persistor}>
-          <SetSelector side="player" />
+          <PlayerSetSelector />
         </PersistGate>
       </Provider>
     );
@@ -108,7 +159,7 @@ export function initializeCpuSetSelector(): void {
     cpuSetSelectorRoot.render(
       <Provider store={store}>
         <PersistGate loading={null} persistor={persistor}>
-          <SetSelector side="cpu" />
+          <CpuSetSelector />
         </PersistGate>
       </Provider>
     );

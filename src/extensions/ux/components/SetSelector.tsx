@@ -1,26 +1,41 @@
 import { DropdownMenuItemType, IComboBox, IComboBoxOption, VirtualizedComboBox } from '@fluentui/react';
 import * as React from 'react';
-import { useAppDispatch, useAppSelector } from '../store/hooks';
-import { setCpuSet, setPlayerSet } from '../store/setSlice';
+import { PokemonSets, SetSelection } from '../store/setSlice';
 
 export interface SetSelectorProps {
   /**
-   * Which side of the battle this selector is for
+   * Label for the selector
    */
-  side: 'player' | 'cpu';
+  label: string;
+  /**
+   * Current selection
+   */
+  selection: SetSelection;
+  /**
+   * Available sets to choose from
+   */
+  availableSets: PokemonSets;
+  /**
+   * Callback when selection changes
+   */
+  onSelectionChange: (selection: SetSelection) => void;
+  /**
+   * Whether to show "Blank Set" option for each species
+   */
+  showBlankOption?: boolean;
 }
 
 /**
  * SetSelector component - renders a dropdown for selecting Pokemon sets
  * with species as group headers and set names as selectable options
  */
-export const SetSelector: React.FC<SetSelectorProps> = ({ side }) => {
-  const dispatch = useAppDispatch();
-  
-  // Select the appropriate state based on side
-  const { selection, availableSets } = useAppSelector((state) => 
-    side === 'player' ? state.set.player : state.set.cpu
-  );
+export const SetSelector: React.FC<SetSelectorProps> = ({ 
+  label,
+  selection,
+  availableSets,
+  onSelectionChange,
+  showBlankOption = false,
+}) => {
 
   // Convert PokemonSets to FluentUI combobox options format
   const options: IComboBoxOption[] = React.useMemo(() => {
@@ -40,7 +55,7 @@ export const SetSelector: React.FC<SetSelectorProps> = ({ side }) => {
         const sets = availableSets[species];
         const setNames = Object.keys(sets);
         setNames.sort();
-        if (side === 'player')
+        if (showBlankOption)
           setNames.push('Blank Set');
         setNames.forEach((setName) => {
           opts.push({
@@ -52,7 +67,7 @@ export const SetSelector: React.FC<SetSelectorProps> = ({ side }) => {
       });
     
     return opts;
-  }, [availableSets]);
+  }, [availableSets, showBlankOption]);
 
   // Get selected key from current selection
   const selectedKey = React.useMemo(() => {
@@ -70,17 +85,15 @@ export const SetSelector: React.FC<SetSelectorProps> = ({ side }) => {
       }
 
       const { species, setName } = option.data;
-      const action = side === 'player' ? setPlayerSet : setCpuSet;
-      
-      dispatch(action({ species, setName }));
+      onSelectionChange({ species, setName });
     },
-    [side, dispatch]
+    [onSelectionChange]
   );
 
   return (
     <VirtualizedComboBox
       placeholder="Select a Pokemon set"
-      label={side === 'player' ? 'Player Set' : 'CPU Set'}
+      label={label}
       options={options}
       selectedKey={selectedKey}
       onChange={handleChange}
