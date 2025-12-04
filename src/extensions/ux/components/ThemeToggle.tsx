@@ -59,7 +59,7 @@ export const ThemeToggle: React.FC<ThemeToggleProps> = ({
   onThemeReady,
 }) => {
   const [isDark, setIsDark] = React.useState(initialMode === 'dark');
-
+  
   // Get current theme
   const currentTheme = isDark ? darkTheme : lightTheme;
 

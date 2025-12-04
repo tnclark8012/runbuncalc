@@ -5,6 +5,29 @@ import * as React from 'react';
 import { gen } from '../../configuration';
 import { IVRecord, PokemonSet } from '../../core/storage.contracts';
 import { applyBoost, convertIVsFromCustomSetToPokemon } from '../../simulator/utils';
+import { getAllAvailableItems, getPlayerAccessibleItems } from '../items';
+import { getAbilitiesForPokemon } from '../pokedex';
+
+/**
+ * Runtime state for a Pokemon (boosts, status, current HP, etc.)
+ * These are values that change during battle and aren't part of the base set definition
+ */
+export interface PokemonState {
+  /**
+   * Current stat boosts (-6 to +6 for each stat)
+   */
+  boosts?: Partial<StatsTable>;
+  
+  /**
+   * Current status condition
+   */
+  status?: StatusName | '';
+  
+  /**
+   * Current HP percentage (0-100)
+   */
+  currentHpPercent?: number;
+}
 
 export interface PokemonSetDetailsProps {
   /**
@@ -13,7 +36,7 @@ export interface PokemonSetDetailsProps {
   label: string;
 
   /**
-   * Species
+   * Species and set data
    */
   speciesSet?: {
     species: string;
@@ -21,9 +44,25 @@ export interface PokemonSetDetailsProps {
   };
 
   /**
+   * Pokemon runtime state (boosts, status, etc.)
+   * If provided, component works in controlled mode
+   */
+  pokemonState?: PokemonState;
+
+  /**
+   * Callback when Pokemon state changes (controlled mode)
+   */
+  onStateChange?: (state: PokemonState) => void;
+
+  /**
    * Whether IVs, nature, and level should be readonly
    */
   readonly?: boolean;
+
+  /**
+   * Whether to use player-accessible items only (true) or all items (false)
+   */
+  usePlayerItems?: boolean;
 }
 
 /**
@@ -32,8 +71,21 @@ export interface PokemonSetDetailsProps {
 export const PokemonSetDetails: React.FC<PokemonSetDetailsProps> = ({ 
   label,
   speciesSet,
-  readonly = false
+  pokemonState,
+  onStateChange,
+  readonly = false,
+  usePlayerItems = true
 }) => {
+  // Determine if we're in controlled mode
+  const isControlled = pokemonState !== undefined && onStateChange !== undefined;
+
+  // State for available abilities
+  const [availableAbilities, setAvailableAbilities] = React.useState<string[]>([]);
+
+  // State for ability and item selections
+  const [selectedAbility, setSelectedAbility] = React.useState<string>('');
+  const [selectedItem, setSelectedItem] = React.useState<string>('');
+
   // Create Pokemon object from speciesSet
   const pokemon = React.useMemo(() => {
     if (!speciesSet) return undefined;
@@ -60,8 +112,8 @@ export const PokemonSetDetails: React.FC<PokemonSetDetailsProps> = ({
     sp: 31,
   });
 
-  // Local state for boost values
-  const [boosts, setBoosts] = React.useState<Partial<StatsTable>>({
+  // Local state for boost values (uncontrolled mode)
+  const [internalBoosts, setInternalBoosts] = React.useState<Partial<StatsTable>>({
     atk: 0,
     def: 0,
     spa: 0,
@@ -69,17 +121,31 @@ export const PokemonSetDetails: React.FC<PokemonSetDetailsProps> = ({
     spe: 0,
   });
 
+  // Local state for status (uncontrolled mode)
+  const [internalStatus, setInternalStatus] = React.useState<StatusName | ''>('');
+
+  // Use controlled or uncontrolled state
+  const boosts = isControlled ? (pokemonState.boosts ?? {}) : internalBoosts;
+  const status = isControlled ? (pokemonState.status ?? '') : internalStatus;
+
+  // Helper to update state (works in both controlled and uncontrolled mode)
+  const updateState = React.useCallback((updates: Partial<PokemonState>) => {
+    if (isControlled) {
+      onStateChange({ ...pokemonState, ...updates });
+    } else {
+      if (updates.boosts !== undefined) setInternalBoosts(updates.boosts);
+      if (updates.status !== undefined) setInternalStatus(updates.status);
+    }
+  }, [isControlled, pokemonState, onStateChange]);
+
   // Local state for editable properties
   const [level, setLevel] = React.useState<number>(100);
   const [type1, setType1] = React.useState<TypeName>('Normal');
   const [type2, setType2] = React.useState<TypeName | undefined>(undefined);
   const [selectedForm, setSelectedForm] = React.useState<string>('');
   const [nature, setNature] = React.useState<string>('Hardy');
-  const [status, setStatus] = React.useState<StatusName | ''>('');
 
-  // Get all available types from the generation
   const availableTypes = React.useMemo(() => {
-    // Common Pokemon types in Gen 8
     const types: TypeName[] = [
       'Normal', 'Fire', 'Water', 'Electric', 'Grass', 'Ice', 
       'Fighting', 'Poison', 'Ground', 'Flying', 'Psychic', 'Bug', 
@@ -151,6 +217,27 @@ export const PokemonSetDetails: React.FC<PokemonSetDetailsProps> = ({
     ];
   }, []);
 
+  // Get all available items (sorted alphabetically with "None" at the top)
+  const availableItems = React.useMemo(() => {
+    const items = usePlayerItems ? getPlayerAccessibleItems() : getAllAvailableItems();
+    return ['None', ...items.sort()];
+  }, [usePlayerItems]);
+
+  // Load abilities when pokemon changes
+  React.useEffect(() => {
+    if (pokemon) {
+      getAbilitiesForPokemon(pokemon).then(abilities => {
+        setAvailableAbilities(abilities);
+      });
+      setSelectedAbility(pokemon.ability!);
+      setSelectedItem(pokemon.item || 'None');
+    } else {
+      setAvailableAbilities([]);
+      setSelectedAbility('');
+      setSelectedItem('None');
+    }
+  }, [pokemon]);
+
   // Update local state when pokemon changes
   React.useEffect(() => {
     if (pokemon?.ivs) {
@@ -162,19 +249,24 @@ export const PokemonSetDetails: React.FC<PokemonSetDetailsProps> = ({
         sd: pokemon.ivs.spd ?? 31,
         sp: pokemon.ivs.spe ?? 31,
       });
-      setBoosts({
-        atk: pokemon.boosts.atk ?? 0,
-        def: pokemon.boosts.def ?? 0,
-        spa: pokemon.boosts.spa ?? 0,
-        spd: pokemon.boosts.spd ?? 0,
-        spe: pokemon.boosts.spe ?? 0,
-      });
+      
+      // Initialize internal state only if uncontrolled
+      if (!isControlled) {
+        setInternalBoosts({
+          atk: pokemon.boosts.atk ?? 0,
+          def: pokemon.boosts.def ?? 0,
+          spa: pokemon.boosts.spa ?? 0,
+          spd: pokemon.boosts.spd ?? 0,
+          spe: pokemon.boosts.spe ?? 0,
+        });
+        setInternalStatus(pokemon.status);
+      }
+      
       setLevel(pokemon.level);
       setType1(pokemon.types[0]);
       setType2(pokemon.types[1]);
       setSelectedForm(speciesSet?.species ?? '');
       setNature(pokemon.nature);
-      setStatus(pokemon.status);
     } else {
       // Reset to defaults when no set is selected
       setIvs({
@@ -185,21 +277,25 @@ export const PokemonSetDetails: React.FC<PokemonSetDetailsProps> = ({
         sd: 31,
         sp: 31,
       });
-      setBoosts({
-        atk: 0,
-        def: 0,
-        spa: 0,
-        spd: 0,
-        spe: 0,
-      });
+      
+      if (!isControlled) {
+        setInternalBoosts({
+          atk: 0,
+          def: 0,
+          spa: 0,
+          spd: 0,
+          spe: 0,
+        });
+        setInternalStatus('');
+      }
+      
       setLevel(100);
       setType1('Normal');
       setType2(undefined);
       setSelectedForm('');
       setNature('Hardy');
-      setStatus('');
     }
-  }, [pokemon, speciesSet]);
+  }, [pokemon, speciesSet, isControlled]);
 
   // Handle IV input changes
   const handleIvChange = (stat: keyof IVRecord, value: string) => {
@@ -218,7 +314,9 @@ export const PokemonSetDetails: React.FC<PokemonSetDetailsProps> = ({
     if (!isNaN(numValue) && pokemon) {
       // Apply the boost to the pokemon object
       applyBoost(pokemon.boosts, stat, numValue - (pokemon.boosts[stat] ?? 0));
-      setBoosts((prev) => ({ ...prev, [stat]: numValue }));
+      
+      const newBoosts = { ...boosts, [stat]: numValue };
+      updateState({ boosts: newBoosts });
     }
   };
 
@@ -271,6 +369,24 @@ export const PokemonSetDetails: React.FC<PokemonSetDetailsProps> = ({
     return natureData?.label ?? nature;
   }, [nature, availableNatures]);
 
+  // Handle ability change
+  const handleAbilityChange = (_: any, data: any) => {
+    const newAbility = data.optionValue ?? '';
+    setSelectedAbility(newAbility);
+    if (pokemon) {
+      pokemon.ability = newAbility as any;
+    }
+  };
+
+  // Handle item change
+  const handleItemChange = (_: any, data: any) => {
+    const newItem = data.optionValue ?? 'None';
+    setSelectedItem(newItem);
+    if (pokemon) {
+      pokemon.item = newItem === 'None' ? '' : (newItem as any);
+    }
+  };
+
   // Get the display label for the selected status
   const selectedStatusLabel = React.useMemo(() => {
     const statusData = availableStatuses.find(s => s.value === status);
@@ -280,7 +396,7 @@ export const PokemonSetDetails: React.FC<PokemonSetDetailsProps> = ({
   // Handle status change
   const handleStatusChange = (_: any, data: any) => {
     const newStatus = data.optionValue as StatusName | '';
-    setStatus(newStatus);
+    updateState({ status: newStatus });
     if (pokemon) {
       pokemon.status = newStatus;
     }
@@ -436,6 +552,41 @@ export const PokemonSetDetails: React.FC<PokemonSetDetailsProps> = ({
           {availableNatures.map(({ name, label }) => (
             <Option key={name} value={name}>
               {label}
+            </Option>
+          ))}
+        </Dropdown>
+      </div>
+
+      {/* Ability control */}
+      <div style={{ marginTop: '10px', display: 'flex', gap: '10px', alignItems: 'center' }}>
+        <Label style={{ minWidth: '60px' }}>Ability:</Label>
+        <Dropdown
+          value={selectedAbility}
+          selectedOptions={[selectedAbility]}
+          onOptionSelect={handleAbilityChange}
+          disabled={availableAbilities.length === 0}
+          style={{ width: '250px' }}
+        >
+          {availableAbilities.map((ability) => (
+            <Option key={ability} value={ability}>
+              {ability}
+            </Option>
+          ))}
+        </Dropdown>
+      </div>
+
+      {/* Item control */}
+      <div style={{ marginTop: '10px', display: 'flex', gap: '10px', alignItems: 'center' }}>
+        <Label style={{ minWidth: '60px' }}>Item:</Label>
+        <Dropdown
+          value={selectedItem}
+          selectedOptions={[selectedItem]}
+          onOptionSelect={handleItemChange}
+          style={{ width: '250px' }}
+        >
+          {availableItems.map((item) => (
+            <Option key={item} value={item}>
+              {item}
             </Option>
           ))}
         </Dropdown>
