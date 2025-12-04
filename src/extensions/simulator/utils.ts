@@ -1,4 +1,4 @@
-import { A, Field, Pokemon, Side, toID } from "@smogon/calc";
+import { A, Field, I, Pokemon, Side, toID } from "@smogon/calc";
 import { MoveName } from "@smogon/calc/dist/data/interface";
 import { StatsTable } from "@smogon/calc/src";
 import { TypeName } from "@smogon/calc/src/data/interface";
@@ -79,9 +79,9 @@ export function isSuperEffective(attackType: TypeName, defender: Pokemon): boole
 
 export function isGrounded(pokemon: Pokemon, field: Field): boolean {
 	return (field.isGravity || pokemon.hasItem('Iron Ball') ||
-    (!pokemon.hasType('Flying') &&
-      !pokemon.hasAbility('Levitate') &&
-      !pokemon.hasItem('Air Balloon')));
+		(!pokemon.hasType('Flying') &&
+			!pokemon.hasAbility('Levitate') &&
+			!pokemon.hasItem('Air Balloon')));
 }
 
 function forEachSet(setCallback: (set: PokemonSet, setName: string, pokemonName: string) => void | boolean | undefined): CustomSets | undefined {
@@ -153,4 +153,24 @@ export function isTargetImmuneToMoveKind(move: MoveName, target: Pokemon, field:
 
 function isPowderMove(move: MoveName): boolean {
 	return ['Cotton Spore', 'Magic Powder', 'Poison Powder', 'Powder', 'Rage Powder', 'Spore', 'Sleep Powder', 'Spore', 'Stun Spore'].includes(move);
+}
+
+export type LegacyStatsTable = {
+  hp?: number;
+  at?: number;
+  df?: number;
+  sa?: number;
+  sd?: number;
+  sp?: number;
+};
+
+export function convertIVsFromCustomSetToPokemon(ivs: LegacyStatsTable | undefined): I.StatsTable {
+	return {
+		hp: ivs?.hp ?? 31,
+		atk: ivs?.at ?? 31,
+		def: ivs?.df ?? 31,
+		spa: ivs?.sa ?? 31,
+		spd: ivs?.sd ?? 31,
+		spe: ivs?.sp ?? 31,
+	};
 }

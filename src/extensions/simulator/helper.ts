@@ -1,8 +1,9 @@
 /* eslint-env jest */
 
-import { I, State, Field, Pokemon, Move, calculate, SPECIES, ABILITIES, PokemonOptions, ITEMS, Side, SpeciesData } from '@smogon/calc';
+import { ABILITIES, calculate, Field, I, ITEMS, Move, Pokemon, PokemonOptions, Side, SPECIES, SpeciesData, State } from '@smogon/calc';
 import { Result } from '@smogon/calc/src';
 import { BattleFieldState, CpuTrainer, PlayerTrainer, PokemonPosition } from './moveScoring.contracts';
+import { LegacyStatsTable } from './utils';
 
 const calc = (gen: I.GenerationNum) => (
   attacker: Pokemon,
@@ -46,15 +47,6 @@ interface Gen {
   Field: typeof field;
   Side: typeof side;
 }
-
-export type LegacyStatsTable = {
-  hp?: number;
-  at?: number;
-  df?: number;
-  sa?: number;
-  sd?: number;
-  sp?: number;
-};
 
 export function convertStats(legacyStatsFromSet?: LegacyStatsTable): I.StatsTable {
   return {
