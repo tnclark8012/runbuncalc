@@ -1,11 +1,11 @@
+import { Button } from '@fluentui/react-components';
 import * as React from 'react';
 import { Provider } from 'react-redux';
 import { PersistGate } from 'redux-persist/integration/react';
-import { store, persistor } from '../store/store';
 import { useAppDispatch, useAppSelector } from '../store/hooks';
 import { setSelectedMove } from '../store/moveSlice';
-import { MoveResultGroup, MoveItem } from './index';
-import { PrimaryButton } from '@fluentui/react';
+import { persistor, store } from '../store/store';
+import { MoveItem, MoveResultGroup } from './index';
 
 /**
  * Props for the DeveloperTools component
@@ -68,7 +68,7 @@ const DeveloperToolsContent: React.FC<DeveloperToolsProps> = ({
         onMoveSelect={handleMoveSelect}
       />
       <div style={{ marginTop: '1em' }}>
-        <PrimaryButton onClick={handleExport} text="Export Store to JSON" />
+        <Button appearance="primary" onClick={handleExport}>Export Store to JSON</Button>
       </div>
       <div style={{ marginTop: '1em', fontSize: '0.9em', color: '#666' }}>
         <strong>Debug Info:</strong>

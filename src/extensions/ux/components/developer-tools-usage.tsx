@@ -4,6 +4,7 @@
  * This demonstrates the Redux + Local Storage integration with the MoveResultGroup component.
  */
 
+import { FluentProvider, webLightTheme } from '@fluentui/react-components';
 import * as React from 'react';
 import { createRoot, Root } from 'react-dom/client';
 import { DeveloperTools, MoveItem } from './index';
@@ -59,12 +60,14 @@ export function initializeDeveloperTools(): void {
       devToolsRoot = createRoot(container);
     }
     devToolsRoot.render(
-      <DeveloperTools
-        moves={exampleMoves}
-        headerId="resultHeaderL"
-        headerText="Developer Tools - Redux + Local Storage Demo"
-        radioGroupName="devToolsMoves"
-      />
+      <FluentProvider theme={webLightTheme}>
+        <DeveloperTools
+          moves={exampleMoves}
+          headerId="resultHeaderL"
+          headerText="Developer Tools - Redux + Local Storage Demo"
+          radioGroupName="devToolsMoves"
+        />
+      </FluentProvider>
     );
   }
 }

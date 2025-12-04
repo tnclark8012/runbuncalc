@@ -1,16 +1,21 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="light">
 <head>
   <meta charset="UTF-8">
   <title>React Component Sandbox</title>
+  <link rel="stylesheet" href="./css/theme-variables.css">
   <style>
+    .theme-toggle-container {
+      position: absolute;
+      top: 1rem;
+      right: 1rem;
+    }
     .move-result-subgroup {
-      border: 1px solid #ccc;
+      border: 1px solid var(--border-color);
       border-radius: 6px;
       margin: 1em 0;
       padding: 1em;
       min-width: 300px;
-      background: #f9f9f9;
     }
     .move-result-groups {
       display: flex;
@@ -27,15 +32,7 @@
   </style>
 </head>
 <body>
-  <h1>React Component Sandbox</h1>
-  <div class="set-selectors">
-    <div class="set-selector-container" id="player-set-selector"></div>
-    <div class="set-selector-container" id="cpu-set-selector"></div>
-  </div>
-  <div class="move-result-groups">
-    <div class="move-result-subgroup" aria-labelledby="resultHeaderL"></div>
-    <div class="move-result-subgroup" aria-labelledby="resultHeaderR"></div>
-  </div>
+  <div id="sandbox-root"></div>
   <script type="text/javascript" src="./sandbox.bundle.js?"></script>
 </body>
 </html>

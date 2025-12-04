@@ -2,6 +2,7 @@
  * Initialize the SetSelector components for player and CPU
  */
 
+import { FluentProvider, webLightTheme } from '@fluentui/react-components';
 import * as React from 'react';
 import { createRoot, Root } from 'react-dom/client';
 import { Provider } from 'react-redux';
@@ -21,7 +22,7 @@ let cpuSetSelectorRoot: Root | null = null;
 /**
  * Connected wrapper component for Player SetSelector
  */
-const PlayerSetSelector: React.FC = () => {
+export const PlayerSetSelector: React.FC = () => {
   const dispatch = useAppDispatch();
   const { selection, availableSets } = useAppSelector((state) => state.set.player);
 
@@ -46,7 +47,7 @@ const PlayerSetSelector: React.FC = () => {
 /**
  * Connected wrapper component for CPU SetSelector
  */
-const CpuSetSelector: React.FC = () => {
+export const CpuSetSelector: React.FC = () => {
   const dispatch = useAppDispatch();
   const { selection, availableSets } = useAppSelector((state) => state.set.cpu);
 
@@ -132,11 +133,13 @@ export function initializePlayerSetSelector(): void {
       playerSetSelectorRoot = createRoot(container);
     }
     playerSetSelectorRoot.render(
-      <Provider store={store}>
-        <PersistGate loading={null} persistor={persistor}>
-          <PlayerSetSelector />
-        </PersistGate>
-      </Provider>
+      <FluentProvider theme={webLightTheme}>
+        <Provider store={store}>
+          <PersistGate loading={null} persistor={persistor}>
+            <PlayerSetSelector />
+          </PersistGate>
+        </Provider>
+      </FluentProvider>
     );
   }
 }
@@ -157,11 +160,13 @@ export function initializeCpuSetSelector(): void {
       cpuSetSelectorRoot = createRoot(container);
     }
     cpuSetSelectorRoot.render(
-      <Provider store={store}>
-        <PersistGate loading={null} persistor={persistor}>
-          <CpuSetSelector />
-        </PersistGate>
-      </Provider>
+      <FluentProvider theme={webLightTheme}>
+        <Provider store={store}>
+          <PersistGate loading={null} persistor={persistor}>
+            <CpuSetSelector />
+          </PersistGate>
+        </Provider>
+      </FluentProvider>
     );
   }
 }

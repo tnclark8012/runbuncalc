@@ -1,0 +1,90 @@
+/* Theme Variables - Fluent UI v9 (Fluent 2) Tokens */
+
+/* Light Theme - Leaf Green */
+:root[data-theme="light"] {
+  /* Brand colors */
+  --colorBrandBackground: #4CAF50;
+  --colorBrandBackgroundHover: #43a047;
+  --colorBrandBackgroundPressed: #388e3c;
+  --colorBrandBackground2: #c8e6c9;
+  --colorBrandBackground3: #a5d6a7;
+  --colorBrandForeground1: #66bb6a;
+  --colorBrandForeground2: #81c784;
+  
+  /* Neutral backgrounds */
+  --colorNeutralBackground1: #ffffff;
+  --colorNeutralBackground2: #faf9f8;
+  --colorNeutralBackground3: #f3f2f1;
+  --colorNeutralBackground4: #edebe9;
+  --colorNeutralBackground5: #e1dfdd;
+  --colorNeutralBackground6: #d0d0d0;
+  
+  /* Neutral foregrounds */
+  --colorNeutralForeground1: #323130;
+  --colorNeutralForeground2: #605e5c;
+  --colorNeutralForeground3: #a19f9d;
+  --colorNeutralForeground4: #201f1e;
+  --colorNeutralForegroundInverted: #000000;
+  
+  /* Neutral strokes (borders) */
+  --colorNeutralStroke1: #ccc;
+  --colorNeutralStroke2: #e1dfdd;
+  --colorNeutralStroke3: #f3f2f1;
+  
+  /* Semantic colors (legacy support) */
+  --background-color: #ffffff;
+  --text-color: #323130;
+  --border-color: #ccc;
+  --card-background: #f9f9f9;
+}
+
+/* Dark Theme - Leaf Green */
+:root[data-theme="dark"] {
+  /* Brand colors */
+  --colorBrandBackground: #66bb6a;
+  --colorBrandBackgroundHover: #76c57a;
+  --colorBrandBackgroundPressed: #81c784;
+  --colorBrandBackground2: #1b391c;
+  --colorBrandBackground3: #2e7d32;
+  --colorBrandForeground1: #81c784;
+  --colorBrandForeground2: #a5d6a7;
+  
+  /* Neutral backgrounds */
+  --colorNeutralBackground1: #121212;
+  --colorNeutralBackground2: #1c1c1c;
+  --colorNeutralBackground3: #252525;
+  --colorNeutralBackground4: #343434;
+  --colorNeutralBackground5: #3d3d3d;
+  --colorNeutralBackground6: #454545;
+  
+  /* Neutral foregrounds */
+  --colorNeutralForeground1: #ffffff;
+  --colorNeutralForeground2: #d0d0d0;
+  --colorNeutralForeground3: #c8c8c8;
+  --colorNeutralForeground4: #f4f4f4;
+  --colorNeutralForegroundInverted: #f8f8f8;
+  
+  /* Neutral strokes (borders) */
+  --colorNeutralStroke1: #454545;
+  --colorNeutralStroke2: #3d3d3d;
+  --colorNeutralStroke3: #252525;
+  
+  /* Semantic colors (legacy support) */
+  --background-color: #121212;
+  --text-color: #ffffff;
+  --border-color: #454545;
+  --card-background: #1c1c1c;
+}
+
+/* Apply theme colors to body */
+body {
+  background-color: var(--background-color);
+  color: var(--text-color);
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* Apply theme to common elements */
+.move-result-subgroup {
+  background-color: var(--card-background);
+  border-color: var(--border-color);
+}
