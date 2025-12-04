@@ -52,6 +52,7 @@ export const CpuPokemonSetDetails: React.FC = () => {
     <PokemonSetDetails
       label="CPU Set Details"
       speciesSet={speciesSet}
+      readonly={true}
     />
   );
 };
