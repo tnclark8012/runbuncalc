@@ -6,9 +6,14 @@ import { FluentProvider, Theme, webLightTheme } from '@fluentui/react-components
 import * as React from 'react';
 import { Provider } from 'react-redux';
 import { PersistGate } from 'redux-persist/integration/react';
+import { getActiveCollection } from '../extensions/core/storage';
+import { CustomSets } from '../extensions/core/storage.contracts';
+import { TrainerSets } from '../extensions/trainer-sets.data';
 import { initializeDeveloperTools } from '../extensions/ux/components/developer-tools-usage';
+import { CpuPokemonSetDetails, PlayerPokemonSetDetails } from '../extensions/ux/components/pokemon-set-details-usage';
 import { CpuSetSelector, PlayerSetSelector } from '../extensions/ux/components/set-selector-usage';
 import { ThemeToggle } from '../extensions/ux/components/ThemeToggle';
+import { loadCpuSets, loadPlayerSets } from '../extensions/ux/store/setSlice';
 import { persistor, store } from '../extensions/ux/store/store';
 
 /**
@@ -27,6 +32,11 @@ export const SandboxApp: React.FC = () => {
     initializeDeveloperTools();
   }, []);
 
+  const realSets: CustomSets = TrainerSets;
+  const playerSets = getActiveCollection().customSets;
+  store.dispatch(loadCpuSets(realSets));
+  store.dispatch(loadPlayerSets(playerSets));
+  
   return (
     <Provider store={store}>
       <PersistGate loading={null} persistor={persistor}>
@@ -47,9 +57,11 @@ export const SandboxApp: React.FC = () => {
           <div className="set-selectors">
             <div className="set-selector-container">
               <PlayerSetSelector />
+              <PlayerPokemonSetDetails />
             </div>
             <div className="set-selector-container">
               <CpuSetSelector />
+              <CpuPokemonSetDetails />
             </div>
           </div>
           <div className="move-result-groups">
