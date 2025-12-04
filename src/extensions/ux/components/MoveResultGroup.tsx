@@ -1,6 +1,6 @@
+import { Label } from '@fluentui/react-components';
 import * as React from 'react';
-import { Label } from '@fluentui/react';
-import { MoveResultGroupProps, MoveItem } from './move-result-group.props';
+import { MoveItem, MoveResultGroupProps } from './move-result-group.props';
 
 /**
  * MoveResultGroup component - renders a radio group containing each move 

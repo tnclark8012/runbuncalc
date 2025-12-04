@@ -1,7 +1,11 @@
-import { initializeDeveloperTools } from '../extensions/ux/components/developer-tools-usage';
-import { initializeSetSelectors } from '../extensions/ux/components/set-selector-usage';
+import * as React from 'react';
+import { createRoot } from 'react-dom/client';
+import { SandboxApp } from './SandboxApp';
 
 document.addEventListener('DOMContentLoaded', () => {
-  initializeSetSelectors();
-  initializeDeveloperTools();
+  const rootContainer = document.getElementById('sandbox-root');
+  if (rootContainer) {
+    const root = createRoot(rootContainer);
+    root.render(React.createElement(SandboxApp));
+  }
 });

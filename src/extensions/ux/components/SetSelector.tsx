@@ -1,4 +1,4 @@
-import { DropdownMenuItemType, IComboBox, IComboBoxOption, VirtualizedComboBox } from '@fluentui/react';
+import { Combobox, ComboboxProps, Option, OptionGroup, OptionOnSelectData, SelectionEvents } from '@fluentui/react-components';
 import * as React from 'react';
 import { CustomSets } from '../../core/storage.contracts';
 import { SetSelection } from '../store/setSlice';
@@ -27,7 +27,7 @@ export interface SetSelectorProps {
 }
 
 /**
- * SetSelector component - renders a dropdown for selecting Pokemon sets
+ * SetSelector component - renders a combobox for selecting Pokemon sets
  * with species as group headers and set names as selectable options
  */
 export const SetSelector: React.FC<SetSelectorProps> = ({ 
@@ -37,74 +37,66 @@ export const SetSelector: React.FC<SetSelectorProps> = ({
   onSelectionChange,
   showBlankOption = false,
 }) => {
-
-  // Convert PokemonSets to FluentUI combobox options format
-  const options: IComboBoxOption[] = React.useMemo(() => {
-    const opts: IComboBoxOption[] = [];
-    
-    Object.keys(availableSets)
-      .sort() // Sort species alphabetically
-      .forEach((species) => {
-        // Add species as header
-        opts.push({
-          key: `header-${species}`,
-          text: species.charAt(0).toUpperCase() + species.slice(1), // Capitalize
-          itemType: DropdownMenuItemType.Header,
-        });
-        
-        // Add each set under this species
-        const sets = availableSets[species];
-        const setNames = Object.keys(sets);
-        setNames.sort();
-        if (showBlankOption)
-          setNames.push('Blank Set');
-        setNames.forEach((setName) => {
-          opts.push({
-            key: `${species}|${setName}`,
-            text: `${species} (${setName})`,
-            data: { species, setName }, // Store for easy access
-          });
-        });
-      });
-    
-    return opts;
-  }, [availableSets, showBlankOption]);
-
-  // Get selected key from current selection
-  const selectedKey = React.useMemo(() => {
+  // Get display value for selected item
+  const selectedValue = React.useMemo(() => {
     if (selection.species && selection.setName) {
-      return `${selection.species}|${selection.setName}`;
+      return `${selection.species} (${selection.setName})`;
     }
-    return undefined;
+    return '';
   }, [selection]);
 
   // Handle selection change
-  const handleChange = React.useCallback(
-    (_event: React.FormEvent<IComboBox>, option?: IComboBoxOption) => {
-      if (!option || option.itemType === DropdownMenuItemType.Header) {
+  const handleOptionSelect: ComboboxProps['onOptionSelect'] = React.useCallback(
+    (event: SelectionEvents, data: OptionOnSelectData) => {
+      const value = data.optionValue;
+      if (!value || value.startsWith('header-')) {
         return;
       }
 
-      const { species, setName } = option.data;
+      const [species, setName] = value.split('|');
       onSelectionChange({ species, setName });
     },
     [onSelectionChange]
   );
 
+  // Render options grouped by species
+  const renderOptions = () => {
+    return Object.keys(availableSets)
+      .sort()
+      .map((species) => {
+        const sets = availableSets[species];
+        const setNames = Object.keys(sets).sort();
+        
+        if (showBlankOption) {
+          setNames.push('Blank Set');
+        }
+
+        return (
+          <OptionGroup key={species} label={species.charAt(0).toUpperCase() + species.slice(1)}>
+            {setNames.map((setName) => (
+              <Option
+                key={`${species}|${setName}`}
+                value={`${species}|${setName}`}
+                text={`${species} (${setName})`}
+              >
+                {setName}
+              </Option>
+            ))}
+          </OptionGroup>
+        );
+      });
+  };
+
   return (
-    <VirtualizedComboBox
+    <Combobox
       placeholder="Select a Pokemon set"
-      label={label}
-      options={options}
-      selectedKey={selectedKey}
-      onChange={handleChange}
-      autoComplete="on"
-      allowFreeform={true}
-      dropdownMaxWidth={400}
-      useComboBoxAsMenuWidth
-      styles={{
-        root: { width: 300 },
-      }}
-    />
+      aria-label={label}
+      value={selectedValue}
+      freeform={true}
+      onOptionSelect={handleOptionSelect}
+      style={{ width: '300px' }}
+    >
+      {renderOptions()}
+    </Combobox>
   );
 };

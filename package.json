@@ -5,7 +5,8 @@
   "repository": "github:smogon/damage-calc",
   "license": "MIT",
   "dependencies": {
-    "@fluentui/react": "^8.125.0",
+    "@fluentui/react-components": "^9.54.0",
+    "@fluentui/react-icons": "^2.0.258",
     "@reduxjs/toolkit": "^2.10.1",
     "@smogon/calc": "file:calc",
     "react": "^19.2.0",
