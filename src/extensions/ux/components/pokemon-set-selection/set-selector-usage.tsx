@@ -7,12 +7,12 @@ import * as React from 'react';
 import { createRoot, Root } from 'react-dom/client';
 import { Provider } from 'react-redux';
 import { PersistGate } from 'redux-persist/integration/react';
-import { getActiveCollection } from '../../core/storage';
-import { CustomSets } from '../../core/storage.contracts';
-import { TrainerSets } from '../../trainer-sets.data';
-import { useAppDispatch, useAppSelector } from '../store/hooks';
-import { loadCpuSets, loadPlayerSets, setCpuSet, setPlayerSet } from '../store/setSlice';
-import { persistor, store } from '../store/store';
+import { getActiveCollection } from '../../../core/storage';
+import { CustomSets } from '../../../core/storage.contracts';
+import { TrainerSets } from '../../../trainer-sets.data';
+import { useAppDispatch, useAppSelector } from '../../store/hooks';
+import { loadCpuSets, loadPlayerSets, setCpuSet, setPlayerSet } from '../../store/setSlice';
+import { persistor, store } from '../../store/store';
 import { SetSelector } from './SetSelector';
 
 // Store roots for potential cleanup/updates

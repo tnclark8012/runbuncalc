@@ -2,11 +2,11 @@ import { Dropdown, Input, Label, Option, Table, TableBody, TableCell, TableHeade
 import { Pokemon, StatsTable } from '@smogon/calc';
 import type { StatusName, TypeName } from '@smogon/calc/dist/data/interface';
 import * as React from 'react';
-import { gen } from '../../configuration';
-import { IVRecord, PokemonSet } from '../../core/storage.contracts';
-import { applyBoost, convertIVsFromCustomSetToPokemon } from '../../simulator/utils';
-import { getAllAvailableItems, getPlayerAccessibleItems } from '../items';
-import { getAbilitiesForPokemon } from '../pokedex';
+import { gen } from '../../../configuration';
+import { IVRecord, PokemonSet } from '../../../core/storage.contracts';
+import { applyBoost, convertIVsFromCustomSetToPokemon } from '../../../simulator/utils';
+import { getAllAvailableItems, getPlayerAccessibleItems } from '../../items';
+import { getAbilitiesForPokemon } from '../../pokedex';
 
 /**
  * Runtime state for a Pokemon (boosts, status, current HP, etc.)

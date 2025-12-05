@@ -1,7 +1,7 @@
 import { Combobox, ComboboxProps, Option, OptionGroup, OptionOnSelectData, SelectionEvents } from '@fluentui/react-components';
 import * as React from 'react';
-import { CustomSets } from '../../core/storage.contracts';
-import { SetSelection } from '../store/setSlice';
+import { CustomSets } from '../../../core/storage.contracts';
+import { SetSelection } from '../../store/setSlice';
 
 export interface SetSelectorProps {
   /**

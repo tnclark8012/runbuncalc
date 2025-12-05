@@ -10,8 +10,10 @@ import { getActiveCollection } from '../extensions/core/storage';
 import { CustomSets } from '../extensions/core/storage.contracts';
 import { TrainerSets } from '../extensions/trainer-sets.data';
 import { initializeDeveloperTools } from '../extensions/ux/components/developer-tools-usage';
-import { CpuPokemonSetDetails, PlayerPokemonSetDetails } from '../extensions/ux/components/pokemon-set-details-usage';
-import { CpuSetSelector, PlayerSetSelector } from '../extensions/ux/components/set-selector-usage';
+import { CpuMoves } from '../extensions/ux/components/move-results/CpuMoves';
+import { PlayerMoves } from '../extensions/ux/components/move-results/PlayerMoves';
+import { CpuPokemonSetDetails, PlayerPokemonSetDetails } from '../extensions/ux/components/pokemon-set-details/pokemon-set-details-usage';
+import { CpuSetSelector, PlayerSetSelector } from '../extensions/ux/components/pokemon-set-selection/set-selector-usage';
 import { ThemeToggle } from '../extensions/ux/components/ThemeToggle';
 import { loadCpuSets, loadPlayerSets } from '../extensions/ux/store/setSlice';
 import { persistor, store } from '../extensions/ux/store/store';
@@ -56,10 +58,12 @@ export const SandboxApp: React.FC = () => {
           <h1>React Component Sandbox</h1>
           <div className="set-selectors">
             <div className="set-selector-container">
+              <PlayerMoves />
               <PlayerSetSelector />
               <PlayerPokemonSetDetails />
             </div>
             <div className="set-selector-container">
+              <CpuMoves />
               <CpuSetSelector />
               <CpuPokemonSetDetails />
             </div>
