@@ -68,6 +68,7 @@ export const PlayerPartyManager: React.FC = () => {
             icon={<Add20Regular />}
             onClick={handlePromoteClick}
             title="Promote to Party"
+            aria-label="Promote to Party"
             style={{ backgroundColor: 'green' }}
           />
         )}
@@ -77,6 +78,7 @@ export const PlayerPartyManager: React.FC = () => {
             icon={<Subtract20Regular />}
             onClick={handleDemoteClick}
             title="Demote to Box"
+            aria-label="Demote to Box"
             style={{ backgroundColor: 'red' }}
           />
         )}
