@@ -31,6 +31,9 @@ export const SandboxApp: React.FC = () => {
   // State to manage theme for the entire app
   const [currentTheme, setCurrentTheme] = React.useState<Theme>(webLightTheme);
 
+  // Track initialization to prevent duplicate dispatches in React StrictMode
+  const isInitialized = React.useRef(false);
+
   // Initialize developer tools on mount
   React.useEffect(() => {
     initializeDeveloperTools();
@@ -38,6 +41,11 @@ export const SandboxApp: React.FC = () => {
 
   // Load initial data on mount
   React.useEffect(() => {
+    if (isInitialized.current) {
+      return;
+    }
+    isInitialized.current = true;
+
     const realSets: CustomSets = TrainerSets;
     const playerSets = getActiveCollection().customSets;
     store.dispatch(loadCpuSets(realSets));
