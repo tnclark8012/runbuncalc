@@ -1,6 +1,7 @@
 import { configureStore } from '@reduxjs/toolkit';
 import { persistReducer, persistStore } from 'redux-persist';
 import moveReducer from './moveSlice';
+import partyReducer from './partySlice';
 import setReducer from './setSlice';
 import syncStorage from './syncStorage';
 
@@ -16,6 +17,7 @@ const persistConfig = {
 
 const persistedMoveReducer = persistReducer(persistConfig, moveReducer);
 const persistedSetReducer = persistReducer({ ...persistConfig, key: 'set' }, setReducer);
+const persistedPartyReducer = persistReducer({ ...persistConfig, key: 'party' }, partyReducer);
 
 /**
  * Configure the Redux store with persistence
@@ -24,6 +26,7 @@ export const store = configureStore({
   reducer: {
     move: persistedMoveReducer,
     set: persistedSetReducer,
+    party: persistedPartyReducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({

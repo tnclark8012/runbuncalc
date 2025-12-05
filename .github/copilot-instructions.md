@@ -1,1 +1,4 @@
 This repository is for building a battle simulator for the game Pokemon Run & Bun. This project is not for building the game itself, but rather is a tool to  help a player plan a way for them to beat the game, accounting for known AI logic. Code in the calc folder should not be edited.
+
+## React components
+Generally, logical components should go in their own subfolder. It may be reasonable to break one large functional component into a few smaller ones in the same folder. Each component should have its own folder with the component code, props definition, etc. Generally, components should be presentational and not directly interact with the Redux store. Instead, use container components or hooks to connect to the store.
