@@ -69,6 +69,7 @@ export const setSlice = createSlice({
     loadPlayerSets: (state, action: PayloadAction<CustomSets>) => {
       state.player.availableSets = action.payload;
     },
+    /** Initializes all available sets in the store. Should only be called once at app initialization */
     loadCpuSets: (state, action: PayloadAction<CustomSets>) => {
       state.cpu.availableSets = action.payload;
     },

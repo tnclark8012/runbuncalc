@@ -9,10 +9,12 @@ import { Provider } from 'react-redux';
 import { PersistGate } from 'redux-persist/integration/react';
 import { getActiveCollection } from '../../../core/storage';
 import { CustomSets } from '../../../core/storage.contracts';
+import { getTrainerIndexBySetSelection } from '../../../trainer-sets';
 import { TrainerSets } from '../../../trainer-sets.data';
 import { useAppDispatch, useAppSelector } from '../../store/hooks';
 import { loadCpuSets, loadPlayerSets, setCpuSet, setPlayerSet } from '../../store/setSlice';
 import { persistor, store } from '../../store/store';
+import { loadTrainerByIndex } from '../../store/trainerSlice';
 import { SetSelector } from './SetSelector';
 
 // Store roots for potential cleanup/updates
@@ -54,6 +56,17 @@ export const CpuSetSelector: React.FC = () => {
   const handleSelectionChange = React.useCallback(
     (newSelection: { species?: string; setName?: string }) => {
       dispatch(setCpuSet(newSelection));
+      
+      // Update trainer index when CPU set changes
+      if (newSelection.species && newSelection.setName) {
+        const trainerIndex = getTrainerIndexBySetSelection({
+          species: newSelection.species,
+          setName: newSelection.setName,
+        });
+        if (trainerIndex >= 0) {
+          dispatch(loadTrainerByIndex(trainerIndex));
+        }
+      }
     },
     [dispatch]
   );

@@ -1,23 +1,47 @@
 import { Pokemon } from "@smogon/calc";
 import { gen } from "./configuration";
-import { TrainerSets } from "./trainer-sets.data";
+import { TrainerNames, TrainerSets } from "./trainer-sets.data";
 import { PokemonSet } from "./trainer-sets.types";
 
-export const OpposingTrainer = (trainerName: keyof ReturnType<typeof initializeTrainerSets>) => initializeTrainerSets()[trainerName];
-let orderedTrainerNames: string[];
+export const OpposingTrainer = (trainerName: TrainerNames) => initializeTrainerSets()[trainerName];
+let orderedTrainerNames: TrainerNames[];
 
-export function getTrainerNameByTrainerIndex(index: number): string {
+export function nextTrainerIndex(currentTrainerIndex: number): number {
+  return currentTrainerIndex === orderedTrainerNames.length - 1 ? currentTrainerIndex : currentTrainerIndex + 1;
+}
+
+export function previousTrainerIndex(currentTrainerIndex: number): number {
+  return currentTrainerIndex === 0 ? 0 : currentTrainerIndex - 1;
+}
+
+export function getTrainerNameByTrainerIndex(index: number): TrainerNames {
   if (!orderedTrainerNames!) {
     initializeTrainerSets();
   }
   return orderedTrainerNames![index];
 }
 
+export function getTrainerNameByPokemonIndex(index: number): TrainerNames {
+  if (!PokemonIndexToTrainerMap.has(index)) {
+    alert(`No trainer found for Pokemon index ${index}`);
+  }
+  return PokemonIndexToTrainerMap.get(index)!;
+}
+
+export function getTrainerIndexBySetSelection(selection: { species: string; setName: string }): number {
+  return orderedTrainerNames.findIndex(name => name === selection.setName);
+}
+
+export function getTrainerNameBySetSelection(selection: { species: string; setName: string }): string {
+  // Implementation for finding trainer name by set selection goes here
+  return getTrainerNameByPokemonIndex((TrainerSets as any)[selection.species][selection.setName].index);
+}
+
 export const PokemonIndexToTrainerMap = (() => {
-  const trainerPokemonIndexMap = new Map<number, string>();
+  const trainerPokemonIndexMap = new Map<number, TrainerNames>();
   for (const [pokemonName, trainerSets] of Object.entries(TrainerSets)) {
     for (const [trainerName, setValue] of Object.entries(trainerSets as { [key: string]: PokemonSet })) {
-      trainerPokemonIndexMap.set(setValue.index, trainerName);
+      trainerPokemonIndexMap.set(setValue.index, trainerName as TrainerNames);
     }
   }
   return trainerPokemonIndexMap;
@@ -32,9 +56,10 @@ function initializeTrainerSets() {
   const trainerNameToMinIndex: Map<string, number> = new Map();
   for (const [pokemonName, trainers] of Object.entries(TrainerSets as { [key: string]: any })) {
     for (const trainerName in trainers) {
+      let normalizedTrainerName = trainerName.trim(); // Multiple pokemon of the same species have trainers like "Bob", "Bob "
       const pokemonSet = trainers[trainerName];
-      if (!trainerNameToMinIndex.has(trainerName) || pokemonSet.index < trainerNameToMinIndex.get(trainerName)!)
-        trainerNameToMinIndex.set(trainerName, pokemonSet.index);
+      if (!trainerNameToMinIndex.has(normalizedTrainerName) || pokemonSet.index < trainerNameToMinIndex.get(normalizedTrainerName)!)
+        trainerNameToMinIndex.set(normalizedTrainerName, pokemonSet.index);
 
       const pokemon = new Pokemon(gen, pokemonName, {
         level: pokemonSet.level,
@@ -44,17 +69,17 @@ function initializeTrainerSets() {
         item: pokemonSet.item,
         ivs: pokemonSet.ivs,
       });
-      if (!trainerBoxes.has(trainerName))
-        trainerBoxes.set(trainerName, new Map());
+      if (!trainerBoxes.has(normalizedTrainerName))
+        trainerBoxes.set(normalizedTrainerName, new Map());
 
-      trainerBoxes.get(trainerName)!.set(pokemonSet.index, pokemon);
+      trainerBoxes.get(normalizedTrainerName)!.set(pokemonSet.index, pokemon);
     }
   }
 
   const orderedTrainers = Array.from(trainerNameToMinIndex.entries())
     .sort((a,b) => a[1] - b[1])
     .map(entry => entry[0]);
-  orderedTrainerNames = orderedTrainers;
+  orderedTrainerNames = orderedTrainers as TrainerNames[];
 
   for (const [trainerName, boxMap] of trainerBoxes.entries()) {
     const sortedPokemons = Array.from(boxMap.entries())
@@ -65,11 +90,4 @@ function initializeTrainerSets() {
 
 
   return trainerParties;
-}
-
-export function getTrainerNameByIndex(index: number): string {
-  if (!PokemonIndexToTrainerMap.has(index)) {
-    alert(`No trainer found for Pokemon index ${index}`);
-  }
-  return PokemonIndexToTrainerMap.get(index)!;
 }

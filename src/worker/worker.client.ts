@@ -1,5 +1,6 @@
 import { Deferred } from "../deferred";
 import { SetCollectionData } from "../extensions/core/storage.contracts";
+import { TrainerNames } from "../extensions/trainer-sets.data";
 import { WorkerMessage, WorkerResponse } from "./worker.api";
 
 // Web Worker API
@@ -34,7 +35,7 @@ function initializeWorker(): void {
     });
 }
 
-export function findPathForParty(trainerName: string, setData: SetCollectionData): Promise<string> {
+export function findPathForParty(trainerName: TrainerNames, setData: SetCollectionData): Promise<string> {
     return sendMessage({ type: 'GET_TRAINER_PATH', payload: {
         trainerName, setCollection: setData
     } });
