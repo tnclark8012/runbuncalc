@@ -54,6 +54,7 @@ function initializeTrainerSets() {
   const orderedTrainers = Array.from(trainerNameToMinIndex.entries())
     .sort((a,b) => a[1] - b[1])
     .map(entry => entry[0]);
+  orderedTrainerNames = orderedTrainers;
 
   for (const [trainerName, boxMap] of trainerBoxes.entries()) {
     const sortedPokemons = Array.from(boxMap.entries())
