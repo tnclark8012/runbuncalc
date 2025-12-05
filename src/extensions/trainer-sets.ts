@@ -29,7 +29,7 @@ export function getTrainerNameByPokemonIndex(index: number): TrainerNames {
 }
 
 export function getTrainerIndexBySetSelection(selection: { species: string; setName: string }): number {
-  return orderedTrainerNames.findIndex(name => name === selection.setName);
+  return orderedTrainerNames.findIndex(name => name === selection.setName.trim());
 }
 
 export function getTrainerNameBySetSelection(selection: { species: string; setName: string }): string {

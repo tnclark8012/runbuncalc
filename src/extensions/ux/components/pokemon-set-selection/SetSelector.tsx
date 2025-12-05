@@ -37,12 +37,16 @@ export const SetSelector: React.FC<SetSelectorProps> = ({
   onSelectionChange,
   showBlankOption = false,
 }) => {
-  // Get display value for selected item
-  const selectedValue = React.useMemo(() => {
+  // Track input value separately from selection for freeform search
+  const [inputValue, setInputValue] = React.useState('');
+
+  // Update input value when selection changes from external source
+  React.useEffect(() => {
     if (selection.species && selection.setName) {
-      return `${selection.species} (${selection.setName})`;
+      setInputValue(`${selection.species} (${selection.setName})`);
+    } else {
+      setInputValue('');
     }
-    return '';
   }, [selection]);
 
   // Handle selection change
@@ -91,7 +95,8 @@ export const SetSelector: React.FC<SetSelectorProps> = ({
     <Combobox
       placeholder="Select a Pokemon set"
       aria-label={label}
-      value={selectedValue}
+      value={inputValue}
+      onInput={(e) => setInputValue(e.currentTarget.value)}
       freeform={true}
       onOptionSelect={handleOptionSelect}
       style={{ width: '300px' }}
