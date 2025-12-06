@@ -2,6 +2,7 @@ import { configureStore } from '@reduxjs/toolkit';
 import { persistReducer, persistStore } from 'redux-persist';
 import moveReducer from './moveSlice';
 import partyReducer from './partySlice';
+import pokemonStateReducer from './pokemonStateSlice';
 import setReducer from './setSlice';
 import syncStorage from './syncStorage';
 import trainerReducer from './trainerSlice';
@@ -30,6 +31,7 @@ export const store = configureStore({
     set: persistedSetReducer,
     party: persistedPartyReducer,
     trainer: persistedTrainerReducer,
+    pokemonState: pokemonStateReducer, // Session-only state, not persisted
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({

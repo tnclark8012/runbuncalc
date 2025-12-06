@@ -1,6 +1,7 @@
 import { Label } from '@fluentui/react-components';
 import * as React from 'react';
 import { CustomSets } from '../../../core/storage.contracts';
+import { parsePokemonId } from '../../party';
 import { PokemonCard } from './PokemonCard';
 
 export interface TrainerPartyProps {
@@ -23,15 +24,6 @@ export interface TrainerPartyProps {
    * Callback when a Pokemon in the party is clicked
    */
   onPokemonClick: (species: string, setName: string) => void;
-}
-
-/**
- * Helper to parse Pokemon ID in format "species (setName)"
- */
-function parsePokemonId(pokemonId: string): { species: string; setName: string } | null {
-  const match = /^(.+) \((.+)\)$/.exec(pokemonId);
-  if (!match) return null;
-  return { species: match[1], setName: match[2] };
 }
 
 /**

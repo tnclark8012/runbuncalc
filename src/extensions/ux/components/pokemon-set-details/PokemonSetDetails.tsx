@@ -7,27 +7,17 @@ import { IVRecord, PokemonSet } from '../../../core/storage.contracts';
 import { applyBoost, convertIVsFromCustomSetToPokemon } from '../../../simulator/utils';
 import { getAllAvailableItems, getPlayerAccessibleItems } from '../../items';
 import { getAbilitiesForPokemon } from '../../pokedex';
+import { PokemonState } from '../../store/pokemonStateSlice';
 import { HPBar } from './HPBar';
 
-/**
- * Runtime state for a Pokemon (boosts, status, current HP, etc.)
- * These are values that change during battle and aren't part of the base set definition
- */
-export interface PokemonState {
+export interface SpeciesSet {
+  species: string;
+  setName: string;
+  set: PokemonSet;
   /**
-   * Current stat boosts (-6 to +6 for each stat)
+   * Current Pokemon state (HP, boosts, status)
    */
-  boosts?: Partial<StatsTable>;
-  
-  /**
-   * Current status condition
-   */
-  status?: StatusName | '';
-  
-  /**
-   * Current HP
-   */
-  currentHp?: number;
+  state?: PokemonState;
 }
 
 export interface PokemonSetDetailsProps {
@@ -39,21 +29,12 @@ export interface PokemonSetDetailsProps {
   /**
    * Species and set data
    */
-  speciesSet?: {
-    species: string;
-    set: PokemonSet;
-  };
+  speciesSet?: SpeciesSet;
 
   /**
-   * Pokemon runtime state (boosts, status, etc.)
-   * If provided, component works in controlled mode
+   * Callback to update Pokemon state
    */
-  pokemonState?: PokemonState;
-
-  /**
-   * Callback when Pokemon state changes (controlled mode)
-   */
-  onStateChange?: (state: PokemonState) => void;
+  onStateChange?: (updates: Partial<PokemonState>) => void;
 
   /**
    * Whether IVs, nature, and level should be readonly
@@ -72,13 +53,10 @@ export interface PokemonSetDetailsProps {
 export const PokemonSetDetails: React.FC<PokemonSetDetailsProps> = ({ 
   label,
   speciesSet,
-  pokemonState,
   onStateChange,
   readonly = false,
   usePlayerItems = true
 }) => {
-  // Determine if we're in controlled mode
-  const isControlled = pokemonState !== undefined && onStateChange !== undefined;
 
   // State for available abilities
   const [availableAbilities, setAvailableAbilities] = React.useState<string[]>([]);
@@ -99,7 +77,10 @@ export const PokemonSetDetails: React.FC<PokemonSetDetailsProps> = ({
       nature: speciesSet.set.nature,
       ivs: convertIVsFromCustomSetToPokemon(speciesSet.set.ivs),
       evs: { atk: 0, def: 0, spa: 0, spd: 0, spe: 0, hp: 0 },
-      moves: speciesSet.set.moves
+      moves: speciesSet.set.moves,
+      curHP: speciesSet.state?.currentHp,
+      status: speciesSet.state?.status,
+      boosts: speciesSet.state?.boosts,
     });
   }, [speciesSet]);
 
@@ -113,36 +94,10 @@ export const PokemonSetDetails: React.FC<PokemonSetDetailsProps> = ({
     sp: 31,
   });
 
-  // Local state for boost values (uncontrolled mode)
-  const [internalBoosts, setInternalBoosts] = React.useState<Partial<StatsTable>>({
-    atk: 0,
-    def: 0,
-    spa: 0,
-    spd: 0,
-    spe: 0,
-  });
-
-  // Local state for status (uncontrolled mode)
-  const [internalStatus, setInternalStatus] = React.useState<StatusName | ''>('');
-
-  // Local state for current HP (uncontrolled mode)
-  const [internalCurrentHp, setInternalCurrentHp] = React.useState<number | undefined>(undefined);
-
-  // Use controlled or uncontrolled state
-  const boosts = isControlled ? (pokemonState.boosts ?? {}) : internalBoosts;
-  const status = isControlled ? (pokemonState.status ?? '') : internalStatus;
-  const currentHp = isControlled ? pokemonState.currentHp : internalCurrentHp;
-
-  // Helper to update state (works in both controlled and uncontrolled mode)
+  // Helper to update state via callback
   const updateState = React.useCallback((updates: Partial<PokemonState>) => {
-    if (isControlled) {
-      onStateChange({ ...pokemonState, ...updates });
-    } else {
-      if (updates.boosts !== undefined) setInternalBoosts(updates.boosts);
-      if (updates.status !== undefined) setInternalStatus(updates.status);
-      if (updates.currentHp !== undefined) setInternalCurrentHp(updates.currentHp);
-    }
-  }, [isControlled, pokemonState, onStateChange]);
+    onStateChange?.(updates);
+  }, [onStateChange]);
 
   // Local state for editable properties
   const [level, setLevel] = React.useState<number>(100);
@@ -256,18 +211,6 @@ export const PokemonSetDetails: React.FC<PokemonSetDetailsProps> = ({
         sp: pokemon.ivs.spe ?? 31,
       });
       
-      // Initialize internal state only if uncontrolled
-      if (!isControlled) {
-        setInternalBoosts({
-          atk: pokemon.boosts.atk ?? 0,
-          def: pokemon.boosts.def ?? 0,
-          spa: pokemon.boosts.spa ?? 0,
-          spd: pokemon.boosts.spd ?? 0,
-          spe: pokemon.boosts.spe ?? 0,
-        });
-        setInternalStatus(pokemon.status);
-      }
-      
       setLevel(pokemon.level);
       setType1(pokemon.types[0]);
       setType2(pokemon.types[1]);
@@ -284,24 +227,13 @@ export const PokemonSetDetails: React.FC<PokemonSetDetailsProps> = ({
         sp: 31,
       });
       
-      if (!isControlled) {
-        setInternalBoosts({
-          atk: 0,
-          def: 0,
-          spa: 0,
-          spd: 0,
-          spe: 0,
-        });
-        setInternalStatus('');
-      }
-      
       setLevel(100);
       setType1('Normal');
       setType2(undefined);
       setSelectedForm('');
       setNature('Hardy');
     }
-  }, [pokemon, speciesSet, isControlled]);
+  }, [pokemon, speciesSet]);
 
   // Handle IV input changes
   const handleIvChange = (stat: keyof IVRecord, value: string) => {
@@ -320,8 +252,8 @@ export const PokemonSetDetails: React.FC<PokemonSetDetailsProps> = ({
     if (!isNaN(numValue) && pokemon) {
       // Apply the boost to the pokemon object
       applyBoost(pokemon.boosts, stat, numValue - (pokemon.boosts[stat] ?? 0));
-      
-      const newBoosts = { ...boosts, [stat]: numValue };
+
+      const newBoosts = { ...pokemon.boosts, [stat]: numValue };
       updateState({ boosts: newBoosts });
     }
   };
@@ -530,8 +462,8 @@ export const PokemonSetDetails: React.FC<PokemonSetDetailsProps> = ({
               <TableCell>
                 {boostKey ? (
                   <Dropdown
-                    value={boosts[boostKey]?.toString() ?? '0'}
-                    selectedOptions={[boosts[boostKey]?.toString() ?? '0']}
+                    value={pokemon!.boosts[boostKey]?.toString() ?? '0'}
+                    selectedOptions={[pokemon!.boosts[boostKey]?.toString() ?? '0']}
                     onOptionSelect={(_, data) => handleBoostChange(boostKey, data.optionValue ?? '0')}
                     style={{ width: '60px', minWidth: '60px' }}
                   >
@@ -623,7 +555,7 @@ export const PokemonSetDetails: React.FC<PokemonSetDetailsProps> = ({
       {/* HP control and health bar */}
       {pokemon && (
         <HPBar
-          currentHp={currentHp ?? pokemon.maxHP()}
+          currentHp={pokemon.curHP() ?? pokemon.maxHP()}
           maxHp={pokemon.maxHP()}
           onHpChange={handleHpChange}
           disabled={!pokemon}

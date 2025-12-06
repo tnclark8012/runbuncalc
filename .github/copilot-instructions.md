@@ -2,3 +2,9 @@ This repository is for building a battle simulator for the game Pokemon Run & Bu
 
 ## React components
 Generally, logical components should go in their own subfolder. It may be reasonable to break one large functional component into a few smaller ones in the same folder. Each component should have its own folder with the component code, props definition, etc. Generally, components should be presentational and not directly interact with the Redux store. Instead, use container components or hooks to connect to the store.
+
+## Sandbox App
+The ultimate goal of this app is to allow a user to simulat a battle between them and the CPU trainers, and plan a path to victory. Because of RNG, and freedom of choice by the player, there are many possible outcomes for turns of a battle. path-finder.ts's `findPlayerWinningPath` and the `BattleFieldState` class are central to helping navigate this. `findPlayerWinningPath` allows you to play out a full battle sequence and find a path with minimal risk. However, these full simulations are slow, sometimes impossibly so given the variance. While complete hands-free "solving" of a battle is ideal, it's not practical or necessary. We want to facilitate the user's ability to plan themselves. 
+
+## Planning the battle
+`PlannedPlayerActionProvider` is a context that provides a way to plan the player's actions for a battle. It allows the user to input their desired actions and see the potential outcomes. The sandbox app will eventually allow user to load a BattleFieldState, select their action, and save it, to see what the next possible BattleFieldStates are. The sequence can continue, and after a few key turns, the app can simulate the rest of the battle to see if the player can win. As such, the Sandbox App will eventually have to allow tracking of PokemonStatus for pokemon that are not the active one.

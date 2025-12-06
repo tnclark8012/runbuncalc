@@ -8,8 +8,10 @@ import * as React from 'react';
 import { useSelector } from 'react-redux';
 import { getPokemonId } from '../../../core/storage';
 import { getTrainerNameByTrainerIndex, OpposingTrainer } from '../../../trainer-sets';
+import { parsePokemonId } from '../../party';
 import { useAppDispatch } from '../../store/hooks';
 import { demoteToBox, promoteToParty } from '../../store/partySlice';
+import { clearCpuStates } from '../../store/pokemonStateSlice';
 import { setCpuSet, setPlayerSet } from '../../store/setSlice';
 import { RootState } from '../../store/store';
 import { loadTrainerByIndex } from '../../store/trainerSlice';
@@ -26,8 +28,8 @@ export const PlayerPartyManager: React.FC = () => {
 
   // Get current selected Pokemon ID
   const selectedPokemonId = React.useMemo(() => {
-    if (selection.species && selection.setName) {
-      return getPokemonId(selection.species, selection.setName);
+    if (selection!.species && selection!.setName) {
+      return getPokemonId(selection!.species, selection!.setName);
     }
     return undefined;
   }, [selection]);
@@ -113,8 +115,8 @@ export const CpuPartyManager: React.FC = () => {
   }, [availableSets, currentTrainerIndex]);
 
   const selectedPokemonId = React.useMemo(() => {
-    if (selection.species && selection.setName) {
-      return getPokemonId(selection.species, selection.setName);
+    if (selection!.species && selection!.setName) {
+      return getPokemonId(selection!.species, selection!.setName);
     }
     return undefined;
   }, [selection]);
@@ -133,13 +135,15 @@ export const CpuPartyManager: React.FC = () => {
       const trainerName = getTrainerNameByTrainerIndex(currentTrainerIndex);
       
       // Parse the Pokemon ID to get species
-      const match = /^(.+) \((.+)\)$/.exec(firstPokemonId);
-      if (match) {
-        const species = match[1];
-        dispatch(setCpuSet({ species, setName: trainerName }));
-      }
+      const { species } = parsePokemonId(firstPokemonId)!;
+      dispatch(setCpuSet({ species, setName: trainerName }));
     }
   }, [currentTrainerIndex, cpuParty, dispatch]);
+
+  // Clear CPU Pokemon states when trainer changes
+  React.useEffect(() => {
+    dispatch(clearCpuStates());
+  }, [currentTrainerIndex, dispatch]);
 
   const handlePreviousTrainer = React.useCallback(() => {
     if (currentTrainerIndex > 0) {
@@ -196,8 +200,8 @@ export const PlayerBoxManager: React.FC = () => {
   const { selection, availableSets } = useSelector((state: RootState) => state.set.player);
 
   const selectedPokemonId = React.useMemo(() => {
-    if (selection.species && selection.setName) {
-      return getPokemonId(selection.species, selection.setName);
+    if (selection!.species && selection!.setName) {
+      return getPokemonId(selection!.species, selection!.setName);
     }
     return undefined;
   }, [selection]);

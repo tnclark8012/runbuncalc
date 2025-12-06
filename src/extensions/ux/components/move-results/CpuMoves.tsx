@@ -12,12 +12,12 @@ export const CpuMoves: React.FC = () => {
   const { selection, availableSets } = useSelector((state: RootState) => state.set.cpu);
   
   const moves = React.useMemo((): MoveItem[] => {
-    if (!selection.species || !selection.setName) return [];
-    
-    const pokemonSets = availableSets[selection.species];
+    if (!selection!.species || !selection!.setName) return [];
+
+    const pokemonSets = availableSets[selection!.species];
     if (!pokemonSets) return [];
     
-    const set = pokemonSets[selection.setName];
+    const set = pokemonSets[selection!.setName];
     if (!set?.moves) return [];
     
     return set.moves.map((moveName, index) => ({
@@ -29,9 +29,9 @@ export const CpuMoves: React.FC = () => {
       defaultChecked: index === 0,
     }));
   }, [selection, availableSets]);
-  
-  const headerText = selection.species 
-    ? `${selection.species}'s Moves`
+
+  const headerText = selection!.species
+    ? `${selection!.species}'s Moves`
     : 'No Pokemon Selected';
   
   return (
