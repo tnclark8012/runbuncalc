@@ -26,9 +26,12 @@ export const CpuMoves: React.FC = () => {
             const hits = moveResult.move.move.hits;
             const damageRange = { min: moveResult.move.lowestRollPerHitDamage * hits, max: moveResult.move.highestRollPerHitDamage * hits };
             const damagePctRange = { min: moveResult.move.lowestRollPerHitHpPercentage * hits, max: moveResult.move.highestRollPerHitHpPercentage * hits };
+            const probability = (action.probability * 100).toFixed(0);
+            const label = `${probability}% ${moveResult.move.move.name}`;
             moveItems.push({
               id: `cpuMove${i}`,
               name: moveResult.move.move.name,
+              label: label,
               damageRange: `${damageRange.min.toFixed(1)} - ${damageRange.max.toFixed(1)}`,
               damagePercent: `${damagePctRange.min.toFixed(1)}% - ${damagePctRange.max.toFixed(1)}%`,
               position,
