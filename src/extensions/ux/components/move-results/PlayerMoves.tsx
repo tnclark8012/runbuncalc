@@ -32,8 +32,8 @@ export const PlayerMoves: React.FC = () => {
     }));
   }, [battleFieldState]);
   
-  const headerText = selection!.species 
-    ? `${selection!.species}'s Moves`
+  const headerText = selection?.species 
+    ? `${selection.species}'s Moves`
     : 'No Pokemon Selected';
   
   return (

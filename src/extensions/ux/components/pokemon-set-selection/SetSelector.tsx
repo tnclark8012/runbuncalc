@@ -63,15 +63,53 @@ export const SetSelector: React.FC<SetSelectorProps> = ({
     [onSelectionChange]
   );
 
+  // Filter options based on search input
+  const getFilteredOptions = React.useCallback(() => {
+    const searchTerm = inputValue.toLowerCase().trim();
+    
+    if (!searchTerm) {
+      return availableSets;
+    }
+
+    const filtered: CustomSets = {};
+    
+    Object.keys(availableSets).forEach((species) => {
+      const speciesLower = species.toLowerCase();
+      const sets = availableSets[species];
+      
+      // Check if species name matches
+      if (speciesLower.includes(searchTerm)) {
+        filtered[species] = sets;
+        return;
+      }
+      
+      // Check if any trainer name matches
+      const matchingSets: typeof sets = {};
+      Object.keys(sets).forEach((setName) => {
+        if (setName.toLowerCase().includes(searchTerm)) {
+          matchingSets[setName] = sets[setName];
+        }
+      });
+      
+      if (Object.keys(matchingSets).length > 0) {
+        filtered[species] = matchingSets;
+      }
+    });
+    
+    return filtered;
+  }, [inputValue, availableSets]);
+
   // Render options grouped by species
   const renderOptions = () => {
-    return Object.keys(availableSets)
+    const filteredSets = getFilteredOptions();
+    
+    return Object.keys(filteredSets)
       .sort()
       .map((species) => {
-        const sets = availableSets[species];
+        const sets = filteredSets[species];
         const setNames = Object.keys(sets).sort();
         
-        if (showBlankOption) {
+        if (showBlankOption && !inputValue) {
           setNames.push('Blank Set');
         }
 
