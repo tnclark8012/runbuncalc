@@ -28,7 +28,18 @@ export interface SetSelectorProps {
 
 /**
  * SetSelector component - renders a combobox for selecting Pokemon sets
- * with species as group headers and set names as selectable options
+ * with species as group headers and set names as selectable options.
+ * 
+ * Features:
+ * - Search by Pokemon species name OR trainer name
+ * - Case-insensitive filtering
+ * - Freeform input for quick searching
+ * 
+ * Performance Note:
+ * FluentUI v9 Combobox doesn't have built-in virtualization support.
+ * However, the search/filter functionality significantly reduces the number
+ * of rendered options, providing good performance even with thousands of items.
+ * When the user types, only matching items are rendered.
  */
 export const SetSelector: React.FC<SetSelectorProps> = ({ 
   label,
