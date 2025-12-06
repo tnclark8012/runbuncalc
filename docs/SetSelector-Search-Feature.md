@@ -92,3 +92,6 @@ State persisted via Redux Persist
 - Fuzzy matching for typos
 - Highlighting of matched text in results
 - Recent selections / favorites
+- Debouncing search input for very large datasets (>10,000 items)
+- Memoization of filtered results to optimize rapid typing
+- Use `Object.entries()` instead of `Object.keys().forEach()` for iteration performance
