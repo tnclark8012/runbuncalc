@@ -2,6 +2,7 @@ import { Combobox, ComboboxProps, Option, OptionGroup, OptionOnSelectData, Selec
 import * as React from 'react';
 import { CustomSets } from '../../../core/storage.contracts';
 import { SetSelection } from '../../store/setSlice';
+import { filterSetsBySearch } from './SetSelector.utils';
 
 export interface SetSelectorProps {
   /**
@@ -76,43 +77,13 @@ export const SetSelector: React.FC<SetSelectorProps> = ({
 
   // Filter options based on search input
   const getFilteredOptions = React.useCallback(() => {
-    const searchTerm = inputValue.toLowerCase().trim();
-    
-    if (!searchTerm) {
-      return availableSets;
-    }
-
-    const filtered: CustomSets = {};
-    
-    Object.keys(availableSets).forEach((species) => {
-      const speciesLower = species.toLowerCase();
-      const sets = availableSets[species];
-      
-      // Check if species name matches
-      if (speciesLower.includes(searchTerm)) {
-        filtered[species] = sets;
-        return;
-      }
-      
-      // Check if any trainer name matches
-      const matchingSets: typeof sets = {};
-      Object.keys(sets).forEach((setName) => {
-        if (setName.toLowerCase().includes(searchTerm)) {
-          matchingSets[setName] = sets[setName];
-        }
-      });
-      
-      if (Object.keys(matchingSets).length > 0) {
-        filtered[species] = matchingSets;
-      }
-    });
-    
-    return filtered;
+    return filterSetsBySearch(availableSets, inputValue);
   }, [inputValue, availableSets]);
 
   // Render options grouped by species
   const renderOptions = () => {
     const filteredSets = getFilteredOptions();
+    const searchTerm = inputValue.trim();
     
     return Object.keys(filteredSets)
       .sort()
@@ -120,7 +91,8 @@ export const SetSelector: React.FC<SetSelectorProps> = ({
         const sets = filteredSets[species];
         const setNames = Object.keys(sets).sort();
         
-        if (showBlankOption && !inputValue) {
+        // Only show blank option when search is empty (after trimming)
+        if (showBlankOption && !searchTerm) {
           setNames.push('Blank Set');
         }
 

@@ -3,6 +3,7 @@
  */
 
 import { CustomSets } from '../../../core/storage.contracts';
+import { filterSetsBySearch } from './SetSelector.utils';
 
 describe('SetSelector Search Functionality', () => {
   // Sample test data that mimics the structure of TrainerSets
@@ -93,6 +94,14 @@ describe('SetSelector Search Functionality', () => {
     expect(filtered).toEqual(sampleSets);
   });
 
+  it('should return all sets when search is only whitespace', () => {
+    const searchTerm = '   ';
+    const filtered = filterSetsBySearch(sampleSets, searchTerm);
+    
+    expect(Object.keys(filtered).length).toBe(3);
+    expect(filtered).toEqual(sampleSets);
+  });
+
   it('should return multiple Pokemon if trainer name matches across species', () => {
     const searchTerm = 'trainer';
     const filtered = filterSetsBySearch(sampleSets, searchTerm);
@@ -118,42 +127,3 @@ describe('SetSelector Search Functionality', () => {
     expect(Object.keys(filtered).length).toBe(0);
   });
 });
-
-/**
- * Helper function that implements the same filtering logic as the SetSelector component
- * This is extracted for testing purposes
- */
-function filterSetsBySearch(availableSets: CustomSets, inputValue: string): CustomSets {
-  const searchTerm = inputValue.toLowerCase().trim();
-  
-  if (!searchTerm) {
-    return availableSets;
-  }
-
-  const filtered: CustomSets = {};
-  
-  Object.keys(availableSets).forEach((species) => {
-    const speciesLower = species.toLowerCase();
-    const sets = availableSets[species];
-    
-    // Check if species name matches
-    if (speciesLower.includes(searchTerm)) {
-      filtered[species] = sets;
-      return;
-    }
-    
-    // Check if any trainer name matches
-    const matchingSets: typeof sets = {};
-    Object.keys(sets).forEach((setName) => {
-      if (setName.toLowerCase().includes(searchTerm)) {
-        matchingSets[setName] = sets[setName];
-      }
-    });
-    
-    if (Object.keys(matchingSets).length > 0) {
-      filtered[species] = matchingSets;
-    }
-  });
-  
-  return filtered;
-}
