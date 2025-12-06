@@ -48,6 +48,12 @@ export interface MoveItem {
   name: string;
 
   /**
+   * Optional custom label (overrides default formatting)
+   * Used for CPU moves to include probability
+   */
+  label?: string;
+
+  /**
    * Damage percentage range (e.g., "259 - 306")
    */
   damageRange: string;

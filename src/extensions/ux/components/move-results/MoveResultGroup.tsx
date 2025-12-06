@@ -1,12 +1,10 @@
-import { Label } from '@fluentui/react-components';
+import { Label, Radio, RadioGroup } from '@fluentui/react-components';
 import * as React from 'react';
 import { MoveItem, MoveResultGroupProps } from './move-result-group.props';
 
 /**
  * MoveResultGroup component - renders a radio group containing each move 
  * and the damage% range it can do to the opponent.
- * 
- * This component preserves the original HTML structure while using React and Fluent UI.
  */
 export const MoveResultGroup: React.FC<MoveResultGroupProps> = ({
 	headerId,
@@ -32,7 +30,8 @@ export const MoveResultGroup: React.FC<MoveResultGroupProps> = ({
 	const currentSelectedId = selectedMoveId !== undefined ? selectedMoveId : internalSelectedId;
 
 	// Update selected move when selection changes
-	const handleMoveChange = React.useCallback((moveId: string) => {
+	const handleMoveChange = React.useCallback((_ev: React.FormEvent<HTMLDivElement>, data: { value: string }) => {
+		const moveId = data.value;
 		// Update internal state only if uncontrolled
 		if (selectedMoveId === undefined) {
 			setInternalSelectedId(moveId);
@@ -43,42 +42,31 @@ export const MoveResultGroup: React.FC<MoveResultGroupProps> = ({
 		}
 	}, [selectedMoveId, onMoveSelect]);
 
-	// Extract the suffix from the move ID for the damage span ID (e.g., "L1" from "resultMoveL1")
-	const getDamageId = (moveId: string): string => {
-		return `resultDamage${moveId.replace('resultMove', '')}`;
-	};
-
 	return (
-		<div 
-			className="move-result-subgroup" 
-			role="radiogroup" 
-			aria-labelledby={headerId}
-		>
+		<div className="move-result-subgroup">
 			<div className="result-move-header">
 				<Label id={headerId}>{headerText}</Label>
 			</div>
-			{moves.map((move: MoveItem) => (
-				<div key={move.id}>
-					<input 
-						className="result-move visually-hidden" 
-						type="radio" 
-						name={radioGroupName} 
-						id={move.id}
-						checked={currentSelectedId === move.id}
-						onChange={() => handleMoveChange(move.id)}
-						aria-describedby={getDamageId(move.id)}
+			<RadioGroup
+				name={radioGroupName}
+				value={currentSelectedId}
+				onChange={handleMoveChange}
+				aria-labelledby={headerId}
+			>
+				{moves.map((move: MoveItem) => (
+					<Radio
+						key={move.id}
+						value={move.id}
+						disabled={move.name === 'No move'}
+						label={
+							<div style={{ display: 'flex', justifyContent: 'space-between', width: '100%' }}>
+								<span>{move.label || move.name}</span>
+								<span style={{ marginLeft: '1rem' }}>{move.damagePercent}</span>
+							</div>
+						}
 					/>
-					<label 
-						className={`btn btn-xxxwide btn-${move.position}`} 
-						htmlFor={move.id}
-					>
-						{move.name}
-					</label>
-					<span id={getDamageId(move.id)}>
-						{move.damagePercent}
-					</span>
-				</div>
-			))}
+				))}
+			</RadioGroup>
 		</div>
 	);
 };
