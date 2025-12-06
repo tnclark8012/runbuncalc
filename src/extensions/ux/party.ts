@@ -57,6 +57,15 @@ export function initializeImportExportControls(): void {
 	});
 }
 
+/**
+ * Helper to parse Pokemon ID in format "species (setName)"
+ */
+export function parsePokemonId(pokemonId: string): { species: string; setName: string } | null {
+	const match = /^(.+) \((.+)\)$/.exec(pokemonId);
+	if (!match) return null;
+	return { species: match[1], setName: match[2] };
+}
+
 export function getCurrentPokemonId(): string {
 	let selectedDropdownForPlayer = $('.player').val() as string;
 	// const match = /^(.*) (\(.*\))$/.exec(selectedDropdownForPlayer)!;

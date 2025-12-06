@@ -29,7 +29,7 @@ export const PlayerSetSelector: React.FC = () => {
   const { selection, availableSets } = useAppSelector((state) => state.set.player);
 
   const handleSelectionChange = React.useCallback(
-    (newSelection: { species?: string; setName?: string }) => {
+    (newSelection: { species: string; setName: string }) => {
       dispatch(setPlayerSet(newSelection));
     },
     [dispatch]
@@ -38,7 +38,7 @@ export const PlayerSetSelector: React.FC = () => {
   return (
     <SetSelector
       label="Player Set"
-      selection={selection}
+      selection={selection!}
       availableSets={availableSets}
       onSelectionChange={handleSelectionChange}
       showBlankOption={true}
@@ -54,7 +54,7 @@ export const CpuSetSelector: React.FC = () => {
   const { selection, availableSets } = useAppSelector((state) => state.set.cpu);
 
   const handleSelectionChange = React.useCallback(
-    (newSelection: { species?: string; setName?: string }) => {
+    (newSelection: { species: string; setName: string }) => {
       dispatch(setCpuSet(newSelection));
       
       // Update trainer index when CPU set changes
@@ -74,7 +74,7 @@ export const CpuSetSelector: React.FC = () => {
   return (
     <SetSelector
       label="CPU Set"
-      selection={selection}
+      selection={selection!}
       availableSets={availableSets}
       onSelectionChange={handleSelectionChange}
       showBlankOption={false}

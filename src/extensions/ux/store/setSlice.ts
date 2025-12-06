@@ -18,8 +18,8 @@ export interface StatsTable {
  * Selection state for a single side (player or CPU)
  */
 export interface SetSelection {
-  species?: string;
-  setName?: string;
+  species: string;
+  setName: string;
 }
 
 /**
@@ -27,22 +27,22 @@ export interface SetSelection {
  */
 export interface SetState {
   player: {
-    selection: SetSelection;
+    selection?: SetSelection;
     availableSets: CustomSets;
   };
   cpu: {
-    selection: SetSelection;
+    selection?: SetSelection;
     availableSets: CustomSets;
   };
 }
 
 const initialState: SetState = {
   player: {
-    selection: {},
+    selection: undefined,
     availableSets: {},
   },
   cpu: {
-    selection: {},
+    selection: undefined,
     availableSets: {},
   },
 };
@@ -61,10 +61,10 @@ export const setSlice = createSlice({
       state.cpu.selection = action.payload;
     },
     clearPlayerSet: (state) => {
-      state.player.selection = {};
+      state.player.selection = undefined;
     },
     clearCpuSet: (state) => {
-      state.cpu.selection = {};
+      state.cpu.selection = undefined;
     },
     loadPlayerSets: (state, action: PayloadAction<CustomSets>) => {
       state.player.availableSets = action.payload;

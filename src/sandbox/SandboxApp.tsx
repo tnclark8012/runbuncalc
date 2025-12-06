@@ -9,6 +9,7 @@ import { PersistGate } from 'redux-persist/integration/react';
 import { getActiveCollection, getParty } from '../extensions/core/storage';
 import { CustomSets } from '../extensions/core/storage.contracts';
 import { TrainerSets } from '../extensions/trainer-sets.data';
+import { CaptureBattleState } from '../extensions/ux/components/CaptureBattleState';
 import { initializeDeveloperTools } from '../extensions/ux/components/developer-tools-usage';
 import { CpuMoves } from '../extensions/ux/components/move-results/CpuMoves';
 import { PlayerMoves } from '../extensions/ux/components/move-results/PlayerMoves';
@@ -87,6 +88,7 @@ export const SandboxApp: React.FC = () => {
               <CpuPartyManager />
             </div>
           </div>
+          <CaptureBattleState />
           <div className="move-result-groups">
             <div className="move-result-subgroup" aria-labelledby="resultHeaderL"></div>
             <div className="move-result-subgroup" aria-labelledby="resultHeaderR"></div>
