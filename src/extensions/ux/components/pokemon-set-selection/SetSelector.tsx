@@ -2,6 +2,7 @@ import { Combobox, ComboboxProps, Option, OptionGroup, OptionOnSelectData, Selec
 import * as React from 'react';
 import { CustomSets } from '../../../core/storage.contracts';
 import { SetSelection } from '../../store/setSlice';
+import { filterSetsBySearch } from './SetSelector.utils';
 
 export interface SetSelectorProps {
   /**
@@ -28,7 +29,18 @@ export interface SetSelectorProps {
 
 /**
  * SetSelector component - renders a combobox for selecting Pokemon sets
- * with species as group headers and set names as selectable options
+ * with species as group headers and set names as selectable options.
+ * 
+ * Features:
+ * - Search by Pokemon species name OR trainer name
+ * - Case-insensitive filtering
+ * - Freeform input for quick searching
+ * 
+ * Performance Note:
+ * FluentUI v9 Combobox doesn't have built-in virtualization support.
+ * However, the search/filter functionality significantly reduces the number
+ * of rendered options, providing good performance even with thousands of items.
+ * When the user types, only matching items are rendered.
  */
 export const SetSelector: React.FC<SetSelectorProps> = ({ 
   label,
@@ -63,15 +75,24 @@ export const SetSelector: React.FC<SetSelectorProps> = ({
     [onSelectionChange]
   );
 
+  // Filter options based on search input
+  const getFilteredOptions = React.useCallback(() => {
+    return filterSetsBySearch(availableSets, inputValue);
+  }, [inputValue, availableSets]);
+
   // Render options grouped by species
   const renderOptions = () => {
-    return Object.keys(availableSets)
+    const filteredSets = getFilteredOptions();
+    const searchTerm = inputValue.trim();
+    
+    return Object.keys(filteredSets)
       .sort()
       .map((species) => {
-        const sets = availableSets[species];
+        const sets = filteredSets[species];
         const setNames = Object.keys(sets).sort();
         
-        if (showBlankOption) {
+        // Only show blank option when search is empty (after trimming)
+        if (showBlankOption && !searchTerm) {
           setNames.push('Blank Set');
         }
 
