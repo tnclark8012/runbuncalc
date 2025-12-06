@@ -1,6 +1,6 @@
 import { findPathForParty } from "../../worker/worker.client";
-import { addToParty, getActiveSets, getParty, removeFromParty, saveActiveSets, getPokemonId, getActiveCollectionName, getSetCollection, saveSetCollection, getActiveCollection } from "../core/storage";
-import { getTrainerNameByIndex } from "../trainer-sets";
+import { addToParty, getActiveCollection, getActiveSets, getParty, getSetCollection, removeFromParty, saveActiveSets, saveSetCollection } from "../core/storage";
+import { getTrainerNameByPokemonIndex } from "../trainer-sets";
 
 export function initializePartyControls(): void {
 	document.querySelector('#trash-pok')?.addEventListener('click', trashPokemon);
@@ -23,7 +23,7 @@ export function initializePartyControls(): void {
 		const outputElement = document.querySelector<HTMLTextAreaElement>('textarea.import-team-text')!;
 		outputElement.value = "Checking...";
 		try {
-			const path = await findPathForParty(getTrainerNameByIndex(nextTrainerId - 1), getActiveCollection());
+			const path = await findPathForParty(getTrainerNameByPokemonIndex(nextTrainerId - 1), getActiveCollection());
 			outputElement.value = `${path}`;
 		} catch (error) {
 			outputElement.value = `Error: ${error}`;

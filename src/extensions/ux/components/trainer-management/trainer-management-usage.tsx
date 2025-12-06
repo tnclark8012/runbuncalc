@@ -3,14 +3,16 @@
  */
 
 import { Button } from '@fluentui/react-components';
-import { Add20Regular, Subtract20Regular } from '@fluentui/react-icons';
+import { Add20Regular, ChevronLeft20Regular, ChevronRight20Regular, Subtract20Regular } from '@fluentui/react-icons';
 import * as React from 'react';
 import { useSelector } from 'react-redux';
 import { getPokemonId } from '../../../core/storage';
+import { getTrainerNameByTrainerIndex, OpposingTrainer } from '../../../trainer-sets';
 import { useAppDispatch } from '../../store/hooks';
 import { demoteToBox, promoteToParty } from '../../store/partySlice';
 import { setCpuSet, setPlayerSet } from '../../store/setSlice';
 import { RootState } from '../../store/store';
+import { loadTrainerByIndex } from '../../store/trainerSlice';
 import { TrainerBox } from './TrainerBox';
 import { TrainerParty } from './TrainerParty';
 
@@ -96,23 +98,19 @@ export const PlayerPartyManager: React.FC = () => {
 };
 
 /**
- * CpuPartyManager - displays CPU trainer's party (read-only, no box)
+ * CpuPartyManager - displays CPU trainer's party with navigation buttons
  */
 export const CpuPartyManager: React.FC = () => {
   const dispatch = useAppDispatch();
   const { selection, availableSets } = useSelector((state: RootState) => state.set.cpu);
+  const { currentTrainerIndex } = useSelector((state: RootState) => state.trainer);
 
-  // Build party from all CPU trainer's Pokemon
+  // Build party from current trainer's Pokemon
   const cpuParty = React.useMemo(() => {
-    const party: string[] = [];
-    // for (const species in availableSets) {
-    //   const sets = availableSets[species];
-    //   for (const setName in sets) {
-    //     party.push(getPokemonId(species, setName));
-    //   }
-    // }
-    return party;
-  }, [availableSets]);
+    const trainerName = getTrainerNameByTrainerIndex(currentTrainerIndex);
+    const trainerParty = OpposingTrainer(trainerName);
+    return trainerParty.map(p => getPokemonId(p.species.name, trainerName));
+  }, [availableSets, currentTrainerIndex]);
 
   const selectedPokemonId = React.useMemo(() => {
     if (selection.species && selection.setName) {
@@ -128,13 +126,64 @@ export const CpuPartyManager: React.FC = () => {
     [dispatch]
   );
 
+  // Auto-select first Pokemon when trainer changes
+  React.useEffect(() => {
+    if (cpuParty.length > 0) {
+      const firstPokemonId = cpuParty[0];
+      const trainerName = getTrainerNameByTrainerIndex(currentTrainerIndex);
+      
+      // Parse the Pokemon ID to get species
+      const match = /^(.+) \((.+)\)$/.exec(firstPokemonId);
+      if (match) {
+        const species = match[1];
+        dispatch(setCpuSet({ species, setName: trainerName }));
+      }
+    }
+  }, [currentTrainerIndex, cpuParty, dispatch]);
+
+  const handlePreviousTrainer = React.useCallback(() => {
+    if (currentTrainerIndex > 0) {
+      dispatch(loadTrainerByIndex(currentTrainerIndex - 1));
+    }
+  }, [dispatch, currentTrainerIndex]);
+
+  const handleNextTrainer = React.useCallback(() => {
+    dispatch(loadTrainerByIndex(currentTrainerIndex + 1));
+  }, [dispatch, currentTrainerIndex]);
+
+  const buttonContainerStyle: React.CSSProperties = {
+    display: 'flex',
+    gap: '8px',
+    marginTop: '8px',
+    justifyContent: 'center',
+  };
+
   return (
-    <TrainerParty
-      party={cpuParty}
-      availableSets={availableSets}
-      selectedPokemonId={selectedPokemonId}
-      onPokemonClick={handlePokemonClick}
-    />
+    <div>
+      <TrainerParty
+        party={cpuParty}
+        availableSets={availableSets}
+        selectedPokemonId={selectedPokemonId}
+        onPokemonClick={handlePokemonClick}
+      />
+      <div style={buttonContainerStyle}>
+        <Button
+          appearance="secondary"
+          icon={<ChevronLeft20Regular />}
+          onClick={handlePreviousTrainer}
+          disabled={currentTrainerIndex === 0}
+        >
+          Previous Trainer
+        </Button>
+        <Button
+          appearance="secondary"
+          icon={<ChevronRight20Regular />}
+          onClick={handleNextTrainer}
+        >
+          Next Trainer
+        </Button>
+      </div>
+    </div>
   );
 };
 

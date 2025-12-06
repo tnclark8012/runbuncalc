@@ -1,11 +1,12 @@
 import { Field, Pokemon } from "@smogon/calc";
-import type { SetCollectionData } from "../core/storage.contracts";
-import { BattleFieldState, CpuTrainer, PlayerTrainer } from "./moveScoring.contracts";
 import { gen } from "../configuration";
+import type { SetCollectionData } from "../core/storage.contracts";
 import { OpposingTrainer } from "../trainer-sets";
+import { TrainerNames } from "../trainer-sets.data";
+import { BattleFieldState, CpuTrainer, PlayerTrainer } from "./moveScoring.contracts";
 
 export class BattleFieldStateBuilder {
-    public static buildTrainerBattle(player: SetCollectionData, cpu: string): BattleFieldState {
+    public static buildTrainerBattle(player: SetCollectionData, cpu: TrainerNames): BattleFieldState {
         const playerPokes = player.party.map(pokemonId => 
             {
                 const name = pokemonId.split(' (')[0];

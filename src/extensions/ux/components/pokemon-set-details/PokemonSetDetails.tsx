@@ -7,6 +7,7 @@ import { IVRecord, PokemonSet } from '../../../core/storage.contracts';
 import { applyBoost, convertIVsFromCustomSetToPokemon } from '../../../simulator/utils';
 import { getAllAvailableItems, getPlayerAccessibleItems } from '../../items';
 import { getAbilitiesForPokemon } from '../../pokedex';
+import { HPBar } from './HPBar';
 
 /**
  * Runtime state for a Pokemon (boosts, status, current HP, etc.)
@@ -24,9 +25,9 @@ export interface PokemonState {
   status?: StatusName | '';
   
   /**
-   * Current HP percentage (0-100)
+   * Current HP
    */
-  currentHpPercent?: number;
+  currentHp?: number;
 }
 
 export interface PokemonSetDetailsProps {
@@ -124,9 +125,13 @@ export const PokemonSetDetails: React.FC<PokemonSetDetailsProps> = ({
   // Local state for status (uncontrolled mode)
   const [internalStatus, setInternalStatus] = React.useState<StatusName | ''>('');
 
+  // Local state for current HP (uncontrolled mode)
+  const [internalCurrentHp, setInternalCurrentHp] = React.useState<number | undefined>(undefined);
+
   // Use controlled or uncontrolled state
   const boosts = isControlled ? (pokemonState.boosts ?? {}) : internalBoosts;
   const status = isControlled ? (pokemonState.status ?? '') : internalStatus;
+  const currentHp = isControlled ? pokemonState.currentHp : internalCurrentHp;
 
   // Helper to update state (works in both controlled and uncontrolled mode)
   const updateState = React.useCallback((updates: Partial<PokemonState>) => {
@@ -135,6 +140,7 @@ export const PokemonSetDetails: React.FC<PokemonSetDetailsProps> = ({
     } else {
       if (updates.boosts !== undefined) setInternalBoosts(updates.boosts);
       if (updates.status !== undefined) setInternalStatus(updates.status);
+      if (updates.currentHp !== undefined) setInternalCurrentHp(updates.currentHp);
     }
   }, [isControlled, pokemonState, onStateChange]);
 
@@ -402,6 +408,11 @@ export const PokemonSetDetails: React.FC<PokemonSetDetailsProps> = ({
     }
   };
 
+  // Handle HP change
+  const handleHpChange = React.useCallback((newHp: number) => {
+    updateState({ currentHp: newHp });
+  }, [updateState]);
+
   // Get available forms
   const availableForms = React.useMemo(() => {
     if (!pokemon?.species.otherFormes) return [];
@@ -564,7 +575,7 @@ export const PokemonSetDetails: React.FC<PokemonSetDetailsProps> = ({
           value={selectedAbility}
           selectedOptions={[selectedAbility]}
           onOptionSelect={handleAbilityChange}
-          disabled={availableAbilities.length === 0}
+          disabled={readonly || availableAbilities.length === 0}
           style={{ width: '250px' }}
         >
           {availableAbilities.map((ability) => (
@@ -608,6 +619,16 @@ export const PokemonSetDetails: React.FC<PokemonSetDetailsProps> = ({
           ))}
         </Dropdown>
       </div>
+
+      {/* HP control and health bar */}
+      {pokemon && (
+        <HPBar
+          currentHp={currentHp ?? pokemon.maxHP()}
+          maxHp={pokemon.maxHP()}
+          onHpChange={handleHpChange}
+          disabled={!pokemon}
+        />
+      )}
     </div>
   );
 };

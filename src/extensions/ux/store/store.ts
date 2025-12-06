@@ -4,6 +4,7 @@ import moveReducer from './moveSlice';
 import partyReducer from './partySlice';
 import setReducer from './setSlice';
 import syncStorage from './syncStorage';
+import trainerReducer from './trainerSlice';
 
 /**
  * Redux persist configuration
@@ -18,6 +19,7 @@ const persistConfig = {
 const persistedMoveReducer = persistReducer(persistConfig, moveReducer);
 const persistedSetReducer = persistReducer({ ...persistConfig, key: 'set' }, setReducer);
 const persistedPartyReducer = persistReducer({ ...persistConfig, key: 'party' }, partyReducer);
+const persistedTrainerReducer = persistReducer({ ...persistConfig, key: 'trainer' }, trainerReducer);
 
 /**
  * Configure the Redux store with persistence
@@ -27,6 +29,7 @@ export const store = configureStore({
     move: persistedMoveReducer,
     set: persistedSetReducer,
     party: persistedPartyReducer,
+    trainer: persistedTrainerReducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({

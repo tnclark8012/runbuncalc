@@ -1,10 +1,11 @@
 import { SetCollectionData } from "../extensions/core/storage.contracts";
+import { TrainerNames } from "../extensions/trainer-sets.data";
 
 export type WorkerRequest = GetTrainerPathRequest;
 export interface GetTrainerPathRequest extends WorkerRequestBase {
     type: 'GET_TRAINER_PATH';
     payload: {
-        trainerName: string;
+        trainerName: TrainerNames;
         setCollection: SetCollectionData;
     }
 }
