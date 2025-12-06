@@ -4,34 +4,53 @@
 
 import * as React from 'react';
 import { useSelector } from 'react-redux';
-import { RootState } from '../../store/store';
+import { getCpuMoveScoresAgainstTarget, getCpuPossibleActions } from '../../../simulator/phases/battle/cpu-move-selection';
+import { selectBattleFieldState } from '../../store/battleFieldStateSelector';
 import { MoveItem } from './move-result-group.props';
 import { MoveResultGroup } from './MoveResultGroup';
 
 export const CpuMoves: React.FC = () => {
-  const { selection, availableSets } = useSelector((state: RootState) => state.set.cpu);
+  const battleFieldState = useSelector(selectBattleFieldState);
   
   const moves = React.useMemo((): MoveItem[] => {
-    if (!selection!.species || !selection!.setName) return [];
+    if (!battleFieldState) return [];
+        const moveResults = getCpuMoveScoresAgainstTarget(battleFieldState, battleFieldState.cpu.active[0], battleFieldState.player.active[0], { slot: 0, type: 'opponent'});
+        const actions = getCpuPossibleActions(battleFieldState, battleFieldState.cpu.active[0])
+        .filter(action => action.type === "move");
+        let moveItems: MoveItem[] = [];
+        for (let i = 0; i < 4; i++) {
+          const action = actions[i];
+          const moveResult = moveResults[i];
+          const position = i === 0 ? 'top' : i === 3 ? 'bottom' : 'mid';
+          if (action) {
+            const hits = moveResult.move.move.hits;
+            const damageRange = { min: moveResult.move.lowestRollPerHitDamage * hits, max: moveResult.move.highestRollPerHitDamage * hits };
+            const damagePctRange = { min: moveResult.move.lowestRollPerHitHpPercentage * hits, max: moveResult.move.highestRollPerHitHpPercentage * hits };
+            moveItems.push({
+              id: `cpuMove${i}`,
+              name: moveResult.move.move.name,
+              damageRange: `${damageRange.min.toFixed(1)} - ${damageRange.max.toFixed(1)}`,
+              damagePercent: `${damagePctRange.min.toFixed(1)}% - ${damagePctRange.max.toFixed(1)}%`,
+              position,
+              defaultChecked: undefined,
+            })
+          }
+          else {
+            moveItems.push({
+              id: `cpuMove${i}`,
+              name: 'No move',
+              damageRange: '',
+              damagePercent: '',
+              position,
+              defaultChecked: undefined,
+            });
+          }
+        }
+        return moveItems;
+  }, [battleFieldState]);
 
-    const pokemonSets = availableSets[selection!.species];
-    if (!pokemonSets) return [];
-    
-    const set = pokemonSets[selection!.setName];
-    if (!set?.moves) return [];
-    
-    return set.moves.map((moveName, index) => ({
-      id: `cpuMove${index}`,
-      name: moveName,
-      damageRange: '0 - 0',
-      damagePercent: '0 - 0%',
-      position: index === 0 ? 'top' : index === set.moves!.length - 1 ? 'bottom' : 'mid',
-      defaultChecked: index === 0,
-    }));
-  }, [selection, availableSets]);
-
-  const headerText = selection!.species
-    ? `${selection!.species}'s Moves`
+  const headerText = battleFieldState?.cpu.active[0].pokemon.species
+    ? `${battleFieldState!.cpu.active[0].pokemon.species.name}'s Moves`
     : 'No Pokemon Selected';
   
   return (

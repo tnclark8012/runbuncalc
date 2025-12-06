@@ -4,31 +4,33 @@
 
 import * as React from 'react';
 import { useSelector } from 'react-redux';
+import { gen } from '../../../configuration';
+import { calculateAllMoves } from '../../../simulator/moveScoring';
+import { selectBattleFieldState } from '../../store/battleFieldStateSelector';
 import { RootState } from '../../store/store';
 import { MoveItem } from './move-result-group.props';
 import { MoveResultGroup } from './MoveResultGroup';
 
 export const PlayerMoves: React.FC = () => {
   const { selection, availableSets } = useSelector((state: RootState) => state.set.player);
+  const battleFieldState = useSelector(selectBattleFieldState);
   
   const moves = React.useMemo((): MoveItem[] => {
-    if (!selection!.species || !selection!.setName) return [];
+    if (!battleFieldState) return [];
 
-    const pokemonSets = availableSets[selection!.species];
-    if (!pokemonSets) return [];
-    
-    const set = pokemonSets[selection!.setName];
-    if (!set?.moves) return [];
-    
-    return set.moves.map((moveName, index) => ({
+    const results = calculateAllMoves(gen, battleFieldState?.player.active[0].pokemon,
+      battleFieldState?.cpu.active[0].pokemon,
+      battleFieldState?.playerField);
+
+    return results.map<MoveItem>((result, index) => ({
       id: `playerMove${index}`,
-      name: moveName,
-      damageRange: '0 - 0',
-      damagePercent: '0 - 0%',
-      position: index === 0 ? 'top' : index === set.moves!.length - 1 ? 'bottom' : 'mid',
+      name: result.move.name,
+      damageRange: result.moveDesc(''),
+      damagePercent: result.moveDesc('%'),
+      position: index === 0 ? 'top' : index === results.length - 1 ? 'bottom' : 'mid',
       defaultChecked: index === 0,
     }));
-  }, [selection, availableSets]);
+  }, [battleFieldState]);
   
   const headerText = selection!.species 
     ? `${selection!.species}'s Moves`
