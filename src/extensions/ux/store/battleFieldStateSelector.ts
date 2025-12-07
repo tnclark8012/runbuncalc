@@ -75,11 +75,35 @@ export const selectBattleFieldState = (state: RootState): BattleFieldState | und
     playerPartyPokemon.push(statefulPokemon);
   }
 
-  const playerActive = playerPartyPokemon.find(p => p.species.name === playerSelection.species);
+  let playerActive = playerPartyPokemon.find(p => p.species.name === playerSelection.species);
+  
   if (!playerActive) {
-    return undefined;
+    // If selected Pokemon is not in party, create it from the selection
+    const selectedSet = playerState.availableSets[playerSelection.species]?.[playerSelection.setName];
+    if (!selectedSet) {
+      return undefined;
+    }
+    
+    const pokemon = new Pokemon(gen, playerSelection.species, {
+      level: selectedSet.level,
+      ability: selectedSet.ability,
+      abilityOn: true,
+      item: selectedSet.item || "",
+      nature: selectedSet.nature,
+      ivs: convertIVsFromCustomSetToPokemon(selectedSet.ivs),
+      evs: { atk: 0, def: 0, spa: 0, spd: 0, spe: 0, hp: 0 },
+      moves: selectedSet.moves,
+    });
+    
+    const pokemonId = getPokemonId(playerSelection.species, playerSelection.setName);
+    playerActive = applyPokemonState(pokemon, pokemonId, 'player');
+    
+    // Set party to empty when selected Pokemon is not in party
+    playerPartyPokemon.length = 0;
+  } else {
+    // If selected Pokemon is in party, remove it from party
+    popFromParty(playerPartyPokemon, playerActive);
   }
-  popFromParty(playerPartyPokemon, playerActive);
 
   // Build CPU party from trainer
   const trainerName = getTrainerNameByTrainerIndex(currentTrainerIndex);
