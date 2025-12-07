@@ -1,5 +1,6 @@
 import { Pokemon } from '@smogon/calc';
 import { gen } from '../../configuration';
+import { CustomSets } from '../../core/storage.contracts';
 import { selectBattleFieldState } from './battleFieldStateSelector';
 import { RootState } from './store';
 
@@ -36,8 +37,8 @@ describe('selectBattleFieldState', () => {
     playerSelection?: { species: string; setName: string };
     cpuSelection?: { species: string; setName: string };
     playerParty?: string[];
-    playerSets?: any;
-    cpuSets?: any;
+    playerSets?: CustomSets;
+    cpuSets?: CustomSets;
     currentTrainerIndex?: number;
   }): RootState => {
     return {

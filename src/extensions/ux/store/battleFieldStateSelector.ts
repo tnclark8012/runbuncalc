@@ -99,7 +99,7 @@ export const selectBattleFieldState = (state: RootState): BattleFieldState | und
     playerActive = applyPokemonState(pokemon, pokemonId, 'player');
     
     // Set party to empty when selected Pokemon is not in party
-    playerPartyPokemon.length = 0;
+    playerPartyPokemon.splice(0);
   } else {
     // If selected Pokemon is in party, remove it from party
     popFromParty(playerPartyPokemon, playerActive);
