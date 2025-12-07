@@ -75,6 +75,9 @@ export const SetSelector: React.FC<SetSelectorProps> = ({
     [onSelectionChange]
   );
 
+  const onFocus: ComboboxProps['onFocus'] = React.useCallback((event: React.FocusEvent<HTMLInputElement, Element>) => {
+    event.target.select();
+  }, [onSelectionChange]);
   // Filter options based on search input
   const getFilteredOptions = React.useCallback(() => {
     return filterSetsBySearch(availableSets, inputValue);
@@ -97,7 +100,8 @@ export const SetSelector: React.FC<SetSelectorProps> = ({
         }
 
         return (
-          <OptionGroup key={species} label={species.charAt(0).toUpperCase() + species.slice(1)}>
+          <OptionGroup 
+          key={species} label={species.charAt(0).toUpperCase() + species.slice(1)}>
             {setNames.map((setName) => (
               <Option
                 key={`${species}|${setName}`}
@@ -117,6 +121,7 @@ export const SetSelector: React.FC<SetSelectorProps> = ({
       placeholder="Select a Pokemon set"
       aria-label={label}
       value={inputValue}
+      onFocus={e => onFocus(e)}
       onInput={(e) => setInputValue(e.currentTarget.value)}
       freeform={true}
       onOptionSelect={handleOptionSelect}

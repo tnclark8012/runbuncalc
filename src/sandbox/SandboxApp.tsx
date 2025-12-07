@@ -20,7 +20,6 @@ import { CpuPartyManager, PlayerBoxManager, PlayerPartyManager } from '../extens
 import { loadPlayerParty } from '../extensions/ux/store/partySlice';
 import { loadCpuSets, loadPlayerSets } from '../extensions/ux/store/setSlice';
 import { persistor, store } from '../extensions/ux/store/store';
-import { loadTrainerByIndex } from '../extensions/ux/store/trainerSlice';
 
 /**
  * Root application component that wraps all sandbox components with a single FluentProvider
@@ -53,7 +52,6 @@ export const SandboxApp: React.FC = () => {
     store.dispatch(loadCpuSets(realSets));
     store.dispatch(loadPlayerSets(playerSets));
     store.dispatch(loadPlayerParty(getParty()));
-    store.dispatch(loadTrainerByIndex(0));
   }, []);
   
   return (

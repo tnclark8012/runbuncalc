@@ -8,7 +8,6 @@ import * as React from 'react';
 import { useSelector } from 'react-redux';
 import { getPokemonId } from '../../../core/storage';
 import { getTrainerNameByTrainerIndex, OpposingTrainer } from '../../../trainer-sets';
-import { parsePokemonId } from '../../party';
 import { useAppDispatch } from '../../store/hooks';
 import { demoteToBox, promoteToParty } from '../../store/partySlice';
 import { clearCpuStates } from '../../store/pokemonStateSlice';
@@ -128,31 +127,27 @@ export const CpuPartyManager: React.FC = () => {
     [dispatch]
   );
 
-  // Auto-select first Pokemon when trainer changes
-  React.useEffect(() => {
-    if (cpuParty.length > 0) {
-      const firstPokemonId = cpuParty[0];
-      const trainerName = getTrainerNameByTrainerIndex(currentTrainerIndex);
-      
-      // Parse the Pokemon ID to get species
-      const { species } = parsePokemonId(firstPokemonId)!;
-      dispatch(setCpuSet({ species, setName: trainerName }));
-    }
-  }, [currentTrainerIndex, cpuParty, dispatch]);
-
   // Clear CPU Pokemon states when trainer changes
   React.useEffect(() => {
     dispatch(clearCpuStates());
   }, [currentTrainerIndex, dispatch]);
 
+  const updateTrainerIndex = (newIndex: number) => {
+    if (newIndex > 0)
+      dispatch(loadTrainerByIndex(newIndex));
+
+    const trainerName = getTrainerNameByTrainerIndex(newIndex);
+    const trainerParty = OpposingTrainer(trainerName);
+    const fistMon = trainerParty[0];
+    dispatch(setCpuSet({ species: fistMon.species.name, setName: trainerName }));
+  };
+
   const handlePreviousTrainer = React.useCallback(() => {
-    if (currentTrainerIndex > 0) {
-      dispatch(loadTrainerByIndex(currentTrainerIndex - 1));
-    }
+    updateTrainerIndex(currentTrainerIndex - 1);
   }, [dispatch, currentTrainerIndex]);
 
   const handleNextTrainer = React.useCallback(() => {
-    dispatch(loadTrainerByIndex(currentTrainerIndex + 1));
+    updateTrainerIndex(currentTrainerIndex + 1);
   }, [dispatch, currentTrainerIndex]);
 
   const buttonContainerStyle: React.CSSProperties = {
