@@ -55,8 +55,6 @@ export const CpuSetSelector: React.FC = () => {
 
   const handleSelectionChange = React.useCallback(
     (newSelection: { species: string; setName: string }) => {
-      dispatch(setCpuSet(newSelection));
-      
       // Update trainer index when CPU set changes
       if (newSelection.species && newSelection.setName) {
         const trainerIndex = getTrainerIndexBySetSelection({
@@ -66,6 +64,7 @@ export const CpuSetSelector: React.FC = () => {
         if (trainerIndex >= 0) {
           dispatch(loadTrainerByIndex(trainerIndex));
         }
+        dispatch(setCpuSet(newSelection));
       }
     },
     [dispatch]
