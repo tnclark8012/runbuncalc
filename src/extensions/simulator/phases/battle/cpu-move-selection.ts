@@ -32,7 +32,11 @@ export function getCpuPossibleActions(state: BattleFieldState, cpuPokemon: Pokem
     return actions;
 }
 
-export function getCpuMoveScoresAgainstTarget(state: BattleFieldState, cpuPokemon: PokemonPosition, target: PokemonPosition, targetSlot: TargetSlot): Array<MoveScore> {
+export function calculateCpuMoveResults(state: BattleFieldState, cpuPokemon: PokemonPosition, target: PokemonPosition): MoveResult[] {
+    return toMoveResults(calculateAllMoves(gen, cpuPokemon.pokemon, target.pokemon, state.cpuField));
+}
+
+export function getPossibleCpuMoveScoresAgainstTarget(state: BattleFieldState, cpuPokemon: PokemonPosition, target: PokemonPosition, targetSlot: TargetSlot): Array<MoveScore> {
     let playerDamageResults = calculateAllMoves(gen, target.pokemon, cpuPokemon.pokemon, state.playerField);
     let cpuDamageResults = calculateAllMoves(gen, cpuPokemon.pokemon, target.pokemon, state.cpuField);
     let cpuAssumedPlayerMove = findHighestDamageMove(toMoveResults(playerDamageResults));
@@ -41,7 +45,7 @@ export function getCpuMoveScoresAgainstTarget(state: BattleFieldState, cpuPokemo
 }
 
 function getCpuPossibleActionsAgainstTarget(state: BattleFieldState, cpuPokemon: PokemonPosition, target: PokemonPosition, targetSlot: TargetSlot): Array<ScoredPossibleAction> {
-    const moveScores = getCpuMoveScoresAgainstTarget(state, cpuPokemon, target, targetSlot);
+    const moveScores = getPossibleCpuMoveScoresAgainstTarget(state, cpuPokemon, target, targetSlot);
     const moveProbabilities = calculateCpuMove(moveScores);
     
     return moveProbabilities.map<ScoredPossibleAction>((moveProb) => {
