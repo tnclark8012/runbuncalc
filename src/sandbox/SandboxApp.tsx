@@ -70,7 +70,7 @@ export const SandboxApp: React.FC = () => {
               }}
             />
           </div>
-          <h1>React Component Sandbox</h1>
+          <h1>Run & Bun Calculator</h1>
           <div className="set-selectors">
             <div className="set-selector-container">
               <PlayerMoves />

@@ -10,7 +10,7 @@ import { MoveScore } from '../../moveScore';
 import { BattleFieldState, CpuTrainer, PlayerTrainer, PokemonPosition } from '../../moveScoring.contracts';
 import { getBox } from '../../playthrough/museum.collection';
 import { importTeam, inGen } from '../../test-helper';
-import { calculateCpuMove, getCpuMoveScoresAgainstTarget, getCpuPossibleActions } from './cpu-move-selection';
+import { calculateCpuMove, getCpuPossibleActions, getPossibleCpuMoveScoresAgainstTarget } from './cpu-move-selection';
 import { PossibleAction } from './move-selection.contracts';
 
 const RunAndBun = 8;
@@ -101,7 +101,7 @@ Ability: Hyper Cutter
         new CpuTrainer([new PokemonPosition(Krabby)], []),
         new Field({ gameType: 'Doubles' }));
 
-      const scores = getCpuMoveScoresAgainstTarget(state, state.cpu.active[0], state.player.active[0], { slot: 0, type: 'opponent' });
+      const scores = getPossibleCpuMoveScoresAgainstTarget(state, state.cpu.active[0], state.player.active[0], { slot: 0, type: 'opponent' });
       const torkoalActions = getCpuActionsFor1v1(Krabby, Torkoal);
       const dragapultActions = getCpuActionsFor1v1(Krabby, Dragapult);
 
@@ -134,13 +134,13 @@ Ability: Hyper Cutter
     const { Starly } = getBox();
 
     let state = create1v1BattleState(Starly, Croagunk);
-    let result = getCpuMoveScoresAgainstTarget(state, state.cpu.active[0], state.player.active[0], { slot: 0, type: 'opponent' });
+    let result = getPossibleCpuMoveScoresAgainstTarget(state, state.cpu.active[0], state.player.active[0], { slot: 0, type: 'opponent' });
     let belch = result.find(r => r.move.move.name === 'Belch');
     expect(belch).toBeUndefined();
 
     Croagunk.item = undefined;
     state = create1v1BattleState(Starly, Croagunk);
-    result = getCpuMoveScoresAgainstTarget(state, state.cpu.active[0], state.player.active[0], { slot: 0, type: 'opponent' });
+    result = getPossibleCpuMoveScoresAgainstTarget(state, state.cpu.active[0], state.player.active[0], { slot: 0, type: 'opponent' });
     belch = result.find(r => r.move.move.name === 'Belch')!;
     expect(belch).toBeDefined();
   });
@@ -166,7 +166,7 @@ Ability: Hyper Cutter
     const { Starly } = getBox();
     const [Carvanha,,] = OpposingTrainer('Team Aqua Grunt Petalburg Woods');
     const state = create1v1BattleState(Starly, Carvanha);
-    const moveScores = getCpuMoveScoresAgainstTarget(state, state.cpu.active[0], state.player.active[0], { slot: 0, type: 'opponent' });
+    const moveScores = getPossibleCpuMoveScoresAgainstTarget(state, state.cpu.active[0], state.player.active[0], { slot: 0, type: 'opponent' });
     const result = calculateCpuMove(moveScores);
     // Aqua Jet and Poison Fang are never the highest, so they always get filtered out.
     // - Bite wins outright: 166 / 256 ≈ 64.84%

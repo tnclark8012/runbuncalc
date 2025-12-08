@@ -71,7 +71,7 @@ export const HPBar: React.FC<HPBarProps> = ({
           onChange={handleHpValueChange}
           min={0}
           max={maxHp}
-          style={{ width: '60px' }}
+          style={{ width: '68px' }}
           disabled={disabled}
         />
         <span>/</span>
