@@ -1,6 +1,7 @@
 import { configureStore } from '@reduxjs/toolkit';
 import { persistReducer, persistStore } from 'redux-persist';
 import capturedBattleStateReducer from './capturedBattleStateSlice';
+import fieldReducer from './fieldSlice';
 import moveReducer from './moveSlice';
 import partyReducer from './partySlice';
 import pokemonStateReducer from './pokemonStateSlice';
@@ -32,6 +33,7 @@ export const store = configureStore({
     set: persistedSetReducer,
     party: persistedPartyReducer,
     trainer: persistedTrainerReducer,
+    field: fieldReducer, // Session-only state, not persisted
     pokemonState: pokemonStateReducer, // Session-only state, not persisted
     capturedBattleState: capturedBattleStateReducer, // Session-only state, not persisted
   },

@@ -11,6 +11,7 @@ import { CustomSets } from '../extensions/core/storage.contracts';
 import { TrainerSets } from '../extensions/trainer-sets.data';
 import { CaptureBattleState } from '../extensions/ux/components/CaptureBattleState';
 import { initializeDeveloperTools } from '../extensions/ux/components/developer-tools-usage';
+import { FieldStateControl } from '../extensions/ux/components/FieldStateControl';
 import { CpuMoves } from '../extensions/ux/components/move-results/CpuMoves';
 import { PlayerMoves } from '../extensions/ux/components/move-results/PlayerMoves';
 import { CpuPokemonSetDetails, PlayerPokemonSetDetails } from '../extensions/ux/components/pokemon-set-details/pokemon-set-details-usage';
@@ -78,6 +79,9 @@ export const SandboxApp: React.FC = () => {
               <PlayerPokemonSetDetails />
               <PlayerPartyManager />
               <PlayerBoxManager />
+            </div>
+            <div className="field-state-control-container" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <FieldStateControl />
             </div>
             <div className="set-selector-container">
               <CpuMoves />

@@ -19,6 +19,7 @@ export const selectBattleFieldState = (state: RootState): BattleFieldState | und
   const { playerParty } = state.party;
   const { currentTrainerIndex } = state.trainer;
   const pokemonStates = state.pokemonState;
+  const fieldState = state.field;
 
   const cpuSelection = cpuState.selection;
   const playerSelection = playerState.selection;
@@ -124,8 +125,28 @@ export const selectBattleFieldState = (state: RootState): BattleFieldState | und
   const playerTrainer = new PlayerTrainer([new PokemonPosition(playerActive, true)], playerPartyPokemon);
   const cpuTrainer = new CpuTrainer(trainerName, [new PokemonPosition(cpuActive, true)], cpuTrainerParty);
 
-  // Create field (default field for now)
-  const field = new Field();
+  // Create field with configured state from Redux
+  const field = new Field({
+    terrain: fieldState.terrain,
+    weather: fieldState.weather,
+    isTrickRoom: fieldState.isTrickRoom,
+    attackerSide: {
+      isLightScreen: fieldState.playerSide.isLightScreen,
+      isReflect: fieldState.playerSide.isReflect,
+      isAuroraVeil: fieldState.playerSide.isAuroraVeil,
+      isTailwind: fieldState.playerSide.isTailwind,
+      isSR: fieldState.playerSide.isSR,
+      spikes: fieldState.playerSide.spikes,
+    },
+    defenderSide: {
+      isLightScreen: fieldState.cpuSide.isLightScreen,
+      isReflect: fieldState.cpuSide.isReflect,
+      isAuroraVeil: fieldState.cpuSide.isAuroraVeil,
+      isTailwind: fieldState.cpuSide.isTailwind,
+      isSR: fieldState.cpuSide.isSR,
+      spikes: fieldState.cpuSide.spikes,
+    },
+  });
 
   // Create BattleFieldState
   return new BattleFieldState(playerTrainer, cpuTrainer, field, 0);
