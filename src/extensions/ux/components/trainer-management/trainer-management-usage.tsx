@@ -27,8 +27,8 @@ export const PlayerPartyManager: React.FC = () => {
 
   // Get current selected Pokemon ID
   const selectedPokemonId = React.useMemo(() => {
-    if (selection!.species && selection!.setName) {
-      return getPokemonId(selection!.species, selection!.setName);
+    if (selection?.species && selection?.setName) {
+      return getPokemonId(selection.species, selection.setName);
     }
     return undefined;
   }, [selection]);
@@ -114,8 +114,8 @@ export const CpuPartyManager: React.FC = () => {
   }, [availableSets, currentTrainerIndex]);
 
   const selectedPokemonId = React.useMemo(() => {
-    if (selection!.species && selection!.setName) {
-      return getPokemonId(selection!.species, selection!.setName);
+    if (selection?.species && selection?.setName) {
+      return getPokemonId(selection.species, selection.setName);
     }
     return undefined;
   }, [selection]);
@@ -195,8 +195,8 @@ export const PlayerBoxManager: React.FC = () => {
   const { selection, availableSets } = useSelector((state: RootState) => state.set.player);
 
   const selectedPokemonId = React.useMemo(() => {
-    if (selection!.species && selection!.setName) {
-      return getPokemonId(selection!.species, selection!.setName);
+    if (selection?.species && selection?.setName) {
+      return getPokemonId(selection.species, selection.setName);
     }
     return undefined;
   }, [selection]);

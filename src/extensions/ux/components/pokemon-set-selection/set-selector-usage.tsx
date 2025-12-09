@@ -38,7 +38,7 @@ export const PlayerSetSelector: React.FC = () => {
   return (
     <SetSelector
       label="Player Set"
-      selection={selection!}
+      selection={selection || { species: '', setName: '' }}
       availableSets={availableSets}
       onSelectionChange={handleSelectionChange}
       showBlankOption={true}
@@ -73,7 +73,7 @@ export const CpuSetSelector: React.FC = () => {
   return (
     <SetSelector
       label="CPU Set"
-      selection={selection!}
+      selection={selection || { species: '', setName: '' }}
       availableSets={availableSets}
       onSelectionChange={handleSelectionChange}
       showBlankOption={false}

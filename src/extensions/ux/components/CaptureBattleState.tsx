@@ -7,9 +7,10 @@ import * as React from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { PlannedMoveAction } from '../../configuration';
 import { selectBattleFieldState } from '../store/battleFieldStateSelector';
-import { captureBattleState } from '../store/capturedBattleStateSlice';
+import { captureBattleState, clearCapturedStates } from '../store/capturedBattleStateSlice';
 import { RootState } from '../store/store';
 import { useStyles } from './CaptureBattleState.styles';
+import { TurnSwitcher } from './turn-switcher/TurnSwitcher';
 
 /**
  * Component that provides a button to capture the current battle state
@@ -24,6 +25,7 @@ export const CaptureBattleState: React.FC = () => {
   const pokemonStates = useSelector((state: RootState) => state.pokemonState);
   const fieldState = useSelector((state: RootState) => state.field);
   const currentTurnNumber = useSelector((state: RootState) => state.capturedBattleState.currentTurnNumber);
+  const capturedStates = useSelector((state: RootState) => state.capturedBattleState.capturedStates);
 
   const handleCapture = React.useCallback(() => {
     if (!battleState) {
@@ -67,11 +69,21 @@ export const CaptureBattleState: React.FC = () => {
     console.log(capturedData);
   }, [battleState, selectedMoveName, partyState, trainerIndex, pokemonStates, fieldState, currentTurnNumber, dispatch]);
 
+  const handleClear = React.useCallback(() => {
+    dispatch(clearCapturedStates());
+  }, [dispatch]);
+
   return (
     <div className={styles.container}>
-      <Button appearance="primary" onClick={handleCapture}>
-        Capture Battle State
-      </Button>
+      <div className={styles.buttonContainer}>
+        <Button appearance="primary" onClick={handleCapture}>
+          Capture Battle State
+        </Button>
+        <Button appearance="secondary" onClick={handleClear}>
+          Clear All
+        </Button>
+      </div>
+      <TurnSwitcher capturedStates={capturedStates} />
     </div>
   );
 };
