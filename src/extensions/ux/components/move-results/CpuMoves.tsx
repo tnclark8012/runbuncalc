@@ -20,8 +20,8 @@ export const CpuMoves: React.FC = () => {
         let moveItems: MoveItem[] = [];
         const mostLikelyMove = moveActions.find(action => action.probability === Math.max(...moveActions.map(a => a.probability)));
         for (let i = 0; i < 4; i++) {
-          const action = moveActions[i];
           const moveResult = moveResults[i];
+          const action = moveActions.find(a => a.move.move.name === moveResult.move.name);
           const position = i === 0 ? 'top' : i === 3 ? 'bottom' : 'mid';
           if (moveResult) {
             const hits = moveResult.move.hits;
