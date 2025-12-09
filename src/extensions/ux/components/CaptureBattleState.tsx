@@ -9,11 +9,13 @@ import { PlannedMoveAction } from '../../configuration';
 import { selectBattleFieldState } from '../store/battleFieldStateSelector';
 import { captureBattleState } from '../store/capturedBattleStateSlice';
 import { RootState } from '../store/store';
+import { useStyles } from './CaptureBattleState.styles';
 
 /**
  * Component that provides a button to capture the current battle state
  */
 export const CaptureBattleState: React.FC = () => {
+  const styles = useStyles();
   const dispatch = useDispatch();
   const battleState = useSelector((state: RootState) => selectBattleFieldState(state));
   const selectedMoveName = useSelector((state: RootState) => state.move.selectedMoveName);
@@ -66,7 +68,7 @@ export const CaptureBattleState: React.FC = () => {
   }, [battleState, selectedMoveName, partyState, trainerIndex, pokemonStates, fieldState, currentTurnNumber, dispatch]);
 
   return (
-    <div style={{ margin: '20px 0', textAlign: 'center' }}>
+    <div className={styles.container}>
       <Button appearance="primary" onClick={handleCapture}>
         Capture Battle State
       </Button>

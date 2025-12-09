@@ -1,5 +1,6 @@
 import { Input, Label } from '@fluentui/react-components';
 import * as React from 'react';
+import { useStyles } from './HPBar.styles';
 
 export interface HPBarProps {
   /**
@@ -32,6 +33,8 @@ export const HPBar: React.FC<HPBarProps> = ({
   onHpChange,
   disabled = false,
 }) => {
+  const styles = useStyles();
+  
   // Calculate HP percentage
   const hpPercentage = maxHp > 0 ? Math.floor((currentHp / maxHp) * 100) : 100;
 
@@ -61,17 +64,17 @@ export const HPBar: React.FC<HPBarProps> = ({
   };
 
   return (
-    <div style={{ marginTop: '10px' }}>
+    <div className={styles.container}>
       {/* HP inputs */}
-      <div style={{ display: 'flex', gap: '10px', alignItems: 'center', marginBottom: '5px' }}>
-        <Label style={{ minWidth: '60px' }}>HP:</Label>
+      <div className={styles.inputRow}>
+        <Label className={styles.label}>HP:</Label>
         <Input
           type="number"
           value={currentHp.toString()}
           onChange={handleHpValueChange}
           min={0}
           max={maxHp}
-          style={{ width: '68px' }}
+          className={styles.hpInput}
           disabled={disabled}
         />
         <span>/</span>
@@ -83,29 +86,21 @@ export const HPBar: React.FC<HPBarProps> = ({
           onChange={handleHpPercentageChange}
           min={0}
           max={100}
-          style={{ width: '68px' }}
+          className={styles.hpInput}
           disabled={disabled}
         />
         <span>% )</span>
       </div>
       
       {/* Health bar */}
-      <div style={{ 
-        width: '100%', 
-        height: '8px', 
-        backgroundColor: '#333',
-        border: '1px solid #666',
-        borderRadius: '4px',
-        overflow: 'hidden',
-        marginLeft: '70px',
-        maxWidth: '300px'
-      }}>
-        <div style={{
-          width: `${hpPercentage}%`,
-          height: '100%',
-          backgroundColor: getHealthBarColor(),
-          transition: 'width 0.3s ease, background-color 0.3s ease'
-        }} />
+      <div className={styles.healthBarContainer}>
+        <div 
+          className={styles.healthBar}
+          style={{
+            width: `${hpPercentage}%`,
+            backgroundColor: getHealthBarColor(),
+          }}
+        />
       </div>
     </div>
   );

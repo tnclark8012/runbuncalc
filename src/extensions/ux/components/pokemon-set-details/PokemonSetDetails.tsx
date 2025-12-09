@@ -9,6 +9,7 @@ import { getAllAvailableItems, getPlayerAccessibleItems } from '../../items';
 import { getAbilitiesForPokemon } from '../../pokedex';
 import { PokemonState } from '../../store/pokemonStateSlice';
 import { HPBar } from './HPBar';
+import { useStyles } from './PokemonSetDetails.styles';
 
 export interface SpeciesSet {
   species: string;
@@ -57,6 +58,7 @@ export const PokemonSetDetails: React.FC<PokemonSetDetailsProps> = ({
   readonly = false,
   usePlayerItems = true
 }) => {
+  const styles = useStyles();
 
   // State for available abilities
   const [availableAbilities, setAvailableAbilities] = React.useState<string[]>([]);
@@ -361,17 +363,17 @@ export const PokemonSetDetails: React.FC<PokemonSetDetailsProps> = ({
   ];
 
   return (
-    <div style={{ padding: '10px' }}>
+    <div className={styles.container}>
       <Label size="large" weight="semibold">{label}</Label>
       
       {/* Type controls */}
-      <div style={{ marginTop: '10px', display: 'flex', gap: '10px', alignItems: 'center' }}>
-        <Label style={{ minWidth: '60px' }}>Type:</Label>
+      <div className={styles.controlRow}>
+        <Label className={styles.controlLabel}>Type:</Label>
         <Dropdown
           value={type1}
           selectedOptions={[type1]}
           onOptionSelect={handleType1Change}
-          style={{ width: '100px', minWidth: '100px' }}
+          className={styles.typeDropdown}
         >
           {availableTypes.map((type) => (
             <Option key={type} value={type}>
@@ -379,29 +381,28 @@ export const PokemonSetDetails: React.FC<PokemonSetDetailsProps> = ({
             </Option>
           ))}
         </Dropdown>
-        {(
-          <Dropdown
-            value={type2 || ''}
-            onOptionSelect={handleType2Change}
-            style={{ width: '100px', minWidth: '100px', visibility: type2 ? 'visible' : 'hidden' }}>
-            {availableTypes.map((type) => (
-              <Option key={type} value={type}>
-                {type}
-              </Option>
-            ))}
-          </Dropdown>
-        )}
+        <Dropdown
+          value={type2 || ''}
+          onOptionSelect={handleType2Change}
+          className={type2 ? styles.type2Dropdown : styles.type2Hidden}
+        >
+          {availableTypes.map((type) => (
+            <Option key={type} value={type}>
+              {type}
+            </Option>
+          ))}
+        </Dropdown>
       </div>
 
       {/* Form control */}
-      <div style={{ marginTop: '10px', display: 'flex', gap: '10px', alignItems: 'center', visibility: availableForms.length > 0 ? 'visible' : 'hidden' }}>
-        <Label style={{ minWidth: '60px' }}>Form:</Label>
+      <div className={styles.controlRow} style={{ visibility: availableForms.length > 0 ? 'visible' : 'hidden' }}>
+        <Label className={styles.controlLabel}>Form:</Label>
         {availableForms.length > 0 ? (
           <Dropdown
             value={selectedForm}
             selectedOptions={[selectedForm]}
             onOptionSelect={handleFormChange}
-            style={{ width: '250px' }}
+            className={styles.wideDropdown}
           >
             {availableForms.map((form) => (
               <Option key={form} value={form}>
@@ -410,8 +411,8 @@ export const PokemonSetDetails: React.FC<PokemonSetDetailsProps> = ({
             ))}
           </Dropdown>
         ) : (
-          <div style={{ width: '250px' }}>
-            <Dropdown disabled style={{ width: '250px' }}>
+          <div className={styles.formDropdownContainer}>
+            <Dropdown disabled className={styles.wideDropdown}>
               <Option value="">-</Option>
             </Dropdown>
           </div>
@@ -419,8 +420,8 @@ export const PokemonSetDetails: React.FC<PokemonSetDetailsProps> = ({
       </div>
 
       {/* Level control */}
-      <div style={{ marginTop: '10px', display: 'flex', gap: '10px', alignItems: 'center' }}>
-        <Label style={{ minWidth: '60px' }}>Level:</Label>
+      <div className={styles.controlRow}>
+        <Label className={styles.controlLabel}>Level:</Label>
         <Input
           type="number"
           min={1}
@@ -428,11 +429,11 @@ export const PokemonSetDetails: React.FC<PokemonSetDetailsProps> = ({
           value={level.toString()}
           onChange={(e) => handleLevelChange(e.target.value)}
           readOnly={readonly}
-          style={{ width: '80px' }}
+          className={styles.levelInput}
         />
       </div>
 
-      <Table aria-label={`${label} IVs`} style={{ marginTop: '10px' }}>
+      <Table aria-label={`${label} IVs`} className={styles.table}>
         <TableHeader>
           <TableRow>
             <TableHeaderCell>Stat</TableHeaderCell>
@@ -452,7 +453,7 @@ export const PokemonSetDetails: React.FC<PokemonSetDetailsProps> = ({
                   value={ivs[key]?.toString() ?? '31'}
                   onChange={(e) => handleIvChange(key, e.target.value)}
                   readOnly={readonly}
-                  style={{ width: '80px' }}
+                  className={styles.ivInput}
                 />
               </TableCell>
               <TableCell>
@@ -461,7 +462,7 @@ export const PokemonSetDetails: React.FC<PokemonSetDetailsProps> = ({
                     value={pokemon.boosts[boostKey]?.toString() ?? '0'}
                     selectedOptions={[pokemon.boosts[boostKey]?.toString() ?? '0']}
                     onOptionSelect={(_, data) => handleBoostChange(boostKey, data.optionValue ?? '0')}
-                    style={{ width: '60px', minWidth: '60px' }}
+                    className={styles.boostDropdown}
                   >
                     {boostOptions.map((boost) => (
                       <Option key={boost} value={boost.toString()}>
@@ -479,14 +480,14 @@ export const PokemonSetDetails: React.FC<PokemonSetDetailsProps> = ({
       </Table>
 
       {/* Nature control */}
-      <div style={{ marginTop: '10px', display: 'flex', gap: '10px', alignItems: 'center' }}>
-        <Label style={{ minWidth: '60px' }}>Nature:</Label>
+      <div className={styles.controlRow}>
+        <Label className={styles.controlLabel}>Nature:</Label>
         <Dropdown
           value={selectedNatureLabel}
           selectedOptions={[nature]}
           onOptionSelect={handleNatureChange}
           disabled={readonly}
-          style={{ width: '250px' }}
+          className={styles.wideDropdown}
         >
           {availableNatures.map(({ name, label }) => (
             <Option key={name} value={name}>
@@ -497,14 +498,14 @@ export const PokemonSetDetails: React.FC<PokemonSetDetailsProps> = ({
       </div>
 
       {/* Ability control */}
-      <div style={{ marginTop: '10px', display: 'flex', gap: '10px', alignItems: 'center' }}>
-        <Label style={{ minWidth: '60px' }}>Ability:</Label>
+      <div className={styles.controlRow}>
+        <Label className={styles.controlLabel}>Ability:</Label>
         <Dropdown
           value={selectedAbility}
           selectedOptions={[selectedAbility]}
           onOptionSelect={handleAbilityChange}
           disabled={readonly || availableAbilities.length === 0}
-          style={{ width: '250px' }}
+          className={styles.wideDropdown}
         >
           {availableAbilities.map((ability) => (
             <Option key={ability} value={ability}>
@@ -515,13 +516,13 @@ export const PokemonSetDetails: React.FC<PokemonSetDetailsProps> = ({
       </div>
 
       {/* Item control */}
-      <div style={{ marginTop: '10px', display: 'flex', gap: '10px', alignItems: 'center' }}>
-        <Label style={{ minWidth: '60px' }}>Item:</Label>
+      <div className={styles.controlRow}>
+        <Label className={styles.controlLabel}>Item:</Label>
         <Dropdown
           value={selectedItem}
           selectedOptions={[selectedItem]}
           onOptionSelect={handleItemChange}
-          style={{ width: '250px' }}
+          className={styles.wideDropdown}
         >
           {availableItems.map((item) => (
             <Option key={item} value={item}>
@@ -532,13 +533,13 @@ export const PokemonSetDetails: React.FC<PokemonSetDetailsProps> = ({
       </div>
 
       {/* Status control */}
-      <div style={{ marginTop: '10px', display: 'flex', gap: '10px', alignItems: 'center' }}>
-        <Label style={{ minWidth: '60px' }}>Status:</Label>
+      <div className={styles.controlRow}>
+        <Label className={styles.controlLabel}>Status:</Label>
         <Dropdown
           value={selectedStatusLabel}
           selectedOptions={[status]}
           onOptionSelect={handleStatusChange}
-          style={{ width: '250px' }}
+          className={styles.wideDropdown}
         >
           {availableStatuses.map(({ value, label }) => (
             <Option key={value || 'healthy'} value={value}>

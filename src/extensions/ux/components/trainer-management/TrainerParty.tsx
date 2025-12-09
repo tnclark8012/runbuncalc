@@ -3,6 +3,7 @@ import * as React from 'react';
 import { CustomSets } from '../../../core/storage.contracts';
 import { parsePokemonId } from '../../party';
 import { PokemonCard } from './PokemonCard';
+import { useStyles } from './TrainerParty.styles';
 
 export interface TrainerPartyProps {
   /**
@@ -35,30 +36,17 @@ export const TrainerParty: React.FC<TrainerPartyProps> = ({
   selectedPokemonId,
   onPokemonClick,
 }) => {
+  const styles = useStyles();
   const isOverLimit = party.length > 6;
 
-  const containerStyle: React.CSSProperties = {
-    border: isOverLimit ? '2px solid red' : '1px solid var(--colorNeutralStroke1)',
-    borderRadius: '4px',
-    padding: '8px',
-    marginTop: '10px',
-  };
-
-  const partyRowStyle: React.CSSProperties = {
-    display: 'flex',
-    gap: '8px',
-    alignItems: 'center',
-    minHeight: '45px',
-  };
-
   return (
-    <div style={containerStyle}>
+    <div className={isOverLimit ? styles.containerOverLimit : styles.container}>
       <Label weight="semibold" size="medium">
-        Party {isOverLimit && <span style={{ color: 'red' }}>({party.length}/6 - Over Limit!)</span>}
+        Party {isOverLimit && <span className={styles.overLimitText}>({party.length}/6 - Over Limit!)</span>}
       </Label>
-      <div style={partyRowStyle}>
+      <div className={styles.partyRow}>
         {party.length === 0 ? (
-          <span style={{ color: 'var(--colorNeutralForeground3)', fontStyle: 'italic' }}>
+          <span className={styles.emptyState}>
             No Pokemon in party
           </span>
         ) : (
