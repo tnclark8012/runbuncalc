@@ -29,7 +29,7 @@ export interface PokemonSetDetailsProps {
   /**
    * Species and set data
    */
-  speciesSet?: SpeciesSet;
+  speciesSet: SpeciesSet;
 
   /**
    * Callback to update Pokemon state
@@ -67,8 +67,6 @@ export const PokemonSetDetails: React.FC<PokemonSetDetailsProps> = ({
 
   // Create Pokemon object from speciesSet
   const pokemon = React.useMemo(() => {
-    if (!speciesSet) return undefined;
-    
     return new Pokemon(gen, speciesSet.species, {
       level: speciesSet.set.level,
       ability: speciesSet.set.ability,
@@ -460,8 +458,8 @@ export const PokemonSetDetails: React.FC<PokemonSetDetailsProps> = ({
               <TableCell>
                 {boostKey ? (
                   <Dropdown
-                    value={pokemon!.boosts[boostKey]?.toString() ?? '0'}
-                    selectedOptions={[pokemon!.boosts[boostKey]?.toString() ?? '0']}
+                    value={pokemon.boosts[boostKey]?.toString() ?? '0'}
+                    selectedOptions={[pokemon.boosts[boostKey]?.toString() ?? '0']}
                     onOptionSelect={(_, data) => handleBoostChange(boostKey, data.optionValue ?? '0')}
                     style={{ width: '60px', minWidth: '60px' }}
                   >
