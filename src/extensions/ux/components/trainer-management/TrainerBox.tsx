@@ -3,6 +3,7 @@ import * as React from 'react';
 import { getPokemonId } from '../../../core/storage';
 import { CustomSets } from '../../../core/storage.contracts';
 import { PokemonCard } from './PokemonCard';
+import { useStyles } from './TrainerBox.styles';
 
 export interface TrainerBoxProps {
   /**
@@ -35,6 +36,8 @@ export const TrainerBox: React.FC<TrainerBoxProps> = ({
   selectedPokemonId,
   onPokemonClick,
 }) => {
+  const styles = useStyles();
+  
   // Build list of all Pokemon not in party
   const boxPokemon = React.useMemo(() => {
     const allPokemon: Array<{ id: string; species: string; setName: string }> = [];
@@ -52,31 +55,17 @@ export const TrainerBox: React.FC<TrainerBoxProps> = ({
     return allPokemon;
   }, [availableSets, party]);
 
-  const containerStyle: React.CSSProperties = {
-    border: '1px solid var(--colorNeutralStroke1)',
-    borderRadius: '4px',
-    padding: '8px',
-    marginTop: '10px',
-  };
-
-  const gridStyle: React.CSSProperties = {
-    display: 'grid',
-    gridTemplateColumns: 'repeat(auto-fill, 40px)',
-    gap: '4px',
-    marginTop: '8px',
-  };
-
   return (
-    <div style={containerStyle}>
+    <div className={styles.container}>
       <Label weight="semibold" size="medium">
         Box ({boxPokemon.length} Pokemon)
       </Label>
       {boxPokemon.length === 0 ? (
-        <div style={{ padding: '16px', color: 'var(--colorNeutralForeground3)', fontStyle: 'italic' }}>
+        <div className={styles.emptyState}>
           All Pokemon are in the party
         </div>
       ) : (
-        <div style={gridStyle}>
+        <div className={styles.grid}>
           {boxPokemon.sort((a, b) => a.species.localeCompare(b.species)).map(({ id, species, setName }) => (
             <PokemonCard
               key={id}

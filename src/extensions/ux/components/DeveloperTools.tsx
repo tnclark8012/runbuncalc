@@ -6,6 +6,7 @@ import { useAppDispatch, useAppSelector } from '../store/hooks';
 import { setSelectedMove } from '../store/moveSlice';
 import { persistor, store } from '../store/store';
 import { MoveItem, MoveResultGroup } from './index';
+import { useStyles } from './DeveloperTools.styles';
 
 /**
  * Props for the DeveloperTools component
@@ -26,6 +27,7 @@ const DeveloperToolsContent: React.FC<DeveloperToolsProps> = ({
   headerText = 'Move Selection (Redux + Local Storage)',
   radioGroupName = 'devToolsMoves',
 }) => {
+  const styles = useStyles();
   const dispatch = useAppDispatch();
   const selectedMoveName = useAppSelector((state) => state.move.selectedMoveName);
 
@@ -69,7 +71,7 @@ const DeveloperToolsContent: React.FC<DeveloperToolsProps> = ({
   }, []);
 
   return (
-    <div style={{ padding: '1em' }}>
+    <div className={styles.container}>
       <MoveResultGroup
         headerId={headerId}
         headerText={headerText}
@@ -78,10 +80,10 @@ const DeveloperToolsContent: React.FC<DeveloperToolsProps> = ({
         selectedMoveId={selectedMoveId}
         onMoveSelect={handleMoveSelect}
       />
-      <div style={{ marginTop: '1em' }}>
+      <div className={styles.exportButton}>
         <Button appearance="primary" onClick={handleExport}>Export Store to JSON</Button>
       </div>
-      <div style={{ marginTop: '1em', fontSize: '0.9em', color: '#666' }}>
+      <div className={styles.debugInfo}>
         <strong>Debug Info:</strong>
         <div>Selected Move: {selectedMoveName || 'None'}</div>
       </div>

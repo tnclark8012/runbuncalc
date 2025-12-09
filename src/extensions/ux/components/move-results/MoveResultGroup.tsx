@@ -1,6 +1,7 @@
 import { Label, Radio, RadioGroup } from '@fluentui/react-components';
 import * as React from 'react';
 import { MoveItem, MoveResultGroupProps } from './move-result-group.props';
+import { useStyles } from './MoveResultGroup.styles';
 
 /**
  * MoveResultGroup component - renders a radio group containing each move 
@@ -14,6 +15,8 @@ export const MoveResultGroup: React.FC<MoveResultGroupProps> = ({
 	onMoveSelect,
 	selectedMoveId,
 }) => {
+	const styles = useStyles();
+	
 	// Determine initial selected move
 	const getInitialSelectedId = (): string | undefined => {
 		if (selectedMoveId !== undefined) {
@@ -59,9 +62,9 @@ export const MoveResultGroup: React.FC<MoveResultGroupProps> = ({
 						value={move.id}
 						disabled={move.name === 'No move'}
 						label={
-							<div style={{ display: 'flex', justifyContent: 'space-between', width: '100%' }}>
+							<div className={styles.moveLabel}>
 								<span>{move.label || move.name}</span>
-								<span style={{ marginLeft: '1rem' }}>{move.damagePercent}</span>
+								<span className={styles.damagePercent}>{move.damagePercent}</span>
 							</div>
 						}
 					/>

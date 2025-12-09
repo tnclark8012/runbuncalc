@@ -13,10 +13,8 @@ import {
   DialogTrigger,
   Dropdown,
   Label,
-  makeStyles,
   Option,
   Switch,
-  tokens,
 } from '@fluentui/react-components';
 import { WeatherCloudy24Regular } from '@fluentui/react-icons';
 import { Terrain, Weather } from '@smogon/calc/dist/data/interface';
@@ -31,59 +29,7 @@ import {
   SideFieldState,
 } from '../store/fieldSlice';
 import { RootState } from '../store/store';
-
-const useStyles = makeStyles({
-  dialogContent: {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: tokens.spacingVerticalL,
-  },
-  section: {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: tokens.spacingVerticalM,
-  },
-  sectionTitle: {
-    fontWeight: tokens.fontWeightSemibold,
-    fontSize: tokens.fontSizeBase300,
-    marginBottom: tokens.spacingVerticalS,
-  },
-  twoColumn: {
-    display: 'grid',
-    gridTemplateColumns: '1fr 1fr',
-    gap: tokens.spacingHorizontalL,
-  },
-  fieldRow: {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: tokens.spacingVerticalS,
-  },
-  sideSection: {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: tokens.spacingVerticalM,
-    padding: tokens.spacingVerticalM,
-    border: `1px solid ${tokens.colorNeutralStroke1}`,
-    borderRadius: tokens.borderRadiusMedium,
-  },
-  spikesControl: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: tokens.spacingHorizontalM,
-  },
-  spikesButtons: {
-    display: 'flex',
-    gap: tokens.spacingHorizontalS,
-  },
-  spikesCounter: {
-    minWidth: '2em',
-    textAlign: 'center',
-    display: 'inline-block',
-  },
-  triggerButton: {
-    minWidth: '90px',
-  },
-});
+import { useStyles } from './FieldStateControl.styles';
 
 const TERRAINS: (Terrain | undefined)[] = [undefined, 'Electric', 'Grassy', 'Psychic', 'Misty'];
 const WEATHERS: (Weather | undefined)[] = [undefined, 'Sun', 'Rain', 'Hail', 'Sand'];

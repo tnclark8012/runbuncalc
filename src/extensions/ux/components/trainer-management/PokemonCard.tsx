@@ -1,5 +1,6 @@
 import { Avatar, Card, Tooltip } from '@fluentui/react-components';
 import * as React from 'react';
+import { useStyles } from './PokemonCard.styles';
 
 export interface PokemonCardProps {
   /**
@@ -40,9 +41,9 @@ export const PokemonCard: React.FC<PokemonCardProps> = ({
   onClick,
   size = 'small',
 }) => {
+  const styles = useStyles();
   const [imageError, setImageError] = React.useState(false);
 
-  const dimensions = size === 'small' ? { width: 40, height: 30 } : { width: 60, height: 45 };
   const imageUrl = `https://raw.githubusercontent.com/May8th1995/sprites/master/${species}.png`;
 
   const handleImageError = React.useCallback(() => {
@@ -54,17 +55,12 @@ export const PokemonCard: React.FC<PokemonCardProps> = ({
     setImageError(false);
   }, [species]);
 
-  const cardStyle: React.CSSProperties = {
-    width: dimensions.width,
-    height: dimensions.height,
-    padding: 0,
-    cursor: 'pointer',
-    border: isSelected ? '2px solid var(--colorBrandBackground)' : '1px solid var(--colorNeutralStroke1)',
-    boxShadow: isSelected ? '0 0 4px var(--colorBrandBackground)' : 'none',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    overflow: 'hidden',
+  // Determine card style based on size and selection state
+  const getCardClassName = () => {
+    if (size === 'small') {
+      return isSelected ? styles.cardSmallSelected : styles.cardSmall;
+    }
+    return isSelected ? styles.cardMediumSelected : styles.cardMedium;
   };
 
   const content = imageError ? (
@@ -79,11 +75,7 @@ export const PokemonCard: React.FC<PokemonCardProps> = ({
       alt={species}
       loading="lazy"
       onError={handleImageError}
-      style={{
-        width: '100%',
-        height: '100%',
-        objectFit: 'contain',
-      }}
+      className={styles.image}
     />
   );
 
@@ -91,7 +83,7 @@ export const PokemonCard: React.FC<PokemonCardProps> = ({
     <Tooltip content={`${species} (${setName})`} relationship="label">
       <Card
         onClick={onClick}
-        style={cardStyle}
+        className={getCardClassName()}
         appearance="subtle"
       >
         {content}
