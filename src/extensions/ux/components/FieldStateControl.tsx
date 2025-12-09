@@ -13,15 +13,15 @@ import {
   DialogTrigger,
   Dropdown,
   Label,
+  makeStyles,
   Option,
   Switch,
-  makeStyles,
   tokens,
 } from '@fluentui/react-components';
 import { WeatherCloudy24Regular } from '@fluentui/react-icons';
+import { Terrain, Weather } from '@smogon/calc/dist/data/interface';
 import * as React from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { Terrain, Weather } from '@smogon/calc/dist/data/interface';
 import {
   setCpuSideField,
   setPlayerSideField,
@@ -81,7 +81,7 @@ const useStyles = makeStyles({
     display: 'inline-block',
   },
   triggerButton: {
-    minWidth: '200px',
+    minWidth: '90px',
   },
 });
 
