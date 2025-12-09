@@ -15,6 +15,22 @@ export interface TurnSwitcherProps {
 }
 
 /**
+ * Extract the move text from a captured battle state
+ */
+function getMoveText(state: CapturedBattleStateData): string {
+  return state.plannedPlayerAction?.type === 'move' 
+    ? state.plannedPlayerAction.move 
+    : 'No move';
+}
+
+/**
+ * Generate a unique key for a captured state based on turn number and trainer index
+ */
+function getStateKey(state: CapturedBattleStateData): string {
+  return `turn-${state.turnNumber}-trainer-${state.trainerIndex}`;
+}
+
+/**
  * TurnSwitcher component - displays the captured battle states in a horizontal row
  */
 export const TurnSwitcher: React.FC<TurnSwitcherProps> = ({
@@ -33,14 +49,13 @@ export const TurnSwitcher: React.FC<TurnSwitcherProps> = ({
             No battle states captured
           </span>
         ) : (
-          capturedStates.map((state, index) => {
-            const moveText = state.plannedPlayerAction?.type === 'move' 
-              ? state.plannedPlayerAction.move 
-              : 'No move';
+          capturedStates.map((state) => {
+            const moveText = getMoveText(state);
+            const stateKey = getStateKey(state);
             
             return (
               <Tooltip 
-                key={index} 
+                key={stateKey} 
                 content={`Turn ${state.turnNumber}: ${moveText}`} 
                 relationship="label"
               >
