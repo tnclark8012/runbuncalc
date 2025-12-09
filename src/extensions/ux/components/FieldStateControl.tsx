@@ -151,17 +151,27 @@ export const FieldStateControl: React.FC = () => {
       </div>
 
       <div className={styles.spikesControl}>
-        <Label>Spikes Layers:</Label>
+        <Label>Spikes:</Label>
         <div className={styles.spikesButtons}>
-          {[0, 1, 2, 3].map((count) => (
-            <Button
-              key={count}
-              appearance={sideState.spikes === count ? 'primary' : 'secondary'}
-              onClick={() => onChange({ spikes: count })}
-            >
-              {count}
-            </Button>
-          ))}
+          <Button
+            size="small"
+            appearance="outline"
+            disabled={sideState.spikes === 0}
+            onClick={() => onChange({ spikes: Math.max(0, sideState.spikes - 1) })}
+          >
+            -
+          </Button>
+          <span style={{ minWidth: '2em', textAlign: 'center', display: 'inline-block' }}>
+            {sideState.spikes}
+          </span>
+          <Button
+            size="small"
+            appearance="outline"
+            disabled={sideState.spikes === 3}
+            onClick={() => onChange({ spikes: Math.min(3, sideState.spikes + 1) })}
+          >
+            +
+          </Button>
         </div>
       </div>
     </div>
@@ -175,12 +185,12 @@ export const FieldStateControl: React.FC = () => {
           icon={<WeatherCloudy24Regular />}
           className={styles.triggerButton}
         >
-          Field Configuration
+          Field
         </Button>
       </DialogTrigger>
       <DialogSurface>
         <DialogBody>
-          <DialogTitle>Field Configuration</DialogTitle>
+          <DialogTitle>Field</DialogTitle>
           <DialogContent className={styles.dialogContent}>
             {/* Global Field Effects */}
             <div className={styles.section}>
