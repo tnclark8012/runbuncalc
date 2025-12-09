@@ -33,12 +33,6 @@ export const useStyles = makeStyles({
   formDropdownContainer: {
     width: '250px',
   },
-  formDropdownVisible: {
-    width: '250px',
-  },
-  formDropdownHidden: {
-    width: '250px',
-  },
   levelInput: {
     width: '80px',
   },

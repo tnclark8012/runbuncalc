@@ -1,5 +1,9 @@
 /**
  * Styles for PokemonCard component
+ * 
+ * Note: Card styles are duplicated across size/selection variants for clarity.
+ * Fluent UI makeStyles doesn't support easy style composition, so we define
+ * each combination explicitly to maintain readability.
  */
 
 import { makeStyles } from '@fluentui/react-components';
