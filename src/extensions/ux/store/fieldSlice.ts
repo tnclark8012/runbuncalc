@@ -84,28 +84,27 @@ export const fieldSlice = createSlice({
     },
   },
   extraReducers: (builder) => {
+    // Helper to reset field state to initial values
+    const resetFieldState = (state: FieldState) => {
+      Object.assign(state, {
+        terrain: undefined,
+        weather: undefined,
+        isTrickRoom: false,
+        playerSide: createDefaultSideState(),
+        cpuSide: createDefaultSideState(),
+      });
+    };
+
     // Clear field state when trainer index changes
     builder
       .addCase(setTrainerIndex, (state) => {
-        state.terrain = undefined;
-        state.weather = undefined;
-        state.isTrickRoom = false;
-        state.playerSide = createDefaultSideState();
-        state.cpuSide = createDefaultSideState();
+        resetFieldState(state);
       })
       .addCase(nextTrainer, (state) => {
-        state.terrain = undefined;
-        state.weather = undefined;
-        state.isTrickRoom = false;
-        state.playerSide = createDefaultSideState();
-        state.cpuSide = createDefaultSideState();
+        resetFieldState(state);
       })
       .addCase(previousTrainer, (state) => {
-        state.terrain = undefined;
-        state.weather = undefined;
-        state.isTrickRoom = false;
-        state.playerSide = createDefaultSideState();
-        state.cpuSide = createDefaultSideState();
+        resetFieldState(state);
       });
   },
 });
