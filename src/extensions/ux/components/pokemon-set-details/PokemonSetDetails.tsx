@@ -373,7 +373,7 @@ export const PokemonSetDetails: React.FC<PokemonSetDetailsProps> = ({
           value={type1}
           selectedOptions={[type1]}
           onOptionSelect={handleType1Change}
-          style={{ width: '100px' }}
+          style={{ width: '100px', minWidth: '100px' }}
         >
           {availableTypes.map((type) => (
             <Option key={type} value={type}>
@@ -381,13 +381,11 @@ export const PokemonSetDetails: React.FC<PokemonSetDetailsProps> = ({
             </Option>
           ))}
         </Dropdown>
-        {type2 && (
+        {(
           <Dropdown
-            value={type2}
-            selectedOptions={[type2]}
+            value={type2 || ''}
             onOptionSelect={handleType2Change}
-            style={{ width: '100px' }}
-          >
+            style={{ width: '100px', minWidth: '100px', visibility: type2 ? 'visible' : 'hidden' }}>
             {availableTypes.map((type) => (
               <Option key={type} value={type}>
                 {type}
