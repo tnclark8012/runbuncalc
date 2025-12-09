@@ -51,6 +51,7 @@ export const PlayerPokemonSetDetails: React.FC = () => {
   }, [dispatch, pokemonId, speciesSet]);
 
   return (
+    speciesSet &&
     <PokemonSetDetails
       label="Player Set Details"
       speciesSet={speciesSet}
@@ -102,6 +103,7 @@ export const CpuPokemonSetDetails: React.FC = () => {
   }, [dispatch, pokemonId, speciesSet]);
 
   return (
+    speciesSet &&
     <PokemonSetDetails
       label="CPU Set Details"
       speciesSet={speciesSet}
