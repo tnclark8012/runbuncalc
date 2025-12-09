@@ -62,6 +62,27 @@ describe('selectBattleFieldState', () => {
         player: {},
         cpu: {},
       },
+      field: {
+        terrain: undefined,
+        weather: undefined,
+        isTrickRoom: false,
+        playerSide: {
+          isLightScreen: false,
+          isReflect: false,
+          isAuroraVeil: false,
+          isTailwind: false,
+          isSR: false,
+          spikes: 0,
+        },
+        cpuSide: {
+          isLightScreen: false,
+          isReflect: false,
+          isAuroraVeil: false,
+          isTailwind: false,
+          isSR: false,
+          spikes: 0,
+        },
+      },
       move: {
         plannedPlayerActions: [],
       },
