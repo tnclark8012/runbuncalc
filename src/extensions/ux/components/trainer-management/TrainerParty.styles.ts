@@ -2,7 +2,7 @@
  * Styles for TrainerParty component
  */
 
-import { makeStyles } from '@fluentui/react-components';
+import { makeStyles, tokens } from '@fluentui/react-components';
 
 export const useStyles = makeStyles({
   container: {
@@ -12,7 +12,7 @@ export const useStyles = makeStyles({
     marginTop: '10px',
   },
   containerOverLimit: {
-    border: '2px solid red',
+    border: `2px solid ${tokens.colorPaletteRedBorder1}`,
     borderRadius: '4px',
     padding: '8px',
     marginTop: '10px',
@@ -24,7 +24,7 @@ export const useStyles = makeStyles({
     minHeight: '45px',
   },
   overLimitText: {
-    color: 'red',
+    color: tokens.colorPaletteRedForeground1,
   },
   emptyState: {
     color: 'var(--colorNeutralForeground3)',
