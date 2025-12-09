@@ -27,14 +27,25 @@ const DeveloperToolsContent: React.FC<DeveloperToolsProps> = ({
   radioGroupName = 'devToolsMoves',
 }) => {
   const dispatch = useAppDispatch();
-  const selectedMoveId = useAppSelector((state) => state.move.selectedMoveId);
+  const selectedMoveName = useAppSelector((state) => state.move.selectedMoveName);
 
   const handleMoveSelect = React.useCallback(
     (moveId: string) => {
-      dispatch(setSelectedMove(moveId));
+      // Extract move name from the selected move
+      const move = moves.find(m => m.id === moveId);
+      if (move) {
+        dispatch(setSelectedMove(move.name));
+      }
     },
-    [dispatch]
+    [dispatch, moves]
   );
+
+  // Find the move ID that matches the selected move name
+  const selectedMoveId = React.useMemo(() => {
+    if (!selectedMoveName) return undefined;
+    const move = moves.find(m => m.name === selectedMoveName);
+    return move?.id;
+  }, [selectedMoveName, moves]);
 
   const handleExport = React.useCallback(() => {
     // Get the current state from the Redux store
@@ -72,7 +83,7 @@ const DeveloperToolsContent: React.FC<DeveloperToolsProps> = ({
       </div>
       <div style={{ marginTop: '1em', fontSize: '0.9em', color: '#666' }}>
         <strong>Debug Info:</strong>
-        <div>Selected Move ID: {selectedMoveId || 'None'}</div>
+        <div>Selected Move: {selectedMoveName || 'None'}</div>
       </div>
     </div>
   );

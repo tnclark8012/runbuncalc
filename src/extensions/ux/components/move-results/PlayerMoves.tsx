@@ -16,7 +16,7 @@ export const PlayerMoves: React.FC = () => {
   const dispatch = useDispatch();
   const { selection, availableSets } = useSelector((state: RootState) => state.set.player);
   const battleFieldState = useSelector(selectBattleFieldState);
-  const selectedMoveId = useSelector((state: RootState) => state.move.selectedMoveId);
+  const selectedMoveName = useSelector((state: RootState) => state.move.selectedMoveName);
   
   const moves = React.useMemo((): MoveItem[] => {
     if (!battleFieldState) return [];
@@ -37,10 +37,21 @@ export const PlayerMoves: React.FC = () => {
 
   const handleMoveSelect = React.useCallback(
     (moveId: string) => {
-      dispatch(setSelectedMove(moveId));
+      // Extract move name from the selected move
+      const move = moves.find(m => m.id === moveId);
+      if (move) {
+        dispatch(setSelectedMove(move.name));
+      }
     },
-    [dispatch]
+    [dispatch, moves]
   );
+
+  // Find the move ID that matches the selected move name
+  const selectedMoveId = React.useMemo(() => {
+    if (!selectedMoveName) return undefined;
+    const move = moves.find(m => m.name === selectedMoveName);
+    return move?.id;
+  }, [selectedMoveName, moves]);
   
   const headerText = selection?.species 
     ? `${selection.species}'s Moves`

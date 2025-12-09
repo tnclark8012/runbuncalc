@@ -2,24 +2,20 @@ import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { PlannedTrainerAction } from '../../configuration';
 import { PartyState } from './partySlice';
 import { PokemonStateState } from './pokemonStateSlice';
-import { SetState } from './setSlice';
-import { TrainerState } from './trainerSlice';
+import { setTrainerIndex, nextTrainer, previousTrainer } from './trainerSlice';
 
 /**
  * Captured state that can be used to reconstruct a BattleFieldState
  */
 export interface CapturedBattleStateData {
-  /** Timestamp when the state was captured */
-  timestamp: number;
-  
-  /** Player and CPU set selections and available sets */
-  sets: SetState;
+  /** Turn number when the state was captured (starts at 1) */
+  turnNumber: number;
   
   /** Player party */
   party: PartyState;
   
   /** Current trainer index */
-  trainer: TrainerState;
+  trainerIndex: number;
   
   /** Pokemon runtime states (HP, boosts, status) */
   pokemonStates: PokemonStateState;
@@ -33,10 +29,14 @@ export interface CapturedBattleStateData {
  */
 export interface CapturedBattleStateState {
   capturedStates: CapturedBattleStateData[];
+  currentTurnNumber: number;
+  currentTrainerIndex: number;
 }
 
 const initialState: CapturedBattleStateState = {
   capturedStates: [],
+  currentTurnNumber: 1,
+  currentTrainerIndex: 0,
 };
 
 /**
@@ -53,6 +53,8 @@ export const capturedBattleStateSlice = createSlice({
   reducers: {
     captureBattleState: (state, action: PayloadAction<CapturedBattleStateData>) => {
       state.capturedStates.push(action.payload);
+      // Increment turn number for next capture
+      state.currentTurnNumber += 1;
       // Keep only the most recent MAX_CAPTURED_STATES entries
       if (state.capturedStates.length > MAX_CAPTURED_STATES) {
         state.capturedStates = state.capturedStates.slice(-MAX_CAPTURED_STATES);
@@ -60,7 +62,29 @@ export const capturedBattleStateSlice = createSlice({
     },
     clearCapturedStates: (state) => {
       state.capturedStates = [];
+      state.currentTurnNumber = 1;
     },
+  },
+  extraReducers: (builder) => {
+    // Listen to trainer index changes and reset turn number
+    builder
+      .addCase(setTrainerIndex, (state, action) => {
+        if (state.currentTrainerIndex !== action.payload) {
+          state.currentTrainerIndex = action.payload;
+          state.currentTurnNumber = 1;
+          state.capturedStates = [];
+        }
+      })
+      .addCase(nextTrainer, (state) => {
+        // Turn number and states are reset when trainer changes
+        state.currentTurnNumber = 1;
+        state.capturedStates = [];
+      })
+      .addCase(previousTrainer, (state) => {
+        // Turn number and states are reset when trainer changes
+        state.currentTurnNumber = 1;
+        state.capturedStates = [];
+      });
   },
 });
 

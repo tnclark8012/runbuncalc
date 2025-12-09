@@ -4,11 +4,11 @@ import { createSlice, PayloadAction } from '@reduxjs/toolkit';
  * State shape for the move selection
  */
 export interface MoveState {
-  selectedMoveId: string | undefined;
+  selectedMoveName: string | undefined;
 }
 
 const initialState: MoveState = {
-  selectedMoveId: undefined,
+  selectedMoveName: undefined,
 };
 
 /**
@@ -19,10 +19,10 @@ export const moveSlice = createSlice({
   initialState,
   reducers: {
     setSelectedMove: (state, action: PayloadAction<string>) => {
-      state.selectedMoveId = action.payload;
+      state.selectedMoveName = action.payload;
     },
     clearSelectedMove: (state) => {
-      state.selectedMoveId = undefined;
+      state.selectedMoveName = undefined;
     },
   },
 });
