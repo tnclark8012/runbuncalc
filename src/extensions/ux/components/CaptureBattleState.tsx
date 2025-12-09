@@ -13,6 +13,12 @@ import { captureBattleState } from '../store/capturedBattleStateSlice';
 import { RootState } from '../store/store';
 
 /**
+ * Regular expression to extract move index from move ID (e.g., "playerMove0" -> 0)
+ * Must match the ID format used in PlayerMoves component
+ */
+const PLAYER_MOVE_ID_PATTERN = /playerMove(\d+)/;
+
+/**
  * Component that provides a button to capture the current battle state
  */
 export const CaptureBattleState: React.FC = () => {
@@ -35,7 +41,7 @@ export const CaptureBattleState: React.FC = () => {
     
     if (selectedMoveId) {
       // Extract the move index from the selectedMoveId (e.g., "playerMove0" -> 0)
-      const moveIndexMatch = selectedMoveId.match(/playerMove(\d+)/);
+      const moveIndexMatch = selectedMoveId.match(PLAYER_MOVE_ID_PATTERN);
       if (moveIndexMatch) {
         const moveIndex = parseInt(moveIndexMatch[1], 10);
         
@@ -55,8 +61,8 @@ export const CaptureBattleState: React.FC = () => {
             type: 'move',
             pokemon: playerPokemon,
             move: moveName,
-            mega: false, // TODO: This should come from the UI if mega evolution is supported
-            targetSlot: 0, // Default target for single battles
+            mega: false, // TODO: Add UI support for mega evolution selection
+            targetSlot: 0, // TODO: Support multiple targets for double battles
           };
         }
       }

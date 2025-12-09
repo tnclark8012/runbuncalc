@@ -40,6 +40,11 @@ const initialState: CapturedBattleStateState = {
 };
 
 /**
+ * Maximum number of captured battle states to keep in memory
+ */
+const MAX_CAPTURED_STATES = 100;
+
+/**
  * Redux slice for managing captured battle states
  */
 export const capturedBattleStateSlice = createSlice({
@@ -48,6 +53,10 @@ export const capturedBattleStateSlice = createSlice({
   reducers: {
     captureBattleState: (state, action: PayloadAction<CapturedBattleStateData>) => {
       state.capturedStates.push(action.payload);
+      // Keep only the most recent MAX_CAPTURED_STATES entries
+      if (state.capturedStates.length > MAX_CAPTURED_STATES) {
+        state.capturedStates = state.capturedStates.slice(-MAX_CAPTURED_STATES);
+      }
     },
     clearCapturedStates: (state) => {
       state.capturedStates = [];
