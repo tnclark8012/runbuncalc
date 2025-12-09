@@ -20,6 +20,7 @@ export const CaptureBattleState: React.FC = () => {
   const partyState = useSelector((state: RootState) => state.party);
   const trainerIndex = useSelector((state: RootState) => state.trainer.currentTrainerIndex);
   const pokemonStates = useSelector((state: RootState) => state.pokemonState);
+  const fieldState = useSelector((state: RootState) => state.field);
   const currentTurnNumber = useSelector((state: RootState) => state.capturedBattleState.currentTurnNumber);
 
   const handleCapture = React.useCallback(() => {
@@ -49,6 +50,7 @@ export const CaptureBattleState: React.FC = () => {
       party: partyState,
       trainerIndex,
       pokemonStates,
+      fieldState,
       plannedPlayerAction,
     };
 
@@ -61,7 +63,7 @@ export const CaptureBattleState: React.FC = () => {
     console.log(battleState.toString());
     console.log('Captured State Data:');
     console.log(capturedData);
-  }, [battleState, selectedMoveName, partyState, trainerIndex, pokemonStates, currentTurnNumber, dispatch]);
+  }, [battleState, selectedMoveName, partyState, trainerIndex, pokemonStates, fieldState, currentTurnNumber, dispatch]);
 
   return (
     <div style={{ margin: '20px 0', textAlign: 'center' }}>

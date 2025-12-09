@@ -68,10 +68,38 @@ export const setSlice = createSlice({
     },
     loadPlayerSets: (state, action: PayloadAction<CustomSets>) => {
       state.player.availableSets = action.payload;
+      
+      // If no selection exists, default to the first available set
+      if (!state.player.selection) {
+        const species = Object.keys(action.payload);
+        if (species.length > 0) {
+          const firstSpecies = species[0];
+          const setNames = Object.keys(action.payload[firstSpecies]);
+          if (setNames.length > 0) {
+            state.player.selection = {
+              species: firstSpecies,
+              setName: setNames[0],
+            };
+          }
+        }
+      }
     },
     /** Initializes all available sets in the store. Should only be called once at app initialization */
     loadCpuSets: (state, action: PayloadAction<CustomSets>) => {
       state.cpu.availableSets = action.payload;
+      if (!state.cpu.selection) {
+        const species = Object.keys(action.payload);
+        if (species.length > 0) {
+          const firstSpecies = species[0];
+          const setNames = Object.keys(action.payload[firstSpecies]);
+          if (setNames.length > 0) {
+            state.cpu.selection = {
+              species: firstSpecies,
+              setName: setNames[0],
+            };
+          }
+        }
+      }
     },
   },
 });

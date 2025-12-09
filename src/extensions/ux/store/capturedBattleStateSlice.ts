@@ -1,5 +1,6 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { PlannedTrainerAction } from '../../configuration';
+import { FieldState } from './fieldSlice';
 import { PartyState } from './partySlice';
 import { PokemonStateState } from './pokemonStateSlice';
 import { setTrainerIndex, nextTrainer, previousTrainer } from './trainerSlice';
@@ -19,6 +20,9 @@ export interface CapturedBattleStateData {
   
   /** Pokemon runtime states (HP, boosts, status) */
   pokemonStates: PokemonStateState;
+  
+  /** Field state (terrain, weather, hazards, screens, etc.) */
+  fieldState: FieldState;
   
   /** The player's planned action for this turn */
   plannedPlayerAction?: PlannedTrainerAction;
@@ -66,25 +70,22 @@ export const capturedBattleStateSlice = createSlice({
     },
   },
   extraReducers: (builder) => {
-    // Helper function to reset turn number and clear captured states
-    const resetCapturedState = (state: CapturedBattleStateState) => {
-      state.currentTurnNumber = 1;
-      state.capturedStates = [];
-    };
-
     // Listen to trainer index changes and reset turn number
     builder
       .addCase(setTrainerIndex, (state, action) => {
         if (state.currentTrainerIndex !== action.payload) {
           state.currentTrainerIndex = action.payload;
-          resetCapturedState(state);
+          state.currentTurnNumber = 1;
+          state.capturedStates = [];
         }
       })
       .addCase(nextTrainer, (state) => {
-        resetCapturedState(state);
+        state.currentTurnNumber = 1;
+        state.capturedStates = [];
       })
       .addCase(previousTrainer, (state) => {
-        resetCapturedState(state);
+        state.currentTurnNumber = 1;
+        state.capturedStates = [];
       });
   },
 });
