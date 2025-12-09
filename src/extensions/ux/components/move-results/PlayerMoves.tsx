@@ -3,17 +3,20 @@
  */
 
 import * as React from 'react';
-import { useSelector } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { gen } from '../../../configuration';
 import { calculateAllMoves } from '../../../simulator/moveScoring';
 import { selectBattleFieldState } from '../../store/battleFieldStateSelector';
+import { setSelectedMove } from '../../store/moveSlice';
 import { RootState } from '../../store/store';
 import { MoveItem } from './move-result-group.props';
 import { MoveResultGroup } from './MoveResultGroup';
 
 export const PlayerMoves: React.FC = () => {
+  const dispatch = useDispatch();
   const { selection, availableSets } = useSelector((state: RootState) => state.set.player);
   const battleFieldState = useSelector(selectBattleFieldState);
+  const selectedMoveName = useSelector((state: RootState) => state.move.selectedMoveName);
   
   const moves = React.useMemo((): MoveItem[] => {
     if (!battleFieldState) return [];
@@ -31,6 +34,24 @@ export const PlayerMoves: React.FC = () => {
       defaultChecked: index === 0,
     }));
   }, [battleFieldState]);
+
+  const handleMoveSelect = React.useCallback(
+    (moveId: string) => {
+      // Extract move name from the selected move
+      const move = moves.find(m => m.id === moveId);
+      if (move) {
+        dispatch(setSelectedMove(move.name));
+      }
+    },
+    [dispatch, moves]
+  );
+
+  // Find the move ID that matches the selected move name
+  const selectedMoveId = React.useMemo(() => {
+    if (!selectedMoveName) return undefined;
+    const move = moves.find(m => m.name === selectedMoveName);
+    return move?.id;
+  }, [selectedMoveName, moves]);
   
   const headerText = selection?.species 
     ? `${selection.species}'s Moves`
@@ -42,6 +63,8 @@ export const PlayerMoves: React.FC = () => {
       headerText={headerText}
       radioGroupName="playerMoves"
       moves={moves}
+      selectedMoveId={selectedMoveId}
+      onMoveSelect={handleMoveSelect}
     />
   );
 };
