@@ -75,6 +75,11 @@ const useStyles = makeStyles({
     display: 'flex',
     gap: tokens.spacingHorizontalS,
   },
+  spikesCounter: {
+    minWidth: '2em',
+    textAlign: 'center',
+    display: 'inline-block',
+  },
   triggerButton: {
     minWidth: '200px',
   },
@@ -161,7 +166,7 @@ export const FieldStateControl: React.FC = () => {
           >
             -
           </Button>
-          <span style={{ minWidth: '2em', textAlign: 'center', display: 'inline-block' }}>
+          <span className={styles.spikesCounter}>
             {sideState.spikes}
           </span>
           <Button
