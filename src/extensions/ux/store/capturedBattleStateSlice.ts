@@ -66,24 +66,25 @@ export const capturedBattleStateSlice = createSlice({
     },
   },
   extraReducers: (builder) => {
+    // Helper function to reset turn number and clear captured states
+    const resetCapturedState = (state: CapturedBattleStateState) => {
+      state.currentTurnNumber = 1;
+      state.capturedStates = [];
+    };
+
     // Listen to trainer index changes and reset turn number
     builder
       .addCase(setTrainerIndex, (state, action) => {
         if (state.currentTrainerIndex !== action.payload) {
           state.currentTrainerIndex = action.payload;
-          state.currentTurnNumber = 1;
-          state.capturedStates = [];
+          resetCapturedState(state);
         }
       })
       .addCase(nextTrainer, (state) => {
-        // Turn number and states are reset when trainer changes
-        state.currentTurnNumber = 1;
-        state.capturedStates = [];
+        resetCapturedState(state);
       })
       .addCase(previousTrainer, (state) => {
-        // Turn number and states are reset when trainer changes
-        state.currentTurnNumber = 1;
-        state.capturedStates = [];
+        resetCapturedState(state);
       });
   },
 });
