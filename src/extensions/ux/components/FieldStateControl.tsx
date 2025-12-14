@@ -20,7 +20,9 @@ import { WeatherCloudy24Regular } from '@fluentui/react-icons';
 import { Terrain, Weather } from '@smogon/calc/dist/data/interface';
 import * as React from 'react';
 import { useDispatch, useSelector } from 'react-redux';
+import { selectTurnStartingState } from '../store/battleFieldStateSelector';
 import {
+  FieldState,
   setCpuSideField,
   setPlayerSideField,
   setTerrain,
@@ -40,7 +42,35 @@ const WEATHERS: (Weather | undefined)[] = [undefined, 'Sun', 'Rain', 'Hail', 'Sa
 export const FieldStateControl: React.FC = () => {
   const styles = useStyles();
   const dispatch = useDispatch();
-  const fieldState = useSelector((state: RootState) => state.field);
+  const startOfTurnState = useSelector(selectTurnStartingState);
+  const configuredField = useSelector((state: RootState) => state.field);
+  const fieldState: FieldState = React.useMemo(() => {
+    if (startOfTurnState)
+      return {
+        terrain: startOfTurnState.field.terrain,
+        weather: startOfTurnState.field.weather,
+        isTrickRoom: startOfTurnState.field.isTrickRoom,
+        cpuSide: {
+          isAuroraVeil: startOfTurnState.cpuSide.isAuroraVeil,
+          isLightScreen: startOfTurnState.cpuSide.isLightScreen,
+          isReflect: startOfTurnState.cpuSide.isReflect,
+          isTailwind: startOfTurnState.cpuSide.isTailwind,
+          isSR: startOfTurnState.cpuSide.isSR,
+          spikes: startOfTurnState.cpuSide.spikes,
+        },
+        playerSide: {
+          isAuroraVeil: startOfTurnState.playerSide.isAuroraVeil,
+          isLightScreen: startOfTurnState.playerSide.isLightScreen,
+          isReflect: startOfTurnState.playerSide.isReflect,
+          isTailwind: startOfTurnState.playerSide.isTailwind,
+          isSR: startOfTurnState.playerSide.isSR,
+          spikes: startOfTurnState.playerSide.spikes,
+        }
+      };
+
+    return configuredField;
+  }, [startOfTurnState, configuredField]);
+
   const [open, setOpen] = React.useState(false);
 
   const handleTerrainChange = (_: any, data: { optionValue?: string }) => {
@@ -72,7 +102,7 @@ export const FieldStateControl: React.FC = () => {
   ) => (
     <div className={styles.sideSection}>
       <div className={styles.sectionTitle}>{side === 'player' ? 'Player Side' : 'CPU Side'}</div>
-      
+
       <div className={styles.fieldRow}>
         <Switch
           label="Light Screen"

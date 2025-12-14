@@ -4,7 +4,8 @@
 
 import { Card, Label, Tooltip } from '@fluentui/react-components';
 import * as React from 'react';
-import { CapturedBattleStateData } from '../../store/capturedBattleStateSlice';
+import { CapturedBattleStateData, deselectTurn, selectTurn } from '../../store/capturedBattleStateSlice';
+import { useAppDispatch, useAppSelector } from '../../store/hooks';
 import { useStyles } from './TurnSwitcher.styles';
 
 export interface TurnSwitcherProps {
@@ -37,6 +38,17 @@ export const TurnSwitcher: React.FC<TurnSwitcherProps> = ({
   capturedStates,
 }) => {
   const styles = useStyles();
+  const dispatch = useAppDispatch();
+  const selectedTurnIndex = useAppSelector(state => state.capturedBattleState.selectedTurnIndex);
+
+  const handleTurnClick = React.useCallback((index: number) => {
+    if (selectedTurnIndex === index) {
+      // Clicking the selected turn deselects it (returns to live state)
+      dispatch(deselectTurn());
+    } else {
+      dispatch(selectTurn(index));
+    }
+  }, [dispatch, selectedTurnIndex]);
 
   return (
     <div className={styles.container}>
@@ -49,9 +61,10 @@ export const TurnSwitcher: React.FC<TurnSwitcherProps> = ({
             No battle states captured
           </span>
         ) : (
-          capturedStates.map((state) => {
+          capturedStates.map((state, index) => {
             const moveText = getMoveText(state);
             const stateKey = getStateKey(state);
+            const isSelected = selectedTurnIndex === index;
             
             return (
               <Tooltip 
@@ -61,7 +74,9 @@ export const TurnSwitcher: React.FC<TurnSwitcherProps> = ({
               >
                 <Card
                   className={styles.stateCard}
-                  appearance="subtle"
+                  appearance={isSelected ? 'filled' : 'subtle'}
+                  onClick={() => handleTurnClick(index)}
+                  style={{ cursor: 'pointer' }}
                 >
                   <div className={styles.cardContent}>
                     <div className={styles.turnNumber}>T{state.turnNumber}</div>

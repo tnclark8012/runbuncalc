@@ -1,19 +1,201 @@
 import { Field, Pokemon } from '@smogon/calc';
 import { PokemonOptions } from '@smogon/calc/dist/pokemon';
-import { gen } from '../../configuration';
+import { gen, PlannedPlayerActionProvider } from '../../configuration';
 import { getPokemonId } from '../../core/storage';
 import { BattleFieldState, CpuTrainer, PlayerTrainer, PokemonPosition } from '../../simulator/moveScoring.contracts';
 import { popFromParty } from '../../simulator/phases/switching/execute-switch';
+import { usingHeuristics } from '../../simulator/turn-helper';
+import { runTurn, runTurnStart } from '../../simulator/turn-state';
 import { convertIVsFromCustomSetToPokemon } from '../../simulator/utils';
 import { getTrainerNameByTrainerIndex, OpposingTrainer } from '../../trainer-sets';
 import { parsePokemonId } from '../party';
+import type { CapturedBattleStateData, PlannedTrainerActionState } from './capturedBattleStateSlice';
 import { RootState } from './store';
+
+export const selectTurnStartingState = (state: RootState) => {
+  const initialState = selectBattleFieldState(state)!;
+  const stateBeforeAnyActions = runTurnStart(initialState);
+  return stateBeforeAnyActions;
+};
 
 /**
  * Creates a BattleFieldState from the current Redux state
  * Returns undefined if the required selections are not present
+ * If a turn is selected in capturedBattleState, reconstructs that turn's state
+ * Otherwise, uses the current live state
  */
 export const selectBattleFieldState = (state: RootState): BattleFieldState | undefined => {
+  // Check if a captured turn is selected
+  const { selectedTurnIndex, capturedStates } = state.capturedBattleState;
+  
+  if (selectedTurnIndex !== null && capturedStates[selectedTurnIndex]) {
+    // Reconstruct BattleFieldState from captured state
+    return reconstructBattleFieldState(capturedStates[selectedTurnIndex], state);
+  }
+  
+  // Use current live state
+  return buildCurrentBattleFieldState(state);
+};
+
+/**
+ * Reconstructs a BattleFieldState from a captured turn's data
+ */
+function reconstructBattleFieldState(capturedData: CapturedBattleStateData, state: RootState): BattleFieldState | undefined {
+  const playerState = state.set.player;
+  const cpuState = state.set.cpu;
+  const pokemonStates = capturedData.pokemonStates;
+  const fieldState = capturedData.fieldState;
+  
+  const cpuSelection = cpuState.selection;
+  const playerSelection = playerState.selection;
+
+  if (!playerSelection || !cpuSelection) {
+    return undefined;
+  }
+
+  // Helper to apply Pokemon state from captured data
+  const applyPokemonState = (pokemon: Pokemon, pokemonId: string, side: 'player' | 'cpu') => {
+    const stateData = side === 'player'
+      ? pokemonStates.player[pokemonId]
+      : pokemonStates.cpu[pokemonId];
+
+    const clonedOptions: PokemonOptions = {};
+    if (stateData) {
+      if (stateData.currentHp !== undefined) {
+        clonedOptions.curHP = stateData.currentHp;
+      }
+
+      if (stateData.status) {
+        clonedOptions.status = stateData.status;
+      }
+
+      if (stateData.boosts) {
+        clonedOptions.boosts = stateData.boosts;
+      }
+    }
+    return pokemon.clone(clonedOptions);
+  };
+
+  // Build player party from captured party state
+  const playerPartyPokemon: Pokemon[] = [];
+  for (const pokemonId of capturedData.party.playerParty) {
+    const parsed = parsePokemonId(pokemonId);
+    if (!parsed) continue;
+
+    const { species, setName } = parsed;
+    const set = playerState.availableSets[species]?.[setName];
+    if (!set) continue;
+
+    const pokemon = new Pokemon(gen, species, {
+      level: set.level,
+      ability: set.ability,
+      abilityOn: true,
+      item: set.item || "",
+      nature: set.nature,
+      ivs: convertIVsFromCustomSetToPokemon(set.ivs),
+      evs: { atk: 0, def: 0, spa: 0, spd: 0, spe: 0, hp: 0 },
+      moves: set.moves,
+    });
+
+    const statefulPokemon = applyPokemonState(pokemon, pokemonId, 'player');
+    playerPartyPokemon.push(statefulPokemon);
+  }
+
+  let playerActive = playerPartyPokemon.find(p => p.species.name === playerSelection.species);
+  
+  if (!playerActive) {
+    const selectedSet = playerState.availableSets[playerSelection.species]?.[playerSelection.setName];
+    if (!selectedSet) {
+      return undefined;
+    }
+    
+    const pokemon = new Pokemon(gen, playerSelection.species, {
+      level: selectedSet.level,
+      ability: selectedSet.ability,
+      abilityOn: true,
+      item: selectedSet.item || "",
+      nature: selectedSet.nature,
+      ivs: convertIVsFromCustomSetToPokemon(selectedSet.ivs),
+      evs: { atk: 0, def: 0, spa: 0, spd: 0, spe: 0, hp: 0 },
+      moves: selectedSet.moves,
+    });
+    
+    const pokemonId = getPokemonId(playerSelection.species, playerSelection.setName);
+    playerActive = applyPokemonState(pokemon, pokemonId, 'player');
+    playerPartyPokemon.splice(0);
+  } else {
+    popFromParty(playerPartyPokemon, playerActive);
+  }
+
+  // Build CPU party from trainer
+  const trainerName = getTrainerNameByTrainerIndex(capturedData.trainerIndex);
+  const cpuTrainerParty = OpposingTrainer(trainerName).map(p => {
+    const pokemonId = getPokemonId(p.species.name, trainerName);
+    return applyPokemonState(p.clone(), pokemonId, 'cpu');
+  });
+
+  const cpuActive = cpuTrainerParty.find(p => 
+    getPokemonId(p.species.name, trainerName) === getPokemonId(cpuSelection.species, cpuSelection.setName)
+  );
+
+  if (!cpuActive) {
+    return undefined;
+  }
+  popFromParty(cpuTrainerParty, cpuActive);
+
+  const playerTrainer = new PlayerTrainer([new PokemonPosition(playerActive, true)], playerPartyPokemon);
+  const cpuTrainer = new CpuTrainer(trainerName, [new PokemonPosition(cpuActive, true)], cpuTrainerParty);
+
+  // Create field from captured field state
+  const field = new Field({
+    terrain: fieldState.terrain,
+    weather: fieldState.weather,
+    isTrickRoom: fieldState.isTrickRoom,
+    attackerSide: {
+      isLightScreen: fieldState.playerSide.isLightScreen,
+      isReflect: fieldState.playerSide.isReflect,
+      isAuroraVeil: fieldState.playerSide.isAuroraVeil,
+      isTailwind: fieldState.playerSide.isTailwind,
+      isSR: fieldState.playerSide.isSR,
+      spikes: fieldState.playerSide.spikes,
+    },
+    defenderSide: {
+      isLightScreen: fieldState.cpuSide.isLightScreen,
+      isReflect: fieldState.cpuSide.isReflect,
+      isAuroraVeil: fieldState.cpuSide.isAuroraVeil,
+      isTailwind: fieldState.cpuSide.isTailwind,
+      isSR: fieldState.cpuSide.isSR,
+      spikes: fieldState.cpuSide.spikes,
+    },
+  });
+
+  const initialState = new BattleFieldState(playerTrainer, cpuTrainer, field, 0);
+  
+  const toPlannedAction = (action: PlannedTrainerActionState) => {
+    return {
+      ...action,
+      pokemon: initialState.player.active.find(p => p.pokemon.species.name === action.pokemonName)!.pokemon,
+    }
+  }
+  let endOfTurnState = usingHeuristics({ playerActionProvider: new PlannedPlayerActionProvider([
+            [ toPlannedAction(capturedData.plannedPlayerAction!) ],
+          ]) }, () => {
+            return runTurn(initialState)
+          });
+
+  console.log("Reconstructed", endOfTurnState, "from", capturedData)
+
+  const mostLikelyEndOfTurnState = endOfTurnState.find(state => state.probability === Math.max(...endOfTurnState.map(state => state.probability)));
+  if (endOfTurnState.length > 0) {
+    console.warn("Found multiple end of turns! Picking the most likely one", mostLikelyEndOfTurnState);
+  }
+  return mostLikelyEndOfTurnState!.state;
+}
+
+/**
+ * Builds a BattleFieldState from the current live Redux state
+ */
+function buildCurrentBattleFieldState(state: RootState): BattleFieldState | undefined {
   const playerState = state.set.player;
   const cpuState = state.set.cpu;
   const { playerParty } = state.party;
@@ -150,4 +332,4 @@ export const selectBattleFieldState = (state: RootState): BattleFieldState | und
 
   // Create BattleFieldState
   return new BattleFieldState(playerTrainer, cpuTrainer, field, 0);
-};
+}

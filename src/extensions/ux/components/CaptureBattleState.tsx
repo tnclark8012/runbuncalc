@@ -5,9 +5,8 @@
 import { Button } from '@fluentui/react-components';
 import * as React from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { PlannedMoveAction } from '../../configuration';
-import { selectBattleFieldState } from '../store/battleFieldStateSelector';
-import { captureBattleState, clearCapturedStates } from '../store/capturedBattleStateSlice';
+import { selectBattleFieldState, selectTurnStartingState } from '../store/battleFieldStateSelector';
+import { captureBattleState, clearCapturedStates, PlannedMoveActionState } from '../store/capturedBattleStateSlice';
 import { RootState } from '../store/store';
 import { useStyles } from './CaptureBattleState.styles';
 import { TurnSwitcher } from './turn-switcher/TurnSwitcher';
@@ -19,6 +18,7 @@ export const CaptureBattleState: React.FC = () => {
   const styles = useStyles();
   const dispatch = useDispatch();
   const battleState = useSelector((state: RootState) => selectBattleFieldState(state));
+  const startOfTurnBattleState = useSelector((state: RootState) => selectTurnStartingState(state));
   const selectedMoveName = useSelector((state: RootState) => state.move.selectedMoveName);
   const partyState = useSelector((state: RootState) => state.party);
   const trainerIndex = useSelector((state: RootState) => state.trainer.currentTrainerIndex);
@@ -34,14 +34,14 @@ export const CaptureBattleState: React.FC = () => {
     }
 
     // Get the selected move name directly from the store
-    let plannedPlayerAction: PlannedMoveAction | undefined;
+    let plannedPlayerAction: PlannedMoveActionState | undefined;
     
     if (selectedMoveName) {
       const playerPokemon = battleState.player.active[0].pokemon;
       
       plannedPlayerAction = {
         type: 'move',
-        pokemon: playerPokemon,
+        pokemonName: playerPokemon.species.name,
         move: selectedMoveName,
         mega: false, // TODO: Add UI support for mega evolution selection
         targetSlot: 0, // TODO: Support multiple targets for double battles

@@ -1,9 +1,8 @@
 /* eslint-env jest */
 
-import { I, State, Field, Pokemon, Move, calculate, SPECIES, ABILITIES, PokemonOptions, ITEMS, Side, SpeciesData } from '@smogon/calc';
+import { ABILITIES, calculate, Field, I, ITEMS, Move, Pokemon, PokemonOptions, Side, SPECIES, SpeciesData, State } from '@smogon/calc';
 import { Result } from '@smogon/calc/src';
 import { ActivePokemon, BattleFieldState } from './moveScoring.contracts';
-import { ConfiguredHeuristics, Heuristics } from '../configuration';
 
 const calc = (gen: I.GenerationNum) => (
   attacker: Pokemon,
@@ -382,18 +381,4 @@ export function expectPlayerTeam(active: ActivePokemon[], party: Pokemon[], stat
 export function expectTeam(expected: { active: ActivePokemon[], party: Pokemon[] }, actual: { active: ActivePokemon[], party: Pokemon[] }): void {
   expect(actual.active.map(p => p.pokemon.id )).toEqual(expected.active.map(p => p.pokemon.id));
   expect(actual.party.map(p => p.id)).toEqual(expected.party.map(p => p.id));
-}
-
-export function usingHeuristics(chosenHeuristics: Partial<ConfiguredHeuristics>, fn: () => any): void {
-  const originalHeuristics = { ...Heuristics };
-  try {
-    for (const key in chosenHeuristics) {
-      (Heuristics as any)[key] = (chosenHeuristics as any)[key];
-    }
-    fn();
-  } finally {
-    for (const key in originalHeuristics) {
-      (Heuristics as any)[key] = (originalHeuristics as any)[key];
-    }
-  }
 }
