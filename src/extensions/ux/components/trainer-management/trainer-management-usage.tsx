@@ -208,8 +208,10 @@ export const PlayerBoxManager: React.FC = () => {
   const handlePokemonClick = React.useCallback(
     (species: string, setName: string) => {
       dispatch(setPlayerSet({ species, setName }));
+      const moves = availableSets[species][setName].moves!;
+      dispatch(setSelectedMoveName(moves[0]));
     },
-    [dispatch]
+    [dispatch, availableSets]
   );
 
   return (
