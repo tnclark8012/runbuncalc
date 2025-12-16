@@ -1,8 +1,8 @@
 import { A, Field, I, Pokemon, Side, toID } from "@smogon/calc";
 import { MoveName } from "@smogon/calc/dist/data/interface";
 import { StatsTable } from "@smogon/calc/src";
-import { TypeName } from "@smogon/calc/src/data/interface";
-import { getFinalSpeed as calcGetFinalSpeed } from "@smogon/calc/src/mechanics/util";
+import { StatID, TypeName } from "@smogon/calc/src/data/interface";
+import { getFinalSpeed as calcGetFinalSpeed, getModifiedStat as calcGetModifiedStat } from "@smogon/calc/src/mechanics/util";
 import { gen } from "../configuration";
 import { getActiveSets, saveActiveSets } from "../core/storage";
 import { CustomSets, PokemonSet } from "../core/storage.contracts";
@@ -33,6 +33,20 @@ export function isFainted(pokemon: A.Pokemon): boolean {
 
 export function getFinalSpeed(pokemon: A.Pokemon, field: Field, side: Side): number {
 	return calcGetFinalSpeed(gen, pokemon as any, field, side);
+}
+
+export function getFinalStats(pokemon: Pokemon, field: Field, side: Side): StatsTable<number> {
+	const stats: Partial<StatsTable<number>> = {};
+	for (const stat in pokemon.stats) {
+		const statId = stat as StatID;
+		if (stat === 'spe') {
+			stats.spe = getFinalSpeed(pokemon, field, side);
+		} else {
+			stats[statId] = calcGetModifiedStat(pokemon.rawStats[statId]!, pokemon.boosts[statId]!, gen);
+		}
+	}
+
+	return stats as StatsTable<number>;
 }
 
 /** Applies an external (not from self) boost to stats. Doesn't impact Clear Body pokemon */

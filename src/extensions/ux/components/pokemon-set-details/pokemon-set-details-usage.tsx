@@ -57,10 +57,12 @@ export const PlayerPokemonSetDetails: React.FC = () => {
   }, [dispatch, pokemonId, speciesSet]);
 
   return (
-    speciesSet &&
+    speciesSet && battleFieldState &&
     <PokemonSetDetails
       label="Player Set Details"
       speciesSet={speciesSet}
+      field={battleFieldState.playerField}
+      side={battleFieldState.playerSide}
       onStateChange={handleStateChange}
     />
   );
@@ -111,10 +113,12 @@ export const CpuPokemonSetDetails: React.FC = () => {
   }, [dispatch, pokemonId, speciesSet]);
 
   return (
-    speciesSet &&
+    speciesSet && battleFieldState &&
     <PokemonSetDetails
       label="CPU Set Details"
       speciesSet={speciesSet}
+      field={battleFieldState.cpuField}
+      side={battleFieldState.cpuSide}
       onStateChange={handleStateChange}
       readonly={true}
     />

@@ -1,12 +1,13 @@
 import { Dropdown, Input, Label, Option, Table, TableBody, TableCell, TableHeader, TableHeaderCell, TableRow } from '@fluentui/react-components';
-import { Pokemon, StatsTable } from '@smogon/calc';
+import { Field, Pokemon, Side, StatsTable } from '@smogon/calc';
 import type { StatusName, TypeName } from '@smogon/calc/dist/data/interface';
 import * as React from 'react';
 import { gen } from '../../../configuration';
 import { IVRecord, PokemonSet } from '../../../core/storage.contracts';
-import { applyBoost, convertIVsFromCustomSetToPokemon } from '../../../simulator/utils';
+import { applyBoost, convertIVsFromCustomSetToPokemon, getFinalStats } from '../../../simulator/utils';
 import { getAllAvailableItems, getPlayerAccessibleItems } from '../../items';
 import { getAbilitiesForPokemon } from '../../pokedex';
+import { FieldOnlyState, SideFieldState } from '../../store/fieldSlice';
 import { PokemonState } from '../../store/pokemonStateSlice';
 import { HPBar } from './HPBar';
 import { useStyles } from './PokemonSetDetails.styles';
@@ -31,6 +32,10 @@ export interface PokemonSetDetailsProps {
    */
   speciesSet: SpeciesSet;
 
+  field: FieldOnlyState;
+
+  side: SideFieldState;
+
   /**
    * Callback to update Pokemon state
    */
@@ -53,6 +58,8 @@ export interface PokemonSetDetailsProps {
 export const PokemonSetDetails: React.FC<PokemonSetDetailsProps> = ({ 
   label,
   speciesSet,
+  field,
+  side,
   onStateChange,
   readonly = false,
   usePlayerItems = true
@@ -350,6 +357,10 @@ export const PokemonSetDetails: React.FC<PokemonSetDetailsProps> = ({
     return [pokemon.species.name, ...pokemon.species.otherFormes];
   }, [pokemon]);
 
+  const resolvedStats = React.useMemo<StatsTable<number>>(() => {
+    return getFinalStats(pokemon, new Field({ ...field }), new Side({ ...side }))
+  }, [pokemon, field, side]);
+
   // Generate boost options from -6 to +6
   const boostOptions = Array.from({ length: 13 }, (_, i) => i - 6);
   const stats = [
@@ -438,6 +449,7 @@ export const PokemonSetDetails: React.FC<PokemonSetDetailsProps> = ({
             <TableHeaderCell>Stat</TableHeaderCell>
             <TableHeaderCell>IVs</TableHeaderCell>
             <TableHeaderCell>Boosts</TableHeaderCell>
+            <TableHeaderCell>Value</TableHeaderCell>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -472,6 +484,9 @@ export const PokemonSetDetails: React.FC<PokemonSetDetailsProps> = ({
                 ) : (
                   <span>—</span>
                 )}
+              </TableCell>
+              <TableCell>
+                <span>{boostKey ? resolvedStats[boostKey]?.toString() : '—'}</span>
               </TableCell>
             </TableRow>
           ))}

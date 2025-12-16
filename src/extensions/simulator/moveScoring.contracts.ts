@@ -208,7 +208,11 @@ export class BattleFieldState {
 	}
 
 	public get cpuField(): Field {
-		return this.field.swap();
+		return new Field({ 
+			...this.playerField,
+			attackerSide: this.cpuSide,
+			defenderSide: this.playerSide,
+		});
 	}
 
 	public get cpuSide(): Side {

@@ -56,12 +56,7 @@ export const MoveResultGroup: React.FC<MoveResultGroupProps> = ({
 
 	return (
 		<div 
-			className="move-result-subgroup" 
-			style={isFaster ? { 
-				border: '2px solid #0078d4',
-				borderRadius: '4px',
-				padding: '8px'
-			} : undefined}
+			className={isFaster ? `move-result-subgroup ${styles.fasterContainer}` : 'move-result-subgroup'}
 		>
 			<div className="result-move-header">
 				<Label id={headerId}>{headerText}</Label>
