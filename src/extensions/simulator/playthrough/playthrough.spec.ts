@@ -1,11 +1,11 @@
 import { Field } from '@smogon/calc';
+import { usingHeuristics } from '../../configuration';
 import { OpposingTrainer } from '../../trainer-sets';
 import { importTeam } from '../helper';
 import { BattleFieldState, CpuTrainer, PlayerTrainer, PokemonPosition } from '../moveScoring.contracts';
-import { findPlayerWinningPath, printDecisionTree } from '../path-finder';
+import { findPlayerWinningPath } from '../path-finder';
 import { determineMoveOrderAndExecute } from '../phases/battle/determine-move-order-and-execute';
 import { BasicScoring } from '../phases/battle/player-move-selection-strategy';
-import { usingHeuristics } from '../test-helper';
 import { getBox } from './museum.collection';
 
 describe('Actual playthrough tests', () => {

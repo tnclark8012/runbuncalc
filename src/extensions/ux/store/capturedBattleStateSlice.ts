@@ -41,12 +41,15 @@ export interface CapturedBattleStateState {
   capturedStates: CapturedBattleStateData[];
   currentTurnNumber: number;
   currentTrainerIndex: number;
+  /** Index of the selected captured state (for viewing possible next states) */
+  selectedStateIndex: number | null;
 }
 
 const initialState: CapturedBattleStateState = {
   capturedStates: [],
   currentTurnNumber: 1,
   currentTrainerIndex: 0,
+  selectedStateIndex: null,
 };
 
 /**
@@ -62,6 +65,12 @@ export const capturedBattleStateSlice = createSlice({
   initialState,
   reducers: {
     captureBattleState: (state, action: PayloadAction<CapturedBattleStateData>) => {
+      // Prune any states with turnNumber >= the new capture's turnNumber
+      // This allows branching - capturing a different action at an earlier turn
+      state.capturedStates = state.capturedStates.filter(
+        s => s.turnNumber < action.payload.turnNumber
+      );
+      
       state.capturedStates.push(action.payload);
       // Increment turn number for next capture
       state.currentTurnNumber += 1;
@@ -73,6 +82,13 @@ export const capturedBattleStateSlice = createSlice({
     clearCapturedStates: (state) => {
       state.capturedStates = [];
       state.currentTurnNumber = 1;
+      state.selectedStateIndex = null;
+    },
+    selectCapturedState: (state, action: PayloadAction<number | null>) => {
+      state.selectedStateIndex = action.payload;
+    },
+    setCurrentTurnNumber: (state, action: PayloadAction<number>) => {
+      state.currentTurnNumber = action.payload;
     },
   },
   extraReducers: (builder) => {
@@ -83,18 +99,21 @@ export const capturedBattleStateSlice = createSlice({
           state.currentTrainerIndex = action.payload;
           state.currentTurnNumber = 1;
           state.capturedStates = [];
+          state.selectedStateIndex = null;
         }
       })
       .addCase(nextTrainer, (state) => {
         state.currentTurnNumber = 1;
         state.capturedStates = [];
+        state.selectedStateIndex = null;
       })
       .addCase(previousTrainer, (state) => {
         state.currentTurnNumber = 1;
         state.capturedStates = [];
+        state.selectedStateIndex = null;
       });
   },
 });
 
-export const { captureBattleState, clearCapturedStates } = capturedBattleStateSlice.actions;
+export const { captureBattleState, clearCapturedStates, selectCapturedState, setCurrentTurnNumber } = capturedBattleStateSlice.actions;
 export default capturedBattleStateSlice.reducer;

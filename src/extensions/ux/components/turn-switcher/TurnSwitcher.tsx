@@ -12,6 +12,14 @@ export interface TurnSwitcherProps {
    * Array of captured battle states
    */
   capturedStates: CapturedBattleStateData[];
+  /**
+   * Index of the currently selected state
+   */
+  selectedStateIndex: number | null;
+  /**
+   * Callback when a state is selected
+   */
+  onSelectState: (index: number) => void;
 }
 
 /**
@@ -35,6 +43,8 @@ function getStateKey(state: CapturedBattleStateData): string {
  */
 export const TurnSwitcher: React.FC<TurnSwitcherProps> = ({
   capturedStates,
+  selectedStateIndex,
+  onSelectState,
 }) => {
   const styles = useStyles();
 
@@ -49,9 +59,10 @@ export const TurnSwitcher: React.FC<TurnSwitcherProps> = ({
             No battle states captured
           </span>
         ) : (
-          capturedStates.map((state) => {
+          capturedStates.map((state, index) => {
             const moveText = getMoveText(state);
             const stateKey = getStateKey(state);
+            const isSelected = selectedStateIndex === index;
             
             return (
               <Tooltip 
@@ -60,8 +71,9 @@ export const TurnSwitcher: React.FC<TurnSwitcherProps> = ({
                 relationship="label"
               >
                 <Card
-                  className={styles.stateCard}
+                  className={`${styles.stateCard} ${isSelected ? styles.stateCardSelected : ''}`}
                   appearance="subtle"
+                  onClick={() => onSelectState(index)}
                 >
                   <div className={styles.cardContent}>
                     <div className={styles.turnNumber}>T{state.turnNumber}</div>

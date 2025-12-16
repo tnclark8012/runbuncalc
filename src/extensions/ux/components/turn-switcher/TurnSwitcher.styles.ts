@@ -2,7 +2,7 @@
  * Styles for TurnSwitcher component
  */
 
-import { makeStyles, tokens } from '@fluentui/react-components';
+import { makeStyles, shorthands, tokens } from '@fluentui/react-components';
 
 export const useStyles = makeStyles({
   container: {
@@ -29,6 +29,10 @@ export const useStyles = makeStyles({
     ':hover': {
       backgroundColor: tokens.colorNeutralBackground1Hover,
     },
+  },
+  stateCardSelected: {
+    backgroundColor: tokens.colorBrandBackground2,
+    ...shorthands.borderColor(tokens.colorBrandStroke1),
   },
   cardContent: {
     display: 'flex',
