@@ -1,8 +1,10 @@
-import { expectCpuTeam, importTeam } from './test-helper';
-import { applyTransforms, BattleFieldStateTransform } from './turn-state';
-import { applyCpuSwitchIns, applyPlayerSwitchIns } from './phases/switching';
-import { BattleFieldState, CpuTrainer, PlayerTrainer, PokemonPosition, Trainer } from './moveScoring.contracts';
 import { Field } from '@smogon/calc';
+import { ItemName } from '@smogon/calc/src/data/interface';
+import { OpposingTrainer } from '../trainer-sets';
+import { BattleFieldState, CpuTrainer, PlayerTrainer, PokemonPosition } from './moveScoring.contracts';
+import { applyCpuSwitchIns, applyPlayerSwitchIns } from './phases/switching';
+import { expectCpuTeam, importTeam } from './test-helper';
+import { applyTransforms, BattleFieldStateTransform, startTurn } from './turn-state';
 
 describe('Turn state', () => {
   test('Switch ins - Sis And Bro Reli And Ian', () => {
@@ -118,5 +120,32 @@ IVs: 30 HP / 9 Atk / 21 Def / 6 SpA / 14 SpD / 25 Spe
       expect(newStates.length).toBe(1);
       // Cinderace comes out because it fast KO's Aggron, but doesn't see that it gets fast KO'd by Excadrill
       expectCpuTeam([{ pokemon: Victreebel, firstTurnOut: false }, { pokemon: Cinderace, firstTurnOut: true }], [Mimikyu, Ursaluna, Sharpedo, Aerodactyl], newStates[0].state);
+  });
+
+  test('Electric surge activates on switch-in', () => {
+      const cpu = OpposingTrainer('Guitarist Kirk');
+      let [Turtwig] = importTeam(`
+      Turtwig
+      Level: 12
+      Hardy Nature
+      Ability: Shell Armor
+      IVs: 20 HP / 27 Atk / 8 SpA
+      - Absorb
+      - Bite
+      - Confide
+      - Growl
+      `);
+
+      cpu[0].item = 'Electric Seed' as ItemName;
+      let state = new BattleFieldState(
+        new PlayerTrainer([ new PokemonPosition(Turtwig, true)], []),
+        new CpuTrainer('Guitarist Kirk', [], cpu),
+        new Field());
+
+      const startOfTurn = startTurn(state);
+      expect(startOfTurn.length).toBe(1);
+      expect(startOfTurn[0].state.field.terrain).toBe('Electric'); // Electric Surge from Kirk's Pincurchin
+      expect(startOfTurn[0].state.cpu.active[0].pokemon.boosts.def).toBe(1); // Electric Seed boost to defense
+      expect(startOfTurn[0].state.cpu.active[0].pokemon.item).toBeUndefined(); // Electric Seed was consumed
   });
 });

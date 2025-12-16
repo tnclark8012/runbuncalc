@@ -1,18 +1,17 @@
-import { Pokemon } from "@smogon/calc";
+import { visitActivePokemonInSpeedOrder } from "../../battle-field-state-visitor";
 import { ActivePokemon, BattleFieldState, PokemonPosition } from "../../moveScoring.contracts";
 import { applyBoost } from "../../utils";
-import { visitActivePokemonInSpeedOrder } from "../../battle-field-state-visitor";
 
 export function applyStartOfTurnAbilities(state: BattleFieldState): BattleFieldState {
-  state = state.clone();
+  let newState = state.clone();
 
   visitActivePokemonInSpeedOrder(state, {
     visitActivePokemon(state, pokemon, field) {
-      state = applyStartOfTurnAbility(state, pokemon);
+      newState = applyStartOfTurnAbility(newState, pokemon);
     },
   });
 
-  return state;
+  return newState;
 }
 
 type Participant  = { self: PokemonPosition, ally?: PokemonPosition, opponents?: PokemonPosition[] };
