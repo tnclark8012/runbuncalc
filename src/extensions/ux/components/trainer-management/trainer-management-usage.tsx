@@ -19,6 +19,34 @@ import { TrainerBox } from './TrainerBox';
 import { TrainerParty } from './TrainerParty';
 
 /**
+ * Hook to get the selected Pokemon ID from a selection state
+ */
+function useSelectedPokemonId(selection: { species: string; setName: string } | undefined): string | undefined {
+  return React.useMemo(() => {
+    if (selection?.species && selection?.setName) {
+      return getPokemonId(selection.species, selection.setName);
+    }
+    return undefined;
+  }, [selection]);
+}
+
+/**
+ * Hook to handle player Pokemon click with move selection
+ */
+function usePlayerPokemonClick(availableSets: any) {
+  const dispatch = useAppDispatch();
+  
+  return React.useCallback(
+    (species: string, setName: string) => {
+      dispatch(setPlayerSet({ species, setName }));
+      const moves = availableSets[species][setName].moves!;
+      dispatch(setSelectedMoveName(moves[0]));
+    },
+    [dispatch, availableSets]
+  );
+}
+
+/**
  * PlayerPartyManager - manages player party with promote/demote button
  */
 export const PlayerPartyManager: React.FC = () => {
@@ -26,27 +54,12 @@ export const PlayerPartyManager: React.FC = () => {
   const { playerParty } = useSelector((state: RootState) => state.party);
   const { selection, availableSets } = useSelector((state: RootState) => state.set.player);
 
-  // Get current selected Pokemon ID
-  const selectedPokemonId = React.useMemo(() => {
-    if (selection?.species && selection?.setName) {
-      return getPokemonId(selection.species, selection.setName);
-    }
-    return undefined;
-  }, [selection]);
+  const selectedPokemonId = useSelectedPokemonId(selection);
+  const handlePokemonClick = usePlayerPokemonClick(availableSets);
 
   // Determine if selected Pokemon is in party or box
   const isSelectedInParty = selectedPokemonId ? playerParty.includes(selectedPokemonId) : false;
   const isSelectedInBox = selectedPokemonId && !isSelectedInParty;
-
-  const handlePokemonClick = React.useCallback(
-    (species: string, setName: string) => {
-      dispatch(setPlayerSet({ species, setName }));
-
-      const moves = availableSets[species][setName].moves!;
-      dispatch(setSelectedMoveName(moves[0]));
-    },
-    [dispatch, availableSets]
-  );
 
   const handlePromoteClick = React.useCallback(() => {
     if (selectedPokemonId && isSelectedInBox) {
@@ -117,12 +130,7 @@ export const CpuPartyManager: React.FC = () => {
     return trainerParty.map(p => getPokemonId(p.species.name, trainerName));
   }, [availableSets, currentTrainerIndex]);
 
-  const selectedPokemonId = React.useMemo(() => {
-    if (selection?.species && selection?.setName) {
-      return getPokemonId(selection.species, selection.setName);
-    }
-    return undefined;
-  }, [selection]);
+  const selectedPokemonId = useSelectedPokemonId(selection);
 
   const handlePokemonClick = React.useCallback(
     (species: string, setName: string) => {
@@ -194,25 +202,11 @@ export const CpuPartyManager: React.FC = () => {
  * PlayerBoxManager - displays player's box (Pokemon not in party)
  */
 export const PlayerBoxManager: React.FC = () => {
-  const dispatch = useAppDispatch();
   const { playerParty } = useSelector((state: RootState) => state.party);
   const { selection, availableSets } = useSelector((state: RootState) => state.set.player);
 
-  const selectedPokemonId = React.useMemo(() => {
-    if (selection?.species && selection?.setName) {
-      return getPokemonId(selection.species, selection.setName);
-    }
-    return undefined;
-  }, [selection]);
-
-  const handlePokemonClick = React.useCallback(
-    (species: string, setName: string) => {
-      dispatch(setPlayerSet({ species, setName }));
-      const moves = availableSets[species][setName].moves!;
-      dispatch(setSelectedMoveName(moves[0]));
-    },
-    [dispatch, availableSets]
-  );
+  const selectedPokemonId = useSelectedPokemonId(selection);
+  const handlePokemonClick = usePlayerPokemonClick(availableSets);
 
   return (
     <TrainerBox
