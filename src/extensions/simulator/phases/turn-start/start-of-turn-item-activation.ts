@@ -1,18 +1,18 @@
 import { Field, Pokemon, StatsTable } from "@smogon/calc";
-import { ActivePokemon, BattleFieldState } from "../../moveScoring.contracts";
-import { applyBoost, consumeItem } from "../../utils";
 import { Terrain } from "@smogon/calc/src/data/interface";
 import { visitActivePokemonInSpeedOrder } from "../../battle-field-state-visitor";
+import { ActivePokemon, BattleFieldState } from "../../moveScoring.contracts";
+import { applyBoost, consumeItem } from "../../utils";
 
 export function activateStartOfTurnItems(state: BattleFieldState): BattleFieldState {
-    state = state.clone();
-    visitActivePokemonInSpeedOrder(state, {
+    let nextState = state.clone();
+    visitActivePokemonInSpeedOrder(nextState, {
         visitActivePokemon: (state, activePokemon, field) => {
-            applyItem(state, activePokemon, field);
+            applyItem(nextState, activePokemon, field);
         }
     });
 
-    return state;
+    return nextState;
 }
 
 function applyItem(state: BattleFieldState, activePokemon: ActivePokemon, field: Field): void {
@@ -36,5 +36,5 @@ function applyBoostAndConsumeItemInTerrain(pokemon: Pokemon, field: Field, terra
 
 function applyBoostAndConsumeItem(pokemon: Pokemon, kind: keyof StatsTable, modifier: number): void {
     consumeItem(pokemon);
-    applyBoost(pokemon.stats, kind, modifier);
+    applyBoost(pokemon.boosts, kind, modifier);
 }
