@@ -10,7 +10,7 @@
 
 import * as React from 'react';
 import { createRoot, Root } from 'react-dom/client';
-import { MoveResultGroup, MoveItem } from './index';
+import { MoveItem, MoveResultGroup } from './index';
 
 // Store roots for potential cleanup/updates
 let leftRoot: Root | null = null;
@@ -93,7 +93,7 @@ const ControlledMoveResultGroup: React.FC = () => {
 			headerText="Pokémon 1's Moves (select one to show detailed results) - CONTROLLED"
 			radioGroupName="resultMoveL"
 			moves={leftMoves}
-			selectedMoveId={selectedMoveId}
+			selectedMoveName={selectedMoveId}
 			onMoveSelect={(moveId: string) => {
 				console.log('Selected move on left (controlled):', moveId);
 				setSelectedMoveId(moveId);

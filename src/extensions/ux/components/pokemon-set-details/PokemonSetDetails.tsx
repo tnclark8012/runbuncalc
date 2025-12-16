@@ -1,6 +1,7 @@
 import { Dropdown, Input, Label, Option, Table, TableBody, TableCell, TableHeader, TableHeaderCell, TableRow } from '@fluentui/react-components';
 import { Field, Pokemon, Side, StatsTable } from '@smogon/calc';
 import type { StatusName, TypeName } from '@smogon/calc/dist/data/interface';
+import { ItemName } from '@smogon/calc/src/data/interface';
 import * as React from 'react';
 import { gen } from '../../../configuration';
 import { IVRecord, PokemonSet } from '../../../core/storage.contracts';
@@ -79,7 +80,7 @@ export const PokemonSetDetails: React.FC<PokemonSetDetailsProps> = ({
       level: speciesSet.set.level,
       ability: speciesSet.set.ability,
       abilityOn: true,
-      item: speciesSet.set.item || "",
+      item: 'item' in (speciesSet.state || {}) ? speciesSet.state?.item || undefined : speciesSet.set.item,
       nature: speciesSet.set.nature,
       ivs: convertIVsFromCustomSetToPokemon(speciesSet.set.ivs),
       evs: { atk: 0, def: 0, spa: 0, spd: 0, spe: 0, hp: 0 },
@@ -324,11 +325,13 @@ export const PokemonSetDetails: React.FC<PokemonSetDetailsProps> = ({
 
   // Handle item change
   const handleItemChange = (_: any, data: any) => {
-    const newItem = data.optionValue ?? 'None';
-    setSelectedItem(newItem);
+    const newItem: ItemName | undefined = data.optionValue === 'None' ? undefined : (data.optionValue as ItemName);
+    setSelectedItem(newItem || 'None');
     if (pokemon) {
-      pokemon.item = newItem === 'None' ? '' : (newItem as any);
+      pokemon.item = newItem;
     }
+
+    updateState({ item: newItem || null });
   };
 
   // Get the display label for the selected status

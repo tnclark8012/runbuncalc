@@ -18,7 +18,7 @@ export const moveSlice = createSlice({
   name: 'move',
   initialState,
   reducers: {
-    setSelectedMove: (state, action: PayloadAction<string>) => {
+    setSelectedMoveName: (state, action: PayloadAction<string>) => {
       state.selectedMoveName = action.payload;
     },
     clearSelectedMove: (state) => {
@@ -27,5 +27,5 @@ export const moveSlice = createSlice({
   },
 });
 
-export const { setSelectedMove, clearSelectedMove } = moveSlice.actions;
+export const { setSelectedMoveName, clearSelectedMove } = moveSlice.actions;
 export default moveSlice.reducer;

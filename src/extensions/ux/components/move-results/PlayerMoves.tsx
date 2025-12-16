@@ -7,7 +7,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { gen } from '../../../configuration';
 import { calculateAllMoves } from '../../../simulator/moveScoring';
 import { getFinalSpeed } from '../../../simulator/utils';
-import { setSelectedMove } from '../../store/moveSlice';
+import { setSelectedMoveName } from '../../store/moveSlice';
 import { selectBattleFieldState } from '../../store/selectors/battleFieldStateSelector';
 import { RootState } from '../../store/store';
 import { MoveItem } from './move-result-group.props';
@@ -37,22 +37,15 @@ export const PlayerMoves: React.FC = () => {
   }, [battleFieldState]);
 
   const handleMoveSelect = React.useCallback(
-    (moveId: string) => {
+    (moveName: string) => {
       // Extract move name from the selected move
-      const move = moves.find(m => m.id === moveId);
+      const move = moves.find(m => m.name === moveName);
       if (move) {
-        dispatch(setSelectedMove(move.id));
+        dispatch(setSelectedMoveName(move.name));
       }
     },
     [dispatch, moves]
   );
-
-  // Find the move ID that matches the selected move name
-  const selectedMoveId = React.useMemo(() => {
-    if (!selectedMoveName) return undefined;
-    const move = moves.find(m => m.id === selectedMoveName);
-    return move?.id;
-  }, [selectedMoveName, moves]);
   
   const headerText = selection?.species 
     ? `${selection.species}'s Moves`
@@ -81,7 +74,7 @@ export const PlayerMoves: React.FC = () => {
       headerText={headerText}
       radioGroupName="playerMoves"
       moves={moves}
-      selectedMoveId={selectedMoveId}
+      selectedMoveName={selectedMoveName}
       onMoveSelect={handleMoveSelect}
       isFaster={isFaster}
     />

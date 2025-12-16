@@ -13,46 +13,46 @@ export const MoveResultGroup: React.FC<MoveResultGroupProps> = ({
 	radioGroupName,
 	moves,
 	onMoveSelect,
-	selectedMoveId,
+	selectedMoveName,
 	isFaster = false,
 }) => {
 	const styles = useStyles();
 	
 	// Determine initial selected move
-	const getInitialSelectedId = (): string | undefined => {
-		if (selectedMoveId !== undefined) {
-			return selectedMoveId;
+	const getInitialSelectedMoveName = (): string | undefined => {
+		if (selectedMoveName !== undefined) {
+			return selectedMoveName;
 		}
 		const defaultMove = moves.find(m => m.defaultChecked);
-		return defaultMove ? defaultMove.id : (moves.length > 0 ? moves[0].id : undefined);
+		return defaultMove ? defaultMove.name : (moves.length > 0 ? moves[0].name : undefined);
 	};
 
-	// Use internal state only when component is uncontrolled (no selectedMoveId prop)
-	const [internalSelectedId, setInternalSelectedId] = React.useState<string | undefined>(getInitialSelectedId);
+	// Use internal state only when component is uncontrolled (no selectedMoveName prop)
+	const [internalSelectedMoveName, setInternalSelectedMoveName] = React.useState<string | undefined>(getInitialSelectedMoveName);
 
-	// Determine which ID is currently selected (controlled prop takes precedence)
-	const currentSelectedId = React.useMemo(() => {
-		const selectedId = selectedMoveId !== undefined ? selectedMoveId : internalSelectedId;
-		if (moves.find(m => m.id === selectedId)) {
-			return selectedId;
+	// Determine which move is currently selected (controlled prop takes precedence)
+	const currentSelectedMoveName = React.useMemo(() => {
+		const selectedName = selectedMoveName !== undefined ? selectedMoveName : internalSelectedMoveName;
+		if (moves.find(m => m.name === selectedName)) {
+			return selectedName;
 		}
 		else {
-			return moves.find(m => m.defaultChecked)?.id;
+			return moves.find(m => m.defaultChecked)?.name;
 		}
-	}, [moves, selectedMoveId, internalSelectedId]);
+	}, [moves, selectedMoveName, internalSelectedMoveName]);
 
 	// Update selected move when selection changes
 	const handleMoveChange = React.useCallback((_ev: React.FormEvent<HTMLDivElement>, data: { value: string }) => {
-		const moveId = data.value;
+		const moveName = data.value;
 		// Update internal state only if uncontrolled
-		if (selectedMoveId === undefined) {
-			setInternalSelectedId(moveId);
+		if (selectedMoveName === undefined) {
+			setInternalSelectedMoveName(moveName);
 		}
 		// Always call the callback if provided
 		if (onMoveSelect) {
-			onMoveSelect(moveId);
+			onMoveSelect(moveName);
 		}
-	}, [selectedMoveId, onMoveSelect]);
+	}, [selectedMoveName, onMoveSelect]);
 
 	return (
 		<div 
@@ -63,14 +63,14 @@ export const MoveResultGroup: React.FC<MoveResultGroupProps> = ({
 			</div>
 			<RadioGroup
 				name={radioGroupName}
-				value={currentSelectedId}
+				value={currentSelectedMoveName}
 				onChange={handleMoveChange}
 				aria-labelledby={headerId}
 			>
 				{moves.map((move: MoveItem) => (
 					<Radio
 						key={move.id}
-						value={move.id}
+						value={move.name}
 						disabled={move.name === 'No move'}
 						label={
 							<div className={styles.moveLabel}>

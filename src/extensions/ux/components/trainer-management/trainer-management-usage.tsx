@@ -9,6 +9,7 @@ import { useSelector } from 'react-redux';
 import { getPokemonId } from '../../../core/storage';
 import { getTrainerNameByTrainerIndex, OpposingTrainer } from '../../../trainer-sets';
 import { useAppDispatch } from '../../store/hooks';
+import { setSelectedMoveName } from '../../store/moveSlice';
 import { demoteToBox, promoteToParty } from '../../store/partySlice';
 import { clearCpuStates } from '../../store/pokemonStateSlice';
 import { setCpuSet, setPlayerSet } from '../../store/setSlice';
@@ -40,8 +41,11 @@ export const PlayerPartyManager: React.FC = () => {
   const handlePokemonClick = React.useCallback(
     (species: string, setName: string) => {
       dispatch(setPlayerSet({ species, setName }));
+
+      const moves = availableSets[species][setName].moves!;
+      dispatch(setSelectedMoveName(moves[0]));
     },
-    [dispatch]
+    [dispatch, availableSets]
   );
 
   const handlePromoteClick = React.useCallback(() => {

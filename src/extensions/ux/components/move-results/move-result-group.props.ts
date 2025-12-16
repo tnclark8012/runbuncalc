@@ -28,9 +28,9 @@ export interface MoveResultGroupProps {
   onMoveSelect?: (moveId: string) => void;
 
   /**
-   * The currently selected move ID
+   * The currently selected move name
    */
-  selectedMoveId?: string;
+  selectedMoveName?: string;
 
   /**
    * Whether this Pokemon is faster (for highlighting)
