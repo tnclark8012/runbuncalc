@@ -14,6 +14,7 @@ export const MoveResultGroup: React.FC<MoveResultGroupProps> = ({
 	moves,
 	onMoveSelect,
 	selectedMoveId,
+	isFaster = false,
 }) => {
 	const styles = useStyles();
 	
@@ -54,7 +55,14 @@ export const MoveResultGroup: React.FC<MoveResultGroupProps> = ({
 	}, [selectedMoveId, onMoveSelect]);
 
 	return (
-		<div className="move-result-subgroup">
+		<div 
+			className="move-result-subgroup" 
+			style={isFaster ? { 
+				border: '2px solid #0078d4',
+				borderRadius: '4px',
+				padding: '8px'
+			} : undefined}
+		>
 			<div className="result-move-header">
 				<Label id={headerId}>{headerText}</Label>
 			</div>

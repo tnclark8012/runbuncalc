@@ -6,6 +6,7 @@ import * as React from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { gen } from '../../../configuration';
 import { calculateAllMoves } from '../../../simulator/moveScoring';
+import { getFinalSpeed } from '../../../simulator/utils';
 import { setSelectedMove } from '../../store/moveSlice';
 import { selectBattleFieldState } from '../../store/selectors/battleFieldStateSelector';
 import { RootState } from '../../store/store';
@@ -57,6 +58,23 @@ export const PlayerMoves: React.FC = () => {
     ? `${selection.species}'s Moves`
     : 'No Pokemon Selected';
   
+  // Calculate if player is faster
+  const isFaster = React.useMemo(() => {
+    if (!battleFieldState) return false;
+    const playerSpeed = getFinalSpeed(
+      battleFieldState.player.active[0].pokemon,
+      battleFieldState.field,
+      battleFieldState.playerSide
+    );
+    const cpuSpeed = getFinalSpeed(
+      battleFieldState.cpu.active[0].pokemon,
+      battleFieldState.field,
+      battleFieldState.cpuSide
+    );
+    // Ties go to CPU (so player must be strictly faster)
+    return playerSpeed > cpuSpeed;
+  }, [battleFieldState]);
+  
   return (
     <MoveResultGroup
       headerId="playerMovesHeader"
@@ -65,6 +83,7 @@ export const PlayerMoves: React.FC = () => {
       moves={moves}
       selectedMoveId={selectedMoveId}
       onMoveSelect={handleMoveSelect}
+      isFaster={isFaster}
     />
   );
 };

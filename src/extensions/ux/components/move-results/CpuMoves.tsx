@@ -5,6 +5,7 @@
 import * as React from 'react';
 import { useSelector } from 'react-redux';
 import { calculateCpuMoveResults, getCpuPossibleActions } from '../../../simulator/phases/battle/cpu-move-selection';
+import { getFinalSpeed } from '../../../simulator/utils';
 import { selectBattleFieldState } from '../../store/selectors/battleFieldStateSelector';
 import { MoveItem } from './move-result-group.props';
 import { MoveResultGroup } from './MoveResultGroup';
@@ -57,12 +58,30 @@ export const CpuMoves: React.FC = () => {
     ? `${battleFieldState!.cpu.active[0].pokemon.species.name}'s Moves`
     : 'No Pokemon Selected';
   
+  // Calculate if CPU is faster (ties go to CPU)
+  const isFaster = React.useMemo(() => {
+    if (!battleFieldState) return false;
+    const playerSpeed = getFinalSpeed(
+      battleFieldState.player.active[0].pokemon,
+      battleFieldState.field,
+      battleFieldState.playerSide
+    );
+    const cpuSpeed = getFinalSpeed(
+      battleFieldState.cpu.active[0].pokemon,
+      battleFieldState.field,
+      battleFieldState.cpuSide
+    );
+    // Ties go to CPU (so CPU is faster if equal or greater)
+    return cpuSpeed >= playerSpeed;
+  }, [battleFieldState]);
+  
   return (
     <MoveResultGroup
       headerId="cpuMovesHeader"
       headerText={headerText}
       radioGroupName="cpuMoves"
       moves={moves}
+      isFaster={isFaster}
     />
   );
 };

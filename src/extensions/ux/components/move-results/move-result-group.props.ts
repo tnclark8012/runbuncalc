@@ -31,6 +31,11 @@ export interface MoveResultGroupProps {
    * The currently selected move ID
    */
   selectedMoveId?: string;
+
+  /**
+   * Whether this Pokemon is faster (for highlighting)
+   */
+  isFaster?: boolean;
 }
 
 /**
