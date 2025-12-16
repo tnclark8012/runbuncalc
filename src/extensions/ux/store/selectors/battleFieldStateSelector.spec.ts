@@ -1,16 +1,14 @@
-import { Pokemon } from '@smogon/calc';
-import { gen } from '../../configuration';
-import { CustomSets } from '../../core/storage.contracts';
+import { CustomSets } from '../../../core/storage.contracts';
+import { RootState } from '../store';
 import { selectBattleFieldState } from './battleFieldStateSelector';
-import { RootState } from './store';
 
 // Mock the trainer sets module to provide test data
-jest.mock('../../trainer-sets', () => ({
+jest.mock('../../../trainer-sets', () => ({
   getTrainerNameByTrainerIndex: jest.fn(() => 'Test Trainer'),
   OpposingTrainer: jest.fn((trainerName: string) => {
     // Return a simple test Pokemon array
     const testPokemon = new (require('@smogon/calc').Pokemon)(
-      require('../../configuration').gen,
+      require('../../../configuration').gen,
       'Starly',
       {
         level: 20,
@@ -27,7 +25,7 @@ jest.mock('../../trainer-sets', () => ({
 }));
 
 // Mock getPokemonId to return the correct format
-jest.mock('../../core/storage', () => ({
+jest.mock('../../../core/storage', () => ({
   getPokemonId: jest.fn((species: string, setName: string) => `${species} (${setName})`),
 }));
 

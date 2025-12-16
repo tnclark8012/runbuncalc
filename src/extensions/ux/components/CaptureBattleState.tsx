@@ -5,9 +5,8 @@
 import { Button } from '@fluentui/react-components';
 import * as React from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { PlannedMoveAction } from '../../configuration';
-import { selectBattleFieldState } from '../store/battleFieldStateSelector';
-import { captureBattleState, clearCapturedStates } from '../store/capturedBattleStateSlice';
+import { captureBattleState, clearCapturedStates, PlannedTrainerActionState } from '../store/capturedBattleStateSlice';
+import { selectBattleFieldState } from '../store/selectors/battleFieldStateSelector';
 import { RootState } from '../store/store';
 import { useStyles } from './CaptureBattleState.styles';
 import { TurnSwitcher } from './turn-switcher/TurnSwitcher';
@@ -34,14 +33,14 @@ export const CaptureBattleState: React.FC = () => {
     }
 
     // Get the selected move name directly from the store
-    let plannedPlayerAction: PlannedMoveAction | undefined;
+    let plannedPlayerAction: PlannedTrainerActionState | undefined;
     
     if (selectedMoveName) {
       const playerPokemon = battleState.player.active[0].pokemon;
       
       plannedPlayerAction = {
         type: 'move',
-        pokemon: playerPokemon,
+        pokemonSpecies: playerPokemon.species.name,
         move: selectedMoveName,
         mega: false, // TODO: Add UI support for mega evolution selection
         targetSlot: 0, // TODO: Support multiple targets for double battles

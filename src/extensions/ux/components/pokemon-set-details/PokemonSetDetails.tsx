@@ -1,19 +1,20 @@
 import { Dropdown, Input, Label, Option, Table, TableBody, TableCell, TableHeader, TableHeaderCell, TableRow } from '@fluentui/react-components';
-import { Pokemon, StatsTable } from '@smogon/calc';
+import { Field, Pokemon, Side, StatsTable } from '@smogon/calc';
 import type { StatusName, TypeName } from '@smogon/calc/dist/data/interface';
+import { ItemName } from '@smogon/calc/src/data/interface';
 import * as React from 'react';
 import { gen } from '../../../configuration';
 import { IVRecord, PokemonSet } from '../../../core/storage.contracts';
-import { applyBoost, convertIVsFromCustomSetToPokemon } from '../../../simulator/utils';
+import { applyBoost, convertIVsFromCustomSetToPokemon, getFinalStats } from '../../../simulator/utils';
 import { getAllAvailableItems, getPlayerAccessibleItems } from '../../items';
 import { getAbilitiesForPokemon } from '../../pokedex';
+import { FieldOnlyState, SideFieldState } from '../../store/fieldSlice';
 import { PokemonState } from '../../store/pokemonStateSlice';
 import { HPBar } from './HPBar';
 import { useStyles } from './PokemonSetDetails.styles';
 
 export interface SpeciesSet {
   species: string;
-  setName: string;
   set: PokemonSet;
   /**
    * Current Pokemon state (HP, boosts, status)
@@ -31,6 +32,10 @@ export interface PokemonSetDetailsProps {
    * Species and set data
    */
   speciesSet: SpeciesSet;
+
+  field: FieldOnlyState;
+
+  side: SideFieldState;
 
   /**
    * Callback to update Pokemon state
@@ -54,6 +59,8 @@ export interface PokemonSetDetailsProps {
 export const PokemonSetDetails: React.FC<PokemonSetDetailsProps> = ({ 
   label,
   speciesSet,
+  field,
+  side,
   onStateChange,
   readonly = false,
   usePlayerItems = true
@@ -73,7 +80,7 @@ export const PokemonSetDetails: React.FC<PokemonSetDetailsProps> = ({
       level: speciesSet.set.level,
       ability: speciesSet.set.ability,
       abilityOn: true,
-      item: speciesSet.set.item || "",
+      item: 'item' in (speciesSet.state || {}) ? speciesSet.state?.item || undefined : speciesSet.set.item,
       nature: speciesSet.set.nature,
       ivs: convertIVsFromCustomSetToPokemon(speciesSet.set.ivs),
       evs: { atk: 0, def: 0, spa: 0, spd: 0, spe: 0, hp: 0 },
@@ -318,11 +325,13 @@ export const PokemonSetDetails: React.FC<PokemonSetDetailsProps> = ({
 
   // Handle item change
   const handleItemChange = (_: any, data: any) => {
-    const newItem = data.optionValue ?? 'None';
-    setSelectedItem(newItem);
+    const newItem: ItemName | undefined = data.optionValue === 'None' ? undefined : (data.optionValue as ItemName);
+    setSelectedItem(newItem || 'None');
     if (pokemon) {
-      pokemon.item = newItem === 'None' ? '' : (newItem as any);
+      pokemon.item = newItem;
     }
+
+    updateState({ item: newItem || null });
   };
 
   // Get the display label for the selected status
@@ -350,6 +359,10 @@ export const PokemonSetDetails: React.FC<PokemonSetDetailsProps> = ({
     if (!pokemon?.species.otherFormes) return [];
     return [pokemon.species.name, ...pokemon.species.otherFormes];
   }, [pokemon]);
+
+  const resolvedStats = React.useMemo<StatsTable<number>>(() => {
+    return getFinalStats(pokemon, new Field({ ...field }), new Side({ ...side }))
+  }, [pokemon, field, side]);
 
   // Generate boost options from -6 to +6
   const boostOptions = Array.from({ length: 13 }, (_, i) => i - 6);
@@ -439,6 +452,7 @@ export const PokemonSetDetails: React.FC<PokemonSetDetailsProps> = ({
             <TableHeaderCell>Stat</TableHeaderCell>
             <TableHeaderCell>IVs</TableHeaderCell>
             <TableHeaderCell>Boosts</TableHeaderCell>
+            <TableHeaderCell>Value</TableHeaderCell>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -473,6 +487,9 @@ export const PokemonSetDetails: React.FC<PokemonSetDetailsProps> = ({
                 ) : (
                   <span>—</span>
                 )}
+              </TableCell>
+              <TableCell>
+                <span>{boostKey ? resolvedStats[boostKey]?.toString() : '—'}</span>
               </TableCell>
             </TableRow>
           ))}

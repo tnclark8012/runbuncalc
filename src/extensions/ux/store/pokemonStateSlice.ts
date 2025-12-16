@@ -20,6 +20,11 @@ export interface PokemonState {
    * Current HP
    */
   currentHp?: number;
+
+  /**
+   * Item
+   */
+  item?: string | null;
 }
 
 /**

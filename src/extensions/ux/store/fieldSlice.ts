@@ -20,6 +20,8 @@ export interface SideFieldState {
   spikes: number;
 }
 
+export type FieldOnlyState = Omit<FieldState, 'playerSide' | 'cpuSide'>;
+  
 /**
  * Complete field state configuration
  */

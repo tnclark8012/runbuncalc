@@ -3,10 +3,10 @@ import * as React from 'react';
 import { Provider } from 'react-redux';
 import { PersistGate } from 'redux-persist/integration/react';
 import { useAppDispatch, useAppSelector } from '../store/hooks';
-import { setSelectedMove } from '../store/moveSlice';
+import { setSelectedMoveName } from '../store/moveSlice';
 import { persistor, store } from '../store/store';
-import { MoveItem, MoveResultGroup } from './index';
 import { useStyles } from './DeveloperTools.styles';
+import { MoveItem, MoveResultGroup } from './index';
 
 /**
  * Props for the DeveloperTools component
@@ -36,7 +36,7 @@ const DeveloperToolsContent: React.FC<DeveloperToolsProps> = ({
       // Extract move name from the selected move
       const move = moves.find(m => m.id === moveId);
       if (move) {
-        dispatch(setSelectedMove(move.name));
+        dispatch(setSelectedMoveName(move.name));
       }
     },
     [dispatch, moves]
@@ -77,7 +77,7 @@ const DeveloperToolsContent: React.FC<DeveloperToolsProps> = ({
         headerText={headerText}
         radioGroupName={radioGroupName}
         moves={moves}
-        selectedMoveId={selectedMoveId}
+        selectedMoveName={selectedMoveId}
         onMoveSelect={handleMoveSelect}
       />
       <div className={styles.exportButton}>

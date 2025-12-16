@@ -91,10 +91,6 @@ export const SandboxApp: React.FC = () => {
             </div>
           </div>
           <CaptureBattleState />
-          <div className="move-result-groups">
-            <div className="move-result-subgroup" aria-labelledby="resultHeaderL"></div>
-            <div className="move-result-subgroup" aria-labelledby="resultHeaderR"></div>
-          </div>
         </FluentProvider>
       </PersistGate>
     </Provider>

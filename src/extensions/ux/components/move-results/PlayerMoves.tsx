@@ -6,8 +6,9 @@ import * as React from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { gen } from '../../../configuration';
 import { calculateAllMoves } from '../../../simulator/moveScoring';
-import { selectBattleFieldState } from '../../store/battleFieldStateSelector';
-import { setSelectedMove } from '../../store/moveSlice';
+import { getFinalSpeed } from '../../../simulator/utils';
+import { setSelectedMoveName } from '../../store/moveSlice';
+import { selectBattleFieldState } from '../../store/selectors/battleFieldStateSelector';
 import { RootState } from '../../store/store';
 import { MoveItem } from './move-result-group.props';
 import { MoveResultGroup } from './MoveResultGroup';
@@ -26,7 +27,7 @@ export const PlayerMoves: React.FC = () => {
       battleFieldState?.playerField);
 
     return results.map<MoveItem>((result, index) => ({
-      id: `playerMove${index}`,
+      id: `${result.attacker.species.name}.${result.move.name}`,
       name: result.move.name,
       damageRange: result.moveDesc(''),
       damagePercent: result.moveDesc('%'),
@@ -36,26 +37,36 @@ export const PlayerMoves: React.FC = () => {
   }, [battleFieldState]);
 
   const handleMoveSelect = React.useCallback(
-    (moveId: string) => {
+    (moveName: string) => {
       // Extract move name from the selected move
-      const move = moves.find(m => m.id === moveId);
+      const move = moves.find(m => m.name === moveName);
       if (move) {
-        dispatch(setSelectedMove(move.name));
+        dispatch(setSelectedMoveName(move.name));
       }
     },
     [dispatch, moves]
   );
-
-  // Find the move ID that matches the selected move name
-  const selectedMoveId = React.useMemo(() => {
-    if (!selectedMoveName) return undefined;
-    const move = moves.find(m => m.name === selectedMoveName);
-    return move?.id;
-  }, [selectedMoveName, moves]);
   
   const headerText = selection?.species 
     ? `${selection.species}'s Moves`
     : 'No Pokemon Selected';
+  
+  // Calculate if player is faster
+  const isFaster = React.useMemo(() => {
+    if (!battleFieldState) return false;
+    const playerSpeed = getFinalSpeed(
+      battleFieldState.player.active[0].pokemon,
+      battleFieldState.field,
+      battleFieldState.playerSide
+    );
+    const cpuSpeed = getFinalSpeed(
+      battleFieldState.cpu.active[0].pokemon,
+      battleFieldState.field,
+      battleFieldState.cpuSide
+    );
+    // Ties go to CPU (so player must be strictly faster)
+    return playerSpeed > cpuSpeed;
+  }, [battleFieldState]);
   
   return (
     <MoveResultGroup
@@ -63,8 +74,9 @@ export const PlayerMoves: React.FC = () => {
       headerText={headerText}
       radioGroupName="playerMoves"
       moves={moves}
-      selectedMoveId={selectedMoveId}
+      selectedMoveName={selectedMoveName}
       onMoveSelect={handleMoveSelect}
+      isFaster={isFaster}
     />
   );
 };
