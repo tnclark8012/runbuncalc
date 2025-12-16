@@ -13,7 +13,6 @@ import { useStyles } from './PokemonSetDetails.styles';
 
 export interface SpeciesSet {
   species: string;
-  setName: string;
   set: PokemonSet;
   /**
    * Current Pokemon state (HP, boosts, status)

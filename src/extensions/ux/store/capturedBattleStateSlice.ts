@@ -1,10 +1,16 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
-import { PlannedTrainerAction } from '../../configuration';
 import { FieldState } from './fieldSlice';
 import { PartyState } from './partySlice';
 import { PokemonStateState } from './pokemonStateSlice';
-import { setTrainerIndex, nextTrainer, previousTrainer } from './trainerSlice';
+import { nextTrainer, previousTrainer, setTrainerIndex } from './trainerSlice';
 
+export interface PlannedTrainerActionState {
+  type: 'move';
+  pokemonSpecies: string;
+  mega?: boolean;
+  move: string;
+  targetSlot?: number;
+}
 /**
  * Captured state that can be used to reconstruct a BattleFieldState
  */
@@ -25,7 +31,7 @@ export interface CapturedBattleStateData {
   fieldState: FieldState;
   
   /** The player's planned action for this turn */
-  plannedPlayerAction?: PlannedTrainerAction;
+  plannedPlayerAction?: PlannedTrainerActionState;
 }
 
 /**

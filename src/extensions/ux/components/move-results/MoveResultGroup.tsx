@@ -30,7 +30,15 @@ export const MoveResultGroup: React.FC<MoveResultGroupProps> = ({
 	const [internalSelectedId, setInternalSelectedId] = React.useState<string | undefined>(getInitialSelectedId);
 
 	// Determine which ID is currently selected (controlled prop takes precedence)
-	const currentSelectedId = selectedMoveId !== undefined ? selectedMoveId : internalSelectedId;
+	const currentSelectedId = React.useMemo(() => {
+		const selectedId = selectedMoveId !== undefined ? selectedMoveId : internalSelectedId;
+		if (moves.find(m => m.id === selectedId)) {
+			return selectedId;
+		}
+		else {
+			return moves.find(m => m.defaultChecked)?.id;
+		}
+	}, [moves, selectedMoveId, internalSelectedId]);
 
 	// Update selected move when selection changes
 	const handleMoveChange = React.useCallback((_ev: React.FormEvent<HTMLDivElement>, data: { value: string }) => {

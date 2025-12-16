@@ -6,8 +6,8 @@ import * as React from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { gen } from '../../../configuration';
 import { calculateAllMoves } from '../../../simulator/moveScoring';
-import { selectBattleFieldState } from '../../store/battleFieldStateSelector';
 import { setSelectedMove } from '../../store/moveSlice';
+import { selectBattleFieldState } from '../../store/selectors/battleFieldStateSelector';
 import { RootState } from '../../store/store';
 import { MoveItem } from './move-result-group.props';
 import { MoveResultGroup } from './MoveResultGroup';
@@ -26,7 +26,7 @@ export const PlayerMoves: React.FC = () => {
       battleFieldState?.playerField);
 
     return results.map<MoveItem>((result, index) => ({
-      id: `playerMove${index}`,
+      id: `${result.attacker.species.name}.${result.move.name}`,
       name: result.move.name,
       damageRange: result.moveDesc(''),
       damagePercent: result.moveDesc('%'),
@@ -40,7 +40,7 @@ export const PlayerMoves: React.FC = () => {
       // Extract move name from the selected move
       const move = moves.find(m => m.id === moveId);
       if (move) {
-        dispatch(setSelectedMove(move.name));
+        dispatch(setSelectedMove(move.id));
       }
     },
     [dispatch, moves]
@@ -49,7 +49,7 @@ export const PlayerMoves: React.FC = () => {
   // Find the move ID that matches the selected move name
   const selectedMoveId = React.useMemo(() => {
     if (!selectedMoveName) return undefined;
-    const move = moves.find(m => m.name === selectedMoveName);
+    const move = moves.find(m => m.id === selectedMoveName);
     return move?.id;
   }, [selectedMoveName, moves]);
   

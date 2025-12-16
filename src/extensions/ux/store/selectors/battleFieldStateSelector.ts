@@ -1,13 +1,13 @@
 import { Field, Pokemon } from '@smogon/calc';
 import { PokemonOptions } from '@smogon/calc/dist/pokemon';
-import { gen } from '../../configuration';
-import { getPokemonId } from '../../core/storage';
-import { BattleFieldState, CpuTrainer, PlayerTrainer, PokemonPosition } from '../../simulator/moveScoring.contracts';
-import { popFromParty } from '../../simulator/phases/switching/execute-switch';
-import { convertIVsFromCustomSetToPokemon } from '../../simulator/utils';
-import { getTrainerNameByTrainerIndex, OpposingTrainer } from '../../trainer-sets';
-import { parsePokemonId } from '../party';
-import { RootState } from './store';
+import { gen } from '../../../configuration';
+import { getPokemonId } from '../../../core/storage';
+import { BattleFieldState, CpuTrainer, PlayerTrainer, PokemonPosition } from '../../../simulator/moveScoring.contracts';
+import { popFromParty } from '../../../simulator/phases/switching/execute-switch';
+import { convertIVsFromCustomSetToPokemon } from '../../../simulator/utils';
+import { getTrainerNameByTrainerIndex, OpposingTrainer } from '../../../trainer-sets';
+import { parsePokemonId } from '../../party';
+import { RootState } from '../store';
 
 /**
  * Creates a BattleFieldState from the current Redux state

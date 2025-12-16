@@ -5,7 +5,7 @@
 import * as React from 'react';
 import { useSelector } from 'react-redux';
 import { calculateCpuMoveResults, getCpuPossibleActions } from '../../../simulator/phases/battle/cpu-move-selection';
-import { selectBattleFieldState } from '../../store/battleFieldStateSelector';
+import { selectBattleFieldState } from '../../store/selectors/battleFieldStateSelector';
 import { MoveItem } from './move-result-group.props';
 import { MoveResultGroup } from './MoveResultGroup';
 
@@ -21,7 +21,7 @@ export const CpuMoves: React.FC = () => {
         const mostLikelyMove = moveActions.find(action => action.probability === Math.max(...moveActions.map(a => a.probability)));
         for (let i = 0; i < 4; i++) {
           const moveResult = moveResults[i];
-          const action = moveActions.find(a => a.move.move.name === moveResult.move.name);
+          const action = moveResult && moveActions.find(a => a.move.move.name === moveResult.move.name);
           const position = i === 0 ? 'top' : i === 3 ? 'bottom' : 'mid';
           if (moveResult) {
             const hits = moveResult.move.hits;
@@ -30,7 +30,7 @@ export const CpuMoves: React.FC = () => {
             const actionChance =  action ? `${(action.probability * 100).toFixed(0)}%` : '';
             const label = action ? `${actionChance} ${moveResult.move.name}` : moveResult.move.name;
             moveItems.push({
-              id: `cpuMove${i}`,
+              id: `${moveResult.attacker.species.name}.${moveResult.move.name}`,
               name: moveResult.move.name,
               label: label,
               damageRange: `${damageRange.min.toFixed(1)} - ${damageRange.max.toFixed(1)}`,

@@ -1,8 +1,6 @@
-import { Pokemon } from '@smogon/calc';
-import { gen } from '../../configuration';
-import { CustomSets } from '../../core/storage.contracts';
+import { CustomSets } from '../../../core/storage.contracts';
+import { RootState } from '../store';
 import { selectBattleFieldState } from './battleFieldStateSelector';
-import { RootState } from './store';
 
 // Mock the trainer sets module to provide test data
 jest.mock('../../trainer-sets', () => ({
