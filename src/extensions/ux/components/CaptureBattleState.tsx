@@ -10,7 +10,7 @@ import { usePossibleStates } from '../hooks/usePossibleStates';
 import { captureBattleState, clearCapturedStates, PlannedTrainerActionState, selectCapturedState, setCurrentTurnNumber } from '../store/capturedBattleStateSlice';
 import { loadFieldState } from '../store/fieldSlice';
 import { loadPlayerParty } from '../store/partySlice';
-import { setCpuPokemonStates, setPlayerPokemonStates } from '../store/pokemonStateSlice';
+import { clearCpuStates, clearPlayerStates, setCpuPokemonStates, setPlayerPokemonStates } from '../store/pokemonStateSlice';
 import { selectBattleFieldState } from '../store/selectors/battleFieldStateSelector';
 import { RootState } from '../store/store';
 import { useStyles } from './CaptureBattleState.styles';
@@ -65,15 +65,22 @@ export const CaptureBattleState: React.FC = () => {
     // Get the selected move name directly from the store
     let plannedPlayerAction: PlannedTrainerActionState | undefined;
     
-    if (selectedMoveName) {
+    const previousTurn = capturedStates.find(t => t.turnNumber === currentTurnNumber - 1);
+    if (previousTurn && previousTurn.plannedPlayerAction &&
+        previousTurn.plannedPlayerAction.type === 'move' &&
+          previousTurn.plannedPlayerAction.pokemonSpecies !== battleState.player.active[0].pokemon.species.name
+      ) {
+        plannedPlayerAction = {
+          type: 'switch',
+          pokemonSpecies: battleState.player.active[0].pokemon.species.name,
+      }
+    }
+    else if (selectedMoveName) {
       const playerPokemon = battleState.player.active[0].pokemon;
-      
       plannedPlayerAction = {
         type: 'move',
         pokemonSpecies: playerPokemon.species.name,
         move: selectedMoveName,
-        mega: false, // TODO: Add UI support for mega evolution selection
-        targetSlot: 0, // TODO: Support multiple targets for double battles
       };
     }
 
@@ -96,10 +103,12 @@ export const CaptureBattleState: React.FC = () => {
     console.log(battleState.toString());
     console.log('Captured State Data:');
     console.log(capturedData);
-  }, [battleState, selectedMoveName, partyState, trainerIndex, pokemonStates, fieldState, currentTurnNumber, dispatch]);
+  }, [battleState, selectedMoveName, partyState, trainerIndex, pokemonStates, fieldState, currentTurnNumber, capturedStates, dispatch]);
 
   const handleClear = React.useCallback(() => {
     dispatch(clearCapturedStates());
+    dispatch(clearCpuStates());
+    dispatch(clearPlayerStates());
   }, [dispatch]);
 
   return (

@@ -22,13 +22,13 @@ export function convertBattleFieldStateToRedux(state: BattleFieldState): {
   
   // Add active pokemon first
   for (const active of state.player.active) {
-    const pokemonId = getPokemonId(active.pokemon.species.name, active.pokemon.name || 'Default');
+    const pokemonId = getPokemonId(active.pokemon.species.name, 'Custom Set');
     playerParty.push(pokemonId);
   }
   
   // Add bench pokemon
   for (const benched of state.player.party) {
-    const pokemonId = getPokemonId(benched.species.name, benched.name || 'Default');
+    const pokemonId = getPokemonId(benched.species.name, 'Custom Set');
     playerParty.push(pokemonId);
   }
 
@@ -38,7 +38,7 @@ export function convertBattleFieldStateToRedux(state: BattleFieldState): {
 
   // Player pokemon states
   for (const active of state.player.active) {
-    const pokemonId = getPokemonId(active.pokemon.species.name, active.pokemon.name || 'Default');
+    const pokemonId = getPokemonId(active.pokemon.species.name, 'Custom Set');
     playerPokemonStates[pokemonId] = {
       currentHp: active.pokemon.curHP(),
       status: active.pokemon.status || '',
@@ -48,7 +48,7 @@ export function convertBattleFieldStateToRedux(state: BattleFieldState): {
   }
 
   for (const benched of state.player.party) {
-    const pokemonId = getPokemonId(benched.species.name, benched.name || 'Default');
+    const pokemonId = getPokemonId(benched.species.name, 'Custom Set');
     playerPokemonStates[pokemonId] = {
       currentHp: benched.curHP(),
       status: benched.status || '',

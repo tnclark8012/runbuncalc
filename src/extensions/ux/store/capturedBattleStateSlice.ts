@@ -4,13 +4,22 @@ import { PartyState } from './partySlice';
 import { PokemonStateState } from './pokemonStateSlice';
 import { nextTrainer, previousTrainer, setTrainerIndex } from './trainerSlice';
 
-export interface PlannedTrainerActionState {
+export type PlannedTrainerSwitchActionState = {
+  type: 'switch';
+  pokemonSpecies: string;
+  targetSlot?: number;
+};
+
+export type PlannedTrainerMoveActionState = {
   type: 'move';
   pokemonSpecies: string;
   mega?: boolean;
   move: string;
   targetSlot?: number;
-}
+};
+
+export type PlannedTrainerActionState = PlannedTrainerSwitchActionState | PlannedTrainerMoveActionState;
+
 /**
  * Captured state that can be used to reconstruct a BattleFieldState
  */

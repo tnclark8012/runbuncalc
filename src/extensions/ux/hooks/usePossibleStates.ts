@@ -133,32 +133,35 @@ function reconstructBattleFieldState(
 }
 
 function runTurnWithPlannedAction(state: BattleFieldState, plannedAction: PlannedTrainerActionState): PossibleBattleFieldState[] {
-  
+
   const plannedActions: PlannedTrainerAction[] = [];
-  let actingPokemon = state.player.active.find(p => p.pokemon.species.name === plannedAction.pokemonSpecies)?.pokemon;
-  if (!actingPokemon) {
-    actingPokemon = state.player.party.find(p => p.species.name === plannedAction.pokemonSpecies);
+  if (plannedAction.type === 'switch') {
+    const actingPokemon = state.player.party.find(p => p.species.name === plannedAction.pokemonSpecies);
     plannedActions.push({
       pokemon: actingPokemon,
       type: 'switch',
     } as PlannedSwitchAction);
   }
   else {
+    const actingPokemon = state.player.active.find(p => p.pokemon.species.name === plannedAction.pokemonSpecies)?.pokemon;
     plannedActions.push({
       type: 'move',
       move: plannedAction.move,
-      pokemon: actingPokemon, 
+      pokemon: actingPokemon!,
     });
   }
-  let results = usingHeuristics({ playerActionProvider: new PlannedPlayerActionProvider([
-            plannedActions,
-          ]) }, () => {
+
+  let paddedPlannedActions = Array(state.turnNumber + 1).fill([]) as PlannedTrainerAction[][];
+  paddedPlannedActions[state.turnNumber] = plannedActions;
+  let results = usingHeuristics({
+    playerActionProvider: new PlannedPlayerActionProvider(paddedPlannedActions)
+  }, () => {
     return runTurn(state);
   });
 
   console.log('Results from planned action:', results);
 
-  return results;
+  return results || [];
 }
 
 /**
