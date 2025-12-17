@@ -27,7 +27,7 @@ export interface TurnSwitcherProps {
  */
 function getTurnLabel(state: CapturedBattleStateData): string {
   return state.plannedPlayerAction?.type === 'move' 
-    ? state.plannedPlayerAction.move 
+    ? `${state.plannedPlayerAction.pokemonSpecies} ${state.plannedPlayerAction.move}`
     : state.plannedPlayerAction!.pokemonSpecies;
 }
 
