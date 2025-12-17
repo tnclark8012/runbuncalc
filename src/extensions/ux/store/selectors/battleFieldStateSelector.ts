@@ -80,9 +80,9 @@ export const selectBattleFieldState = createSelector(
       playerPartyPokemon.push(statefulPokemon);
     }
 
-    let playerActive = playerPartyPokemon.find(p => p.species.name === playerSelection.species);
-
-    if (!playerActive) {
+    let selectedPlayerPokemon = playerPartyPokemon.find(p => p.species.name === playerSelection.species);
+    const selectedPlayerPokemonId = getPokemonId(playerSelection.species, playerSelection.setName);
+    if (!selectedPlayerPokemon) {
       // If selected Pokemon is not in party, create it from the selection
       const selectedSet = playerState.availableSets[playerSelection.species]?.[playerSelection.setName];
       if (!selectedSet) {
@@ -100,25 +100,25 @@ export const selectBattleFieldState = createSelector(
         moves: selectedSet.moves,
       });
 
-      const pokemonId = getPokemonId(playerSelection.species, playerSelection.setName);
-      playerActive = applyPokemonState(pokemon, pokemonId, 'player');
+      
+      selectedPlayerPokemon = applyPokemonState(pokemon, selectedPlayerPokemonId, 'player');
 
       // Set party to empty when selected Pokemon is not in party
       playerPartyPokemon.splice(0);
     } else {
       // If selected Pokemon is in party, remove it from party
-      popFromParty(playerPartyPokemon, playerActive);
+      popFromParty(playerPartyPokemon, selectedPlayerPokemon);
     }
 
     // Build CPU party from trainer
     const trainerName = getTrainerNameByTrainerIndex(trainerState.currentTrainerIndex);
+    const selectedCpuPokemonId = getPokemonId(cpuSelection.species, trainerName);
     const cpuTrainerParty = OpposingTrainer(trainerName).map(p => {
-      const pokemonId = getPokemonId(p.species.name, trainerName);
-      return applyPokemonState(p.clone(), pokemonId, 'cpu');
+      return applyPokemonState(p.clone(), selectedCpuPokemonId, 'cpu');
     });
 
     const cpuActive = cpuTrainerParty.find(p =>
-      getPokemonId(p.species.name, trainerName) === getPokemonId(cpuSelection.species, cpuSelection.setName)
+      getPokemonId(p.species.name, trainerName) === selectedCpuPokemonId
     );
 
     if (!cpuActive) {
@@ -126,8 +126,8 @@ export const selectBattleFieldState = createSelector(
     }
     popFromParty(cpuTrainerParty, cpuActive);
 
-    const playerTrainer = new PlayerTrainer([new PokemonPosition(playerActive, true)], playerPartyPokemon);
-    const cpuTrainer = new CpuTrainer(trainerName, [new PokemonPosition(cpuActive, true)], cpuTrainerParty);
+    const playerTrainer = new PlayerTrainer([new PokemonPosition(selectedPlayerPokemon, pokemonStates.player[selectedPlayerPokemonId]?.firstTurnOut)], playerPartyPokemon);
+    const cpuTrainer = new CpuTrainer(trainerName, [new PokemonPosition(cpuActive, pokemonStates.cpu[selectedCpuPokemonId]?.firstTurnOut)], cpuTrainerParty);
 
     // Create field with configured state from Redux
     const field = new Field({

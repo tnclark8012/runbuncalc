@@ -17,6 +17,7 @@ import { convertIVsFromCustomSetToPokemon } from '../../simulator/utils';
 import { getTrainerNameByTrainerIndex, OpposingTrainer } from '../../trainer-sets';
 import { parsePokemonId } from '../party';
 import { CapturedBattleStateData, PlannedTrainerActionState } from '../store/capturedBattleStateSlice';
+import { SetSelection } from '../store/setSlice';
 import { RootState } from '../store/store';
 
 /**
@@ -25,6 +26,7 @@ import { RootState } from '../store/store';
 function reconstructBattleFieldState(
   capturedState: CapturedBattleStateData,
   availablePlayerSets: CustomSets,
+  playerSelection: SetSelection | undefined,
 ): BattleFieldState | undefined {
   const { party, trainerIndex, pokemonStates, fieldState, turnNumber } = capturedState;
 
@@ -85,7 +87,9 @@ function reconstructBattleFieldState(
   }
 
   // First pokemon in party is the active one
-  const playerActive = playerPartyPokemon[0];
+  const selectedPokemonSpecies = playerSelection?.species;
+  let playerActive = playerPartyPokemon.find(p => p.species.name === selectedPokemonSpecies);
+  playerActive = playerActive || playerPartyPokemon[0];
   popFromParty(playerPartyPokemon, playerActive);
 
   // Build CPU party from trainer
@@ -102,8 +106,9 @@ function reconstructBattleFieldState(
   const cpuActive = cpuTrainerParty[0];
   popFromParty(cpuTrainerParty, cpuActive);
 
-  const playerTrainer = new PlayerTrainer([new PokemonPosition(playerActive, true)], playerPartyPokemon);
-  const cpuTrainer = new CpuTrainer(trainerName, [new PokemonPosition(cpuActive, true)], cpuTrainerParty);
+  const playerActiveState = pokemonStates.player[getPokemonId(playerActive.species.name, playerSelection!.setName)];
+  const playerTrainer = new PlayerTrainer([new PokemonPosition(playerActive, playerActiveState?.firstTurnOut)], playerPartyPokemon);
+  const cpuTrainer = new CpuTrainer(trainerName, [new PokemonPosition(cpuActive, pokemonStates.cpu[getPokemonId(cpuActive.species.name, trainerName)]?.firstTurnOut)], cpuTrainerParty);
 
   // Create field with captured state
   const field = new Field({
@@ -174,7 +179,7 @@ export function usePossibleStates(): PossibleBattleFieldState[] {
   const capturedStates = useSelector((state: RootState) => state.capturedBattleState.capturedStates);
   const availablePlayerSets = useSelector((state: RootState) => state.set.player.availableSets);
   const availableCpuSets = useSelector((state: RootState) => state.set.cpu.availableSets);
-
+  const playerSelection = useSelector((state: RootState) => state.set.player.selection);
   useEffect(() => {
     if (selectedStateIndex === null || selectedStateIndex >= capturedStates.length) {
       setPossibleStates([]);
@@ -185,6 +190,7 @@ export function usePossibleStates(): PossibleBattleFieldState[] {
     const battleFieldState = reconstructBattleFieldState(
       selectedState,
       availablePlayerSets,
+      playerSelection
     );
 
     if (!battleFieldState) {
@@ -202,7 +208,7 @@ export function usePossibleStates(): PossibleBattleFieldState[] {
       console.error('Error running turn simulation:', error);
       setPossibleStates([]);
     }
-  }, [selectedStateIndex, capturedStates, availablePlayerSets, availableCpuSets]);
+  }, [selectedStateIndex, capturedStates, availablePlayerSets, availableCpuSets, playerSelection]);
 
   return possibleStates;
 }

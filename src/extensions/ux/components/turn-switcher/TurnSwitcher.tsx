@@ -25,10 +25,10 @@ export interface TurnSwitcherProps {
 /**
  * Extract the move text from a captured battle state
  */
-function getMoveText(state: CapturedBattleStateData): string {
+function getTurnLabel(state: CapturedBattleStateData): string {
   return state.plannedPlayerAction?.type === 'move' 
     ? state.plannedPlayerAction.move 
-    : 'No move';
+    : state.plannedPlayerAction!.pokemonSpecies;
 }
 
 /**
@@ -60,14 +60,14 @@ export const TurnSwitcher: React.FC<TurnSwitcherProps> = ({
           </span>
         ) : (
           capturedStates.map((state, index) => {
-            const moveText = getMoveText(state);
+            const turnLabel = getTurnLabel(state);
             const stateKey = getStateKey(state);
             const isSelected = selectedStateIndex === index;
             
             return (
               <Tooltip 
                 key={stateKey} 
-                content={`Turn ${state.turnNumber}: ${moveText}`} 
+                content={`Turn ${state.turnNumber}: ${turnLabel}`} 
                 relationship="label"
               >
                 <Card
@@ -77,7 +77,7 @@ export const TurnSwitcher: React.FC<TurnSwitcherProps> = ({
                 >
                   <div className={styles.cardContent}>
                     <div className={styles.turnNumber}>T{state.turnNumber}</div>
-                    <div className={styles.moveText}>{moveText}</div>
+                    <div className={styles.moveText}>{turnLabel}</div>
                   </div>
                 </Card>
               </Tooltip>

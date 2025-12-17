@@ -25,6 +25,8 @@ export interface PokemonState {
    * Item
    */
   item?: string | null;
+
+  firstTurnOut?: boolean;
 }
 
 /**
