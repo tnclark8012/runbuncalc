@@ -29,6 +29,11 @@ export interface PokemonCardProps {
    * - medium: 60x45px (for party)
    */
   size?: 'small' | 'medium';
+
+  /**
+   * Whether this Pokemon is fainted (currentHp = 0)
+   */
+  isFainted?: boolean;
 }
 
 /**
@@ -40,6 +45,7 @@ export const PokemonCard: React.FC<PokemonCardProps> = ({
   isSelected,
   onClick,
   size = 'small',
+  isFainted = false,
 }) => {
   const styles = useStyles();
   const [imageError, setImageError] = React.useState(false);
@@ -55,10 +61,16 @@ export const PokemonCard: React.FC<PokemonCardProps> = ({
     setImageError(false);
   }, [species]);
 
-  // Determine card style based on size and selection state
+  // Determine card style based on size, selection state, and fainted status
   const getCardClassName = () => {
     if (size === 'small') {
+      if (isFainted) {
+        return isSelected ? styles.cardSmallSelectedFainted : styles.cardSmallFainted;
+      }
       return isSelected ? styles.cardSmallSelected : styles.cardSmall;
+    }
+    if (isFainted) {
+      return isSelected ? styles.cardMediumSelectedFainted : styles.cardMediumFainted;
     }
     return isSelected ? styles.cardMediumSelected : styles.cardMedium;
   };

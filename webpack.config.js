@@ -1,6 +1,6 @@
+import CopyWebpackPlugin from 'copy-webpack-plugin';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import CopyWebpackPlugin from 'copy-webpack-plugin';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -34,6 +34,7 @@ export default [{
       patterns: [
         { from: './*.html', to: '[name][ext]', context: 'src' },
         { from: './js/data/sets/gen8.js', to: 'js/data/sets/gen8.js', context: 'src' },
+        { from: './extensions/ux/svgs/**/*.svg', to: 'extensions/ux/svgs/[name][ext]', context: 'src' },
       ],
     }),
   ],

@@ -29,10 +29,14 @@ export const PossibleStateCard: React.FC<PossibleStateCardProps> = ({
   const { probability, state } = possibleState;
 
   // Get HP information for display
-  const playerHp = state.player.active[0]?.pokemon.curHP() || 0;
-  const playerMaxHp = state.player.active[0]?.pokemon.maxHP() || 1;
-  const cpuHp = state.cpu.active[0]?.pokemon.curHP() || 0;
-  const cpuMaxHp = state.cpu.active[0]?.pokemon.maxHP() || 1;
+  const playerPokemon = state.player.active[0]?.pokemon;
+  const playerHp = playerPokemon?.curHP() || 0;
+  const playerMaxHp = playerPokemon?.maxHP() || 1;
+  const playerPokemonName = playerPokemon?.species.name || '';
+  const cpuPokemon = state.cpu.active[0]?.pokemon;
+  const cpuPokemonName = cpuPokemon?.species.name || '';
+  const cpuHp = cpuPokemon?.curHP() || 0;
+  const cpuMaxHp = cpuPokemon?.maxHP() || 1;
 
   const playerHpPercent = Math.round((playerHp / playerMaxHp) * 100);
   const cpuHpPercent = Math.round((cpuHp / cpuMaxHp) * 100);
@@ -50,11 +54,11 @@ export const PossibleStateCard: React.FC<PossibleStateCardProps> = ({
         <div className={styles.hpInfo}>
           <div className={styles.hpRow}>
             <span className={styles.label}>Player:</span>
-            <span className={styles.hpValue}>{playerHpPercent}%</span>
+            <span className={styles.hpValue}>{playerPokemonName} {playerHpPercent}%</span>
           </div>
           <div className={styles.hpRow}>
             <span className={styles.label}>CPU:</span>
-            <span className={styles.hpValue}>{cpuHpPercent}%</span>
+            <span className={styles.hpValue}>{cpuPokemonName} {cpuHpPercent}%</span>
           </div>
         </div>
       </div>

@@ -2,6 +2,7 @@ import { Label } from '@fluentui/react-components';
 import * as React from 'react';
 import { CustomSets } from '../../../core/storage.contracts';
 import { parsePokemonId } from '../../party';
+import { useAppSelector } from '../../store/hooks';
 import { PokemonCard } from './PokemonCard';
 import { useStyles } from './TrainerParty.styles';
 
@@ -25,6 +26,11 @@ export interface TrainerPartyProps {
    * Callback when a Pokemon in the party is clicked
    */
   onPokemonClick: (species: string, setName: string) => void;
+
+  /**
+   * Which side this party belongs to ('player' or 'cpu')
+   */
+  side: 'player' | 'cpu';
 }
 
 /**
@@ -35,9 +41,11 @@ export const TrainerParty: React.FC<TrainerPartyProps> = ({
   availableSets,
   selectedPokemonId,
   onPokemonClick,
+  side,
 }) => {
   const styles = useStyles();
   const isOverLimit = party.length > 6;
+  const pokemonStates = useAppSelector((state) => state.pokemonState[side]);
 
   return (
     <div className={isOverLimit ? styles.containerOverLimit : styles.container}>
@@ -56,6 +64,8 @@ export const TrainerParty: React.FC<TrainerPartyProps> = ({
 
             const { species, setName } = parsed;
             const isSelected = pokemonId === selectedPokemonId;
+            const pokemonState = pokemonStates[pokemonId];
+            const isFainted = pokemonState?.currentHp === 0;
 
             return (
               <PokemonCard
@@ -65,6 +75,7 @@ export const TrainerParty: React.FC<TrainerPartyProps> = ({
                 isSelected={isSelected}
                 onClick={() => onPokemonClick(species, setName)}
                 size="medium"
+                isFainted={isFainted}
               />
             );
           })

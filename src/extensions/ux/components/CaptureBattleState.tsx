@@ -12,6 +12,7 @@ import { loadFieldState } from '../store/fieldSlice';
 import { loadPlayerParty } from '../store/partySlice';
 import { clearCpuStates, clearPlayerStates, setCpuPokemonStates, setPlayerPokemonStates } from '../store/pokemonStateSlice';
 import { selectBattleFieldState } from '../store/selectors/battleFieldStateSelector';
+import { setCpuSet, setPlayerSet } from '../store/setSlice';
 import { RootState } from '../store/store';
 import { useStyles } from './CaptureBattleState.styles';
 import { PossibleStateCard } from './turn-switcher/PossibleStateCard';
@@ -41,6 +42,7 @@ export const CaptureBattleState: React.FC = () => {
 
   const handleSelectPossibleState = React.useCallback((index: number) => {
     const possibleState = possibleStates[index];
+
     if (!possibleState) return;
 
     const converted = convertBattleFieldStateToRedux(possibleState.state);
@@ -51,9 +53,9 @@ export const CaptureBattleState: React.FC = () => {
     dispatch(setCpuPokemonStates(converted.pokemonStates.cpu));
     dispatch(loadFieldState(converted.fieldState));
     dispatch(setCurrentTurnNumber(converted.turnNumber + 1));
-    
-    // Clear selection after loading
-    dispatch(selectCapturedState(null));
+    dispatch(setCpuSet({ setName: possibleState.state.cpu.name, species: possibleState.state.cpu.active[0].pokemon.species.name }));
+    dispatch(setPlayerSet({ setName: 'Custom Set', species: possibleState.state.player.active[0].pokemon.species.name }));
+
   }, [dispatch, possibleStates]);
 
   const handleCapture = React.useCallback(() => {

@@ -1,0 +1,20 @@
+<svg width="1440" height="800" viewBox="0 0 1440 800" fill="none" xmlns="http://www.w3.org/2000/svg">
+<rect width="1440" height="800" fill="url(#paint0_linear_psychic)"/>
+<g opacity="0.4">
+<path d="M0 685.5C193.5 636.5 411 651.5 597 712C783 772.5 937.5 878.5 1152 789C1366.5 699.5 1440 754 1440 754V800H0V685.5Z" fill="#E056FD"/>
+<path d="M0 543.5C236.5 499.5 459 566 645 626.5C831 687 1017 741.5 1231.5 652C1446 562.5 1440 617 1440 617V800H0V543.5Z" fill="#9C27B0"/>
+</g>
+<g opacity="0.2">
+<circle cx="205" cy="438" r="36" fill="#E056FD"/>
+<circle cx="1243" cy="265" r="22" fill="#E056FD"/>
+<circle cx="788" cy="527" r="58" fill="#E056FD"/>
+<path d="M1058.5 460L1074.09 487H1042.91L1058.5 460Z" fill="#E056FD"/>
+<path d="M368.5 226L384.088 253H352.912L368.5 226Z" fill="#E056FD"/>
+</g>
+<defs>
+<linearGradient id="paint0_linear_psychic" x1="720" y1="0" x2="720" y2="800" gradientUnits="userSpaceOnUse">
+<stop stop-color="#4A148C"/>
+<stop offset="1" stop-color="#7B1FA2"/>
+</linearGradient>
+</defs>
+</svg>
