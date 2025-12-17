@@ -1,0 +1,24 @@
+<svg width="1440" height="800" viewBox="0 0 1440 800" fill="none" xmlns="http://www.w3.org/2000/svg">
+<rect width="1440" height="800" fill="url(#paint0_linear_misty)"/>
+<g opacity="0.6">
+<path d="M0 598C284.5 531.5 508.5 665.5 808.5 643.5C1108.5 621.5 1294.5 531.5 1440 553.5V800H0V598Z" fill="#E3F2FD"/>
+</g>
+<g opacity="0.5">
+<path d="M1440 716C1155.5 649.5 931.5 783.5 631.5 761.5C331.5 739.5 145.5 649.5 0 671.5V800H1440V716Z" fill="#BBDEFB"/>
+</g>
+<g opacity="0.3" filter="url(#filter0_f_misty)">
+<circle cx="318" cy="439" r="120" fill="#E1BEE7"/>
+<circle cx="1122" cy="355" r="169" fill="#E1BEE7"/>
+</g>
+<defs>
+<filter id="filter0_f_misty" x="148" y="136" width="1193" height="472" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+<feFlood flood-opacity="0" result="BackgroundImageFix"/>
+<feBlend mode="normal" in="SourceGraphic" in2="BackgroundImageFix" result="shape"/>
+<feGaussianBlur stdDeviation="25" result="effect1_foregroundBlur_misty"/>
+</filter>
+<linearGradient id="paint0_linear_misty" x1="720" y1="0" x2="720" y2="800" gradientUnits="userSpaceOnUse">
+<stop stop-color="#F3E5F5"/>
+<stop offset="1" stop-color="#E3F2FD"/>
+</linearGradient>
+</defs>
+</svg>
