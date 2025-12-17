@@ -109,6 +109,7 @@ export const PlayerPartyManager: React.FC = () => {
           availableSets={availableSets}
           selectedPokemonId={selectedPokemonId}
           onPokemonClick={handlePokemonClick}
+          side="player"
         />
       </div>
     </div>
@@ -176,6 +177,7 @@ export const CpuPartyManager: React.FC = () => {
         availableSets={availableSets}
         selectedPokemonId={selectedPokemonId}
         onPokemonClick={handlePokemonClick}
+        side="cpu"
       />
       <div style={buttonContainerStyle}>
         <Button
