@@ -25,6 +25,8 @@ export interface PokemonState {
    * Item
    */
   item?: string | null;
+
+  firstTurnOut?: boolean;
 }
 
 /**
@@ -59,6 +61,12 @@ export const pokemonStateSlice = createSlice({
     setCpuPokemonState: (state, action: PayloadAction<{ pokemonId: string; state: PokemonState }>) => {
       state.cpu[action.payload.pokemonId] = action.payload.state;
     },
+    setPlayerPokemonStates: (state, action: PayloadAction<PokemonStateMap>) => {
+      state.player = action.payload;
+    },
+    setCpuPokemonStates: (state, action: PayloadAction<PokemonStateMap>) => {
+      state.cpu = action.payload;
+    },
     clearPlayerStates: (state) => {
       state.player = {};
     },
@@ -71,6 +79,8 @@ export const pokemonStateSlice = createSlice({
 export const {
   setPlayerPokemonState,
   setCpuPokemonState,
+  setPlayerPokemonStates,
+  setCpuPokemonStates,
   clearPlayerStates,
   clearCpuStates,
 } = pokemonStateSlice.actions;

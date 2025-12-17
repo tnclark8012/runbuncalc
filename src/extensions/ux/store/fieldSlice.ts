@@ -84,6 +84,9 @@ export const fieldSlice = createSlice({
       state.playerSide = createDefaultSideState();
       state.cpuSide = createDefaultSideState();
     },
+    loadFieldState: (state, action: PayloadAction<FieldState>) => {
+      Object.assign(state, action.payload);
+    },
   },
   extraReducers: (builder) => {
     // Helper to reset field state to initial values
@@ -118,6 +121,7 @@ export const {
   setPlayerSideField,
   setCpuSideField,
   clearFieldState,
+  loadFieldState,
 } = fieldSlice.actions;
 
 export default fieldSlice.reducer;

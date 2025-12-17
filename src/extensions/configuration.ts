@@ -1,8 +1,8 @@
 import { Generations, Move, Pokemon } from "@smogon/calc";
-import { BasicScoring, IMoveScoringStrategy } from "./simulator/phases/battle/player-move-selection-strategy";
+import { createMove, megaEvolve } from "./simulator/moveScoring";
 import type { BattleFieldState, MoveResult, Trainer } from "./simulator/moveScoring.contracts";
 import { PossibleSwitchAction, PossibleTrainerAction } from "./simulator/phases/battle/move-selection.contracts";
-import { createMove, megaEvolve } from "./simulator/moveScoring";
+import { BasicScoring, IMoveScoringStrategy } from "./simulator/phases/battle/player-move-selection-strategy";
 
 export const gen = Generations.get(8);
 
@@ -125,4 +125,18 @@ export function switchTo(pokemon: Pokemon): PlannedSwitchAction {
         type: 'switch',
         pokemon,
     };
+}
+
+export function usingHeuristics<T>(chosenHeuristics: Partial<ConfiguredHeuristics>, fn: () => T): T {
+  const originalHeuristics = { ...Heuristics };
+  try {
+    for (const key in chosenHeuristics) {
+      (Heuristics as any)[key] = (chosenHeuristics as any)[key];
+    }
+    return fn();
+  } finally {
+    for (const key in originalHeuristics) {
+      (Heuristics as any)[key] = (originalHeuristics as any)[key];
+    }
+  }
 }
