@@ -39,8 +39,12 @@ export const HPBar: React.FC<HPBarProps> = ({
   const hpPercentage = maxHp > 0 ? Math.floor((currentHp / maxHp) * 100) : 100;
 
   // Local state for raw input values (what the user is typing)
-  const [hpValueInput, setHpValueInput] = React.useState<string>(currentHp.toString());
-  const [hpPercentageInput, setHpPercentageInput] = React.useState<string>(hpPercentage.toString());
+  // Initialize with functions to avoid stale values
+  const [hpValueInput, setHpValueInput] = React.useState<string>(() => currentHp.toString());
+  const [hpPercentageInput, setHpPercentageInput] = React.useState<string>(() => {
+    const percentage = maxHp > 0 ? Math.floor((currentHp / maxHp) * 100) : 100;
+    return percentage.toString();
+  });
   
   // Track focus state
   const [isHpValueFocused, setIsHpValueFocused] = React.useState(false);
