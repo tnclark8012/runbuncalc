@@ -12,7 +12,7 @@ import { getPokemonId } from '../../core/storage';
 import { CustomSets } from '../../core/storage.contracts';
 import { BattleFieldState, CpuTrainer, PlayerTrainer, PokemonPosition } from '../../simulator/moveScoring.contracts';
 import { popFromParty } from '../../simulator/phases/switching/execute-switch';
-import { PossibleBattleFieldState, runTurn } from '../../simulator/turn-state';
+import { PossibleBattleFieldState, runTurn, startTurn } from '../../simulator/turn-state';
 import { convertIVsFromCustomSetToPokemon } from '../../simulator/utils';
 import { getTrainerNameByTrainerIndex, OpposingTrainer } from '../../trainer-sets';
 import { parsePokemonId } from '../party';
@@ -164,9 +164,12 @@ function runTurnWithPlannedAction(state: BattleFieldState, plannedAction: Planne
     return runTurn(state);
   });
 
-  console.log('Results from planned action:', results);
+  let startedTurns = (results || []).map(r => startTurn(r.state)).flat();
 
-  return results || [];
+  console.log('Results from planned action:', results);
+  console.log('Started turns:', startedTurns);
+
+  return startedTurns || [];
 }
 
 /**
