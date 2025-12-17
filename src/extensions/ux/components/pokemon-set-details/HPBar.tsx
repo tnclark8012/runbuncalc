@@ -38,21 +38,60 @@ export const HPBar: React.FC<HPBarProps> = ({
   // Calculate HP percentage
   const hpPercentage = maxHp > 0 ? Math.floor((currentHp / maxHp) * 100) : 100;
 
-  // Handle HP value change
+  // Local state for raw input values (what the user is typing)
+  const [hpValueInput, setHpValueInput] = React.useState<string>(currentHp.toString());
+  const [hpPercentageInput, setHpPercentageInput] = React.useState<string>(hpPercentage.toString());
+  
+  // Track focus state
+  const [isHpValueFocused, setIsHpValueFocused] = React.useState(false);
+  const [isHpPercentageFocused, setIsHpPercentageFocused] = React.useState(false);
+
+  // Update local state when props change (but only if not focused)
+  React.useEffect(() => {
+    if (!isHpValueFocused) {
+      setHpValueInput(currentHp.toString());
+    }
+  }, [currentHp, isHpValueFocused]);
+
+  React.useEffect(() => {
+    if (!isHpPercentageFocused) {
+      setHpPercentageInput(hpPercentage.toString());
+    }
+  }, [hpPercentage, isHpPercentageFocused]);
+
+  // Handle HP value change (during typing - allow any input)
   const handleHpValueChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const value = parseInt(event.target.value, 10);
+    setHpValueInput(event.target.value);
+  };
+
+  // Handle HP value blur (validate and snap)
+  const handleHpValueBlur = () => {
+    setIsHpValueFocused(false);
+    const value = parseInt(hpValueInput, 10);
     if (!isNaN(value) && value >= 0 && value <= maxHp) {
       onHpChange(value);
+    } else {
+      // Reset to current valid value if invalid
+      setHpValueInput(currentHp.toString());
     }
   };
 
-  // Handle HP percentage change
+  // Handle HP percentage change (during typing - allow any input)
   const handleHpPercentageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const percentage = parseInt(event.target.value, 10);
+    setHpPercentageInput(event.target.value);
+  };
+
+  // Handle HP percentage blur (validate and snap)
+  const handleHpPercentageBlur = () => {
+    setIsHpPercentageFocused(false);
+    const percentage = parseInt(hpPercentageInput, 10);
     if (!isNaN(percentage) && percentage >= 0 && percentage <= 100) {
       // Calculate new HP from percentage (always round down)
       const newHp = Math.floor(maxHp * percentage / 100);
       onHpChange(newHp);
+    } else {
+      // Reset to current valid value if invalid
+      setHpPercentageInput(hpPercentage.toString());
     }
   };
 
@@ -70,8 +109,10 @@ export const HPBar: React.FC<HPBarProps> = ({
         <Label className={styles.label}>HP:</Label>
         <Input
           type="number"
-          value={currentHp.toString()}
+          value={hpValueInput}
           onChange={handleHpValueChange}
+          onFocus={() => setIsHpValueFocused(true)}
+          onBlur={handleHpValueBlur}
           min={0}
           max={maxHp}
           className={styles.hpInput}
@@ -82,8 +123,10 @@ export const HPBar: React.FC<HPBarProps> = ({
         <span>(</span>
         <Input
           type="number"
-          value={hpPercentage.toString()}
+          value={hpPercentageInput}
           onChange={handleHpPercentageChange}
+          onFocus={() => setIsHpPercentageFocused(true)}
+          onBlur={handleHpPercentageBlur}
           min={0}
           max={100}
           className={styles.hpInput}
