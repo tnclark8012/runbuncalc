@@ -86,7 +86,8 @@ function scoreConsiderations(movesToConsider: CPUMoveConsideration[]): MoveScore
         generalSetup(moveScore, potentialMove);
         offensiveSetup(moveScore, potentialMove);
         defensiveSetup(moveScore, potentialMove);
-        // specificSetup(moveScore, potentialMove);
+        specialAttackSetup(moveScore, potentialMove);
+        shellSmashSetup(moveScore, potentialMove);
         // recovery(moveScore, potentialMove);
     }
 
@@ -595,6 +596,214 @@ export function specificMoves(moveScore: MoveScore, consideration: CPUMoveConsid
             if (hasBerry(consideration.aiMon))
                 moveScore.setScore(-20);
             break;
+        case 'Agility':
+        case 'Rock Polish':
+        case 'Autotomize':
+            if (consideration.aiIsSlower) {
+                moveScore.addScore(7);
+            }
+            else {
+                moveScore.never();
+            }
+            break;
+        case 'Earthquake':
+            if (consideration.aiPartner) {
+                const partnerGrounded = isGrounded(consideration.aiPartner, consideration.field);
+                if (!partnerGrounded || (consideration.aiPartner.moves.includes('Magnet Rise' as MoveName) && consideration.aiPartnerIsFaster)) {
+                    moveScore.addScore(2);
+                }
+                else if (partnerGrounded && consideration.aiPartner.hasType('Fire', 'Poison', 'Electric', 'Rock')) {
+                    moveScore.addScore(-10);
+                }
+                else if (partnerGrounded) {
+                    moveScore.addScore(-3);
+                }
+            }
+            break;
+        case 'Will-O-Wisp':
+            moveScore.addScore(6);
+            // ~37% of the time, the following conditions are checked
+            if (Math.random() < 0.37) {
+                if (hasPhysicalMoves(consideration.playerMon)) {
+                    moveScore.addScore(1);
+                }
+                if (consideration.aiMon.moves.includes('Hex' as MoveName) || 
+                    (consideration.aiPartner && consideration.aiPartner.moves.includes('Hex' as MoveName))) {
+                    moveScore.addScore(1);
+                }
+            }
+            break;
+        case 'Trick':
+        case 'Switcheroo':
+            if (consideration.aiMon.hasItem('Toxic Orb', 'Flame Orb', 'Black Sludge')) {
+                moveScore.addAlternativeScores(6, 0.5, 7, 0.5);
+            }
+            else if (consideration.aiMon.hasItem('Iron Ball', 'Lagging Tail', 'Sticky Barb')) {
+                moveScore.addScore(7);
+            }
+            else {
+                moveScore.addScore(5);
+            }
+            break;
+        case 'Yawn':
+        case 'Dark Void':
+        case 'Grasswhistle':
+        case 'Sing':
+        case 'Sleep Powder':
+        case 'Spore':
+        case 'Hypnosis':
+        case 'Lovely Kiss':
+            moveScore.addScore(6);
+            // 25% of the time, AI considers additional conditions
+            if (Math.random() < 0.25 && !consideration.kos) {
+                // Check if player can be put to sleep (simplified - would need more comprehensive checks)
+                if (!consideration.playerMon.hasStatus('slp', 'par', 'brn', 'frz', 'psn', 'tox')) {
+                    moveScore.addScore(1);
+                    
+                    if ((consideration.aiMon.moves.includes('Dream Eater' as MoveName) || 
+                         consideration.aiMon.moves.includes('Nightmare' as MoveName)) &&
+                        !consideration.playerMon.moves.some(m => m === 'Snore' || m === 'Sleep Talk')) {
+                        moveScore.addScore(1);
+                    }
+                    if (consideration.aiMon.moves.includes('Hex' as MoveName) || 
+                        (consideration.aiPartner && consideration.aiPartner.moves.includes('Hex' as MoveName))) {
+                        moveScore.addScore(1);
+                    }
+                }
+            }
+            break;
+        case 'Poison Powder':
+        case 'Poisongas':
+        case 'Toxic':
+        case 'Poison Gas':
+            moveScore.addScore(6);
+            // ~38% of the time, if the AI cannot KO the player mon
+            if (Math.random() < 0.38 && !consideration.kos) {
+                const playerHPPercentage = consideration.playerMon.curHP() / consideration.playerMon.maxHP();
+                if (playerHPPercentage > 0.2 && !consideration.playerMon.hasStatus('psn', 'tox')) {
+                    if ((consideration.aiMon.hasAbility('Merciless') ||
+                         consideration.aiMon.moves.includes('Hex' as MoveName) ||
+                         consideration.aiMon.moves.includes('Venom Drench' as MoveName) ||
+                         consideration.aiMon.moves.includes('Venoshock' as MoveName)) &&
+                        !canUseDamagingMoves(consideration.playerMon)) {
+                        moveScore.addScore(2);
+                    }
+                }
+            }
+            break;
+        case 'Destiny Bond':
+            if (consideration.aiIsFaster && consideration.playerWillKOAI) {
+                moveScore.addAlternativeScores(7, 0.81, 6, 0.19);
+            }
+            else if (consideration.aiIsSlower) {
+                moveScore.addAlternativeScores(5, 0.5, 6, 0.5);
+            }
+            break;
+        case 'Meteor Beam':
+            if (consideration.aiMon.hasItem('Power Herb')) {
+                moveScore.addScore(9);
+            }
+            else {
+                moveScore.never();
+            }
+            break;
+        case 'Belly Drum':
+            if (consideration.playerMon.hasStatus('frz', 'slp')) {
+                moveScore.addScore(9);
+            }
+            else if (!consideration.playerWillKOAI) { // After Belly Drum
+                moveScore.addScore(8);
+            }
+            else {
+                moveScore.addScore(4);
+            }
+            break;
+        case 'Focus Energy':
+        case 'Laser Focus':
+            if (consideration.aiMon.hasAbility('Super Luck', 'Sniper') ||
+                consideration.aiMon.hasItem('Scope Lens') ||
+                consideration.aiMon.moves.some(m => hasHighCritChance(createMove(consideration.aiMon, m)))) {
+                moveScore.addScore(7);
+            }
+            else {
+                moveScore.addScore(6);
+            }
+            if (consideration.playerMon.hasAbility('Shell Armor', 'Battle Armor')) {
+                moveScore.never();
+            }
+            break;
+        case 'Coaching':
+            moveScore.addScore(6);
+            if (consideration.field.gameType === 'Doubles' && consideration.aiPartner && !consideration.aiPartner.hasAbility('Contrary')) {
+                if (consideration.aiPartner.boosts.atk < 2) {
+                    moveScore.addScore(1 - consideration.aiPartner.boosts.atk);
+                }
+                if (consideration.aiPartner.boosts.def < 2) {
+                    moveScore.addScore(1 - consideration.aiPartner.boosts.def);
+                }
+                moveScore.addScore(1, 0.8);
+            }
+            else {
+                moveScore.never();
+            }
+            break;
+        case 'Taunt':
+            if (consideration.playerMon.moves.includes('Trick Room' as MoveName) && !consideration.field.isTrickRoom) {
+                moveScore.addScore(9);
+            }
+            else if (consideration.playerMon.moves.includes('Defog' as MoveName) && 
+                     consideration.field.attackerSide.isAuroraVeil && 
+                     consideration.aiIsFaster) {
+                moveScore.addScore(9);
+            }
+            else {
+                moveScore.addScore(5);
+            }
+            break;
+        case 'Encore':
+            // Check if target is already encored or first turn out
+            if (consideration.aiMonFirstTurnOut) {
+                moveScore.never();
+                break;
+            }
+            
+            // TODO: Check if last move should be encored (non-damaging moves typically)
+            if (consideration.aiIsFaster) {
+                moveScore.addScore(7);
+            }
+            else {
+                moveScore.addAlternativeScores(6, 0.5, 5, 0.5);
+            }
+            break;
+        case 'Counter':
+        case 'Mirror Coat':
+            moveScore.addScore(6);
+            
+            if (consideration.playerWillKOAI && !savedFromKO(consideration.aiMon)) {
+                moveScore.addScore(-20);
+            }
+            
+            const hasSturdy = consideration.aiMon.hasAbility('Sturdy') || consideration.aiMon.hasItem('Focus Sash');
+            const isFullHP = consideration.aiMon.curHP() === consideration.aiMon.maxHP();
+            const onlyCorrespondingSplit = moveName === 'Counter' ? 
+                hasPhysicalMoves(consideration.playerMon) && !hasSpecialMoves(consideration.playerMon) :
+                hasSpecialMoves(consideration.playerMon) && !hasPhysicalMoves(consideration.playerMon);
+            
+            if (consideration.playerWillKOAI && hasSturdy && isFullHP && onlyCorrespondingSplit) {
+                moveScore.addScore(2);
+            }
+            else if (!consideration.playerWillKOAI && onlyCorrespondingSplit) {
+                moveScore.addScore(2, 0.8);
+            }
+            
+            if (consideration.aiIsFaster) {
+                moveScore.addScore(-1, 0.25);
+            }
+            
+            if (consideration.playerMon.moves.some(m => createMove(consideration.playerMon, m).category === 'Status')) {
+                moveScore.addScore(-1, 0.25);
+            }
+            break;
     }
 }
 
@@ -678,6 +887,63 @@ export function defensiveSetup(moveScore: MoveScore, consideration: CPUMoveConsi
         consideration.aiMon.boosts.def < 2 || consideration.aiMon.boosts.spd < 2)
         moveScore.addScore(2);
 
+}
+
+export function specialAttackSetup(moveScore: MoveScore, consideration: CPUMoveConsideration): void {
+    if (!['Tail Glow', 'Nasty Plot', 'Work Up'].includes(moveScore.move.move.name))
+        return;
+
+    moveScore.addScore(6);
+
+    if (consideration.playerMon.hasStatus('frz', 'slp')) { // Not quite - needs recharging, loafing around due to Truant
+        moveScore.addScore(3);
+    }
+    else {
+        // TODO: Check if player mon cannot 3HKO AI mon
+        // For now, simplified check
+        const playerDamagePerTurn = consideration.playerMove.highestRollPerHitDamage * consideration.playerMove.move.hits;
+        const canThreeHKO = playerDamagePerTurn * 3 >= consideration.aiMon.curHP();
+        
+        if (!canThreeHKO) {
+            moveScore.addScore(1);
+            if (consideration.aiIsFaster) {
+                moveScore.addScore(1);
+            }
+        }
+    }
+
+    if (consideration.aiIsSlower && consideration.playerWill2HKOAI) {
+        moveScore.addScore(-5);
+    }
+
+    if (consideration.aiMon.boosts.spa >= 2) {
+        moveScore.addScore(-1);
+    }
+}
+
+export function shellSmashSetup(moveScore: MoveScore, consideration: CPUMoveConsideration): void {
+    if (moveScore.move.move.name !== 'Shell Smash')
+        return;
+
+    moveScore.addScore(6);
+
+    if (consideration.playerMon.hasStatus('frz', 'slp')) { // Not quite - needs recharging
+        moveScore.addScore(3);
+    }
+
+    // Check if player can KO after Shell Smash (simplified - would need to factor in defense drops)
+    if (!consideration.playerWillKOAI) {
+        moveScore.addScore(2);
+    }
+    else {
+        moveScore.addScore(-2);
+    }
+
+    if (consideration.aiMon.boosts.atk >= 1 || 
+        consideration.aiMon.boosts.atk >= 6 || 
+        consideration.aiMon.boosts.spa >= 6) {
+        moveScore.never();
+    }
 }
 
 export function hasHighCritChance(move: Move): boolean {
