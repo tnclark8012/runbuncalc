@@ -735,16 +735,16 @@ export function toMoveResult(result: Result): MoveResult {
     let resultDamage = typeof result.damage === 'number' ? [result.damage] : result.damage as number[];
     let lowestHitDamage = resultDamage[0] ? resultDamage[0] : result.damage as number;
     let highestHitDamage = (result.damage as number[])[15] ? resultDamage[15] : result.damage as number;
-    let getDamagePct = (hitDamage: number) => hitDamage * (createMove(result.attacker, result.move).hits / result.defender.stats.hp * 100);
+    let getPerHitDamagePct = (hitDamage: number) => hitDamage / result.defender.stats.hp * 100;
     return {
         attacker: result.attacker,
         defender: result.defender,
         move: result.move,
         damageRolls: resultDamage,
         lowestRollPerHitDamage: lowestHitDamage,
-        lowestRollPerHitHpPercentage: getDamagePct(lowestHitDamage),
+        lowestRollPerHitHpPercentage: getPerHitDamagePct(lowestHitDamage),
         highestRollPerHitDamage: highestHitDamage,
-        highestRollPerHitHpPercentage: getDamagePct(highestHitDamage),
+        highestRollPerHitHpPercentage: getPerHitDamagePct(highestHitDamage),
     };
 }
 

@@ -1,10 +1,12 @@
 /* eslint-disable max-len */
 
 import {
-  Field
+  Field,
+  calculate,
+  Move
 } from '@smogon/calc';
 import { inGen, importTeam, importPokemon } from './test-helper';
-import { calculateAllMoves, megaEvolve, toMoveResult } from './moveScoring';
+import { calculateAllMoves, megaEvolve, toMoveResult, createMove } from './moveScoring';
 import { OpposingTrainer } from '../trainer-sets';
 import { getBox } from './playthrough/museum.collection';
 import { gen } from '../configuration';
@@ -25,6 +27,88 @@ Level: 1
         expect(mega.ability).toBe('Scrappy');
         expect(mega.stats.atk).toBeGreaterThan(Lopunny.stats.atk);
         expect(mega.moves).toEqual(Lopunny.moves);
+      });
+    });
+
+    describe('toMoveResult', () => {
+      test('should calculate per-hit percentage without multiplying by hits', () => {
+        // Import Braviary with Dual Wingbeat (2-hit move)
+        let [Braviary] = importTeam(`
+Braviary (M) @ Choice Band
+Level: 38
+Ability: Defiant
+IVs: 31 HP / 31 Atk / 31 Def / 31 SpA / 31 SpD / 31 Spe
+- Dual Wingbeat
+`);
+        
+        // Import Talonflame as the defender
+        let [Talonflame] = importTeam(`
+Talonflame
+Level: 38
+Jolly Nature
+Ability: Flame Body
+IVs: 11 Def / 30 SpA / 25 SpD
+- Acrobatics
+- Flame Charge
+- Will-O-Wisp
+- Roost
+`);
+
+        // Calculate damage for Dual Wingbeat
+        const move = createMove(Braviary, Braviary.moves[0]);
+        const result = calculate(gen, Braviary, Talonflame, move);
+        const moveResult = toMoveResult(result);
+
+        // Dual Wingbeat hits 2 times
+        expect(moveResult.move.hits).toBe(2);
+
+        // The per-hit percentage should be approximately half of what the total would be
+        // since it hits 2 times
+        const totalLowestPct = (moveResult.lowestRollPerHitHpPercentage * moveResult.move.hits);
+        const totalHighestPct = (moveResult.highestRollPerHitHpPercentage * moveResult.move.hits);
+
+        // Verify that per-hit percentage is indeed per-hit (not already multiplied by hits)
+        // For a 2-hit move, the per-hit should be roughly half the total
+        expect(moveResult.lowestRollPerHitHpPercentage).toBeLessThan(totalLowestPct);
+        expect(moveResult.highestRollPerHitHpPercentage).toBeLessThan(totalHighestPct);
+
+        // Verify the per-hit damage is the basis for the percentage calculation
+        const expectedLowestPct = (moveResult.lowestRollPerHitDamage / Talonflame.stats.hp) * 100;
+        const expectedHighestPct = (moveResult.highestRollPerHitDamage / Talonflame.stats.hp) * 100;
+        
+        expect(moveResult.lowestRollPerHitHpPercentage).toBeCloseTo(expectedLowestPct, 2);
+        expect(moveResult.highestRollPerHitHpPercentage).toBeCloseTo(expectedHighestPct, 2);
+      });
+
+      test('should calculate per-hit percentage correctly for single-hit move', () => {
+        let [Talonflame] = importTeam(`
+Talonflame
+Level: 38
+Jolly Nature
+Ability: Flame Body
+- Acrobatics
+`);
+        
+        let [Braviary] = importTeam(`
+Braviary (M)
+Level: 38
+Ability: Defiant
+`);
+
+        // Calculate damage for Acrobatics (single-hit move)
+        const move = createMove(Talonflame, Talonflame.moves[0]);
+        const result = calculate(gen, Talonflame, Braviary, move);
+        const moveResult = toMoveResult(result);
+
+        // Acrobatics hits 1 time
+        expect(moveResult.move.hits).toBe(1);
+
+        // For a single-hit move, per-hit percentage should equal total percentage
+        const expectedLowestPct = (moveResult.lowestRollPerHitDamage / Braviary.stats.hp) * 100;
+        const expectedHighestPct = (moveResult.highestRollPerHitDamage / Braviary.stats.hp) * 100;
+        
+        expect(moveResult.lowestRollPerHitHpPercentage).toBeCloseTo(expectedLowestPct, 2);
+        expect(moveResult.highestRollPerHitHpPercentage).toBeCloseTo(expectedHighestPct, 2);
       });
     });
   });
