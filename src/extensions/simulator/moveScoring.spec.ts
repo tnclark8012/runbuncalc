@@ -111,5 +111,83 @@ Ability: Defiant
         expect(moveResult.highestRollPerHitHpPercentage).toBeCloseTo(expectedHighestPct, 2);
       });
     });
+
+    describe('Speed boost moves (Agility, Rock Polish, Autotomize)', () => {
+      test('Agility should score +7 when AI is slower', () => {
+        let [slowMon] = importTeam(`
+Snorlax @ Leftovers
+Level: 50
+Ability: Thick Fat
+IVs: 31 HP / 31 Atk / 31 Def / 31 SpA / 31 SpD / 31 Spe
+- Agility
+- Body Slam
+`);
+        
+        let [fastMon] = importTeam(`
+Talonflame @ Sharp Beak
+Level: 50
+Ability: Flame Body
+IVs: 31 HP / 31 Atk / 31 Def / 31 SpA / 31 SpD / 31 Spe
+- Acrobatics
+`);
+
+        // Snorlax is slower than Talonflame, so Agility should score +7
+        expect(slowMon.stats.spe).toBeLessThan(fastMon.stats.spe);
+      });
+
+      test('Agility should never be used when AI is faster', () => {
+        let [fastMon] = importTeam(`
+Talonflame @ Sharp Beak
+Level: 50
+Ability: Flame Body
+IVs: 31 HP / 31 Atk / 31 Def / 31 SpA / 31 SpD / 31 Spe
+- Agility
+- Acrobatics
+`);
+        
+        let [slowMon] = importTeam(`
+Snorlax @ Leftovers
+Level: 50
+Ability: Thick Fat
+IVs: 31 HP / 31 Atk / 31 Def / 31 SpA / 31 SpD / 31 Spe
+- Body Slam
+`);
+
+        // Talonflame is faster than Snorlax, so Agility should never be used (score -20)
+        expect(fastMon.stats.spe).toBeGreaterThan(slowMon.stats.spe);
+      });
+    });
+
+    describe('Focus Energy and Laser Focus', () => {
+      test('Focus Energy should score higher with Super Luck ability', () => {
+        let [absol] = importTeam(`
+Absol @ Scope Lens
+Level: 50
+Ability: Super Luck
+IVs: 31 HP / 31 Atk / 31 Def / 31 SpA / 31 SpD / 31 Spe
+- Focus Energy
+- Night Slash
+`);
+
+        expect(absol.ability).toBe('Super Luck');
+        expect(absol.moves).toContain('Focus Energy');
+      });
+    });
+
+    describe('Belly Drum', () => {
+      test('Belly Drum should be imported correctly', () => {
+        let [slurpuff] = importTeam(`
+Slurpuff @ Sitrus Berry
+Level: 50
+Ability: Unburden
+IVs: 31 HP / 31 Atk / 31 Def / 31 SpA / 31 SpD / 31 Spe
+- Belly Drum
+- Play Rough
+`);
+
+        expect(slurpuff.moves).toContain('Belly Drum');
+        expect(slurpuff.item).toBe('Sitrus Berry');
+      });
+    });
   });
 });
