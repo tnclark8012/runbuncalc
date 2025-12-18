@@ -622,7 +622,8 @@ export function specificMoves(moveScore: MoveScore, consideration: CPUMoveConsid
             break;
         case 'Will-O-Wisp':
             moveScore.addScore(6);
-            // ~37% of the time, the following conditions are checked
+            // ~37% of the time, the following conditions are checked (per ai.md spec)
+            // Note: Math.random() is intentional here to match actual game AI behavior
             if (Math.random() < 0.37) {
                 if (hasPhysicalMoves(consideration.playerMon)) {
                     moveScore.addScore(1);
@@ -654,7 +655,8 @@ export function specificMoves(moveScore: MoveScore, consideration: CPUMoveConsid
         case 'Hypnosis':
         case 'Lovely Kiss':
             moveScore.addScore(6);
-            // 25% of the time, AI considers additional conditions
+            // 25% of the time, AI considers additional conditions (per ai.md spec)
+            // Note: Math.random() is intentional here to match actual game AI behavior
             if (Math.random() < 0.25 && !consideration.kos) {
                 // Check if player can be put to sleep (simplified - would need more comprehensive checks)
                 if (!consideration.playerMon.hasStatus('slp', 'par', 'brn', 'frz', 'psn', 'tox')) {
@@ -673,11 +675,11 @@ export function specificMoves(moveScore: MoveScore, consideration: CPUMoveConsid
             }
             break;
         case 'Poison Powder':
-        case 'Poisongas':
         case 'Toxic':
         case 'Poison Gas':
             moveScore.addScore(6);
-            // ~38% of the time, if the AI cannot KO the player mon
+            // ~38% of the time, if the AI cannot KO the player mon (per ai.md spec)
+            // Note: Math.random() is intentional here to match actual game AI behavior
             if (Math.random() < 0.38 && !consideration.kos) {
                 const playerHPPercentage = consideration.playerMon.curHP() / consideration.playerMon.maxHP();
                 if (playerHPPercentage > 0.2 && !consideration.playerMon.hasStatus('psn', 'tox')) {
@@ -939,8 +941,8 @@ export function shellSmashSetup(moveScore: MoveScore, consideration: CPUMoveCons
         moveScore.addScore(-2);
     }
 
+    // If AI mon's attack stat is +1 or higher, or either attacking stat is at +6
     if (consideration.aiMon.boosts.atk >= 1 || 
-        consideration.aiMon.boosts.atk >= 6 || 
         consideration.aiMon.boosts.spa >= 6) {
         moveScore.never();
     }
