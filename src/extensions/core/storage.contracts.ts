@@ -39,4 +39,5 @@ export interface IVRecord {
     sa?: number;
     sd?: number;
     sp?: number;
+    spe?: never;
 }
