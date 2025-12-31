@@ -27,6 +27,7 @@ function reconstructBattleFieldState(
   capturedState: CapturedBattleStateData,
   availablePlayerSets: CustomSets,
   playerSelection: SetSelection | undefined,
+  cpuSelection: SetSelection | undefined
 ): BattleFieldState | undefined {
   const { party, trainerIndex, pokemonStates, fieldState, turnNumber } = capturedState;
 
@@ -87,8 +88,8 @@ function reconstructBattleFieldState(
   }
 
   // First pokemon in party is the active one
-  const selectedPokemonSpecies = playerSelection?.species;
-  let playerActive = playerPartyPokemon.find(p => p.species.name === selectedPokemonSpecies);
+  const selectedPlayerPokemonSpecies = playerSelection?.species;
+  let playerActive = playerPartyPokemon.find(p => p.species.name === selectedPlayerPokemonSpecies);
   playerActive = playerActive || playerPartyPokemon[0];
   popFromParty(playerPartyPokemon, playerActive);
 
@@ -103,7 +104,9 @@ function reconstructBattleFieldState(
     return undefined;
   }
 
-  const cpuActive = cpuTrainerParty[0];
+  const selectedCpuPokemonSpecies = cpuSelection?.species;
+  let cpuActive = cpuTrainerParty.find(p => p.species.name === selectedCpuPokemonSpecies);
+  cpuActive = cpuActive || cpuTrainerParty[0];
   popFromParty(cpuTrainerParty, cpuActive);
 
   const playerActiveState = pokemonStates.player[getPokemonId(playerActive.species.name, playerSelection!.setName)];
@@ -188,6 +191,7 @@ export function usePossibleStates(): PossibleBattleFieldState[] {
   const availablePlayerSets = useSelector((state: RootState) => state.set.player.availableSets);
   const availableCpuSets = useSelector((state: RootState) => state.set.cpu.availableSets);
   const playerSelection = useSelector((state: RootState) => state.set.player.selection);
+  const cpuSelection = useSelector((state: RootState) => state.set.cpu.selection);
   useEffect(() => {
     if (selectedStateIndex === null || selectedStateIndex >= capturedStates.length) {
       setPossibleStates([]);
@@ -198,7 +202,8 @@ export function usePossibleStates(): PossibleBattleFieldState[] {
     const battleFieldState = reconstructBattleFieldState(
       selectedState,
       availablePlayerSets,
-      playerSelection
+      playerSelection,
+      cpuSelection
     );
 
     if (!battleFieldState) {
@@ -216,7 +221,7 @@ export function usePossibleStates(): PossibleBattleFieldState[] {
       console.error('Error running turn simulation:', error);
       setPossibleStates([]);
     }
-  }, [selectedStateIndex, capturedStates, availablePlayerSets, availableCpuSets, playerSelection]);
+  }, [selectedStateIndex, capturedStates, availablePlayerSets, availableCpuSets, playerSelection, cpuSelection]);
 
   return possibleStates;
 }
