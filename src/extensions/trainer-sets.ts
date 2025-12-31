@@ -21,6 +21,14 @@ export function getTrainerNameByTrainerIndex(index: number): TrainerNames {
   return orderedTrainerNames![index];
 }
 
+export function getTrainerIndexByTrainerName(trainerName: TrainerNames): number {
+  if (!orderedTrainerNames!) {
+    initializeTrainerSets();
+  }
+
+  return orderedTrainerNames!.findIndex(name => name === trainerName);
+}
+
 export function getTrainerNameByPokemonIndex(index: number): TrainerNames {
   if (!PokemonIndexToTrainerMap.has(index)) {
     alert(`No trainer found for Pokemon index ${index}`);

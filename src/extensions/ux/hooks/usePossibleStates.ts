@@ -164,7 +164,12 @@ function runTurnWithPlannedAction(state: BattleFieldState, plannedAction: Planne
     return runTurn(state);
   });
 
-  let startedTurns = (results || []).map(r => startTurn(r.state)).flat();
+  let startedTurns = (results || []).map(turnResult => {
+    let starts = startTurn(turnResult.state);
+    // Maintain original probability
+    starts.forEach(possibleStart => possibleStart.probability *= turnResult.probability);
+    return starts;
+  }).flat();
 
   console.log('Results from planned action:', results);
   console.log('Started turns:', startedTurns);
