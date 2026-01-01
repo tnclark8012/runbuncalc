@@ -1,0 +1,57 @@
+<svg width="100%" height="100%" viewBox="0 0 800 600" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="hail-sky-gradient" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#1E3A5F;stop-opacity:1" />
+      <stop offset="50%" style="stop-color:#4A6FA5;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#B0C4DE;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="grassy-ground" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#7FA982;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#629464;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+
+  <!-- Sky -->
+  <rect width="100%" height="400" fill="url(#hail-sky-gradient)"/>
+
+  <!-- Dark clouds -->
+  <g fill="#2C3E50" opacity="0.8">
+    <ellipse cx="180" cy="90" rx="60" ry="35"/>
+    <ellipse cx="240" cy="80" rx="70" ry="40"/>
+    <ellipse cx="300" cy="95" rx="55" ry="33"/>
+    
+    <ellipse cx="500" cy="130" rx="65" ry="38"/>
+    <ellipse cx="570" cy="120" rx="75" ry="43"/>
+    <ellipse cx="640" cy="135" rx="60" ry="35"/>
+  </g>
+
+  <!-- Hail -->
+  <g fill="#E8F4F8" opacity="0.8">
+    <circle cx="120" cy="180" r="4"/>
+    <circle cx="170" cy="200" r="5"/>
+    <circle cx="220" cy="190" r="4"/>
+    <circle cx="270" cy="210" r="5"/>
+    <circle cx="320" cy="195" r="4"/>
+    <circle cx="370" cy="215" r="5"/>
+    <circle cx="420" cy="205" r="4"/>
+    <circle cx="470" cy="225" r="5"/>
+    <circle cx="520" cy="210" r="4"/>
+    <circle cx="570" cy="230" r="5"/>
+    <circle cx="620" cy="220" r="4"/>
+    <circle cx="670" cy="240" r="5"/>
+    <circle cx="720" cy="225" r="4"/>
+    
+    <circle cx="100" cy="300" r="4"/>
+    <circle cx="200" cy="310" r="5"/>
+    <circle cx="300" cy="315" r="4"/>
+    <circle cx="400" cy="325" r="5"/>
+    <circle cx="500" cy="330" r="4"/>
+    <circle cx="600" cy="340" r="5"/>
+    <circle cx="700" cy="345" r="4"/>
+  </g>
+
+  <!-- Grassy Ground -->
+  <rect x="0" y="400" width="100%" height="200" fill="url(#grassy-ground)"/>
+  <path d="M0 420 C281.5 395 551 430 832 445 C1113 460 1304.5 415 1440 430 L1440 600 L0 600 Z" fill="#66BB6A" opacity="0.7" transform="scale(0.556, 1)"/>
+  <path d="M1440 480 C1158.5 455 889 490 608 505 C327 520 135.5 475 0 490 L0 600 L1440 600 Z" fill="#43A047" opacity="0.7" transform="scale(0.556, 1)"/>
+</svg>

@@ -1,0 +1,47 @@
+<svg width="100%" height="100%" viewBox="0 0 800 600" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="sandstorm-sky-gradient" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#8B7355;stop-opacity:1" />
+      <stop offset="50%" style="stop-color:#C19A6B;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#E5C29F;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="grassy-ground" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#A5D6A7;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#81C784;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+
+  <!-- Sky -->
+  <rect width="100%" height="400" fill="url(#sandstorm-sky-gradient)"/>
+
+  <!-- Sand clouds/particles -->
+  <g fill="#D2B48C" opacity="0.4">
+    <ellipse cx="150" cy="100" rx="70" ry="40"/>
+    <ellipse cx="230" cy="90" rx="60" ry="35"/>
+    <ellipse cx="310" cy="110" rx="65" ry="38"/>
+    
+    <ellipse cx="480" cy="140" rx="75" ry="43"/>
+    <ellipse cx="570" cy="130" rx="70" ry="40"/>
+    <ellipse cx="660" cy="150" rx="65" ry="38"/>
+  </g>
+
+  <!-- Sand particles -->
+  <g opacity="0.5">
+    <circle cx="120" cy="200" r="2" fill="#C19A6B"/>
+    <circle cx="180" cy="220" r="3" fill="#D2B48C"/>
+    <circle cx="240" cy="210" r="2" fill="#C19A6B"/>
+    <circle cx="300" cy="235" r="3" fill="#D2B48C"/>
+    <circle cx="360" cy="215" r="2" fill="#C19A6B"/>
+    <circle cx="420" cy="240" r="3" fill="#D2B48C"/>
+    <circle cx="480" cy="225" r="2" fill="#C19A6B"/>
+    <circle cx="540" cy="245" r="3" fill="#D2B48C"/>
+    <circle cx="600" cy="230" r="2" fill="#C19A6B"/>
+    <circle cx="660" cy="250" r="3" fill="#D2B48C"/>
+    <circle cx="720" cy="235" r="2" fill="#C19A6B"/>
+  </g>
+
+  <!-- Grassy Ground -->
+  <rect x="0" y="400" width="100%" height="200" fill="url(#grassy-ground)"/>
+  <path d="M0 420 C281.5 395 551 430 832 445 C1113 460 1304.5 415 1440 430 L1440 600 L0 600 Z" fill="#66BB6A" opacity="0.7" transform="scale(0.556, 1)"/>
+  <path d="M1440 480 C1158.5 455 889 490 608 505 C327 520 135.5 475 0 490 L0 600 L1440 600 Z" fill="#43A047" opacity="0.7" transform="scale(0.556, 1)"/>
+</svg>

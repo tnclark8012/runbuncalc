@@ -23,6 +23,42 @@ import { loadPlayerParty } from '../extensions/ux/store/partySlice';
 import { loadCpuSets, loadPlayerSets } from '../extensions/ux/store/setSlice';
 import { persistor, store } from '../extensions/ux/store/store';
 
+// Combined terrain + weather backgrounds (prioritized)
+const COMBINED_BACKGROUNDS: Record<string, string> = {
+  'Electric-Sun': 'url(./extensions/ux/svgs/electric-terrain-sun.svg)',
+  'Electric-Rain': 'url(./extensions/ux/svgs/electric-terrain-rain.svg)',
+  'Electric-Hail': 'url(./extensions/ux/svgs/electric-terrain-hail.svg)',
+  'Electric-Sand': 'url(./extensions/ux/svgs/electric-terrain-sand.svg)',
+  'Grassy-Sun': 'url(./extensions/ux/svgs/grassy-terrain-sun.svg)',
+  'Grassy-Rain': 'url(./extensions/ux/svgs/grassy-terrain-rain.svg)',
+  'Grassy-Hail': 'url(./extensions/ux/svgs/grassy-terrain-hail.svg)',
+  'Grassy-Sand': 'url(./extensions/ux/svgs/grassy-terrain-sand.svg)',
+  'Psychic-Sun': 'url(./extensions/ux/svgs/psychic-terrain-sun.svg)',
+  'Psychic-Rain': 'url(./extensions/ux/svgs/psychic-terrain-rain.svg)',
+  'Psychic-Hail': 'url(./extensions/ux/svgs/psychic-terrain-hail.svg)',
+  'Psychic-Sand': 'url(./extensions/ux/svgs/psychic-terrain-sand.svg)',
+  'Misty-Sun': 'url(./extensions/ux/svgs/misty-terrain-sun.svg)',
+  'Misty-Rain': 'url(./extensions/ux/svgs/misty-terrain-rain.svg)',
+  'Misty-Hail': 'url(./extensions/ux/svgs/misty-terrain-hail.svg)',
+  'Misty-Sand': 'url(./extensions/ux/svgs/misty-terrain-sand.svg)',
+};
+
+// Weather-only backgrounds (when no terrain)
+const WEATHER_BACKGROUNDS: Record<string, string> = {
+  'Sun': 'url(./extensions/ux/svgs/weather-sun.svg)',
+  'Rain': 'url(./extensions/ux/svgs/weather-rain.svg)',
+  'Hail': 'url(./extensions/ux/svgs/weather-hail.svg)',
+  'Sand': 'url(./extensions/ux/svgs/weather-sand.svg)',
+};
+
+// Terrain-only backgrounds (fallback)
+const TERRAIN_BACKGROUNDS: Record<string, string> = {
+  'Electric': 'url(./extensions/ux/svgs/electric-terrain.svg)',
+  'Grassy': 'url(./extensions/ux/svgs/grassy-terrain.svg)',
+  'Psychic': 'url(./extensions/ux/svgs/psychic-terrain.svg)',
+  'Misty': 'url(./extensions/ux/svgs/misty-terrain.svg)',
+};
+
 /**
  * Inner component that can access Redux state for terrain-based background
  */
@@ -33,8 +69,9 @@ const SandboxContent: React.FC<{
   onThemeReady: (theme: Theme) => void;
 }> = ({ currentTheme, initialMode, onThemeChange, onThemeReady }) => {
   const terrain = useAppSelector((state) => state.field.terrain);
+  const weather = useAppSelector((state) => state.field.weather);
 
-  // Determine background style based on terrain
+  // Determine background style based on terrain and weather
   const setSelectorsStyle = React.useMemo(() => {
     const baseStyle = {
       display: 'flex',
@@ -47,22 +84,35 @@ const SandboxContent: React.FC<{
       backgroundRepeat: 'no-repeat',
     };
 
-    const backgroundImageSvg = {
-      'Electric': 'url(./extensions/ux/svgs/electric-terrain.svg)',
-      'Grassy': 'url(./extensions/ux/svgs/grassy-terrain.svg)',
-      'Psychic': 'url(./extensions/ux/svgs/psychic-terrain.svg)',
-      'Misty': 'url(./extensions/ux/svgs/misty-terrain.svg)',
-    };
+    // Try combined terrain + weather first
+    if (terrain && weather) {
+      const combinedKey = `${terrain}-${weather}`;
+      if (COMBINED_BACKGROUNDS[combinedKey]) {
+        return {
+          ...baseStyle,
+          backgroundImage: COMBINED_BACKGROUNDS[combinedKey],
+        };
+      }
+    }
 
-    if (terrain && backgroundImageSvg[terrain]) {
+    // If only weather is set, use weather-only background
+    if (weather && WEATHER_BACKGROUNDS[weather]) {
       return {
         ...baseStyle,
-        backgroundImage: backgroundImageSvg[terrain as keyof typeof backgroundImageSvg],
+        backgroundImage: WEATHER_BACKGROUNDS[weather],
+      };
+    }
+
+    // If only terrain is set, use terrain-only background
+    if (terrain && TERRAIN_BACKGROUNDS[terrain]) {
+      return {
+        ...baseStyle,
+        backgroundImage: TERRAIN_BACKGROUNDS[terrain],
       };
     }
     
     return undefined;
-  }, [terrain]);
+  }, [terrain, weather]);
 
   return (
     <>
