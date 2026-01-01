@@ -50,6 +50,7 @@ export function executeMove(attacker: Pokemon, defender: Pokemon, moveOrMoveName
 	}
 
 	attackerHp = getHPAfterDamage(attacker, attackerHp, attackerMaxHP, getItemRecoil(attacker));
+	attackerHp = ['Explosion', 'Misty Explosion', 'Self-Destruct'].includes(move.name) ? 0 : attackerHp;
 	attacker = attacker.clone({ curHP: attackerHp });
 
 

@@ -1,14 +1,14 @@
 import { Terrain, Weather } from '@smogon/calc/dist/data/interface';
 import fieldReducer, {
   clearFieldState,
+  FieldState,
   setCpuSideField,
   setPlayerSideField,
   setTerrain,
   setTrickRoom,
   setWeather,
-  FieldState,
 } from './fieldSlice';
-import { setTrainerIndex, nextTrainer, previousTrainer } from './trainerSlice';
+import { setTrainerIndex } from './trainerSlice';
 
 describe('fieldSlice', () => {
   const initialState: FieldState = {
@@ -167,16 +167,6 @@ describe('fieldSlice', () => {
 
     it('should clear field state when trainer index changes', () => {
       const actual = fieldReducer(stateWithConfig, setTrainerIndex(5));
-      expect(actual).toEqual(initialState);
-    });
-
-    it('should clear field state when navigating to next trainer', () => {
-      const actual = fieldReducer(stateWithConfig, nextTrainer());
-      expect(actual).toEqual(initialState);
-    });
-
-    it('should clear field state when navigating to previous trainer', () => {
-      const actual = fieldReducer(stateWithConfig, previousTrainer());
       expect(actual).toEqual(initialState);
     });
   });

@@ -246,7 +246,7 @@ export function allDamagingMoves(moveScore: MoveScore, considerations: CPUMoveCo
             If multiple moves kill, then they are all considered the highest damaging move and 
             all get this score.
             */
-    if ((considerations.isHighestDamagingMove && isQualifiedForHighestDamageMove(considerations.result.move)) || considerations.kos) {
+    if ((considerations.isHighestDamagingMove || considerations.kos) && isQualifiedForHighestDamageMove(considerations.result.move)) {
         moveScore.addAlternativeScores(6, 0.8, 8, 0.2);
     }
 

@@ -2,7 +2,7 @@ import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { FieldState } from './fieldSlice';
 import { PartyState } from './partySlice';
 import { PokemonStateState } from './pokemonStateSlice';
-import { nextTrainer, previousTrainer, setTrainerIndex } from './trainerSlice';
+import { setTrainerIndex } from './trainerSlice';
 
 export type PlannedTrainerSwitchActionState = {
   type: 'switch';
@@ -111,16 +111,6 @@ export const capturedBattleStateSlice = createSlice({
           state.selectedStateIndex = null;
         }
       })
-      .addCase(nextTrainer, (state) => {
-        state.currentTurnNumber = 1;
-        state.capturedStates = [];
-        state.selectedStateIndex = null;
-      })
-      .addCase(previousTrainer, (state) => {
-        state.currentTurnNumber = 1;
-        state.capturedStates = [];
-        state.selectedStateIndex = null;
-      });
   },
 });
 

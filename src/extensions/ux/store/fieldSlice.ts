@@ -1,6 +1,8 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { Terrain, Weather } from '@smogon/calc/dist/data/interface';
-import { nextTrainer, previousTrainer, setTrainerIndex } from './trainerSlice';
+import { getTrainerNameByTrainerIndex } from '../../trainer-sets';
+import { getTrainerMetadata } from '../../trainer-sets.metadata';
+import { setTrainerIndex } from './trainerSlice';
 
 /**
  * Side-specific field state (screens, hazards, tailwind)
@@ -89,28 +91,19 @@ export const fieldSlice = createSlice({
     },
   },
   extraReducers: (builder) => {
-    // Helper to reset field state to initial values
-    const resetFieldState = (state: FieldState) => {
-      Object.assign(state, {
-        terrain: undefined,
-        weather: undefined,
-        isTrickRoom: false,
-        playerSide: createDefaultSideState(),
-        cpuSide: createDefaultSideState(),
-      });
-    };
-
     // Clear field state when trainer index changes
     builder
-      .addCase(setTrainerIndex, (state) => {
-        resetFieldState(state);
+      .addCase(setTrainerIndex, (state, action) => {
+        let metadata = getTrainerMetadata(getTrainerNameByTrainerIndex(action.payload)) || {};
+        Object.assign(state, {
+          terrain: undefined,
+          weather: undefined,
+          isTrickRoom: false,
+          playerSide: createDefaultSideState(),
+          cpuSide: createDefaultSideState(),
+          ...metadata.fieldState
+        });
       })
-      .addCase(nextTrainer, (state) => {
-        resetFieldState(state);
-      })
-      .addCase(previousTrainer, (state) => {
-        resetFieldState(state);
-      });
   },
 });
 

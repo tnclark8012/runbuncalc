@@ -35,7 +35,6 @@ function isPossibleState(state: BattleFieldState | PossibleBattleFieldState): st
 export function startTurn(state: BattleFieldState): PossibleBattleFieldState[] {
     let nextState = state.clone();
     const transforms: BattleFieldStateTransform[] = [
-        applyPlayerSwitchIns,
         applyCpuSwitchIns,
         applyFieldHazards,
         applyStartOfTurnAbilities,
@@ -51,6 +50,7 @@ export function runTurn(state: BattleFieldState): PossibleBattleFieldState[] {
     let nextState = state.clone();
     nextState.turnNumber++;
     const transforms: BattleFieldStateTransform[] = [
+        applyPlayerSwitchIns,
         startTurn,
         determineMoveOrderAndExecute,
         applyEndOfTurnEffects,
