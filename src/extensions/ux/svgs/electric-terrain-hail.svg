@@ -1,0 +1,79 @@
+<svg width="100%" height="100%" viewBox="0 0 800 600" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="hail-sky-gradient" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#1E3A5F;stop-opacity:1" />
+      <stop offset="50%" style="stop-color:#4A6FA5;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#B0C4DE;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="electric-atmos-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#FFD700;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#FFA500;stop-opacity:1" />
+    </linearGradient>
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="2.5" result="coloredBlur"/>
+      <feMerge>
+        <feMergeNode in="coloredBlur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    <pattern id="grid-pattern" width="40" height="40" patternUnits="userSpaceOnUse">
+      <path d="M 40 0 L 0 0 0 40" fill="none" stroke="#4fc3f7" stroke-width="0.5" opacity="0.3"/>
+    </pattern>
+  </defs>
+
+  <!-- Sky -->
+  <rect width="100%" height="400" fill="url(#hail-sky-gradient)"/>
+
+  <!-- Dark clouds -->
+  <g fill="#2C3E50" opacity="0.8">
+    <ellipse cx="180" cy="90" rx="60" ry="35"/>
+    <ellipse cx="240" cy="80" rx="70" ry="40"/>
+    <ellipse cx="300" cy="95" rx="55" ry="33"/>
+    
+    <ellipse cx="500" cy="130" rx="65" ry="38"/>
+    <ellipse cx="570" cy="120" rx="75" ry="43"/>
+    <ellipse cx="640" cy="135" rx="60" ry="35"/>
+  </g>
+
+  <!-- Hail -->
+  <g fill="#E8F4F8" opacity="0.8">
+    <circle cx="120" cy="180" r="4"/>
+    <circle cx="170" cy="200" r="5"/>
+    <circle cx="220" cy="190" r="4"/>
+    <circle cx="270" cy="210" r="5"/>
+    <circle cx="320" cy="195" r="4"/>
+    <circle cx="370" cy="215" r="5"/>
+    <circle cx="420" cy="205" r="4"/>
+    <circle cx="470" cy="225" r="5"/>
+    <circle cx="520" cy="210" r="4"/>
+    <circle cx="570" cy="230" r="5"/>
+    <circle cx="620" cy="220" r="4"/>
+    <circle cx="670" cy="240" r="5"/>
+    <circle cx="720" cy="225" r="4"/>
+    
+    <circle cx="100" cy="300" r="4"/>
+    <circle cx="200" cy="310" r="5"/>
+    <circle cx="300" cy="315" r="4"/>
+    <circle cx="400" cy="325" r="5"/>
+    <circle cx="500" cy="330" r="4"/>
+    <circle cx="600" cy="340" r="5"/>
+    <circle cx="700" cy="345" r="4"/>
+  </g>
+
+  <!-- Electric Ground -->
+  <rect x="0" y="400" width="100%" height="200" fill="url(#electric-atmos-gradient)"/>
+  <rect x="0" y="400" width="100%" height="200" fill="url(#grid-pattern)" opacity="0.4" />
+
+  <!-- Lightning bolts -->
+  <g filter="url(#glow)" stroke="#ffeb3b" stroke-width="3" fill="none" opacity="0.8">
+    <path d="M100,420 L150,480 L120,490 L180,560" />
+    <path d="M600,420 L550,480 L580,490 L520,560" />
+  </g>
+
+  <!-- Electric particles -->
+  <g filter="url(#glow)" fill="#00e5ff" opacity="0.6">
+    <circle cx="200" cy="450" r="3" />
+    <circle cx="400" cy="470" r="4" />
+    <circle cx="600" cy="460" r="2" />
+  </g>
+</svg>

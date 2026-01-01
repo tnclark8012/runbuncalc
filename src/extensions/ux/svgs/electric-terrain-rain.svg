@@ -6,8 +6,8 @@
       <stop offset="100%" style="stop-color:#A0AEC0;stop-opacity:1" />
     </linearGradient>
     <linearGradient id="electric-atmos-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" style="stop-color:#1a237e;stop-opacity:1" />
-      <stop offset="100%" style="stop-color:#311b92;stop-opacity:1" />
+      <stop offset="0%" style="stop-color:#FFD700;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#FFA500;stop-opacity:1" />
     </linearGradient>
     <filter id="glow">
       <feGaussianBlur stdDeviation="2.5" result="coloredBlur"/>

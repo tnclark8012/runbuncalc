@@ -27,12 +27,20 @@ import { persistor, store } from '../extensions/ux/store/store';
 const COMBINED_BACKGROUNDS: Record<string, string> = {
   'Electric-Sun': 'url(./extensions/ux/svgs/electric-terrain-sun.svg)',
   'Electric-Rain': 'url(./extensions/ux/svgs/electric-terrain-rain.svg)',
+  'Electric-Hail': 'url(./extensions/ux/svgs/electric-terrain-hail.svg)',
+  'Electric-Sand': 'url(./extensions/ux/svgs/electric-terrain-sand.svg)',
   'Grassy-Sun': 'url(./extensions/ux/svgs/grassy-terrain-sun.svg)',
   'Grassy-Rain': 'url(./extensions/ux/svgs/grassy-terrain-rain.svg)',
+  'Grassy-Hail': 'url(./extensions/ux/svgs/grassy-terrain-hail.svg)',
+  'Grassy-Sand': 'url(./extensions/ux/svgs/grassy-terrain-sand.svg)',
   'Psychic-Sun': 'url(./extensions/ux/svgs/psychic-terrain-sun.svg)',
   'Psychic-Rain': 'url(./extensions/ux/svgs/psychic-terrain-rain.svg)',
+  'Psychic-Hail': 'url(./extensions/ux/svgs/psychic-terrain-hail.svg)',
+  'Psychic-Sand': 'url(./extensions/ux/svgs/psychic-terrain-sand.svg)',
   'Misty-Sun': 'url(./extensions/ux/svgs/misty-terrain-sun.svg)',
   'Misty-Rain': 'url(./extensions/ux/svgs/misty-terrain-rain.svg)',
+  'Misty-Hail': 'url(./extensions/ux/svgs/misty-terrain-hail.svg)',
+  'Misty-Sand': 'url(./extensions/ux/svgs/misty-terrain-sand.svg)',
 };
 
 // Weather-only backgrounds (when no terrain)
