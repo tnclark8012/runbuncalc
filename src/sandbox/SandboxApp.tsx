@@ -33,8 +33,9 @@ const SandboxContent: React.FC<{
   onThemeReady: (theme: Theme) => void;
 }> = ({ currentTheme, initialMode, onThemeChange, onThemeReady }) => {
   const terrain = useAppSelector((state) => state.field.terrain);
+  const weather = useAppSelector((state) => state.field.weather);
 
-  // Determine background style based on terrain
+  // Determine background style based on terrain and weather
   const setSelectorsStyle = React.useMemo(() => {
     const baseStyle = {
       display: 'flex',
@@ -47,22 +48,63 @@ const SandboxContent: React.FC<{
       backgroundRepeat: 'no-repeat',
     };
 
-    const backgroundImageSvg = {
+    // Combined terrain + weather backgrounds (prioritized)
+    const combinedBackgrounds: Record<string, string> = {
+      'Electric-Sun': 'url(./extensions/ux/svgs/electric-terrain-sun.svg)',
+      'Electric-Rain': 'url(./extensions/ux/svgs/electric-terrain-rain.svg)',
+      'Grassy-Sun': 'url(./extensions/ux/svgs/grassy-terrain-sun.svg)',
+      'Grassy-Rain': 'url(./extensions/ux/svgs/grassy-terrain-rain.svg)',
+      'Psychic-Sun': 'url(./extensions/ux/svgs/psychic-terrain-sun.svg)',
+      'Psychic-Rain': 'url(./extensions/ux/svgs/psychic-terrain-rain.svg)',
+      'Misty-Sun': 'url(./extensions/ux/svgs/misty-terrain-sun.svg)',
+      'Misty-Rain': 'url(./extensions/ux/svgs/misty-terrain-rain.svg)',
+    };
+
+    // Weather-only backgrounds (when no terrain)
+    const weatherBackgrounds: Record<string, string> = {
+      'Sun': 'url(./extensions/ux/svgs/weather-sun.svg)',
+      'Rain': 'url(./extensions/ux/svgs/weather-rain.svg)',
+      'Hail': 'url(./extensions/ux/svgs/weather-hail.svg)',
+      'Sand': 'url(./extensions/ux/svgs/weather-sand.svg)',
+    };
+
+    // Terrain-only backgrounds (fallback)
+    const terrainBackgrounds: Record<string, string> = {
       'Electric': 'url(./extensions/ux/svgs/electric-terrain.svg)',
       'Grassy': 'url(./extensions/ux/svgs/grassy-terrain.svg)',
       'Psychic': 'url(./extensions/ux/svgs/psychic-terrain.svg)',
       'Misty': 'url(./extensions/ux/svgs/misty-terrain.svg)',
     };
 
-    if (terrain && backgroundImageSvg[terrain]) {
+    // Try combined terrain + weather first
+    if (terrain && weather) {
+      const combinedKey = `${terrain}-${weather}`;
+      if (combinedBackgrounds[combinedKey]) {
+        return {
+          ...baseStyle,
+          backgroundImage: combinedBackgrounds[combinedKey],
+        };
+      }
+    }
+
+    // If only weather is set, use weather-only background
+    if (weather && weatherBackgrounds[weather]) {
       return {
         ...baseStyle,
-        backgroundImage: backgroundImageSvg[terrain as keyof typeof backgroundImageSvg],
+        backgroundImage: weatherBackgrounds[weather],
+      };
+    }
+
+    // If only terrain is set, use terrain-only background
+    if (terrain && terrainBackgrounds[terrain]) {
+      return {
+        ...baseStyle,
+        backgroundImage: terrainBackgrounds[terrain],
       };
     }
     
     return undefined;
-  }, [terrain]);
+  }, [terrain, weather]);
 
   return (
     <>
