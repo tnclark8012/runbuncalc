@@ -23,6 +23,34 @@ import { loadPlayerParty } from '../extensions/ux/store/partySlice';
 import { loadCpuSets, loadPlayerSets } from '../extensions/ux/store/setSlice';
 import { persistor, store } from '../extensions/ux/store/store';
 
+// Combined terrain + weather backgrounds (prioritized)
+const COMBINED_BACKGROUNDS: Record<string, string> = {
+  'Electric-Sun': 'url(./extensions/ux/svgs/electric-terrain-sun.svg)',
+  'Electric-Rain': 'url(./extensions/ux/svgs/electric-terrain-rain.svg)',
+  'Grassy-Sun': 'url(./extensions/ux/svgs/grassy-terrain-sun.svg)',
+  'Grassy-Rain': 'url(./extensions/ux/svgs/grassy-terrain-rain.svg)',
+  'Psychic-Sun': 'url(./extensions/ux/svgs/psychic-terrain-sun.svg)',
+  'Psychic-Rain': 'url(./extensions/ux/svgs/psychic-terrain-rain.svg)',
+  'Misty-Sun': 'url(./extensions/ux/svgs/misty-terrain-sun.svg)',
+  'Misty-Rain': 'url(./extensions/ux/svgs/misty-terrain-rain.svg)',
+};
+
+// Weather-only backgrounds (when no terrain)
+const WEATHER_BACKGROUNDS: Record<string, string> = {
+  'Sun': 'url(./extensions/ux/svgs/weather-sun.svg)',
+  'Rain': 'url(./extensions/ux/svgs/weather-rain.svg)',
+  'Hail': 'url(./extensions/ux/svgs/weather-hail.svg)',
+  'Sand': 'url(./extensions/ux/svgs/weather-sand.svg)',
+};
+
+// Terrain-only backgrounds (fallback)
+const TERRAIN_BACKGROUNDS: Record<string, string> = {
+  'Electric': 'url(./extensions/ux/svgs/electric-terrain.svg)',
+  'Grassy': 'url(./extensions/ux/svgs/grassy-terrain.svg)',
+  'Psychic': 'url(./extensions/ux/svgs/psychic-terrain.svg)',
+  'Misty': 'url(./extensions/ux/svgs/misty-terrain.svg)',
+};
+
 /**
  * Inner component that can access Redux state for terrain-based background
  */
@@ -48,58 +76,30 @@ const SandboxContent: React.FC<{
       backgroundRepeat: 'no-repeat',
     };
 
-    // Combined terrain + weather backgrounds (prioritized)
-    const combinedBackgrounds: Record<string, string> = {
-      'Electric-Sun': 'url(./extensions/ux/svgs/electric-terrain-sun.svg)',
-      'Electric-Rain': 'url(./extensions/ux/svgs/electric-terrain-rain.svg)',
-      'Grassy-Sun': 'url(./extensions/ux/svgs/grassy-terrain-sun.svg)',
-      'Grassy-Rain': 'url(./extensions/ux/svgs/grassy-terrain-rain.svg)',
-      'Psychic-Sun': 'url(./extensions/ux/svgs/psychic-terrain-sun.svg)',
-      'Psychic-Rain': 'url(./extensions/ux/svgs/psychic-terrain-rain.svg)',
-      'Misty-Sun': 'url(./extensions/ux/svgs/misty-terrain-sun.svg)',
-      'Misty-Rain': 'url(./extensions/ux/svgs/misty-terrain-rain.svg)',
-    };
-
-    // Weather-only backgrounds (when no terrain)
-    const weatherBackgrounds: Record<string, string> = {
-      'Sun': 'url(./extensions/ux/svgs/weather-sun.svg)',
-      'Rain': 'url(./extensions/ux/svgs/weather-rain.svg)',
-      'Hail': 'url(./extensions/ux/svgs/weather-hail.svg)',
-      'Sand': 'url(./extensions/ux/svgs/weather-sand.svg)',
-    };
-
-    // Terrain-only backgrounds (fallback)
-    const terrainBackgrounds: Record<string, string> = {
-      'Electric': 'url(./extensions/ux/svgs/electric-terrain.svg)',
-      'Grassy': 'url(./extensions/ux/svgs/grassy-terrain.svg)',
-      'Psychic': 'url(./extensions/ux/svgs/psychic-terrain.svg)',
-      'Misty': 'url(./extensions/ux/svgs/misty-terrain.svg)',
-    };
-
     // Try combined terrain + weather first
     if (terrain && weather) {
       const combinedKey = `${terrain}-${weather}`;
-      if (combinedBackgrounds[combinedKey]) {
+      if (COMBINED_BACKGROUNDS[combinedKey]) {
         return {
           ...baseStyle,
-          backgroundImage: combinedBackgrounds[combinedKey],
+          backgroundImage: COMBINED_BACKGROUNDS[combinedKey],
         };
       }
     }
 
     // If only weather is set, use weather-only background
-    if (weather && weatherBackgrounds[weather]) {
+    if (weather && WEATHER_BACKGROUNDS[weather]) {
       return {
         ...baseStyle,
-        backgroundImage: weatherBackgrounds[weather],
+        backgroundImage: WEATHER_BACKGROUNDS[weather],
       };
     }
 
     // If only terrain is set, use terrain-only background
-    if (terrain && terrainBackgrounds[terrain]) {
+    if (terrain && TERRAIN_BACKGROUNDS[terrain]) {
       return {
         ...baseStyle,
-        backgroundImage: terrainBackgrounds[terrain],
+        backgroundImage: TERRAIN_BACKGROUNDS[terrain],
       };
     }
     
