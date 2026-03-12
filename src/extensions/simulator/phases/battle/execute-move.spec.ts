@@ -1,14 +1,13 @@
 /* eslint-disable max-len */
 import {
-  Field,
-  Generations,
+  Field
 } from '@smogon/calc';
-import { inGen, importTeam } from '../../test-helper';
-import { calculateMoveResult } from '../../moveScoring';
-import { executeMove } from './execute-move';
 import { cpuRng, playerRng } from '../../../configuration';
-import { getBox } from '../../playthrough/museum.collection';
 import { OpposingTrainer } from '../../../trainer-sets';
+import { importTeam } from '../../helper';
+import { getBox } from '../../playthrough/museum.collection';
+import { inGen } from '../../test-helper';
+import { executeMove } from './execute-move';
 
 const RunAndBun = 8;
 inGen(RunAndBun, ({ gen, calculate, Pokemon, Move }) => {

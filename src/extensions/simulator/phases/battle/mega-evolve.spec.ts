@@ -1,8 +1,8 @@
 /* eslint-disable max-len */
 
-import { create1v1BattleState } from '../../helper';
+import { create1v1BattleState, importTeam } from '../../helper';
 import { createMove, megaEvolve } from '../../moveScoring';
-import { importTeam, inGen } from '../../test-helper';
+import { inGen } from '../../test-helper';
 import { executeMegaEvolution } from './mega-evolve';
 import { PossibleTrainerAction } from './move-selection.contracts';
 

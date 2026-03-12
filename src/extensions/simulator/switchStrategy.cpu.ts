@@ -1,8 +1,8 @@
 import { Pokemon } from "@smogon/calc";
+import { gen } from "../configuration";
 import { BattleFieldState, SwitchStrategy } from "./moveScoring.contracts";
 import { BattleSimulator } from "./simulator";
-import { gen } from "../configuration";
-import { getFinalSpeed } from "./utils";
+import { combinePerHitDamageRolls, getFinalSpeed } from "./utils";
 
 interface SwitchInConsideration {
     pokemon: Pokemon;
@@ -25,8 +25,8 @@ export class CpuSwitchStrategy implements SwitchStrategy {
             let playerMonAfterBattle = resultState.player.active[0];
             const cpuMoveResult = result.turnOutcomes[0].actions.find(a => a.attacker.equals(remainingMon))!;
             const playerMoveResult = result.turnOutcomes[0].actions.find(a => !a.attacker.equals(remainingMon))!;
-            let cpuDamage = cpuMoveResult.highestRollPerHitDamage * cpuMoveResult.move.hits;
-            let playerDamage = playerMoveResult.highestRollPerHitDamage * playerMoveResult.move.hits;
+            let cpuDamage = combinePerHitDamageRolls(cpuMoveResult.highestRollPerHitDamage, cpuMoveResult.move.hits)
+            let playerDamage = combinePerHitDamageRolls(playerMoveResult.highestRollPerHitDamage, playerMoveResult.move.hits);
             let playerSpeed = getFinalSpeed(playerMonAfterBattle.pokemon, state.playerField, state.playerSide);
             return {
                 pokemon: remainingMon,

@@ -1,7 +1,6 @@
 /* eslint-env jest */
 
 import { calculate, Field, GenerationNum, Move, Pokemon, Result, Side, State, StatsTable } from '@smogon/calc';
-import { ActivePokemon, BattleFieldState } from './moveScoring.contracts';
 
 const calc = (gen: GenerationNum) => (
   attacker: Pokemon,
@@ -188,18 +187,5 @@ const statToLegacyMap: { [stat: string]: string } = {
   'def': 'df',
   'spa': 'sa',
   'spd': 'sd',
-  'spe': 'sp'
+  'spe': 'sp',
 };
-
-export function expectCpuTeam(active: ActivePokemon[], party: Pokemon[], state: BattleFieldState): void {
-  expectTeam({ active, party }, { active: state.cpu.active, party: state.cpu.party });
-}
-
-export function expectPlayerTeam(active: ActivePokemon[], party: Pokemon[], state: BattleFieldState): void {
-  expectTeam({ active, party }, { active: state.player.active, party: state.player.party });
-}
-
-export function expectTeam(expected: { active: ActivePokemon[], party: Pokemon[] }, actual: { active: ActivePokemon[], party: Pokemon[] }): void {
-  expect(actual.active.map(p => p.pokemon.id )).toEqual(expected.active.map(p => p.pokemon.id));
-  expect(actual.party.map(p => p.id)).toEqual(expected.party.map(p => p.id));
-}

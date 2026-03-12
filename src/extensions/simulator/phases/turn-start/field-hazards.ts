@@ -1,4 +1,4 @@
-import { Side } from "@smogon/calc/src/field";
+import { Side } from "@smogon/calc";
 import { ActivePokemon, BattleFieldState } from "../../moveScoring.contracts";
 import { visitActivePokemonInSpeedOrder } from "../../battle-field-state-visitor";
 import { Pokemon } from "@smogon/calc";

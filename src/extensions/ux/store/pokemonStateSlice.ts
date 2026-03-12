@@ -1,6 +1,6 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import type { StatusName } from '@smogon/calc/dist/data/interface';
-import { StatsTable } from '@smogon/calc/src';
+import { StatsTable } from '@smogon/calc';
 
 /**
  * Runtime state for a Pokemon (boosts, status, current HP, etc.)
@@ -86,3 +86,4 @@ export const {
 } = pokemonStateSlice.actions;
 
 export default pokemonStateSlice.reducer;
+

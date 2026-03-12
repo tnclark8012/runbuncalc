@@ -47,21 +47,25 @@ export async function getAbilitiesForPokemon(pokemon: Pokemon): Promise<string[]
 
 async function ensurePokedexLoaded(this: any): Promise<BattlePokedex> {
   if (!(ensurePokedexLoaded as any)._pokedex) {
-    const pokedexModule = await loadCommonJSScript<PokedexModule>("https://tnclark8012.github.io/RBDex/pokedex.js");
-    (ensurePokedexLoaded as any)._pokedex = pokedexModule.BattlePokedex;
-    (window as any).BattlePokedex = pokedexModule.BattlePokedex;
-    await loadGlobalScripts([
-      "https://play.pokemonshowdown.com/config/config.js",
-      "https://tnclark8012.github.io/RBDex/battledata.js",
-      "https://tnclark8012.github.io/RBDex/search-index.js",
-      "https://tnclark8012.github.io/RBDex/learnsets.js",
-      "https://tnclark8012.github.io/RBDex/moves.js",
-      "https://play.pokemonshowdown.com/data/abilities.js",
-      "https://play.pokemonshowdown.com/data/typechart.js",
-      "https://play.pokemonshowdown.com/data/aliases.js",
-      "https://tnclark8012.github.io/RBDex/battle-dex-search.js",
-      "https://tnclark8012.github.io/RBDex/search.js",
-    ]);
+    (ensurePokedexLoaded as any)._pokedex = new Promise(async (resolve) => {
+      const pokedexModule = await loadCommonJSScript<PokedexModule>("https://tnclark8012.github.io/RBDex/pokedex.js");
+      const pokedex = pokedexModule.BattlePokedex;
+      (window as any).BattlePokedex = pokedexModule.BattlePokedex;
+      await loadGlobalScripts([
+        "https://play.pokemonshowdown.com/config/config.js",
+        "https://tnclark8012.github.io/RBDex/battledata.js",
+        "https://tnclark8012.github.io/RBDex/search-index.js",
+        "https://tnclark8012.github.io/RBDex/learnsets.js",
+        "https://tnclark8012.github.io/RBDex/moves.js",
+        "https://play.pokemonshowdown.com/data/abilities.js",
+        "https://play.pokemonshowdown.com/data/typechart.js",
+        "https://play.pokemonshowdown.com/data/aliases.js",
+        "https://tnclark8012.github.io/RBDex/battle-dex-search.js",
+        "https://tnclark8012.github.io/RBDex/search.js",
+      ]);
+      
+      resolve(pokedex);
+    });
   }
 
   return (ensurePokedexLoaded as any)._pokedex;

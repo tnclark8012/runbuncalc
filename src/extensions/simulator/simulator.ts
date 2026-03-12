@@ -1,4 +1,5 @@
-import { Field, I, Pokemon, Result } from '@smogon/calc';
+import { Field, Pokemon, Result } from '@smogon/calc';
+import { Generation } from '@smogon/calc/dist/data/interface';
 import { cpuRng, playerRng } from '../configuration';
 import { MoveScore } from './moveScore';
 import { calculateAllMoves, canUseDamagingMoves, findHighestDamageMove, moveKillsAttacker, moveWillFail, savedFromKO, scoreCPUMoves, toMoveResults } from './moveScoring';
@@ -6,7 +7,7 @@ import { ActivePokemon, BattleFieldState, CpuTrainer, MoveResult, PlayerMoveCons
 import { executeMove } from './phases/battle/execute-move';
 import { CpuSwitchStrategy } from './switchStrategy.cpu';
 import { PartyOrderSwitchStrategy } from './switchStrategy.partyOrder';
-import { applyBoost, getFinalSpeed } from './utils';
+import { applyBoost, combinePerHitDamageRolls, getFinalSpeed } from './utils';
 
 export interface BattleResult {
 	winner: Pokemon;
@@ -27,7 +28,7 @@ export class BattleSimulator {
 	private currentTurnState!: BattleFieldState;
 	private readonly turns: TurnOutcome[] = [];
 
-	constructor(private readonly gen: I.Generation,
+	constructor(private readonly gen: Generation,
 		playerTrainerOrPokemon: Pokemon | Trainer,
 		cpuTrainerOrPokemon: Pokemon | Trainer,
 		field: Field,
@@ -176,13 +177,13 @@ export class BattleSimulator {
 		let damageResults = toMoveResults(playerResults);
 		let movesToConsider = damageResults
 			.map<PlayerMoveConsideration>(r => {
-				const kos = (r.lowestRollPerHitDamage * playerRng.getHits(r)) >= r.defender.curHP() && (!savedFromKO(r.defender) || r.move.hits > 1);
+				const kos = (combinePerHitDamageRolls(r.lowestRollPerHitDamage, playerRng.getHits(r))) >= r.defender.curHP() && (!savedFromKO(r.defender) || r.move.hits > 1);
 				return {
 					aiMon: r.defender,
 					playerMon: r.attacker,
 					result: r,
-					lowestRollTotalHitsHpPercentage: r.lowestRollPerHitHpPercentage * r.move.hits,
-					highestRollTotalHitsHpPercentage: r.highestRollPerHitHpPercentage * r.move.hits,
+					lowestRollTotalHitsHpPercentage: combinePerHitDamageRolls(r.lowestRollPerHitHpPercentage),
+					highestRollTotalHitsHpPercentage: combinePerHitDamageRolls(r.highestRollPerHitHpPercentage),
 					kos: kos,
 					kosThroughRequiredLifesaver: kos && savedFromKO(r.defender),
 					attackerDiesToRecoil: moveKillsAttacker(r),

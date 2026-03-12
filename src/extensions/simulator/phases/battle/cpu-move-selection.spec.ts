@@ -5,11 +5,11 @@ import {
   Pokemon,
 } from '@smogon/calc';
 import { OpposingTrainer } from '../../../trainer-sets';
-import { create1v1BattleState } from '../../helper';
+import { create1v1BattleState, importTeam } from '../../helper';
 import { MoveScore } from '../../moveScore';
 import { BattleFieldState, CpuTrainer, PlayerTrainer, PokemonPosition } from '../../moveScoring.contracts';
 import { getBox } from '../../playthrough/museum.collection';
-import { importTeam, inGen } from '../../test-helper';
+import { inGen } from '../../test-helper';
 import { calculateCpuMove, getCpuPossibleActions, getPossibleCpuMoveScoresAgainstTarget } from './cpu-move-selection';
 import { PossibleAction } from './move-selection.contracts';
 

@@ -1,10 +1,11 @@
-import { Generations, Pokemon, Result, Move } from "@smogon/calc";
-import { MoveScore } from "../../moveScore";
-import { calculateAllMoves, canMegaEvolve, findHighestDamageMove, toMoveResults, megaEvolve, savedFromKO, createMove } from "../../moveScoring";
-import { BattleFieldState, MoveResult, PlayerMoveConsideration, PokemonPosition } from "../../moveScoring.contracts";
-import { PossibleAction, PossibleTrainerAction, ScoredPossibleAction, TargetSlot } from "./move-selection.contracts";
+import { Move, Pokemon, Result } from "@smogon/calc";
 import { gen, Heuristics, playerRng } from "../../../configuration";
+import { MoveScore } from "../../moveScore";
+import { calculateAllMoves, canMegaEvolve, createMove, findHighestDamageMove, megaEvolve, savedFromKO, toMoveResults } from "../../moveScoring";
+import { BattleFieldState, MoveResult, PlayerMoveConsideration, PokemonPosition } from "../../moveScoring.contracts";
+import { combinePerHitDamageRolls } from "../../utils";
 import { SwitchAfterKOStrategy } from "../switching/player-switch-in";
+import { PossibleAction, PossibleTrainerAction, ScoredPossibleAction, TargetSlot } from "./move-selection.contracts";
 
 const playerSwitchStrategy = new SwitchAfterKOStrategy();
 
@@ -114,11 +115,11 @@ export function getMoveScoresAgainstTarget(state: BattleFieldState, playerPokemo
 
 
 function getPlayerMoveConsiderations(playerResults: Result[]): PlayerMoveConsideration[] {
-    let getDamagePct = (moveResult: MoveResult, hitDamage: number) => hitDamage * (createMove(moveResult.attacker, moveResult.move).hits / moveResult.defender.stats.hp * 100);
+    let getDamagePct = (moveResult: MoveResult, hitDamage: number[]) => combinePerHitDamageRolls(hitDamage, createMove(moveResult.attacker, moveResult.move).hits) / moveResult.defender.stats.hp * 100;
     let damageResults = toMoveResults(playerResults);
     return damageResults
         .map<PlayerMoveConsideration>(r => {
-            const kos = r.lowestRollPerHitDamage * playerRng.getHits(r) >= r.defender.curHP() && (!savedFromKO(r.defender) || r.move.hits > 1);
+            const kos = combinePerHitDamageRolls(r.lowestRollPerHitDamage,  playerRng.getHits(r)) >= r.defender.curHP() && (!savedFromKO(r.defender) || r.move.hits > 1);
             return {
                 aiMon: r.defender,
                 playerMon: r.attacker,

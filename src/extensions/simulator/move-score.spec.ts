@@ -1,8 +1,8 @@
-import { Field, Move, StatsTable} from '@smogon/calc';
-import { calculateMoveResult } from './moveScoring';
+import { Field } from '@smogon/calc';
 import { playerRng } from '../configuration';
-import { importTeam } from './test-helper';
+import { importTeam } from './helper';
 import { MoveScore, ScoreModifier } from './moveScore';
+import { calculateMoveResult } from './moveScoring';
 import { MoveResult } from './moveScoring.contracts';
 
 describe('MoveScore', () => {

@@ -1,4 +1,4 @@
-import { A, I, Field } from '@smogon/calc';
+import type { Field, Move, Pokemon, Result } from '@smogon/calc';
 
 declare global {
   var cntrlIsPressed: boolean;
@@ -6,17 +6,17 @@ declare global {
   /**
    * dist\js\shared_controls.js
    */
-  function createPokemon(pokeInfo: JQuery<HTMLElement> | string | null): A.Pokemon;
+  function createPokemon(pokeInfo: JQuery<HTMLElement> | string | null): Pokemon;
   function createField(): Field;
-  function checkStatBoost(p1: A.Pokemon, p2: A.Pokemon): void;
+  function checkStatBoost(p1: Pokemon, p2: Pokemon): void;
   
   interface DamageRange {
-			move: A.Move,
+			move: Move,
 			lowestRoll: number,
 			highestRoll: number,
   }
 
-  function getDamageRanges(results: A.Result[]): DamageRange[];
+  function getDamageRanges(results: Result[]): DamageRange[];
 
   function updateDex(customSets: any): void;
   function selectFirstMon(): void;

@@ -1,5 +1,5 @@
 import { Field, Move } from "@smogon/calc";
-import { Side } from "@smogon/calc/src";
+import { Side } from "@smogon/calc";
 import { cpuRng, Heuristics, playerRng } from "../../../configuration";
 import { PokemonPositionReplacer, PokemonReplacer } from "../../battle-field-state-visitor";
 import { isTwoTurnMove, makesInvulnerable } from "../../move-properties";

@@ -1,6 +1,5 @@
-import { Field, Move, Pokemon } from '@smogon/calc';
+import { Field, Move, Pokemon, Side } from '@smogon/calc';
 import { MoveName } from '@smogon/calc/dist/data/interface';
-import { Side } from '@smogon/calc/src';
 import { PartyOrderSwitchStrategy } from './switchStrategy.partyOrder';
 
 export interface VolatileStatus {
@@ -31,11 +30,16 @@ export interface MoveResult {
 	attacker: Pokemon;
 	defender: Pokemon;
 	move: Move;
-	lowestRollPerHitDamage: number;
-	lowestRollPerHitHpPercentage: number;
-	highestRollPerHitDamage: number;
-	highestRollPerHitHpPercentage: number;
-	damageRolls: number[];
+	/** The lowest damage roll per hit for this move. A 2-hit move will have 2 entries */
+	lowestRollPerHitDamage: number[];
+	/** The lowest HP percentage per hit for this move. A 2-hit move will have 2 entries */
+	lowestRollPerHitHpPercentage: number[];
+	/** The highest damage roll per hit for this move. A 2-hit move will have 2 entries */
+	highestRollPerHitDamage: number[];
+	/** The highest HP percentage per hit for this move. A 2-hit move will have 2 entries */
+	highestRollPerHitHpPercentage: number[];
+	/** Damage rolls per hit for this move. A 2-hit move will have 2 entries */
+	damageRollsPerHit: number[][];
 }
 
 export interface CPUMoveConsideration extends MoveConsideration {
