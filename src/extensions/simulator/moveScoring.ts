@@ -5,7 +5,7 @@ import { MoveScore } from "./moveScore";
 import { ActivePokemon, BattleFieldState, CPUMoveConsideration, MoveConsideration, MoveResult, PokemonPosition, Trainer } from './moveScoring.contracts';
 import { calculateCpuMove, MoveProbability } from './phases/battle/cpu-move-selection';
 import { PossibleTrainerAction } from './phases/battle/move-selection.contracts';
-import { canFlinch, curHPPercentage, getFinalSpeed, getTypeEffectiveness, hasAnyBoosts, hasBerry, isGrounded, isSoundBased, isSuperEffective, isTargetImmuneToMoveKind, processCartesianProduct } from './utils';
+import { canFlinch, combinePerHitDamageRolls, curHPPercentage, getFinalSpeed, getTypeEffectiveness, hasAnyBoosts, hasBerry, isGrounded, isSoundBased, isSuperEffective, isTargetImmuneToMoveKind, processCartesianProduct } from './utils';
 
 export function scoreCPUMoves(cpuResults: Result[], playerMove: MoveResult, state: BattleFieldState): MoveScore[] {
     let moveResults = toMoveResults(cpuResults);
@@ -27,9 +27,21 @@ export function scoreCPUMoves(cpuResults: Result[], playerMove: MoveResult, stat
         let results = scoreConsiderations(considerations);
         return calculateCpuMove(results);
     };
+    // TODO: This isn't quite right. This treats the damage roll as shared across each hit, when really it's combinitoric.
+    const flattenMultiHitMoves = (rollsPerHit: number[][]) => {
+        let flattened = [...rollsPerHit[0]];
+        
+        for (let hitIndex = 1; hitIndex < rollsPerHit.length; hitIndex++) {
+            for (let i = 0; i < flattened.length; i++) {
+                flattened[i] += rollsPerHit[hitIndex][i];
+            }
+        }
 
-    const totalCombinationsScored = processCartesianProduct([
-        ...moveResults.map(m => m.damageRolls),
+        return flattened;
+    }
+
+    const totalCombinationsScored = processCartesianProduct<number>([
+        ...moveResults.map(m => flattenMultiHitMoves(m.damageRollsPerHit)),
     ], ([m1RollDamage, m2RollDamage, m3RollDamage, m4RollDamage]) => {
         const seenRollsKey = JSON.stringify([m1RollDamage, m2RollDamage, m3RollDamage, m4RollDamage]);
         if (!seenRollsMap.has(seenRollsKey)) {
@@ -97,15 +109,15 @@ export class DamageRolls {
     private readonly maxDamagingMove: [MoveResult, number] = undefined!;
     private readonly moveNameToDamageRollCappedAtDefenderHP: Map<string, number> = new Map();
 
-    constructor(moveNameToDamageRoll: Map<MoveResult, number>) {
-        for (let [result, damageRoll] of moveNameToDamageRoll.entries()) {
+    constructor(moveNameToAllHitsCombinedDamageRoll: Map<MoveResult, number>) {
+        for (let [result, damageRoll] of moveNameToAllHitsCombinedDamageRoll.entries()) {
             this.moveNameToDamageRollCappedAtDefenderHP.set(
                 result.move.name, 
-                Math.min(damageRoll * result.move.hits, result.defender.curHP()));
+                Math.min(damageRoll, result.defender.curHP()));
             if (!isQualifiedForHighestDamageMove(result.move))
                 continue;
             if (!this.maxDamagingMove || 
-                (result.move.hits * damageRoll > this.maxDamagingMove[0].move.hits * this.maxDamagingMove[1]))
+                (damageRoll > this.maxDamagingMove[1]))
                 this.maxDamagingMove = [result, damageRoll];
         }
     }
@@ -113,7 +125,7 @@ export class DamageRolls {
     public static fromMaxRolls(moveResults: MoveResult[]): DamageRolls {
         let maxRolls = new Map<MoveResult, number>();
         for (let result of moveResults) {
-            maxRolls.set(result, result.highestRollPerHitDamage);
+            maxRolls.set(result, combinePerHitDamageRolls(result.highestRollPerHitDamage));
         }
         return new DamageRolls(maxRolls);
     }
@@ -143,8 +155,8 @@ export function getCpuMoveConsiderations(cpuResults: MoveResult[], playerMove: M
     let movesToConsider = cpuResults.map<CPUMoveConsideration>(r => {
         const allhitDamageCappedAtDefenderHP = damageRolls.getAllHitDamageCappedAtDefenderHP(r);
         const kos = allhitDamageCappedAtDefenderHP === r.defender.curHP();
-        const lowestRollTotalHitsHpPercentage = r.lowestRollPerHitHpPercentage * r.move.hits;
-        const highestRollTotalHitsHpPercentage = r.highestRollPerHitHpPercentage * r.move.hits;
+        const lowestRollTotalHitsHpPercentage = r.lowestRollPerHitHpPercentage.reduce((a, b) => a + b, 0);
+        const highestRollTotalHitsHpPercentage = r.highestRollPerHitHpPercentage.reduce((a, b) => a + b, 0);
         return {
             result: r,
             lowestRollTotalHitsHpPercentage,
@@ -161,9 +173,9 @@ export function getCpuMoveConsiderations(cpuResults: MoveResult[], playerMove: M
             playerMon,
             aiMon,
             playerMove,
-            playerWillKOAI: playerMove.highestRollPerHitDamage * playerMove.move.hits >= aiMon.curHP() && !savedFromKO(aiMon),
-            playerWill2HKOAI: playerMove.highestRollPerHitDamage * playerMove.move.hits * 2 >= aiMon.curHP(),
-            aiOutdamagesPlayer: allhitDamageCappedAtDefenderHP > playerMove.highestRollPerHitDamage * playerMove.move.hits,
+            playerWillKOAI: playerMove.highestRollPerHitDamage.reduce((a, b) => a + b, 0) >= aiMon.curHP() && !savedFromKO(aiMon),
+            playerWill2HKOAI: playerMove.highestRollPerHitDamage.reduce((a, b) => a + b, 0) * 2 >= aiMon.curHP(),
+            aiOutdamagesPlayer: allhitDamageCappedAtDefenderHP > playerMove.highestRollPerHitDamage.reduce((a, b) => a + b, 0),
             aiMonFirstTurnOut: !!aiMonPosition.firstTurnOut,
             lastTurnCPUMove: undefined, // TODO: Track last move as volatile status?
             field: state.field
@@ -720,7 +732,9 @@ function isQualifiedForHighestDamageMove(move: Move): boolean {
 export function findHighestDamageMove(moveResults: MoveResult[]): MoveResult {
     let maxDamageMove: MoveResult = moveResults[0];
     for (let result of moveResults) {
-        if ((result.highestRollPerHitDamage * result.move.hits) > (maxDamageMove.highestRollPerHitDamage * maxDamageMove.move.hits))
+        const resultDamage = result.highestRollPerHitDamage.reduce((a, b) => a + b, 0);
+        const maxDamage = maxDamageMove.highestRollPerHitDamage.reduce((a, b) => a + b, 0);
+        if (resultDamage > maxDamage)
             maxDamageMove = result;
     }
 
@@ -732,20 +746,24 @@ export function toMoveResults(results: Result[]): MoveResult[] {
 }
 
 export function toMoveResult(result: Result): MoveResult {
-    // HACK: Smogon/calc returns total damage for multi-hit moves as of 10.0.0 which was from May 2023. It's fixed in later commits, but there's no NPM package.
-    let resultDamage = typeof result.damage === 'number' ? [result.damage] : result.damage as number[];
-    let lowestHitDamage = resultDamage[0] ? resultDamage[0] : result.damage as number;
-    let highestHitDamage = (result.damage as number[])[15] ? resultDamage[15] : result.damage as number;
+    const isSingleDamageRoll = (damage: Result['damage']): damage is number => typeof damage === 'number';
+    const isMultiDamageRollOfSingleHitMove = (damage: Result['damage']): damage is number[] => !isSingleDamageRoll(damage) && typeof damage[0] === 'number';
+    const normalizedDamageRollsByHit: number[][] = isSingleDamageRoll(result.damage) ? [[result.damage]] :
+        isMultiDamageRollOfSingleHitMove(result.damage) ? [result.damage] :
+        result.damage;
+    let lowestHitDamage = normalizedDamageRollsByHit.map(hitRolls => hitRolls[0]);
+    let highestHitDamage = normalizedDamageRollsByHit.map(hitRolls => hitRolls[hitRolls.length - 1]);
+    
     let getPerHitDamagePct = (hitDamage: number) => hitDamage / result.defender.stats.hp * 100;
     return {
         attacker: result.attacker,
         defender: result.defender,
         move: result.move,
-        damageRolls: resultDamage,
+        damageRollsPerHit: normalizedDamageRollsByHit,
         lowestRollPerHitDamage: lowestHitDamage,
-        lowestRollPerHitHpPercentage: getPerHitDamagePct(lowestHitDamage),
+        lowestRollPerHitHpPercentage: lowestHitDamage.map(getPerHitDamagePct),
         highestRollPerHitDamage: highestHitDamage,
-        highestRollPerHitHpPercentage: getPerHitDamagePct(highestHitDamage),
+        highestRollPerHitHpPercentage: highestHitDamage.map(getPerHitDamagePct),
     };
 }
 

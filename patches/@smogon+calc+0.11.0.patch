@@ -38,10 +38,16 @@ index bc38c31..bebc176 100644
      Bisharp: { nfe: true },
      Cresselia: { bs: { df: 110, sd: 120 } },
 diff --git a/node_modules/@smogon/calc/dist/field.d.ts b/node_modules/@smogon/calc/dist/field.d.ts
-index 2faa6d5..91e500a 100644
+index 2faa6d5..32eeaef 100644
 --- a/node_modules/@smogon/calc/dist/field.d.ts
 +++ b/node_modules/@smogon/calc/dist/field.d.ts
-@@ -6,6 +6,7 @@ export declare class Field implements State.Field {
+@@ -1,11 +1,12 @@
++import type { GameType, Terrain, Weather } from './data/interface';
+ import type { State } from './state';
+-import type { GameType, Weather, Terrain } from './data/interface';
+ export declare class Field implements State.Field {
+     gameType: GameType;
+     weather?: Weather;
      terrain?: Terrain;
      isMagicRoom: boolean;
      isWonderRoom: boolean;
@@ -86,10 +92,19 @@ index 78803e4..01673b4 100644
          this.isLightScreen = !!side.isLightScreen;
          this.isProtected = !!side.isProtected;
 diff --git a/node_modules/@smogon/calc/dist/index.d.ts b/node_modules/@smogon/calc/dist/index.d.ts
-index 0e1870a..89816e9 100644
+index 0e1870a..f411366 100644
 --- a/node_modules/@smogon/calc/dist/index.d.ts
 +++ b/node_modules/@smogon/calc/dist/index.d.ts
-@@ -29,16 +29,17 @@ export declare class Pokemon extends A.Pokemon {
+@@ -1,6 +1,6 @@
+-import type { State } from './state';
+-import type * as I from './data/interface';
+ import * as A from './adaptable';
++import type * as I from './data/interface';
++import type { State } from './state';
+ export declare function calculate(gen: I.GenerationNum | I.Generation, attacker: A.Pokemon, defender: A.Pokemon, move: A.Move, field?: A.Field): A.Result;
+ export declare class Move extends A.Move {
+     constructor(gen: I.GenerationNum | I.Generation, name: string, options?: Partial<Omit<State.Move, 'ability' | 'item' | 'species'>> & {
+@@ -29,16 +29,18 @@ export declare class Pokemon extends A.Pokemon {
      static getForme(gen: I.GenerationNum | I.Generation, speciesName: string, item?: string, moveName?: string): string;
  }
  export declare function calcStat(gen: I.GenerationNum | I.Generation, stat: I.StatID | 'spc', base: number, iv: number, ev: number, level: number, nature?: string): number;
@@ -114,6 +129,7 @@ index 0e1870a..89816e9 100644
 +export { type State } from './state';
  export { STATS, Stats } from './stats';
 +export { toID } from './util';
++
 diff --git a/node_modules/@smogon/calc/dist/pokemon.d.ts b/node_modules/@smogon/calc/dist/pokemon.d.ts
 index b186309..a112998 100644
 --- a/node_modules/@smogon/calc/dist/pokemon.d.ts
@@ -171,7 +187,7 @@ index b186309..a112998 100644
      static getForme(gen: I.Generation, speciesName: string, item?: I.ItemName, moveName?: I.MoveName): string;
      private static withDefault;
 diff --git a/node_modules/@smogon/calc/dist/pokemon.js b/node_modules/@smogon/calc/dist/pokemon.js
-index 95a17fa..a88841c 100644
+index 95a17fa..8f75ead 100644
 --- a/node_modules/@smogon/calc/dist/pokemon.js
 +++ b/node_modules/@smogon/calc/dist/pokemon.js
 @@ -35,7 +35,8 @@ var Pokemon = (function () {
@@ -210,7 +226,15 @@ index 95a17fa..a88841c 100644
              level: this.level,
              ability: this.ability,
              abilityOn: this.abilityOn,
-@@ -193,9 +198,10 @@ var Pokemon = (function () {
+@@ -183,6 +188,7 @@ var Pokemon = (function () {
+             dynamaxLevel: this.dynamaxLevel,
+             alliesFainted: this.alliesFainted,
+             boostedStat: this.boostedStat,
++            id: this.id,
+             item: this.item,
+             gender: this.gender,
+             nature: this.nature,
+@@ -193,9 +199,10 @@ var Pokemon = (function () {
              status: this.status,
              teraType: this.teraType,
              toxicCounter: this.toxicCounter,

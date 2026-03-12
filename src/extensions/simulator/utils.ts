@@ -18,6 +18,11 @@ export function getPercentageOfMaxHP(pokemon: Pokemon, percentage: number): numb
 	return Math.floor(pokemon.maxHP() * percentage / 100);
 }
 
+export function combinePerHitDamageRolls(damageByHit: number[], maxHits?: number): number {
+	const hitsToConsider = maxHits ? Math.min(maxHits, damageByHit.length) : damageByHit.length;
+	return damageByHit.slice(0, hitsToConsider).reduce((a, b) => a + b, 0);
+}
+
 export function getHPAfterDamage(pokemon: Pokemon, currentHp: number, maxHp: number, damage: number): number {
 	let newHp = Math.max(0, Math.min(maxHp, currentHp - Math.floor(damage)));
 	if (hasLifeSavingItem(pokemon) || hasLifeSavingAbility(pokemon))

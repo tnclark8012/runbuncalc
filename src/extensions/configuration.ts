@@ -19,7 +19,7 @@ export interface RNGStrategy {
     doesAttackingStatusProc(moveResult: MoveResult): boolean;
     doesAttackingAbilityProc(moveResult: MoveResult): boolean;
     doesAbilityProcAsDefender(defender: Pokemon, moveResult: MoveResult): boolean;
-    getDamageRoll(moveResult: MoveResult): number;
+    getDamageRollPerHit(moveResult: MoveResult): number[];
     getHits(moveResult: MoveResult): number;
     willMoveCrit(move: Move): boolean;
 }
@@ -33,7 +33,7 @@ export const playerRng: RNGStrategy = {
     doesAttackingStatusProc: (m) => false,
     doesAttackingAbilityProc: () => false,
     doesAbilityProcAsDefender: () => false,
-    getDamageRoll: (r) => r.lowestRollPerHitDamage,
+    getDamageRollPerHit: (r) => r.lowestRollPerHitDamage,
     getHits: (r) => r.move.hits,
     willMoveCrit: (move) => move.isCrit
 };
@@ -42,7 +42,7 @@ export const cpuRng: RNGStrategy = {
     doesAttackingStatusProc: (m) => true,
     doesAttackingAbilityProc: () => true,
     doesAbilityProcAsDefender: (defender, moveResult) => true,
-    getDamageRoll: (r) => r.highestRollPerHitDamage,
+    getDamageRollPerHit: (r) => r.highestRollPerHitDamage,
     getHits: (r) => r.move.hits,
     willMoveCrit: (move) => move.isCrit,
 };

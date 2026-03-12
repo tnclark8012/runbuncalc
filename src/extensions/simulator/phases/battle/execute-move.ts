@@ -35,7 +35,7 @@ export function executeMove(attacker: Pokemon, defender: Pokemon, moveOrMoveName
 		const damagePerHit = moveResult.highestRollPerHitDamage;
 		const abilityRecoilPerHit = getPerHitAbilityRecoil(attacker, moveResult.move, defender);
 		const statusAfterHit = getStatusAfterHit(attacker, defender, moveResult, attackerRng);
-		defenderHp = getHPAfterDamage(defender, defenderHp, defenderMaxHP, damagePerHit);
+		defenderHp = getHPAfterDamage(defender, defenderHp, defenderMaxHP, damagePerHit[i]);
 		defender.status = statusAfterHit;
 		consumeDefenderItemAfterHit(defender, move);
 

@@ -7,6 +7,7 @@ import { gen } from '../configuration';
 import { importTeam } from './helper';
 import { createMove, megaEvolve, toMoveResult } from './moveScoring';
 import { inGen } from './test-helper';
+import { combinePerHitDamageRolls } from './utils';
 
 const RunAndBun = 8;
 inGen(RunAndBun, ({ }) => {
@@ -61,20 +62,20 @@ IVs: 11 Def / 30 SpA / 25 SpD
 
         // The per-hit percentage should be approximately half of what the total would be
         // since it hits 2 times
-        const totalLowestPct = (moveResult.lowestRollPerHitHpPercentage * moveResult.move.hits);
-        const totalHighestPct = (moveResult.highestRollPerHitHpPercentage * moveResult.move.hits);
+        const totalLowestPct = combinePerHitDamageRolls(moveResult.lowestRollPerHitHpPercentage);
+        const totalHighestPct = combinePerHitDamageRolls(moveResult.highestRollPerHitHpPercentage);
 
         // Verify that per-hit percentage is indeed per-hit (not already multiplied by hits)
         // For a 2-hit move, the per-hit should be roughly half the total
-        expect(moveResult.lowestRollPerHitHpPercentage).toBeLessThan(totalLowestPct);
-        expect(moveResult.highestRollPerHitHpPercentage).toBeLessThan(totalHighestPct);
+        expect(moveResult.lowestRollPerHitHpPercentage[0]).toBeLessThan(totalLowestPct);
+        expect(moveResult.highestRollPerHitHpPercentage[0]).toBeLessThan(totalHighestPct);
 
         // Verify the per-hit damage is the basis for the percentage calculation
-        const expectedLowestPct = (moveResult.lowestRollPerHitDamage / Talonflame.stats.hp) * 100;
-        const expectedHighestPct = (moveResult.highestRollPerHitDamage / Talonflame.stats.hp) * 100;
+        const expectedLowestPct = combinePerHitDamageRolls(moveResult.lowestRollPerHitDamage) / Talonflame.stats.hp * 100;
+        const expectedHighestPct = combinePerHitDamageRolls(moveResult.highestRollPerHitDamage) / Talonflame.stats.hp * 100;
         
-        expect(moveResult.lowestRollPerHitHpPercentage).toBeCloseTo(expectedLowestPct, 2);
-        expect(moveResult.highestRollPerHitHpPercentage).toBeCloseTo(expectedHighestPct, 2);
+        expect(combinePerHitDamageRolls(moveResult.lowestRollPerHitHpPercentage)).toBeCloseTo(expectedLowestPct, 2);
+        expect(combinePerHitDamageRolls(moveResult.highestRollPerHitHpPercentage)).toBeCloseTo(expectedHighestPct, 2);
       });
 
       test('should calculate per-hit percentage correctly for single-hit move', () => {
@@ -101,11 +102,11 @@ Ability: Defiant
         expect(moveResult.move.hits).toBe(1);
 
         // For a single-hit move, per-hit percentage should equal total percentage
-        const expectedLowestPct = (moveResult.lowestRollPerHitDamage / Braviary.stats.hp) * 100;
-        const expectedHighestPct = (moveResult.highestRollPerHitDamage / Braviary.stats.hp) * 100;
+        const expectedLowestPct = (combinePerHitDamageRolls(moveResult.lowestRollPerHitDamage) / Braviary.stats.hp) * 100;
+        const expectedHighestPct = (combinePerHitDamageRolls(moveResult.highestRollPerHitDamage) / Braviary.stats.hp) * 100;
         
-        expect(moveResult.lowestRollPerHitHpPercentage).toBeCloseTo(expectedLowestPct, 2);
-        expect(moveResult.highestRollPerHitHpPercentage).toBeCloseTo(expectedHighestPct, 2);
+        expect(combinePerHitDamageRolls(moveResult.lowestRollPerHitHpPercentage)).toBeCloseTo(expectedLowestPct, 2);
+        expect(combinePerHitDamageRolls(moveResult.highestRollPerHitHpPercentage)).toBeCloseTo(expectedHighestPct, 2);
       });
     });
   });
