@@ -1,7 +1,7 @@
 import { Dropdown, Input, Label, Option, Table, TableBody, TableCell, TableHeader, TableHeaderCell, TableRow } from '@fluentui/react-components';
 import { Field, Pokemon, Side, StatsTable } from '@smogon/calc';
 import type { StatusName, TypeName } from '@smogon/calc/dist/data/interface';
-import { ItemName } from '@smogon/calc/src/data/interface';
+import { ItemName } from '@smogon/calc/dist/data/interface';
 import * as React from 'react';
 import { gen } from '../../../configuration';
 import { IVRecord, PokemonSet } from '../../../core/storage.contracts';
@@ -578,3 +578,4 @@ export const PokemonSetDetails: React.FC<PokemonSetDetailsProps> = ({
     </div>
   );
 };
+

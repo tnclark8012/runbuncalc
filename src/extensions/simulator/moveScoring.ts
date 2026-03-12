@@ -1,5 +1,5 @@
-import { A, calculate, Field, I, Move, Pokemon, Result } from '@smogon/calc';
-import { MoveName } from '@smogon/calc/dist/data/interface';
+import { calculate, Field, Move, Pokemon, Result } from '@smogon/calc';
+import { Generation, MoveName } from '@smogon/calc/dist/data/interface';
 import { gen, RNGStrategy } from '../configuration';
 import { MoveScore } from "./moveScore";
 import { ActivePokemon, BattleFieldState, CPUMoveConsideration, MoveConsideration, MoveResult, PokemonPosition, Trainer } from './moveScoring.contracts';
@@ -197,11 +197,11 @@ export function damagingMinus2SpDefReductionWithGuaranteedEffect(moveScore: Move
         moveScore.addScore(6);
 }
 
-export function hasSpecialMoves(pokemon: A.Pokemon): boolean {
+export function hasSpecialMoves(pokemon: Pokemon): boolean {
     return !!pokemon.moves.find(m => createMove(pokemon, m).category === 'Special');
 }
 
-export function hasPhysicalMoves(pokemon: A.Pokemon): boolean {
+export function hasPhysicalMoves(pokemon: Pokemon): boolean {
     return !!pokemon.moves.find(m => createMove(pokemon, m).category === 'Physical');
 }
 
@@ -732,6 +732,7 @@ export function toMoveResults(results: Result[]): MoveResult[] {
 }
 
 export function toMoveResult(result: Result): MoveResult {
+    // HACK: Smogon/calc returns total damage for multi-hit moves as of 10.0.0 which was from May 2023. It's fixed in later commits, but there's no NPM package.
     let resultDamage = typeof result.damage === 'number' ? [result.damage] : result.damage as number[];
     let lowestHitDamage = resultDamage[0] ? resultDamage[0] : result.damage as number;
     let highestHitDamage = (result.damage as number[])[15] ? resultDamage[15] : result.damage as number;
@@ -748,7 +749,7 @@ export function toMoveResult(result: Result): MoveResult {
     };
 }
 
-export function savedFromKO(pokemon: A.Pokemon): boolean {
+export function savedFromKO(pokemon: Pokemon): boolean {
     return hasLifeSavingAbility(pokemon) || hasLifeSavingItem(pokemon);
 }
 
@@ -763,20 +764,20 @@ export function moveWillFail(pokemonSide: ActivePokemon, consideration: MoveCons
     return false;
 }
 
-export function hasLifeSavingItem(pokemon: A.Pokemon): boolean {
+export function hasLifeSavingItem(pokemon: Pokemon): boolean {
     return pokemon.hasItem('Focus Sash') && pokemon.curHP() === pokemon.maxHP();
 }
 
-export function hasLifeSavingAbility(pokemon: A.Pokemon): boolean {
+export function hasLifeSavingAbility(pokemon: Pokemon): boolean {
     return pokemon.hasAbility('Sturdy') && pokemon.curHP() === pokemon.maxHP();
 }
 
-export function canUseDamagingMoves(pokemon: A.Pokemon): boolean {
+export function canUseDamagingMoves(pokemon: Pokemon): boolean {
     return pokemon.moves.map(m => createMove(pokemon, m)).some(m => m.category !== 'Status');
 }
 
 /** Creates a Move as used by a particular pokemon. This will account for things like skill link, item boosts, etc in damage calcs */
-export function createMove(pokemon: A.Pokemon, moveName: string | A.Move): Move {
+export function createMove(pokemon: Pokemon, moveName: string | Move): Move {
     if (moveName && typeof moveName !== "string")
         moveName = moveName.name;
 
@@ -791,7 +792,7 @@ export function createMove(pokemon: A.Pokemon, moveName: string | A.Move): Move 
  * @param attackerField 
  * @returns 
  */
-export function calculateAllMoves(gen: I.Generation, attacker: Pokemon, defender: Pokemon, attackerField: Field): Result[] {
+export function calculateAllMoves(gen: Generation, attacker: Pokemon, defender: Pokemon, attackerField: Field): Result[] {
     var results = [];
     for (var i = 0; i < attacker.moves.length; i++) {
         results[i] = calculate(gen, attacker, defender, createMove(attacker, attacker.moves[i]), attackerField);

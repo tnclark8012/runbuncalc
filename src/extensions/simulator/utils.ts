@@ -1,8 +1,6 @@
-import { A, Field, I, Pokemon, Side, toID } from "@smogon/calc";
-import { MoveName } from "@smogon/calc/dist/data/interface";
-import { StatsTable } from "@smogon/calc/src";
-import { StatID, TypeName } from "@smogon/calc/src/data/interface";
-import { getFinalSpeed as calcGetFinalSpeed, getModifiedStat as calcGetModifiedStat } from "@smogon/calc/src/mechanics/util";
+import { Field, Pokemon, Side, StatsTable, toID } from "@smogon/calc";
+import { MoveName, StatID, TypeName } from "@smogon/calc/dist/data/interface";
+import { getFinalSpeed as calcGetFinalSpeed, getModifiedStat as calcGetModifiedStat } from "@smogon/calc/dist/mechanics/util";
 import { gen } from "../configuration";
 import { getActiveSets, saveActiveSets } from "../core/storage";
 import { CustomSets, PokemonSet } from "../core/storage.contracts";
@@ -12,11 +10,11 @@ export function canFlinch(move: MoveName): boolean {
 	return ['Air Slash', 'Astonish', 'Bite', 'Bone Club', 'Bulldoze', 'Dark Pulse', 'Dragon Rush', 'Extrasensory', 'Fire Fang', 'Headbutt', 'Heart Stamp', 'Ice Fang', 'Iron Head', 'Needle Arm', 'Rock Slide', 'Rock Tomb', 'Rolling Kick', 'Rollout', 'Sky Attack', 'Stomp', 'Waterfall', 'Zen Headbutt'].includes(move);
 }
 
-export function curHPPercentage(pokemon: A.Pokemon): number {
+export function curHPPercentage(pokemon: Pokemon): number {
 	return pokemon.curHP() / pokemon.maxHP();
 }
 
-export function getPercentageOfMaxHP(pokemon: A.Pokemon, percentage: number): number {
+export function getPercentageOfMaxHP(pokemon: Pokemon, percentage: number): number {
 	return Math.floor(pokemon.maxHP() * percentage / 100);
 }
 
@@ -27,11 +25,11 @@ export function getHPAfterDamage(pokemon: Pokemon, currentHp: number, maxHp: num
 	return newHp;
 }
 
-export function isFainted(pokemon: A.Pokemon): boolean {
+export function isFainted(pokemon: Pokemon): boolean {
 	return pokemon.curHP() <= 0;
 }
 
-export function getFinalSpeed(pokemon: A.Pokemon, field: Field, side: Side): number {
+export function getFinalSpeed(pokemon: Pokemon, field: Field, side: Side): number {
 	return calcGetFinalSpeed(gen, pokemon as any, field, side);
 }
 
@@ -65,7 +63,7 @@ export function applyBoost(stats: StatsTable, kind: keyof StatsTable, modifier: 
 	stats[kind] = Math.min(Math.max(-6, stats[kind] + modifier), 6);
 }
 
-export function consumeItem(pokemon: A.Pokemon): void {
+export function consumeItem(pokemon: Pokemon): void {
 	if (pokemon.item) {
 		pokemon.item = undefined;
 		if (pokemon.hasAbility('Unburden'))
@@ -73,7 +71,7 @@ export function consumeItem(pokemon: A.Pokemon): void {
 	}
 }
 
-export function hasBerry(pokemon: A.Pokemon): boolean {
+export function hasBerry(pokemon: Pokemon): boolean {
 	return !!(pokemon.item && pokemon.item.endsWith('Berry'));
 }
 
@@ -178,7 +176,7 @@ export type LegacyStatsTable = {
   sp?: number;
 };
 
-export function convertIVsFromCustomSetToPokemon(ivs: LegacyStatsTable | undefined): I.StatsTable {
+export function convertIVsFromCustomSetToPokemon(ivs: LegacyStatsTable | undefined): StatsTable {
 	return {
 		hp: ivs?.hp ?? 31,
 		atk: ivs?.at ?? 31,

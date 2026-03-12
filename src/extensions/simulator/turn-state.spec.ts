@@ -1,9 +1,10 @@
 import { Field } from '@smogon/calc';
-import { ItemName } from '@smogon/calc/src/data/interface';
+import { ItemName } from '@smogon/calc/dist/data/interface';
 import { OpposingTrainer } from '../trainer-sets';
+import { importTeam } from './helper';
 import { BattleFieldState, CpuTrainer, PlayerTrainer, PokemonPosition } from './moveScoring.contracts';
 import { applyCpuSwitchIns, applyPlayerSwitchIns } from './phases/switching';
-import { expectCpuTeam, importTeam } from './test-helper';
+import { expectCpuTeam } from './test-helper';
 import { applyTransforms, BattleFieldStateTransform, startTurn } from './turn-state';
 
 describe('Turn state', () => {

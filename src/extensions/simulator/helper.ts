@@ -1,18 +1,38 @@
 /* eslint-env jest */
 
-import { ABILITIES, calculate, Field, I, ITEMS, Move, Pokemon, PokemonOptions, Side, SPECIES, SpeciesData, State } from '@smogon/calc';
-import { Result } from '@smogon/calc/src';
+import { ABILITIES, calculate, Field, ITEMS, Move, Pokemon, PokemonOptions, Result, Side, SPECIES, State } from '@smogon/calc';
+import { GenderName, GenerationNum, StatsTable, TypeName } from '@smogon/calc/dist/data/interface';
 import { BattleFieldState, CpuTrainer, PlayerTrainer, PokemonPosition } from './moveScoring.contracts';
 import { LegacyStatsTable } from './utils';
 
-const calc = (gen: I.GenerationNum) => (
+export interface SpeciesData {
+  readonly types: [TypeName] | [TypeName, TypeName];
+  // TODO: replace with baseStats
+  readonly bs: {
+    hp: number;
+    at: number;
+    df: number;
+    sa?: number;
+    sd?: number;
+    sp: number;
+    sl?: number;
+  };
+  readonly weightkg: number; // weight
+  readonly nfe?: boolean;
+  readonly gender?: GenderName;
+  readonly otherFormes?: string[];
+  readonly baseSpecies?: string;
+  readonly abilities?: {0: string}; // ability
+}
+
+const calc = (gen: GenerationNum) => (
   attacker: Pokemon,
   defender: Pokemon,
   move: Move,
   field?: Field
 ) => calculate(gen, attacker, defender, move, field);
 
-const move = (gen: I.GenerationNum) => (
+const move = (gen: GenerationNum) => (
   name: string,
   options: Partial<Omit<State.Move, 'ability' | 'item' | 'species'>> & {
     ability?: string;
@@ -21,7 +41,7 @@ const move = (gen: I.GenerationNum) => (
   } = {}
 ) => new Move(gen, name, options as any);
 
-const pokemon = (gen: I.GenerationNum) => (
+const pokemon = (gen: GenerationNum) => (
   name: string,
   options: Partial<Omit<State.Pokemon, 'ability' | 'item' | 'nature' | 'moves'>> & {
     ability?: string;
@@ -29,9 +49,9 @@ const pokemon = (gen: I.GenerationNum) => (
     nature?: string;
     moves?: string[];
     curHP?: number;
-    ivs?: Partial<I.StatsTable> & {spc?: number};
-    evs?: Partial<I.StatsTable> & {spc?: number};
-    boosts?: Partial<I.StatsTable> & {spc?: number};
+    ivs?: Partial<StatsTable> & {spc?: number};
+    evs?: Partial<StatsTable> & {spc?: number};
+    boosts?: Partial<StatsTable> & {spc?: number};
   } = {}
 ) => new Pokemon(gen, name, options as any);
 
@@ -40,7 +60,7 @@ const field = (field: Partial<State.Field> = {}) => new Field(field);
 const side = (side: State.Side = {}) => new Side(side);
 
 interface Gen {
-  gen: I.GenerationNum;
+  gen: GenerationNum;
   calculate: ReturnType<typeof calc>;
   Pokemon: ReturnType<typeof pokemon>;
   Move: ReturnType<typeof move>;
@@ -48,7 +68,7 @@ interface Gen {
   Side: typeof side;
 }
 
-export function convertStats(legacyStatsFromSet?: LegacyStatsTable): I.StatsTable {
+export function convertStats(legacyStatsFromSet?: LegacyStatsTable): StatsTable {
   return {
     hp: legacyStatsFromSet?.hp || 31,
     atk: legacyStatsFromSet?.at || 31,
@@ -59,7 +79,7 @@ export function convertStats(legacyStatsFromSet?: LegacyStatsTable): I.StatsTabl
   }
 }
 
-export function inGen(gen: I.GenerationNum, fn: (gen: Gen) => void) {
+export function inGen(gen: GenerationNum, fn: (gen: Gen) => void) {
   fn({
     gen,
     calculate: calc(gen),
@@ -70,7 +90,7 @@ export function inGen(gen: I.GenerationNum, fn: (gen: Gen) => void) {
   });
 }
 
-export function inGens(from: I.GenerationNum, to: I.GenerationNum, fn: (gen: Gen) => void) {
+export function inGens(from: GenerationNum, to: GenerationNum, fn: (gen: Gen) => void) {
   for (let gen = from; gen <= to; gen++) {
     inGen(gen, fn);
   }
@@ -79,21 +99,21 @@ export function inGens(from: I.GenerationNum, to: I.GenerationNum, fn: (gen: Gen
 export function tests(name: string, fn: (gen: Gen) => void, type?: 'skip' | 'only'): void;
 export function tests(
   name: string,
-  from: I.GenerationNum,
+  from: GenerationNum,
   fn: (gen: Gen) => void,
   type?: 'skip' | 'only'
 ): void;
 export function tests(
   name: string,
-  from: I.GenerationNum,
-  to: I.GenerationNum,
+  from: GenerationNum,
+  to: GenerationNum,
   fn: (gen: Gen) => void,
   type?: 'skip' | 'only'
 ): void;
 export function tests(...args: any[]) {
   const name = args[0];
-  let from: I.GenerationNum;
-  let to: I.GenerationNum;
+  let from: GenerationNum;
+  let to: GenerationNum;
   let fn: (gen: Gen) => void;
   let type: 'skip' | 'only' | undefined = undefined;
   if (typeof args[1] !== 'number') {
@@ -102,13 +122,13 @@ export function tests(...args: any[]) {
     fn = args[1];
     type = args[2];
   } else if (typeof args[2] !== 'number') {
-    from = args[1] as I.GenerationNum ?? 1;
+    from = args[1] as GenerationNum ?? 1;
     to = 8;
     fn = args[2];
     type = args[3];
   } else {
-    from = args[1] as I.GenerationNum ?? 1;
-    to = args[2] as I.GenerationNum ?? 8;
+    from = args[1] as GenerationNum ?? 1;
+    to = args[2] as GenerationNum ?? 8;
     fn = args[3];
     type = args[4];
   }
@@ -128,12 +148,12 @@ export function tests(...args: any[]) {
 declare global {
   namespace jest {
     interface Matchers<R, T> {
-      toMatch(gen: I.GenerationNum, notation?: '%' | 'px' | ResultDiff, diff?: ResultDiff): R;
+      toMatch(gen: GenerationNum, notation?: '%' | 'px' | ResultDiff, diff?: ResultDiff): R;
     }
   }
 }
 
-type ResultDiff = Partial<Record<I.GenerationNum, Partial<ResultBreakdown>>>;
+type ResultDiff = Partial<Record<GenerationNum, Partial<ResultBreakdown>>>;
 interface ResultBreakdown {
   range: [number, number];
   desc: string;
@@ -143,7 +163,7 @@ interface ResultBreakdown {
 expect.extend({
   toMatch(
     received: Result,
-    gen: I.GenerationNum,
+    gen: GenerationNum,
     notation?: '%' | 'px' | ResultDiff,
     diff?: ResultDiff
   ) {
@@ -258,8 +278,8 @@ export function importTeam(importText: string): Pokemon[] {
         return currentPoke;
       
       var currentRow = rows[x] ? rows[x].split(/[/:]/) : '';
-      var evs: Partial<I.StatsTable> = {};
-      var ivs: Partial<I.StatsTable> = {};
+      var evs: Partial<StatsTable> = {};
+      var ivs: Partial<StatsTable> = {};
       var ev;
       var j;
 
@@ -286,12 +306,12 @@ export function importTeam(importText: string): Pokemon[] {
       }
       currentAbility = rows[x] ? rows[x].trim().split(":") : '';
       if (currentAbility[0] == "Ability") {
-        currentPoke.ability = currentAbility[1].trim();
+        currentPoke.ability = currentAbility[1].trim() as any;
       }
 
       currentNature = rows[x] ? rows[x].trim().split(" ") : '';
       if (currentNature[1] == "Nature") {
-        currentPoke.nature = currentNature[0];
+        currentPoke.nature = currentNature[0] as any;
       }
     }
     return currentPoke;

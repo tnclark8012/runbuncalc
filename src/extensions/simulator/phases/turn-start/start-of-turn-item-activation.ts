@@ -1,5 +1,5 @@
 import { Field, Pokemon, StatsTable } from "@smogon/calc";
-import { Terrain } from "@smogon/calc/src/data/interface";
+import { Terrain } from "@smogon/calc/dist/data/interface";
 import { visitActivePokemonInSpeedOrder } from "../../battle-field-state-visitor";
 import { ActivePokemon, BattleFieldState } from "../../moveScoring.contracts";
 import { applyBoost, consumeItem } from "../../utils";

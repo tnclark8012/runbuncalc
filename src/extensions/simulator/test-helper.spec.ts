@@ -1,5 +1,5 @@
-import { StatsTable} from '@smogon/calc';
-import { importPokemon, importTeam } from '@smogon/calc/src/test/helper';
+import { StatsTable } from '@smogon/calc';
+import { importPokemon, importTeam } from './helper';
 
 describe('Helper', () => {
   test('importPokemon', () => {
@@ -97,3 +97,4 @@ Ability: Speed Boost
     expect(combusken.ability).toBe('Speed Boost');
   })
 });
+

@@ -4,7 +4,7 @@
 
 import { Field, Pokemon } from '@smogon/calc';
 import { PokemonOptions } from '@smogon/calc/dist/pokemon';
-import { ItemName } from '@smogon/calc/src/data/interface';
+import { ItemName } from '@smogon/calc/dist/data/interface';
 import { useEffect, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { gen, PlannedPlayerActionProvider, PlannedSwitchAction, PlannedTrainerAction, usingHeuristics } from '../../configuration';
@@ -225,3 +225,4 @@ export function usePossibleStates(): PossibleBattleFieldState[] {
 
   return possibleStates;
 }
+

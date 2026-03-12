@@ -1,4 +1,5 @@
-import { A, calculate, Field, GenerationNum, I } from '@smogon/calc';
+import { calculate, Field, GenerationNum, Pokemon, Result } from '@smogon/calc';
+import { Generation } from '@smogon/calc/dist/data/interface';
 import { Deferred } from '../../deferred';
 import { gen } from '../configuration';
 import { BattleFieldState } from '../simulator/moveScoring.contracts';
@@ -77,7 +78,7 @@ export interface SimulatorCalculationColor {
 
 export type CalculationColor = LegacyCalculationColor | SimulatorCalculationColor;
 
-async function getCalculationColors(playerPokemon: A.Pokemon[], cpuPokemon: A.Pokemon): Promise<CalculationColor[]> {
+async function getCalculationColors(playerPokemon: Pokemon[], cpuPokemon: Pokemon): Promise<CalculationColor[]> {
 	var field = createField();
 
 	const result: CalculationColor[] = [];
@@ -105,7 +106,7 @@ async function getCalculationColors(playerPokemon: A.Pokemon[], cpuPokemon: A.Po
 	return result;
 }
 
-async function getSimulatedCalculationResult(p1: A.Pokemon, p2: A.Pokemon, field: Field): Promise<CalculationColor> {
+async function getSimulatedCalculationResult(p1: Pokemon, p2: Pokemon, field: Field): Promise<CalculationColor> {
 	const deferred = new Deferred<CalculationColor>();
 	var p1speed = p1.stats.spe;
 	var p2speed = p2.stats.spe;
@@ -140,7 +141,7 @@ async function getSimulatedCalculationResult(p1: A.Pokemon, p2: A.Pokemon, field
 	return deferred.promise;
 }
 
-function getLegacyCalculationResult(p1: A.Pokemon, p2: A.Pokemon, field: Field): LegacyCalculationColor {
+function getLegacyCalculationResult(p1: Pokemon, p2: Pokemon, field: Field): LegacyCalculationColor {
 	let damageResults = calculateAllMoves(gen, p1, field, p2, field.swap());
 	p1 = damageResults[0][0].attacker;
 	p2 = damageResults[1][0].attacker;
@@ -232,10 +233,10 @@ function getLegacyCalculationResult(p1: A.Pokemon, p2: A.Pokemon, field: Field):
 	return { type: 'legacy', speed: fastest, code: code! };
 }
 
-function calculateAllMoves(gen: GenerationNum | I.Generation, p1: A.Pokemon, p1field: Field, p2: A.Pokemon, p2field: Field, double?: number): A.Result[][] {
+function calculateAllMoves(gen: GenerationNum | Generation, p1: Pokemon, p1field: Field, p2: Pokemon, p2field: Field, double?: number): Result[][] {
 	double = double ? 2 : 0;
 	checkStatBoost(p1, p2);
-	var results: A.Result[][] = [[], [], [], []];
+	var results: Result[][] = [[], [], [], []];
 	for (var i = 0; i < 4; i++) {
 		results[0 + double][i] = calculate(gen, p1, p2, (p1.moves as any)[i], p1field);
 		results[1 + double][i] = calculate(gen, p2, p1, (p2.moves[i] as any), p2field);

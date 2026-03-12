@@ -1,6 +1,6 @@
 import { Field, Move, Pokemon } from '@smogon/calc';
 import { MoveName } from '@smogon/calc/dist/data/interface';
-import { Side } from '@smogon/calc/src';
+import { Side } from '@smogon/calc';
 import { PartyOrderSwitchStrategy } from './switchStrategy.partyOrder';
 
 export interface VolatileStatus {

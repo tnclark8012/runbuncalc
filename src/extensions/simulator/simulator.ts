@@ -1,4 +1,5 @@
-import { Field, I, Pokemon, Result } from '@smogon/calc';
+import { Field, Pokemon, Result } from '@smogon/calc';
+import { Generation } from '@smogon/calc/dist/data/interface';
 import { cpuRng, playerRng } from '../configuration';
 import { MoveScore } from './moveScore';
 import { calculateAllMoves, canUseDamagingMoves, findHighestDamageMove, moveKillsAttacker, moveWillFail, savedFromKO, scoreCPUMoves, toMoveResults } from './moveScoring';
@@ -27,7 +28,7 @@ export class BattleSimulator {
 	private currentTurnState!: BattleFieldState;
 	private readonly turns: TurnOutcome[] = [];
 
-	constructor(private readonly gen: I.Generation,
+	constructor(private readonly gen: Generation,
 		playerTrainerOrPokemon: Pokemon | Trainer,
 		cpuTrainerOrPokemon: Pokemon | Trainer,
 		field: Field,

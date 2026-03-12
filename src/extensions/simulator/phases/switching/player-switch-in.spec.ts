@@ -1,12 +1,11 @@
 /* eslint-disable max-len */
 
 import {
-  Field,
-  Pokemon,
+  Field
 } from '@smogon/calc';
-import { inGen, importTeam, importPokemon, expectPlayerTeam } from '../../test-helper';
-import { ActivePokemon, BattleFieldState, CpuTrainer, PlayerTrainer, PokemonPosition, Trainer } from '../../moveScoring.contracts';
-import { applyCpuSwitchIns, chooseSwitchIn } from './cpu-switch-in';
+import { importTeam } from '../../helper';
+import { BattleFieldState, CpuTrainer, PlayerTrainer, PokemonPosition } from '../../moveScoring.contracts';
+import { expectPlayerTeam, inGen } from '../../test-helper';
 import { applyPlayerSwitchIns } from './player-switch-in';
 
 const RunAndBun = 8;

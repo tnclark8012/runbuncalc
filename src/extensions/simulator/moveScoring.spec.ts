@@ -1,15 +1,12 @@
 /* eslint-disable max-len */
 
 import {
-  Field,
-  calculate,
-  Move
+  calculate
 } from '@smogon/calc';
-import { inGen, importTeam, importPokemon } from './test-helper';
-import { calculateAllMoves, megaEvolve, toMoveResult, createMove } from './moveScoring';
-import { OpposingTrainer } from '../trainer-sets';
-import { getBox } from './playthrough/museum.collection';
 import { gen } from '../configuration';
+import { importTeam } from './helper';
+import { createMove, megaEvolve, toMoveResult } from './moveScoring';
+import { inGen } from './test-helper';
 
 const RunAndBun = 8;
 inGen(RunAndBun, ({ }) => {
