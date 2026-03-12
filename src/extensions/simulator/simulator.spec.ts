@@ -75,14 +75,14 @@ Ability: Thick Fat
 - Apple Acid
 `); 
 
-          let battleSimulator = new BattleSimulator(Generations.get(gen), playerGolisopod, cpuAppletun, new Field());
-          const result = battleSimulator.getResult({ maxTurns: 2 });
+          const field = new Field();
+          field.defenderSide.isTailwind = true;
+          let battleSimulator = new BattleSimulator(Generations.get(gen), playerGolisopod, cpuAppletun, field);
+          const result = battleSimulator.getResult({ maxTurns: 1 });
           
-          const [turn1, turn2] = result.turnOutcomes;
-          expect(turn1.actions[0].attacker.equals(playerGolisopod)).toBe(true);
-          expect(turn1.endOfTurnState.player.active[0].pokemon.curHP()).toBeLessThan(playerGolisopod.maxHP());
-          const goliDamageTaken = turn1.actions[1].lowestRollPerHitDamage;
-          expect(turn2.endOfTurnState.player.active[0].pokemon.curHP()).toBe(playerGolisopod.maxHP()); 
+          const [turn1] = result.turnOutcomes;
+          expect(turn1.actions[1].attacker.equals(playerGolisopod)).toBe(true);
+          expect(turn1.endOfTurnState.player.active[0].pokemon.curHP()).toBe(playerGolisopod.maxHP()); 
       });
 
       test('stat changes from moves take effect after the turn', () => {
