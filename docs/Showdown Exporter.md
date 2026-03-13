@@ -77,3 +77,5 @@ This is the main "figure it out" step. Everything else is straightforward portin
 - **Bulbapedia — Experience curves**: https://bulbapedia.bulbagarden.net/wiki/Experience — Formulas for all 6 growth rates (erratic, fast, medium fast, medium slow, slow, fluctuating)
 - **Bulbapedia — Hidden Power type calculation**: https://bulbapedia.bulbagarden.net/wiki/Hidden_Power_(move)/Calculation — IV parity formula for determining Hidden Power type
 - **NullLuaV1.1.lua** (attached) — Reference implementation with all Pokemon Null lookup tables and decryption logic
+
+"C:\Users\tncla\Downloads\NullLuaV1.1.lua"

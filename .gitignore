@@ -7,3 +7,4 @@ pnpm-debug.log
 npm-debug.log
 obj
 dist/
+__testdata__/

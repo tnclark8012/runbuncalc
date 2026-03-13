@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Pokemon Null Save → Showdown Exporter</title>
+  <style>
+    body { font-family: system-ui, sans-serif; max-width: 800px; margin: 2rem auto; padding: 0 1rem; }
+    h1 { font-size: 1.5rem; }
+    .file-inputs { display: flex; gap: 1rem; flex-wrap: wrap; margin-bottom: 1rem; }
+    .file-inputs label { font-weight: bold; display: block; margin-bottom: 0.25rem; }
+    button { padding: 0.5rem 1.5rem; font-size: 1rem; cursor: pointer; }
+    button:disabled { opacity: 0.5; cursor: not-allowed; }
+    textarea { width: 100%; height: 400px; font-family: monospace; font-size: 0.85rem; }
+    .status { margin: 0.5rem 0; color: #666; }
+    .error { color: #c00; }
+    .actions { display: flex; gap: 0.5rem; margin-top: 0.5rem; }
+  </style>
+</head>
+<body>
+  <h1>Pokemon Null Save → Showdown Exporter</h1>
+  <p>Upload your <code>.sav</code> and <code>.gba</code> files to export your Pokemon in Showdown format.</p>
+
+  <div class="file-inputs">
+    <div>
+      <label for="savFile">.sav file</label>
+      <input type="file" id="savFile" accept=".sav">
+    </div>
+    <div>
+      <label for="romFile">.gba file</label>
+      <input type="file" id="romFile" accept=".gba">
+    </div>
+  </div>
+
+  <button id="exportBtn" disabled>Export</button>
+  <div id="status" class="status"></div>
+
+  <textarea id="output" readonly placeholder="Showdown-format output will appear here..."></textarea>
+  <div class="actions">
+    <button id="copyBtn" disabled>Copy to Clipboard</button>
+  </div>
+
+  <script type="module">
+    // This page is designed to work with a bundled version of the exporter.
+    // For now, include the core logic inline for standalone use.
+    import {parseSaveFile} from './exporter/save-parser.js';
+    import {extractPokemon} from './exporter/pokemon-data.js';
+    import {formatAllPokemon} from './exporter/showdown-format.js';
+
+    const savInput = document.getElementById('savFile');
+    const romInput = document.getElementById('romFile');
+    const exportBtn = document.getElementById('exportBtn');
+    const copyBtn = document.getElementById('copyBtn');
+    const output = document.getElementById('output');
+    const status = document.getElementById('status');
+
+    let savBuffer = null;
+    let romBuffer = null;
+
+    function updateExportButton() {
+      exportBtn.disabled = !(savBuffer && romBuffer);
+    }
+
+    savInput.addEventListener('change', async (e) => {
+      const file = e.target.files[0];
+      if (file) {
+        savBuffer = await file.arrayBuffer();
+        status.textContent = `Loaded ${file.name} (${savBuffer.byteLength} bytes)`;
+        status.className = 'status';
+      }
+      updateExportButton();
+    });
+
+    romInput.addEventListener('change', async (e) => {
+      const file = e.target.files[0];
+      if (file) {
+        romBuffer = await file.arrayBuffer();
+        status.textContent = `Loaded ${file.name} (${romBuffer.byteLength} bytes)`;
+        status.className = 'status';
+      }
+      updateExportButton();
+    });
+
+    exportBtn.addEventListener('click', () => {
+      try {
+        status.textContent = 'Parsing save file...';
+        const blocks = parseSaveFile(savBuffer);
+        const {party, pcBoxes} = extractPokemon(blocks);
+        const text = formatAllPokemon(party, pcBoxes, romBuffer);
+        output.value = text;
+        status.textContent = `Exported ${party.length} party + ${pcBoxes.reduce((s, b) => s + b.length, 0)} PC pokemon.`;
+        status.className = 'status';
+        copyBtn.disabled = false;
+      } catch (err) {
+        status.textContent = `Error: ${err.message}`;
+        status.className = 'status error';
+      }
+    });
+
+    copyBtn.addEventListener('click', () => {
+      navigator.clipboard.writeText(output.value).then(() => {
+        status.textContent = 'Copied to clipboard!';
+      });
+    });
+  </script>
+</body>
+</html>
