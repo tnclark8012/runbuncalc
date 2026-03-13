@@ -1,3 +1,4 @@
+import { formatAllPokemon, parseSaveFile, RomType } from "../../exporter";
 import { findPathForParty } from "../../worker/worker.client";
 import { addToParty, getActiveCollection, getActiveSets, getParty, getSetCollection, removeFromParty, saveActiveSets, saveSetCollection } from "../core/storage";
 import { getTrainerNameByPokemonIndex } from "../trainer-sets";
@@ -44,16 +45,52 @@ export function initializeImportExportControls(): void {
 		URL.revokeObjectURL(link.href);
 	});
 
-	const importBoxInput = document.querySelector<HTMLInputElement>("#importBoxInput")!;
-	document.querySelector("#importBox")!.addEventListener("click", () => {
-		importBoxInput.click();
+	connectFileInput("#importSave", "#importSaveInput", async (fileList: FileList) => {
+		if (fileList.length !== 2) {
+			alert("Please select both a .sav file and a .gba file");
+			return;
+		}
+		
+		const files = [fileList[0], fileList[1]];
+		const savFile = files.find(file => file.name.endsWith('.sav'));
+		const gbaFile = files.find(file => file.name.endsWith('.gba'));
+
+		if (!savFile) {
+			alert("Please select a .sav file");
+			return;
+		}
+
+		if (!gbaFile) {
+			alert("Please select a .gba file");
+			return;
+		}
+
+		const [saveBuffer, romBuffer] = await Promise.all([savFile.arrayBuffer(), gbaFile.arrayBuffer()]);
+		const gameState = parseSaveFile(RomType.PokemonNull, saveBuffer, romBuffer);
+		const team = formatAllPokemon(gameState);
+		navigator.clipboard.writeText(team);
+		alert("Team copied to clipboard!");
 	});
 
-	importBoxInput.addEventListener('change', (e: any) => {
-		const file = e.target!.files[0];
+	connectFileInput("#importBox", "#importBoxInput", (files) => {
+		const file = files[0];
 		file.text().then((value: string) => {
 			saveSetCollection(JSON.parse(value));
 		});
+	});
+}
+
+function connectFileInput(buttonSelector: string, inputSelector: string, callback: (files: FileList) => void): void {
+	const fileInput = document.querySelector<HTMLInputElement>(inputSelector)!;
+	const button = document.querySelector<HTMLButtonElement>(buttonSelector)!;
+
+	button.addEventListener("click", () => {
+		fileInput.click();
+	});
+
+	fileInput.addEventListener("change", (e: any) => {
+		const file = e.target!.files[0];
+		callback(e.target!.files);
 	});
 }
 
