@@ -43,8 +43,8 @@
     // This page is designed to work with a bundled version of the exporter.
     // For now, include the core logic inline for standalone use.
     import {parseSaveFile} from './exporter/save-parser.js';
-    import {extractPokemon} from './exporter/pokemon-data.js';
     import {formatAllPokemon} from './exporter/showdown-format.js';
+    import {RomType} from './exporter/game-data/index.js';
 
     const savInput = document.getElementById('savFile');
     const romInput = document.getElementById('romFile');
@@ -83,11 +83,10 @@
     exportBtn.addEventListener('click', () => {
       try {
         status.textContent = 'Parsing save file...';
-        const blocks = parseSaveFile(savBuffer);
-        const {party, pcBoxes} = extractPokemon(blocks);
-        const text = formatAllPokemon(party, pcBoxes, romBuffer);
+        const gameState = parseSaveFile(RomType.PokemonNull, savBuffer, romBuffer);
+        const text = formatAllPokemon(gameState);
         output.value = text;
-        status.textContent = `Exported ${party.length} party + ${pcBoxes.reduce((s, b) => s + b.length, 0)} PC pokemon.`;
+        status.textContent = `Exported ${gameState.parsedSave.party.length} party + ${gameState.parsedSave.pcBoxes.reduce((s, b) => s + b.length, 0)} PC pokemon.`;
         status.className = 'status';
         copyBtn.disabled = false;
       } catch (err) {

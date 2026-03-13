@@ -1,4 +1,6 @@
-import { SaveSector } from './types';
+import { getGameConfig, RomType } from './game-data';
+import { extractPokemon } from './pokemon-data';
+import { GameState, SaveSector } from './types';
 
 const SECTOR_SIZE = 4096;
 const DATA_SIZE = 3968;
@@ -55,7 +57,7 @@ function concatenateSections(
   return new DataView(combined.buffer);
 }
 
-export function parseSaveFile(buffer: ArrayBuffer): SaveBlocks {
+function parseSaveBlocks(buffer: ArrayBuffer): SaveBlocks {
   if (buffer.byteLength !== 131072) {
     throw new Error(`Expected 128KB save file, got ${buffer.byteLength} bytes`);
   }
@@ -94,4 +96,11 @@ export function parseSaveFile(buffer: ArrayBuffer): SaveBlocks {
     saveBlock1: concatenateSections(activeSlot, 1, 4),
     pokemonStorage: concatenateSections(activeSlot, 5, 13),
   };
+}
+
+export function parseSaveFile(romType: RomType, savBuffer: ArrayBuffer, romBuffer: ArrayBuffer): GameState {
+  const config = getGameConfig(romType, romBuffer);
+  const blocks = parseSaveBlocks(savBuffer);
+  const parsedSave = extractPokemon(config, blocks);
+  return { romType, config, romBuffer, parsedSave };
 }

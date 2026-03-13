@@ -1,7 +1,7 @@
 import { calcLevelFromRom } from './experience';
 import { ABILITIES, ITEMS, MOVES, NATURES, SPECIES_NAMES } from './lookup-tables';
 import { getAbilityId } from './rom-reader';
-import { BoxPokemon, PartyPokemon } from './types';
+import { BoxPokemon, GameConfig, GameState, PartyPokemon } from './types';
 
 const HIDDEN_POWER_TYPES = [
   'Fighting', 'Flying', 'Poison', 'Ground', 'Rock', 'Bug',
@@ -38,8 +38,8 @@ function getItemName(itemId: number): string | undefined {
   return ITEMS[itemId - 1];
 }
 
-function getAbilityName(mon: BoxPokemon, romBuffer: ArrayBuffer): string {
-  const abilityId = getAbilityId(romBuffer, mon.species, mon.altAbility);
+function getAbilityName(mon: BoxPokemon, config: GameConfig, romBuffer: ArrayBuffer): string {
+  const abilityId = getAbilityId(config, romBuffer, mon.species, mon.altAbility);
   if (abilityId === 0) return 'Unknown';
   const name = ABILITIES[abilityId - 1];
   if (!name || name === 'None') {
@@ -75,13 +75,13 @@ function formatMoveLine(mon: BoxPokemon): string {
   return lines.join('\n');
 }
 
-export function formatPartyMon(mon: PartyPokemon, romBuffer: ArrayBuffer): string {
+export function formatPartyMon(mon: PartyPokemon, config: GameConfig, romBuffer: ArrayBuffer): string {
   const parts: string[] = [];
   let header = getSpeciesName(mon.species);
   const item = getItemName(mon.heldItem);
   if (item) header += ` @ ${item}`;
   parts.push(header);
-  parts.push(`Ability: ${getAbilityName(mon, romBuffer)}`);
+  parts.push(`Ability: ${getAbilityName(mon, config, romBuffer)}`);
   parts.push(`Level: ${mon.level}`);
   parts.push(`${getNature(mon)} Nature`);
   const ivLine = formatIVLine(mon);
@@ -91,14 +91,14 @@ export function formatPartyMon(mon: PartyPokemon, romBuffer: ArrayBuffer): strin
   return parts.join('\n');
 }
 
-export function formatPCMon(mon: BoxPokemon, romBuffer: ArrayBuffer): string {
+export function formatPCMon(mon: BoxPokemon, config: GameConfig, romBuffer: ArrayBuffer): string {
   const parts: string[] = [];
   let header = getSpeciesName(mon.species);
   const item = getItemName(mon.heldItem);
   if (item) header += ` @ ${item}`;
   parts.push(header);
-  parts.push(`Ability: ${getAbilityName(mon, romBuffer)}`);
-  const level = calcLevelFromRom(mon.experience, mon.species, romBuffer);
+  parts.push(`Ability: ${getAbilityName(mon, config, romBuffer)}`);
+  const level = calcLevelFromRom(mon.experience, mon.species, config, romBuffer);
   parts.push(`Level: ${level}`);
   parts.push(`${getNature(mon)} Nature`);
   const ivLine = formatIVLine(mon);
@@ -108,20 +108,17 @@ export function formatPCMon(mon: BoxPokemon, romBuffer: ArrayBuffer): string {
   return parts.join('\n');
 }
 
-export function formatAllPokemon(
-  party: PartyPokemon[],
-  pcBoxes: BoxPokemon[][],
-  romBuffer: ArrayBuffer,
-): string {
+export function formatAllPokemon(gameState: GameState): string {
+  const { parsedSave: { party, pcBoxes }, config, romBuffer } = gameState;
   const sections: string[] = [];
 
   for (const mon of party) {
-    sections.push(formatPartyMon(mon, romBuffer));
+    sections.push(formatPartyMon(mon, config, romBuffer));
   }
 
   for (const box of pcBoxes) {
     for (const mon of box) {
-      sections.push(formatPCMon(mon, romBuffer));
+      sections.push(formatPCMon(mon, config, romBuffer));
     }
   }
 

@@ -1,3 +1,16 @@
+import { RomType } from './game-data';
+import type { GameConfig } from './game-data/types';
+
+export { RomType };
+export type { GameConfig };
+
+export interface GameState {
+  romType: RomType;
+  config: GameConfig;
+  romBuffer: ArrayBuffer;
+  parsedSave: ParsedSave;
+}
+
 export interface SaveSector {
   index: number;
   sectionId: number;

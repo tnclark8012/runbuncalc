@@ -1,4 +1,5 @@
 import { readSpeciesInfo } from './rom-reader';
+import { GameConfig } from './types';
 
 // Growth rate IDs (from pokeemerald-expansion)
 const GROWTH_MEDIUM_FAST = 0;
@@ -57,7 +58,7 @@ export function calcLevel(experience: number, growthRate: number): number {
   return level;
 }
 
-export function calcLevelFromRom(experience: number, speciesId: number, romBuffer: ArrayBuffer): number {
-  const info = readSpeciesInfo(romBuffer, speciesId);
+export function calcLevelFromRom(experience: number, speciesId: number, config: GameConfig, romBuffer: ArrayBuffer): number {
+  const info = readSpeciesInfo(config, romBuffer, speciesId);
   return calcLevel(experience, info.growthRate);
 }

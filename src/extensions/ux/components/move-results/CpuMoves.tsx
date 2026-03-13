@@ -5,7 +5,7 @@
 import * as React from 'react';
 import { useSelector } from 'react-redux';
 import { calculateCpuMoveResults, getCpuPossibleActions } from '../../../simulator/phases/battle/cpu-move-selection';
-import { getFinalSpeed } from '../../../simulator/utils';
+import { combinePerHitDamageRolls, getFinalSpeed } from '../../../simulator/utils';
 import { selectBattleFieldState } from '../../store/selectors/battleFieldStateSelector';
 import { MoveItem } from './move-result-group.props';
 import { MoveResultGroup } from './MoveResultGroup';
@@ -26,8 +26,8 @@ export const CpuMoves: React.FC = () => {
           const position = i === 0 ? 'top' : i === 3 ? 'bottom' : 'mid';
           if (moveResult) {
             const hits = moveResult.move.hits;
-            const damageRange = { min: moveResult.lowestRollPerHitDamage * hits, max: moveResult.highestRollPerHitDamage * hits };
-            const damagePctRange = { min: moveResult.lowestRollPerHitHpPercentage * hits, max: moveResult.highestRollPerHitHpPercentage * hits };
+            const damageRange = { min: combinePerHitDamageRolls(moveResult.lowestRollPerHitDamage) * hits, max: combinePerHitDamageRolls(moveResult.highestRollPerHitDamage) * hits };
+            const damagePctRange = { min: combinePerHitDamageRolls(moveResult.lowestRollPerHitHpPercentage) * hits, max: combinePerHitDamageRolls(moveResult.highestRollPerHitHpPercentage) * hits };
             const actionChance =  action ? `${(action.probability * 100).toFixed(0)}%` : '';
             const label = action ? `${actionChance} ${moveResult.move.name}` : moveResult.move.name;
             moveItems.push({

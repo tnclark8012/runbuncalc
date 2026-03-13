@@ -1,25 +1,9 @@
 import { decodeGBAString } from './charmap';
 import { SPECIES_NAMES } from './lookup-tables';
 import { SaveBlocks } from './save-parser';
-import { BoxPokemon, ParsedSave, PartyPokemon } from './types';
+import { BoxPokemon, GameConfig, ParsedSave, PartyPokemon } from './types';
 
-// pokeemerald-expansion struct layout constants
-const BOX_MON_SIZE = 84;
-const PARTY_MON_SIZE = 104;
-const SUBSTRUCTURE_OFFSET = 36; // encrypted substructures start at byte 36 in the struct
-const NICKNAME_LENGTH = 12;
-const OT_NAME_LENGTH = 10;
-const BOXES_COUNT = 24;
-const MONS_PER_BOX = 30;
 const MAX_SPECIES_ID = SPECIES_NAMES.length;
-
-// SaveBlock1 offsets (empirically determined for Pokemon Null / pokeemerald-expansion)
-const PARTY_COUNT_OFFSET = 0x234;
-const PARTY_DATA_OFFSET = 0x238;
-
-// PokemonStorage offsets
-const PC_CURRENT_BOX_OFFSET = 0;
-const PC_BOXES_OFFSET = 4;
 
 /**
  * Substructure order lookup table (24 permutations).
@@ -40,26 +24,24 @@ function readBytes(view: DataView, offset: number, length: number): Uint8Array {
   return bytes;
 }
 
-function readBoxMon(view: DataView, offset: number): BoxPokemon | null {
+function readBoxMon(config: GameConfig, view: DataView, offset: number): BoxPokemon | null {
   const personality = view.getUint32(offset, true);
   const otId = view.getUint32(offset + 4, true);
 
   if (personality === 0 && otId === 0) return null;
 
   // Header fields
-  // In this pokeemerald-expansion build, there's an extra byte at +8 before the
-  // nickname text, so we read from +9. Same pattern for OT name at +22.
-  const nickname = decodeGBAString(readBytes(view, offset + 9, NICKNAME_LENGTH - 1), NICKNAME_LENGTH - 1);
+  const nickname = decodeGBAString(readBytes(view, offset + config.nicknameOffset, config.nicknameLength), config.nicknameLength);
 
-  const language = view.getUint8(offset + 19);
-  const flags = view.getUint8(offset + 20);
-  const otName = decodeGBAString(readBytes(view, offset + 22, OT_NAME_LENGTH), OT_NAME_LENGTH);
-  const markings = view.getUint8(offset + 32);
+  const language = view.getUint8(offset + config.nicknameOffset + config.nicknameLength - 1);
+  const flags = view.getUint8(offset + config.nicknameOffset + config.nicknameLength);
+  const otName = decodeGBAString(readBytes(view, offset + config.otNameOffset, config.otNameLength), config.otNameLength);
+  const markings = view.getUint8(offset + config.substructureOffset - 4);
 
   // Decrypt substructures
   const key = (otId ^ personality) >>> 0;
   const pSel = SUBSTRUCTURE_ORDER[personality % 24];
-  const dataStart = offset + SUBSTRUCTURE_OFFSET;
+  const dataStart = offset + config.substructureOffset;
 
   const ss: number[][] = [[], [], [], []];
   for (let s = 0; s < 4; s++) {
@@ -160,44 +142,45 @@ function readBoxMon(view: DataView, offset: number): BoxPokemon | null {
   };
 }
 
-function readPartyMon(view: DataView, offset: number): PartyPokemon | null {
-  const boxMon = readBoxMon(view, offset);
+function readPartyMon(config: GameConfig, view: DataView, offset: number): PartyPokemon | null {
+  const boxMon = readBoxMon(config, view, offset);
   if (!boxMon) return null;
 
+  const statsStart = offset + config.boxMonSize;
   return {
     ...boxMon,
-    status: view.getUint32(offset + 84, true),
-    level: view.getUint8(offset + 88),
-    hp: view.getUint16(offset + 90, true),
-    maxHP: view.getUint16(offset + 92, true),
-    attack: view.getUint16(offset + 94, true),
-    defense: view.getUint16(offset + 96, true),
-    speed: view.getUint16(offset + 98, true),
-    spAttack: view.getUint16(offset + 100, true),
-    spDefense: view.getUint16(offset + 102, true),
+    status: view.getUint32(statsStart, true),
+    level: view.getUint8(statsStart + 4),
+    hp: view.getUint16(statsStart + 6, true),
+    maxHP: view.getUint16(statsStart + 8, true),
+    attack: view.getUint16(statsStart + 10, true),
+    defense: view.getUint16(statsStart + 12, true),
+    speed: view.getUint16(statsStart + 14, true),
+    spAttack: view.getUint16(statsStart + 16, true),
+    spDefense: view.getUint16(statsStart + 18, true),
   };
 }
 
-export function extractPokemon(blocks: SaveBlocks): ParsedSave {
+export function extractPokemon(config: GameConfig, blocks: SaveBlocks): ParsedSave {
   const sb1 = blocks.saveBlock1;
   const storage = blocks.pokemonStorage;
 
   // Party
-  const partyCount = sb1.getUint32(PARTY_COUNT_OFFSET, true);
+  const partyCount = sb1.getUint32(config.partyCountOffset, true);
   const party: PartyPokemon[] = [];
   for (let i = 0; i < partyCount && i < 6; i++) {
-    const mon = readPartyMon(sb1, PARTY_DATA_OFFSET + i * PARTY_MON_SIZE);
+    const mon = readPartyMon(config, sb1, config.partyDataOffset + i * config.partyMonSize);
     if (mon && !mon.isBadEgg) party.push(mon);
   }
 
   // PC Boxes
   const pcBoxes: BoxPokemon[][] = [];
-  for (let box = 0; box < BOXES_COUNT; box++) {
+  for (let box = 0; box < config.boxesCount; box++) {
     const boxMons: BoxPokemon[] = [];
-    for (let slot = 0; slot < MONS_PER_BOX; slot++) {
-      const offset = PC_BOXES_OFFSET + (box * MONS_PER_BOX + slot) * BOX_MON_SIZE;
-      if (offset + BOX_MON_SIZE > storage.byteLength) break;
-      const mon = readBoxMon(storage, offset);
+    for (let slot = 0; slot < config.monsPerBox; slot++) {
+      const offset = config.pcBoxesOffset + (box * config.monsPerBox + slot) * config.boxMonSize;
+      if (offset + config.boxMonSize > storage.byteLength) break;
+      const mon = readBoxMon(config, storage, offset);
       if (mon && !mon.isBadEgg) boxMons.push(mon);
     }
     pcBoxes.push(boxMons);
