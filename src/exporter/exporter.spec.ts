@@ -8,144 +8,145 @@ import { parseSaveFile } from './save-parser';
 import { formatAllPokemon, formatPartyMon, formatPCMon } from './showdown-format';
 import { GameState } from './types';
 
-const TEST_DATA_DIR = path.join(__dirname, '__testdata__');
-const SAV_PATH = path.join(TEST_DATA_DIR, 'Pokemon Null.sav');
-const ROM_PATH = path.join(TEST_DATA_DIR, 'Pokemon Null.gba');
+describe.skip('REQUIRES TEST DATA', () => {
+  const TEST_DATA_DIR = path.join(__dirname, '__testdata__');
+  const SAV_PATH = path.join(TEST_DATA_DIR, 'Pokemon Null.sav');
+  const ROM_PATH = path.join(TEST_DATA_DIR, 'Pokemon Null.gba');
 
-function loadTestFiles() {
-  const savBuffer = fs.readFileSync(SAV_PATH).buffer;
-  const romBuffer = fs.readFileSync(ROM_PATH).buffer;
-  return {savBuffer, romBuffer};
-}
+  function loadTestFiles() {
+    const savBuffer = fs.readFileSync(SAV_PATH).buffer;
+    const romBuffer = fs.readFileSync(ROM_PATH).buffer;
+    return { savBuffer, romBuffer };
+  }
 
-function loadGameState(): GameState {
-  const {savBuffer, romBuffer} = loadTestFiles();
-  return parseSaveFile(RomType.PokemonNull, savBuffer, romBuffer);
-}
+  function loadGameState(): GameState {
+    const { savBuffer, romBuffer } = loadTestFiles();
+    return parseSaveFile(RomType.PokemonNull, savBuffer, romBuffer);
+  }
 
-describe('Save File Parser', () => {
-  test('parses save file without errors', () => {
-    const gameState = loadGameState();
-    expect(gameState.parsedSave.party.length).toBeGreaterThan(0);
-    expect(gameState.config).toBeDefined();
-    expect(gameState.romType).toBe(RomType.PokemonNull);
+  describe('Save File Parser', () => {
+    test('parses save file without errors', () => {
+      const gameState = loadGameState();
+      expect(gameState.parsedSave.party.length).toBeGreaterThan(0);
+      expect(gameState.config).toBeDefined();
+      expect(gameState.romType).toBe(RomType.PokemonNull);
+    });
+
+    test('rejects wrong-sized save files', () => {
+      const { romBuffer } = loadTestFiles();
+      expect(() => parseSaveFile(RomType.PokemonNull, new ArrayBuffer(100), romBuffer)).toThrow('Expected 128KB');
+    });
+
+    test('rejects unrecognized ROM', () => {
+      const { savBuffer } = loadTestFiles();
+      const fakeRom = new ArrayBuffer(0x100);
+      expect(() => parseSaveFile(RomType.PokemonNull, savBuffer, fakeRom)).toThrow('Unrecognized ROM title');
+    });
   });
 
-  test('rejects wrong-sized save files', () => {
-    const {romBuffer} = loadTestFiles();
-    expect(() => parseSaveFile(RomType.PokemonNull, new ArrayBuffer(100), romBuffer)).toThrow('Expected 128KB');
+  describe('Pokemon Data Extraction', () => {
+    let gameState: GameState;
+
+    beforeAll(() => {
+      gameState = loadGameState();
+    });
+
+    test('extracts party pokemon', () => {
+      expect(gameState.parsedSave.partyCount).toBe(6);
+      expect(gameState.parsedSave.party.length).toBe(6);
+    });
+
+    test('party lead is Lv38 Lapras named Nessie', () => {
+      const lapras = gameState.parsedSave.party[0];
+
+      expect(lapras.species).toBe(131);
+      expect(SPECIES_NAMES[lapras.species - 1]).toBe('Lapras');
+      expect(lapras.nickname).toBe('Nessie');
+      expect(lapras.level).toBe(38);
+    });
+
+    test('Lapras IVs are correct', () => {
+      const lapras = gameState.parsedSave.party[0];
+
+      expect(lapras.hpIV).toBe(31);
+      expect(lapras.attackIV).toBe(31);
+      expect(lapras.defenseIV).toBe(0);
+      expect(lapras.spAttackIV).toBe(12);
+      expect(lapras.spDefenseIV).toBe(30);
+      expect(lapras.speedIV).toBe(13);
+    });
+
+    test('first PC box mon is Lv38 Darmanitan named Monke', () => {
+      const box1 = gameState.parsedSave.pcBoxes[0];
+      expect(box1.length).toBeGreaterThanOrEqual(1);
+
+      const darmanitan = box1[0];
+      expect(darmanitan.species).toBe(555);
+      expect(SPECIES_NAMES[darmanitan.species - 1]).toBe('Darmanitan');
+      expect(darmanitan.nickname).toBe('Monke');
+    });
+
+    test('Darmanitan IVs are correct', () => {
+      const darmanitan = gameState.parsedSave.pcBoxes[0][0];
+
+      expect(darmanitan.hpIV).toBe(21);
+      expect(darmanitan.attackIV).toBe(9);
+      expect(darmanitan.defenseIV).toBe(22);
+      expect(darmanitan.spAttackIV).toBe(10);
+      expect(darmanitan.spDefenseIV).toBe(8);
+      expect(darmanitan.speedIV).toBe(18);
+    });
   });
 
-  test('rejects unrecognized ROM', () => {
-    const {savBuffer} = loadTestFiles();
-    const fakeRom = new ArrayBuffer(0x100);
-    expect(() => parseSaveFile(RomType.PokemonNull, savBuffer, fakeRom)).toThrow('Unrecognized ROM title');
-  });
-});
+  describe('ROM Reader', () => {
+    let gameState: GameState;
 
-describe('Pokemon Data Extraction', () => {
-  let gameState: GameState;
+    beforeAll(() => {
+      gameState = loadGameState();
+    });
 
-  beforeAll(() => {
-    gameState = loadGameState();
-  });
+    test('reads Lapras ability from ROM', () => {
+      const { config, romBuffer } = gameState;
+      const abilityId = getAbilityId(config, romBuffer, 131, 0);
+      expect(abilityId).toBeGreaterThan(0);
+      const abilityName = ABILITIES[abilityId - 1];
+      expect(['Water Absorb', 'Shell Armor', 'Hydration']).toContain(abilityName);
+    });
 
-  test('extracts party pokemon', () => {
-    expect(gameState.parsedSave.partyCount).toBe(6);
-    expect(gameState.parsedSave.party.length).toBe(6);
-  });
+    test('calculates Darmanitan level from experience', () => {
+      const { config, romBuffer } = gameState;
+      const darmanitan = gameState.parsedSave.pcBoxes[0][0];
 
-  test('party lead is Lv38 Lapras named Nessie', () => {
-    const lapras = gameState.parsedSave.party[0];
-
-    expect(lapras.species).toBe(131);
-    expect(SPECIES_NAMES[lapras.species - 1]).toBe('Lapras');
-    expect(lapras.nickname).toBe('Nessie');
-    expect(lapras.level).toBe(38);
+      const level = calcLevelFromRom(darmanitan.experience, darmanitan.species, config, romBuffer);
+      expect(level).toBe(38);
+    });
   });
 
-  test('Lapras IVs are correct', () => {
-    const lapras = gameState.parsedSave.party[0];
+  describe('Showdown Formatter', () => {
+    let gameState: GameState;
 
-    expect(lapras.hpIV).toBe(31);
-    expect(lapras.attackIV).toBe(31);
-    expect(lapras.defenseIV).toBe(0);
-    expect(lapras.spAttackIV).toBe(12);
-    expect(lapras.spDefenseIV).toBe(30);
-    expect(lapras.speedIV).toBe(13);
-  });
+    beforeAll(() => {
+      gameState = loadGameState();
+    });
 
-  test('first PC box mon is Lv38 Darmanitan named Monke', () => {
-    const box1 = gameState.parsedSave.pcBoxes[0];
-    expect(box1.length).toBeGreaterThanOrEqual(1);
+    test('formats party Lapras correctly', () => {
+      const { config, romBuffer } = gameState;
+      const output = formatPartyMon(gameState.parsedSave.party[0], config, romBuffer);
 
-    const darmanitan = box1[0];
-    expect(darmanitan.species).toBe(555);
-    expect(SPECIES_NAMES[darmanitan.species - 1]).toBe('Darmanitan');
-    expect(darmanitan.nickname).toBe('Monke');
-  });
+      expect(output).toContain('Lapras');
+      expect(output).toContain('Level: 38');
+      expect(output).toContain('Ability:');
+      expect(output).toContain('Nature');
+      expect(output).toContain('IVs:');
+      expect(output).toMatch(/0 Def/);
+      expect(output).toMatch(/12 SpA/);
+      expect(output).toMatch(/13 Spe/);
+      expect(output).toMatch(/^- /m);
+    });
 
-  test('Darmanitan IVs are correct', () => {
-    const darmanitan = gameState.parsedSave.pcBoxes[0][0];
-
-    expect(darmanitan.hpIV).toBe(21);
-    expect(darmanitan.attackIV).toBe(9);
-    expect(darmanitan.defenseIV).toBe(22);
-    expect(darmanitan.spAttackIV).toBe(10);
-    expect(darmanitan.spDefenseIV).toBe(8);
-    expect(darmanitan.speedIV).toBe(18);
-  });
-});
-
-describe('ROM Reader', () => {
-  let gameState: GameState;
-
-  beforeAll(() => {
-    gameState = loadGameState();
-  });
-
-  test('reads Lapras ability from ROM', () => {
-    const {config, romBuffer} = gameState;
-    const abilityId = getAbilityId(config, romBuffer, 131, 0);
-    expect(abilityId).toBeGreaterThan(0);
-    const abilityName = ABILITIES[abilityId - 1];
-    expect(['Water Absorb', 'Shell Armor', 'Hydration']).toContain(abilityName);
-  });
-
-  test('calculates Darmanitan level from experience', () => {
-    const {config, romBuffer} = gameState;
-    const darmanitan = gameState.parsedSave.pcBoxes[0][0];
-
-    const level = calcLevelFromRom(darmanitan.experience, darmanitan.species, config, romBuffer);
-    expect(level).toBe(38);
-  });
-});
-
-describe('Showdown Formatter', () => {
-  let gameState: GameState;
-
-  beforeAll(() => {
-    gameState = loadGameState();
-  });
-
-  test('formats party Lapras correctly', () => {
-    const {config, romBuffer} = gameState;
-    const output = formatPartyMon(gameState.parsedSave.party[0], config, romBuffer);
-
-    expect(output).toContain('Lapras');
-    expect(output).toContain('Level: 38');
-    expect(output).toContain('Ability:');
-    expect(output).toContain('Nature');
-    expect(output).toContain('IVs:');
-    expect(output).toMatch(/0 Def/);
-    expect(output).toMatch(/12 SpA/);
-    expect(output).toMatch(/13 Spe/);
-    expect(output).toMatch(/^- /m);
-  });
-
-  test(`All pokemon`, () => {
-    const result = formatAllPokemon(gameState);
-    expect(result).toBe(`Lapras
+    test(`All pokemon`, () => {
+      const result = formatAllPokemon(gameState);
+      expect(result).toBe(`Lapras
 Ability: Shell Armor
 Level: 38
 Hardy Nature
@@ -244,31 +245,32 @@ IVs: 27 HP / 25 Atk / 30 Def / 6 SpA / 7 SpD / 8 Spe
 - Smokescreen
 - Wrap
 - Bite`);
-  });
+    });
 
-  test('formats PC Darmanitan correctly', () => {
-    const {config, romBuffer} = gameState;
-    const output = formatPCMon(gameState.parsedSave.pcBoxes[0][0], config, romBuffer);
+    test('formats PC Darmanitan correctly', () => {
+      const { config, romBuffer } = gameState;
+      const output = formatPCMon(gameState.parsedSave.pcBoxes[0][0], config, romBuffer);
 
-    expect(output).toContain('Darmanitan');
-    expect(output).toContain('Level: 38');
-    expect(output).toContain('Ability:');
-    expect(output).toContain('Nature');
-  });
+      expect(output).toContain('Darmanitan');
+      expect(output).toContain('Level: 38');
+      expect(output).toContain('Ability:');
+      expect(output).toContain('Nature');
+    });
 
-  test('full output has no empty species names', () => {
-    const {config, romBuffer, parsedSave: {party, pcBoxes}} = gameState;
+    test('full output has no empty species names', () => {
+      const { config, romBuffer, parsedSave: { party, pcBoxes } } = gameState;
 
-    for (const mon of party) {
-      const output = formatPartyMon(mon, config, romBuffer);
-      expect(output).not.toContain('Unknown(');
-    }
-
-    for (const box of pcBoxes) {
-      for (const mon of box) {
-        const output = formatPCMon(mon, config, romBuffer);
+      for (const mon of party) {
+        const output = formatPartyMon(mon, config, romBuffer);
         expect(output).not.toContain('Unknown(');
       }
-    }
+
+      for (const box of pcBoxes) {
+        for (const mon of box) {
+          const output = formatPCMon(mon, config, romBuffer);
+          expect(output).not.toContain('Unknown(');
+        }
+      }
+    });
   });
 });
