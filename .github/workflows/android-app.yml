@@ -29,13 +29,15 @@ jobs:
         with:
           distribution: temurin
           java-version: '21'
-      - uses: android-actions/setup-android@v3
+      - uses: android-actions/setup-android@v4
         with:
           packages: platform-tools
           log-accepted-android-sdk-licenses: false
       - uses: gradle/actions/setup-gradle@v5
       - name: Install Android SDK packages
-        run: sdkmanager "platforms;android-37" "build-tools;37.0.0"
+        run: |
+          sdkmanager --list --channel=3
+          sdkmanager "platforms;android-37" "build-tools;37.0.0"
       - name: Install app dependencies
         run: npm ci --prefix app --no-audit --no-fund
       - name: Build web UI and sync Android
