@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; base-uri 'none'; form-action 'none'">
+  <title>Save access prototype</title>
+  <style>
+    body { font: 16px system-ui, sans-serif; max-width: 46rem; margin: auto; padding: 1rem; color: #17212b; }
+    button, select { font: inherit; margin: .3rem 0; padding: .8rem; width: 100%; }
+    pre { white-space: pre-wrap; overflow-wrap: anywhere; padding: 1rem; background: #edf2f7; }
+    #status { padding: 1rem; background: #e8f4ec; }
+    #status.error { background: #ffe4e4; }
+    h2 { font-size: 1.15rem; margin-top: 1.5rem; }
+  </style>
+</head>
+<body>
+  <h1>Hello, Android save files</h1>
+  <p><strong>THROWAWAY PROTOTYPE.</strong> Can this offline web page in an Android shell read a save,
+    retain permission after closing, and reread it without another picker?</p>
+  <p>No root, network permission, uploads, or Pokemon parsing. Only your chosen document access is retained.
+    A file read is limited to 32 MiB.</p>
+  <p id="status" role="status">Opening Android bridge...</p>
+  <button id="folder">Choose save folder (one-time setup)</button>
+  <button id="refresh">Refresh folder listing</button>
+  <label for="files">Files directly inside the selected folder</label>
+  <select id="files"><option value="">Choose a folder first</option></select>
+  <button id="read">Read selected file</button>
+  <button id="file">Choose a single file instead</button>
+  <button id="reread">Reread remembered file (no picker)</button>
+  <h2>Latest read</h2>
+  <pre id="result">No file read yet.</pre>
+  <h2>Try these checks</h2>
+  <ol>
+    <li>Choose <code>Johnemulators/GBA/save</code>, choose a save, and read it. Check byte count and hash.</li>
+    <li>Force-stop this app in Android settings, reopen it, then tap "Reread remembered file".
+      A successful read without the picker tests retained permission.</li>
+    <li>Save different progress in the emulator. Return here and reread. A changed hash means the stored bytes changed;
+      an unchanged hash does not prove a read failure or a fresh emulator save.</li>
+    <li>Enable airplane mode and reread to test offline access. If a folder is refused, try selecting the individual file.</li>
+  </ol>
+  <p>A provider may revoke access or replace a file's document identity. If rereading fails, reselect it.
+    State files require their own folder selection; live emulator RAM is not tested.</p>
+  <h2>Current device and permission state</h2>
+  <p>These are Android content URIs, not raw filesystem paths. Avoid sharing screenshots containing private filenames.</p>
+  <pre id="state"></pre>
+  <script>
+    const files = document.getElementById('files');
+    let listing = '';
+    document.getElementById('folder').onclick = () => SaveAccess.chooseFolder();
+    document.getElementById('file').onclick = () => SaveAccess.chooseFile();
+    document.getElementById('refresh').onclick = () => SaveAccess.refreshFolder();
+    document.getElementById('read').onclick = () => SaveAccess.readFile(files.value);
+    document.getElementById('reread').onclick = () => SaveAccess.reread();
+    window.renderState = state => {
+      document.getElementById('status').textContent = state.status;
+      document.getElementById('status').classList.toggle('error', Boolean(state.error));
+      document.querySelectorAll('button, select').forEach(button => { button.disabled = state.busy; });
+      const nextListing = JSON.stringify(state.files);
+      if (nextListing !== listing) {
+        listing = nextListing;
+        files.replaceChildren();
+        for (const file of state.files) files.add(new Option(file.name, file.uri));
+        if (!state.files.length) files.add(new Option('No files listed; choose or refresh a folder', ''));
+      }
+      document.getElementById('result').textContent = state.result
+        ? JSON.stringify(state.result, null, 2) : 'No successful read in this session.';
+      document.getElementById('state').textContent = JSON.stringify(state, null, 2);
+    };
+  </script>
+</body>
+</html>
