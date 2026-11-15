@@ -12,6 +12,12 @@ https://calc.pokemonshowdown.com.
 This repository houses both the package implementing the core damage formula mechanics in each
 generation ([`@smogon/calc`][1]) as well as [logic and markup for the official UI][2].
 
+## RnB Calc Android app
+
+The web-based Android companion lives in [`app/`](app/README.md), separately from
+the existing calculator build. See its README for Capacitor development, Android
+save-file access, and downloadable APK builds through GitHub Actions.
+
 ## Agent skills
 
 Matt Pocock's [grilling skills](https://github.com/mattpocock/skills) are installed
