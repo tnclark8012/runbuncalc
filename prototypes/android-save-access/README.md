@@ -13,7 +13,9 @@ are persisted; file contents are streamed locally to compute byte count and SHA-
 
 Push this branch, then open the **Android save access PROTOTYPE** run under the
 repository's Actions tab. The push workflow runs only on
-`prototype/android-save-access`; no merge is needed. Download the
+`prototype/android-save-access`; no merge is needed. If GitHub reports **Action
+required**, review the run's prompt and approve it if offered; there is no APK
+until the build actually succeeds. Download the
 `save-access-prototype-debug` artifact from a successful run, unzip it, and install
 `app-debug.apk` on the phone. Android may require allowing installation from the
 browser or file manager used to open it. No Play Store account is required.
