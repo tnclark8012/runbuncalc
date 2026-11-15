@@ -13,7 +13,7 @@ import org.robolectric.RuntimeEnvironment;
 import org.robolectric.annotation.Config;
 
 @RunWith(RobolectricTestRunner.class)
-@Config(sdk = 35)
+@Config(sdk = 37)
 public class SaveSelectionStoreTest {
     private Context context;
     private SaveSelectionStore store;

@@ -3,7 +3,7 @@
 The Android companion lives here independently of the existing calculator build.
 Its UI is React/TypeScript, bundled locally inside Capacitor. Android save access
 uses the Storage Access Framework; no root, internet, or broad storage permission
-is requested. Android 8.0+ is supported.
+is requested. Android 17+ (API 37) is required.
 
 ## Layout
 
@@ -18,7 +18,7 @@ calculator and `calc/` are not part of this app build.
 
 ## Development
 
-Install Node 22+, JDK 21, and Android SDK platform/build-tools 36. Set
+Install Node 22+, JDK 21, and Android SDK platform/build-tools 37. Set
 `ANDROID_HOME` to your SDK directory and `JAVA_HOME` to JDK 21.
 
 ```sh

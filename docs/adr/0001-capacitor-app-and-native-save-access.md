@@ -8,3 +8,4 @@ supports repeat reads without root, whereas a browser-only PWA does not establis
 the same retained-access contract. This accepts Capacitor's native build/tooling
 dependency while isolating platform storage from presentation; it does not choose
 the simulator architecture or imply iOS/browser save access is implemented.
+The user explicitly chose Android 17 (API 37) as the minimum supported version.

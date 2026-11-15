@@ -110,19 +110,20 @@ public final class SaveDocumentRepository {
     public JSObject selectFile(String value) throws SaveAccessException, IOException {
         SaveSelection selection = selections.load();
         if (selection.folderUri == null) throw new SaveAccessException("NO_FOLDER", "Connect a save folder first.");
-        Uri candidate = Uri.parse(value);
-        Uri root = rootDocument(selection.folderUri);
-        if (!"content".equals(candidate.getScheme())
-            || !Objects.equals(root.getAuthority(), candidate.getAuthority())
-            || !DocumentsContract.isTreeUri(candidate)
-            || !DocumentsContract.getTreeDocumentId(root).equals(DocumentsContract.getTreeDocumentId(candidate))
-            || !DocumentsContract.isChildDocument(resolver, root, candidate)) {
-            throw new SaveAccessException("INVALID_SELECTION", "Choose a file inside the connected folder.");
+        Uri tree = Uri.parse(selection.folderUri);
+        Uri children = DocumentsContract.buildChildDocumentsUriUsingTree(tree,
+            DocumentsContract.getTreeDocumentId(tree));
+        try (Cursor cursor = query(children)) {
+            while (cursor.moveToNext()) {
+                if (DocumentsContract.Document.MIME_TYPE_DIR.equals(cursor.getString(4))) continue;
+                Uri document = DocumentsContract.buildDocumentUriUsingTree(tree, cursor.getString(0));
+                if (document.toString().equals(value)) {
+                    selections.save(selection.selectChild(document.toString()));
+                    return getState();
+                }
+            }
         }
-        Document document = metadata(candidate);
-        if (document.directory) throw new SaveAccessException("NOT_A_FILE", "Select a file, not a folder.");
-        selections.save(selection.selectChild(candidate.toString()));
-        return getState();
+        throw new SaveAccessException("INVALID_SELECTION", "Choose a file from the connected folder. Refresh its listing if it changed.");
     }
 
     public JSObject readSelected() throws SaveAccessException, IOException {
