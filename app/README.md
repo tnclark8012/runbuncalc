@@ -18,7 +18,8 @@ calculator and `calc/` are not part of this app build.
 
 ## Development
 
-Install Node 22+, JDK 21, and Android SDK platform/build-tools 37. Set
+Install Node 22+, JDK 21, Android SDK platform `android-37.0`, and build-tools
+`37.0.0`. Set
 `ANDROID_HOME` to your SDK directory and `JAVA_HOME` to JDK 21.
 
 ```sh

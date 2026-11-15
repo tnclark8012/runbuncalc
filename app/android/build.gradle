@@ -23,6 +23,19 @@ allprojects {
     }
 }
 
+// Capacitor-generated library modules otherwise assign only the major SDK number.
+subprojects {
+    plugins.withId('com.android.library') {
+        androidComponents.finalizeDsl { android ->
+            android.compileSdk {
+                version = release(rootProject.ext.compileSdkVersion) {
+                    minorApiLevel = rootProject.ext.compileSdkMinorApiLevel
+                }
+            }
+        }
+    }
+}
+
 task clean(type: Delete) {
     delete rootProject.buildDir
 }

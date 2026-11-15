@@ -2,7 +2,11 @@ apply plugin: 'com.android.application'
 
 android {
     namespace = "com.runbuncalc.app"
-    compileSdk = rootProject.ext.compileSdkVersion
+    compileSdk {
+        version = release(rootProject.ext.compileSdkVersion) {
+            minorApiLevel = rootProject.ext.compileSdkMinorApiLevel
+        }
+    }
     defaultConfig {
         applicationId "com.runbuncalc.app"
         minSdkVersion rootProject.ext.minSdkVersion
