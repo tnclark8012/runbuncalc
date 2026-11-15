@@ -1,5 +1,5 @@
 {
-  "exclude": ["import", "obj", "dist"],
+  "exclude": ["import", "obj", "dist", "app"],
   "compilerOptions": {
     "outDir": "obj",
     "allowUnreachableCode": false,

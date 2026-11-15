@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">RnB Calc</string>
+    <string name="title_activity_main">RnB Calc</string>
+    <string name="package_name">com.runbuncalc.app</string>
+    <string name="custom_url_scheme">com.runbuncalc.app</string>
+</resources>

@@ -1,0 +1,7 @@
+body { margin: 0; color: #17212b; background: #fff; font: 16px system-ui, sans-serif; }
+main { max-width: 46rem; margin: auto; padding: 1rem; padding-top: max(1rem, env(safe-area-inset-top)); padding-bottom: max(1rem, env(safe-area-inset-bottom)); }
+button, select { box-sizing: border-box; display: block; font: inherit; margin: .6rem 0; padding: .8rem; width: 100%; }
+fieldset { border: 1px solid #cbd5e0; }
+.error { padding: 1rem; background: #ffe4e4; }
+pre, dd { overflow-wrap: anywhere; white-space: pre-wrap; margin: .5rem 0 1rem; }
+dt { font-weight: bold; }
