@@ -12,6 +12,26 @@ https://calc.pokemonshowdown.com.
 This repository houses both the package implementing the core damage formula mechanics in each
 generation ([`@smogon/calc`][1]) as well as [logic and markup for the official UI][2].
 
+## Agent skills
+
+Matt Pocock's [grilling skills](https://github.com/mattpocock/skills) are installed
+locally in `.agents/skills/` for GitHub Copilot:
+
+- `/grill-me`: stress-test an idea through an interview.
+- `/grill-with-docs`: interview while capturing domain terminology and decisions.
+- `/wayfinder`: map larger planning efforts into decision tickets.
+
+Supporting skills include `grilling`, `domain-modeling`, `prototype`, `research`,
+and `/setup-matt-pocock-skills`. Run `/setup-matt-pocock-skills` once before using
+the engineering skills to configure the issue tracker and documentation layout.
+
+The upstream revision is pinned in `skills-lock.json`; the imported files retain
+their [MIT license](.agents/skills/LICENSE). Restore the locked installation with:
+
+```sh
+npx skills@latest experimental_install --agent github-copilot --frozen-lockfile
+```
+
 ## `@smogon/calc`
 
 The `@smogon/calc` package powers the UI, providing a programmatic interface for computing damage
