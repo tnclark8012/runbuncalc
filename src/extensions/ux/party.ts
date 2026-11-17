@@ -75,18 +75,23 @@ export function initializeImportExportControls(): void {
 
 	connectFileInput("#importBox", "#importBoxInput", async (files) => {
 		try {
-			const collection = parseSetCollectionJson(await files[0].text());
-			saveSetCollection(collection);
-			const names = Object.keys(collection);
-			const selector = document.querySelector<HTMLSelectElement>('#activeCollection')!;
-			selector.replaceChildren(...names.map(name => new Option(name, name)));
-			selector.selectedIndex = 0;
-			saveActiveCollectionName(names[0]);
-			refreshPlayerPokedex();
+			importBoxJson(await files[0].text());
 		} catch (error) {
 			alert(`Could not import box: ${error instanceof Error ? error.message : String(error)}`);
 		}
 	});
+}
+
+export function importBoxJson(json: string): void {
+	const collection = parseSetCollectionJson(json);
+	const selector = document.querySelector<HTMLSelectElement>('#activeCollection');
+	if (!selector) throw new Error('The calculator is not ready to import boxes.');
+	saveSetCollection(collection);
+	const names = Object.keys(collection);
+	selector.replaceChildren(...names.map(name => new Option(name, name)));
+	selector.selectedIndex = 0;
+	saveActiveCollectionName(names[0]);
+	refreshPlayerPokedex();
 }
 
 function connectFileInput(buttonSelector: string, inputSelector: string, callback: (files: FileList) => void): void {

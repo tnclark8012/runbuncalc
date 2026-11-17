@@ -7,6 +7,7 @@ import android.content.UriPermission;
 import android.database.Cursor;
 import android.net.Uri;
 import android.provider.DocumentsContract;
+import android.util.Base64;
 
 import com.getcapacitor.JSArray;
 import com.getcapacitor.JSObject;
@@ -27,11 +28,19 @@ public final class SaveDocumentRepository {
     };
     private final ContentResolver resolver;
     private final SaveSelectionStore selections;
+    private final SaveSelectionStore otherSelections;
     private final SaveFileReader reader = new SaveFileReader();
+    private final boolean rom;
 
     public SaveDocumentRepository(Context context) {
+        this(context, false);
+    }
+
+    public SaveDocumentRepository(Context context, boolean rom) {
+        this.rom = rom;
         resolver = context.getContentResolver();
-        selections = new SaveSelectionStore(context);
+        selections = new SaveSelectionStore(context, rom ? "rom-connection" : "save-connection");
+        otherSelections = new SaveSelectionStore(context, rom ? "save-connection" : "rom-connection");
     }
 
     public JSObject getState() throws SaveAccessException, IOException {
@@ -70,7 +79,8 @@ public final class SaveDocumentRepository {
         boolean alreadyGranted = hasGrant(uri.toString());
         resolver.takePersistableUriPermission(uri, Intent.FLAG_GRANT_READ_URI_PERMISSION);
         try {
-            metadata(folder ? rootDocument(uri.toString()) : uri);
+            Document selected = metadata(folder ? rootDocument(uri.toString()) : uri);
+            if (!folder) validateFile(selected);
             selections.save(next);
         } catch (IOException | SaveAccessException | SecurityException error) {
             if (!alreadyGranted) release(uri.toString());
@@ -93,6 +103,7 @@ public final class SaveDocumentRepository {
         try (Cursor cursor = query(children)) {
             while (cursor.moveToNext()) {
                 if (DocumentsContract.Document.MIME_TYPE_DIR.equals(cursor.getString(4))) continue;
+                if (!allowsName(cursor.getString(1))) continue;
                 if (files.length() == 200) {
                     truncated = true;
                     break;
@@ -118,6 +129,7 @@ public final class SaveDocumentRepository {
                 if (DocumentsContract.Document.MIME_TYPE_DIR.equals(cursor.getString(4))) continue;
                 Uri document = DocumentsContract.buildDocumentUriUsingTree(tree, cursor.getString(0));
                 if (document.toString().equals(value)) {
+                    validateFile(document(cursor, document));
                     selections.save(selection.selectChild(document.toString()));
                     return getState();
                 }
@@ -127,6 +139,10 @@ public final class SaveDocumentRepository {
     }
 
     public JSObject readSelected() throws SaveAccessException, IOException {
+        return readSelected(false);
+    }
+
+    public JSObject readSelected(boolean includeData) throws SaveAccessException, IOException {
         SaveSelection selection = selections.load();
         if (selection.fileUri == null) throw new SaveAccessException("NO_FILE", "Select a save file first.");
         if (!hasGrant(selection.grantUri())) {
@@ -134,11 +150,11 @@ public final class SaveDocumentRepository {
         }
         Uri uri = Uri.parse(selection.fileUri);
         Document before = metadata(uri);
-        if (before.directory) throw new SaveAccessException("NOT_A_FILE", "Select a file, not a folder.");
+        validateFile(before);
         SaveFileReader.Result read;
         try (InputStream stream = resolver.openInputStream(uri)) {
             if (stream == null) throw new IOException("The provider returned no file stream.");
-            read = reader.read(stream, SaveFileReader.MAX_BYTES);
+            read = reader.read(stream, SaveFileReader.MAX_BYTES, includeData);
         }
         Document after = metadata(uri);
         if (!Objects.equals(before.size, after.size) || !Objects.equals(before.modifiedAt, after.modifiedAt)
@@ -150,7 +166,19 @@ public final class SaveDocumentRepository {
         result.put("bytes", read.bytes);
         result.put("sha256", read.sha256);
         result.put("readAt", Instant.now().toString());
+        if (includeData) result.put("dataBase64", Base64.encodeToString(read.data, Base64.NO_WRAP));
         return result;
+    }
+
+    private boolean allowsName(String name) {
+        return name != null && (rom ? name.matches("(?i).+\\.gba") : name.matches("(?i).+\\.jg[0-9]+"));
+    }
+
+    private void validateFile(Document document) throws SaveAccessException {
+        if (document.directory || !allowsName(document.name)) {
+            throw new SaveAccessException("INVALID_SELECTION",
+                rom ? "Select a Run & Bun ROM (.gba)." : "Select a John GBA snapshot (.jgN), not a .sav or .jsN preview.");
+        }
     }
 
     public JSObject forget() throws SaveAccessException, IOException {
@@ -174,8 +202,10 @@ public final class SaveDocumentRepository {
         return false;
     }
 
-    private void release(String value) {
+    private void release(String value) throws SaveAccessException {
         if (value == null || !hasGrant(value)) return;
+        // A folder grant can be shared by the independent ROM and snapshot connections.
+        if (Objects.equals(otherSelections.load().grantUri(), value)) return;
         resolver.releasePersistableUriPermission(Uri.parse(value), Intent.FLAG_GRANT_READ_URI_PERMISSION);
     }
 

@@ -26,20 +26,22 @@ public final class SaveAccessPlugin extends Plugin {
     private final ExecutorService worker = Executors.newSingleThreadExecutor();
     private final AtomicBoolean busy = new AtomicBoolean();
     private SaveDocumentRepository documents;
+    private SaveDocumentRepository romDocuments;
 
     @Override
     public void load() {
         documents = new SaveDocumentRepository(getContext());
+        romDocuments = new SaveDocumentRepository(getContext(), true);
     }
 
     @PluginMethod
     public void getState(PluginCall call) {
-        execute(call, documents::getState);
+        execute(call, () -> documents(call).getState());
     }
 
     @PluginMethod
     public void listFiles(PluginCall call) {
-        execute(call, documents::listFiles);
+        execute(call, () -> documents(call).listFiles());
     }
 
     @PluginMethod
@@ -49,17 +51,17 @@ public final class SaveAccessPlugin extends Plugin {
             call.reject("Select a file from the connected folder.", "INVALID_SELECTION");
             return;
         }
-        execute(call, () -> documents.selectFile(uri));
+        execute(call, () -> documents(call).selectFile(uri));
     }
 
     @PluginMethod
     public void readSelected(PluginCall call) {
-        execute(call, documents::readSelected);
+        execute(call, () -> documents(call).readSelected(Boolean.TRUE.equals(call.getBoolean("includeData", false))));
     }
 
     @PluginMethod
     public void forget(PluginCall call) {
-        execute(call, documents::forget);
+        execute(call, () -> documents(call).forget());
     }
 
     @PluginMethod
@@ -73,6 +75,10 @@ public final class SaveAccessPlugin extends Plugin {
     public void chooseFile(PluginCall call) {
         Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
         intent.setType("*/*");
+        intent.putExtra(Intent.EXTRA_MIME_TYPES, new String[] {
+            "application/octet-stream", "application/gzip", "application/x-gzip",
+            "application/x-gba-rom", "application/x-gameboy-advance-rom"
+        });
         intent.addCategory(Intent.CATEGORY_OPENABLE);
         choose(call, intent, "filePicked");
     }
@@ -118,7 +124,14 @@ public final class SaveAccessPlugin extends Plugin {
             call.reject("This provider did not grant persistent read access. Choose a local document.", "PERMISSION_REQUIRED");
             return;
         }
-        submit(call, () -> documents.connect(uri, folder));
+        submit(call, () -> documents(call).connect(uri, folder));
+    }
+
+    private SaveDocumentRepository documents(PluginCall call) throws SaveAccessException {
+        String target = call.getString("target", "snapshot");
+        if ("rom".equals(target)) return romDocuments;
+        if ("snapshot".equals(target)) return documents;
+        throw new SaveAccessException("INVALID_TARGET", "Choose the ROM or snapshot connection.");
     }
 
     private boolean begin(PluginCall call) {

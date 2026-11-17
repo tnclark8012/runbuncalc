@@ -1,5 +1,5 @@
 import { Avatar, Card, Tooltip } from '@fluentui/react-components';
-import { spriteIds } from '@runbuncalc/rbdex-data';
+import { getPokemonSpriteUrl } from '../../../core/pokemon-sprites';
 import * as React from 'react';
 import { useStyles } from './PokemonCard.styles';
 
@@ -51,9 +51,7 @@ export const PokemonCard: React.FC<PokemonCardProps> = ({
   const styles = useStyles();
   const [imageError, setImageError] = React.useState(false);
 
-  const speciesId = species.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-z0-9]/g, '');
-  const spriteId = spriteIds[speciesId];
-  const imageUrl = spriteId ? `./pokemon-sprites/${spriteId}.png` : undefined;
+  const imageUrl = getPokemonSpriteUrl(species);
 
   const handleImageError = React.useCallback(() => {
     setImageError(true);

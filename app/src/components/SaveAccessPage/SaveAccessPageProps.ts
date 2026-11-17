@@ -1,6 +1,7 @@
-import type {SaveAccessState, SaveDocument, SaveRead} from '../../storage/save-access';
+import type {SaveAccessState, SaveDocument, SaveRead, SaveTarget} from '../../storage/save-access';
 
 export interface SaveAccessPageProps {
+  target: SaveTarget;
   state: SaveAccessState | null;
   files: SaveDocument[];
   truncated: boolean;

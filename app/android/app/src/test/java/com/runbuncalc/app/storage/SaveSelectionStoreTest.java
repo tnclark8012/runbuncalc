@@ -44,6 +44,17 @@ public class SaveSelectionStoreTest {
     }
 
     @Test
+    public void restoresRomIndependentlyWithoutReplacingTheExistingSnapshotSelection() throws Exception {
+        store.save(SaveSelection.file("content://saves/document/snapshot"));
+        SaveSelectionStore rom = new SaveSelectionStore(context, "rom-connection");
+        rom.save(SaveSelection.file("content://saves/document/rom"));
+        assertEquals("content://saves/document/snapshot", new SaveSelectionStore(context).load().fileUri);
+        assertEquals("content://saves/document/rom", new SaveSelectionStore(context, "rom-connection").load().fileUri);
+        rom.clear();
+        assertEquals("content://saves/document/snapshot", store.load().fileUri);
+    }
+
+    @Test
     public void rejectsUnknownSchemaButAllowsExplicitRecovery() throws Exception {
         context.getSharedPreferences("save-connection", Context.MODE_PRIVATE).edit()
             .putInt("version", 99).commit();
