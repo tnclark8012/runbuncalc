@@ -18,6 +18,35 @@ The web-based Android companion lives in [`app/`](app/README.md), separately fro
 the existing calculator build. See its README for Capacitor development, Android
 save-file access, and downloadable APK builds through GitHub Actions.
 
+## Offline sandbox
+
+The default landing page (`index.html`) serves the React battle planner, also
+available at `sandbox.html`. It bundles Run & Bun abilities, inherited
+learnsets, and Pokemon sprites locally. Build with Node 22+ and `npm install &&
+npm run build`. Installation downloads the versioned data-and-sprite archive;
+running the sandbox does not contact RBDex, Pokemon Showdown, or image hosts.
+
+On HTTPS (or localhost), visit the site root or `sandbox.html` online once and let its service
+worker finish installing. It precaches the page, bundles, sprites, backgrounds,
+and third-party notices so the same URL can subsequently reload offline. The
+legacy calculator pages are not covered. Clearing site data removes offline
+availability; a failed registration is reported in the browser console.
+The separate Android diagnostic app is unchanged.
+
+The data dependency is `@runbuncalc/rbdex-data`, installed from the versioned
+[RBDex release archive](https://github.com/tnclark8012/RBDex/releases/tag/data-v0.1.1).
+The archive already contains generated data, sprites, and corresponding source;
+installation does not build RBDex or fetch individual sprites. RB-Client and live
+upstream Showdown scripts are not needed. Update the release URL and lockfile
+integrity to update the data and sprites together.
+
+RBDex data retains its AGPLv3 license; this repository's MIT notice does not
+relicense it. The build ships its license and corresponding source under
+`vendor/rbdex/`. Sprites are supplied by PokeAPI/sprites, whose README invites
+application downloads; image contents remain copyright The Pokemon Company.
+Their license/README, metadata license, pinned revisions, and the list of
+cosmetic forms using a default-species sprite are also included there.
+
 ## Agent skills
 
 Matt Pocock's [grilling skills](https://github.com/mattpocock/skills) are installed

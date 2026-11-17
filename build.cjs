@@ -58,5 +58,5 @@ function cpdir(src, dest) {
 
 cpdir('src', 'dist');
 makeCachebuster('dist/honkalculate.template.html', 'dist/honkalculate.html');
-makeCachebuster('dist/index.template.html', 'dist/index.html');
+fs.copyFileSync('dist/sandbox.html', 'dist/index.html');
 makeCachebuster('dist/randoms.template.html', 'dist/randoms.html');

@@ -1,9 +1,13 @@
 import CopyWebpackPlugin from 'copy-webpack-plugin';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { createRequire } from 'node:module';
+import offline from './offline-plugin.cjs';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+const require = createRequire(import.meta.url);
+const dexRoot = path.dirname(require.resolve('@runbuncalc/rbdex-data/package.json'));
 
 export default [{
   mode: 'development',
@@ -33,10 +37,25 @@ export default [{
     new CopyWebpackPlugin({
       patterns: [
         { from: './*.html', to: '[name][ext]', context: 'src' },
+        { from: './sandbox.html', to: 'index.html', context: 'src' },
         { from: './js/data/sets/gen8.js', to: 'js/data/sets/gen8.js', context: 'src' },
         { from: './extensions/ux/svgs/**/*.svg', to: 'extensions/ux/svgs/[name][ext]', context: 'src' },
+        { from: './css/theme-variables.css', to: 'css/theme-variables.css', context: 'src' },
+        { from: 'dist/sprites/*.png', context: dexRoot, to: 'pokemon-sprites/[name][ext]' },
+        { from: 'LICENSE', context: dexRoot, to: 'vendor/rbdex/AGPL-3.0.txt' },
+        {
+          from: '{pokedex.js,learnsets.js,moves.js,package.json,DATA-PACKAGE.md,package/*.cjs}',
+          context: dexRoot,
+          to: 'vendor/rbdex/source/[path][name][ext]',
+        },
+        {
+          from: 'dist/{SPRITES-LICENCE.txt,SPRITES-README.md,METADATA-LICENSE.md,sprite-sources.json,pokemon.csv}',
+          context: dexRoot,
+          to: 'vendor/rbdex/[name][ext]',
+        },
       ],
     }),
+    new offline.OfflinePlugin(),
   ],
 },
 {

@@ -8,6 +8,7 @@
     "@fluentui/react-components": "^9.54.0",
     "@fluentui/react-icons": "^2.0.258",
     "@reduxjs/toolkit": "^2.10.1",
+    "@runbuncalc/rbdex-data": "https://github.com/tnclark8012/RBDex/releases/download/data-v0.1.1/runbuncalc-rbdex-data-0.1.1.tgz",
     "@smogon/calc": "^0.11.0",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
