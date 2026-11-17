@@ -1,0 +1,11 @@
+#!/bin/sh
+set -eu
+
+staged_roms=$(git diff --cached --name-only --no-renames --diff-filter=ACMT -- ':(glob,icase)**/*.gba')
+
+if [ -n "$staged_roms" ]; then
+    printf '%s\n' 'Commit blocked: staged GBA ROM files are not allowed.' >&2
+    printf '%s\n' "$staged_roms" >&2
+    printf '%s\n' 'Unstage these files before committing. Keep ROMs outside version control.' >&2
+    exit 1
+fi
