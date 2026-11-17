@@ -67,10 +67,10 @@ for (const id of E.names) {
     const wall = performance.now(), heapBefore = process.memoryUsage().heapUsed;
     const session = E.create(id, mode);
     E.run(session, report.perCaseCapMs);
-    const expected = ["rare", "hidden", "cycle"].includes(id) ? "not-established" : "qualified-synthetic";
+    const expected = ["rare", "hidden", "cycle", "interior-trap"].includes(id) ? "not-established" : "qualified-synthetic";
     if (session.status !== "searching" && session.status !== "memory-boundary" && session.status !== expected)
       throw Error(`Reference disagreement for ${id}/${mode}: ${session.status}`);
-    if (["uniform", "threshold", "bait", "rare", "hidden", "revealed", "cycle", "chain", "hp-progress"].includes(id)
+    if (["uniform", "threshold", "interior-trap", "bait", "rare", "hidden", "revealed", "cycle", "chain", "hp-progress"].includes(id)
       && session.status !== expected) throw Error(`Tiny reference not resolved: ${id}/${mode}`);
     if (["fixed", "partial", "open", "stress"].includes(id)) {
       const locked = E.fixture(id).preparation[0].team.slice(0, id === "fixed" ? 3 : id === "partial" ? 1 : 0);

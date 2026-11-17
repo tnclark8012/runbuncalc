@@ -15,8 +15,9 @@
   a production algorithm, or evidence of Android feasibility. No uploads or automatic persistence.
   Open this file directly. The desktop runner uses the identical inline logic.</p>
 <p>Compare matchup-first team/switch ordering, coarse HP groups refined after a failed check,
-  and strongest-move-first ordering. Every proposed complete plan goes through an independent,
-  exact-state checker retaining every modeled outcome. Only zero-faint plans are synthesized;
+  and strongest-move-first ordering. Every proposed complete plan goes through an independent
+  checker retaining every modeled outcome. Compare exact-state checking with conservative HP-range
+  coverage (with exact fallback). Only zero-faint plans are synthesized;
   positive-tolerance synthesis, hidden-state inference, LAO*/BRTDP and real mechanics are not implemented.</p>
 <section>
   <h2>Free play</h2>
@@ -27,6 +28,10 @@
     <option value="ranges">Adaptive HP groups</option>
     <option value="progress">Strongest moves first</option>
     <option value="combined">All three</option>
+  </select></label>
+  <label>Verification <select id="verifier">
+    <option value="exact">Every reachable exact state</option>
+    <option value="interval">Whole HP ranges, exact fallback</option>
   </select></label>
   <p>
     <button id="reset">Reset situation</button>
@@ -50,7 +55,7 @@
 <script id="search-kernel">
 "use strict";
 globalThis.BattleSearchExperiment = (() => {
-  const VERSION = "synthetic-129-v1";
+  const VERSION = "synthetic-129-v2";
   const clone = value => JSON.parse(JSON.stringify(value));
   const key = value => JSON.stringify(value);
   const now = () => performance.now();
@@ -106,6 +111,14 @@ globalThis.BattleSearchExperiment = (() => {
       reserve: { actions: [action("One continuation works for the entire range", 20)], next: () => [edge(terminal("win"))] }
     }, { node: "lead", hp: [100], fainted: false }, {
       description: "All 16 exact HP values admit the same continuation: range discovery can share work, but checking still covers all 16."
+    });
+    if (id === "interior-trap") return graphFixture(id, {
+      lead: { actions: [action("Enter the HP range")], next: () =>
+        Array.from({ length: 16 }, (_, i) => edge({ node: "reserve", hp: [20 + i * 4], fainted: false }, 1, 16)) },
+      reserve: { actions: [action("Continuation with an interior trap")], next: s =>
+        [edge(terminal(s.hp[0] === 40 ? "loss" : "win"))] }
+    }, { node: "lead", hp: [100], fainted: false }, {
+      description: "Both HP endpoints win, but 40 HP loses. This kernel has no range-proof rule and must fall back to exact checking."
     });
     if (id === "rare") return graphFixture(id, {
       lead: { actions: [action("Risky victory", 100)], next: () =>
@@ -226,7 +239,7 @@ globalThis.BattleSearchExperiment = (() => {
       }
     };
   }
-  const names = ["threshold", "uniform", "rare", "bait", "hidden", "revealed", "cycle", "chain", "hp-progress", "fixed", "partial", "open", "stress"];
+  const names = ["threshold", "uniform", "interior-trap", "rare", "bait", "hidden", "revealed", "cycle", "chain", "hp-progress", "fixed", "partial", "open", "stress"];
   const flags = mode => ({
     matchup: mode === "matchup" || mode === "combined",
     ranges: mode === "ranges" || mode === "combined",
@@ -234,7 +247,7 @@ globalThis.BattleSearchExperiment = (() => {
   });
   function create(id, mode = "baseline", options = {}) {
     const started = now();
-    const config = { aggregate: true, edited: false, maxStates: 20000, ...options };
+    const config = { aggregate: true, edited: false, maxStates: 20000, verifier: "exact", ...options };
     const f = fixture(id, config.edited), fl = flags(mode);
     const preparations = clone(f.preparation);
     if (fl.matchup) preparations.sort((a, b) => b.score - a.score);
@@ -242,10 +255,12 @@ globalThis.BattleSearchExperiment = (() => {
     return {
       version: VERSION, id, mode, config, input: key([VERSION, id, config, preparations]),
       preparations, teamIndex: 0, status: "searching", memo: {}, policy: {}, representatives: {},
-      cuts: {}, forceExact: false, storedStates: 0, verificationMemo: {}, phase: "discover", candidate: null, verdict: null,
+      cuts: {}, forceExact: false, storedStates: 0, verificationMemo: {}, rangeProof: null,
+      phase: "discover", candidate: null, verdict: null,
       stats: { activeMs: preprocessingMs, preprocessingMs, firstCandidateMs: null, qualifiedMs: null, visits: 0, expansions: 0,
         memoHits: 0, rawEvents: 0, aggregatedEvents: 0, verificationStates: 0,
-        refinements: 0, pauses: 0, peakStoredStates: 0, teamsTried: 0, maxAtomicMs: 0 },
+        refinements: 0, pauses: 0, peakStoredStates: 0, teamsTried: 0, maxAtomicMs: 0,
+        intervalBoxes: 0, intervalSplits: 0, intervalEventPairs: 0, intervalFallbacks: 0 },
       verification: null
     };
   }
@@ -264,7 +279,8 @@ globalThis.BattleSearchExperiment = (() => {
   }
   function clearSearch(session) {
     session.memo = {}; session.policy = {}; session.representatives = {};
-    session.verificationMemo = {}; session.verification = null; session.storedStates = 0; session.phase = "discover";
+    session.verificationMemo = {}; session.verification = null; session.rangeProof = null;
+    session.storedStates = 0; session.phase = "discover";
   }
   function work(session, milliseconds = 20, maxVisits = Infinity) {
     if (session.status !== "searching") return session;
@@ -347,6 +363,93 @@ globalThis.BattleSearchExperiment = (() => {
       if (!cyclic) store(session.verificationMemo, exact, result);
       return result;
     }
+    function verifyRanges(start) {
+      // These kernels are piecewise affine in HP; this is not a generic endpoint theorem.
+      const supported = ["uniform", "threshold", "fixed", "partial", "open", "stress"];
+      const withoutHP = s => key({ ...s, hp: [] });
+      function rank(s) {
+        if (s.result) return [0, 0, 0];
+        if (s.node) return [s.node === "lead" ? 2 : 1, 0, 0];
+        return [5 - s.enemy, s.enemyPP, s.enemyHP];
+      }
+      function decreases(before, after) {
+        const a = rank(before), b = rank(after);
+        for (let i = 0; i < a.length; i++) if (a[i] !== b[i]) return b[i] < a[i];
+        return false;
+      }
+      function split(box) {
+        const base = withoutHP(box.low), cuts = session.cuts[base] || [];
+        for (let i = 0; i < box.low.hp.length; i++) {
+          const points = session.forceExact || !flags(session.mode).ranges
+            ? [box.low.hp[i] + 1] : cuts[i] || [];
+          const boundaries = session.id === "threshold" && box.low.node === "reserve"
+            ? [...points, 70] : points;
+          const point = boundaries.find(p => box.low.hp[i] < p && p <= box.high.hp[i]);
+          if (point !== undefined) {
+            const left = clone(box), right = clone(box);
+            left.high.hp[i] = point - 1; right.low.hp[i] = point;
+            session.stats.intervalSplits++;
+            return [...split(left), ...split(right)];
+          }
+        }
+        return [box];
+      }
+      if (!session.rangeProof) {
+        session.rangeProof = { frontier: [], next: {}, index: 0,
+          fallback: !supported.includes(session.id) || !flags(session.mode).ranges || session.forceExact };
+        if (!session.rangeProof.fallback)
+          session.rangeProof.frontier.push(store({}, "root", { low: clone(start), high: clone(start) }));
+        else session.stats.intervalFallbacks++;
+      }
+      const proof = session.rangeProof;
+      function fallback() {
+        session.stats.intervalFallbacks++;
+        session.storedStates -= proof.frontier.length + Object.keys(proof.next).length;
+        proof.frontier = []; proof.next = {}; proof.fallback = true;
+        return null;
+      }
+      if (proof.fallback) return null;
+      while (proof.frontier.length) {
+        tick();
+        if (proof.index === proof.frontier.length) {
+          session.storedStates -= proof.frontier.length;
+          proof.frontier = Object.values(proof.next); proof.next = {}; proof.index = 0;
+          continue;
+        }
+        const before = now();
+        for (const box of split(proof.frontier[proof.index])) {
+          session.stats.intervalBoxes++;
+          if (box.low.fainted || box.low.hp.some(hp => hp <= 0)) return fallback();
+          const selected = session.policy[project(box.low, session)];
+          if (selected !== session.policy[project(box.high, session)]) return fallback();
+          const a = f.actions(box.low).find(candidate => candidate.id === selected);
+          if (!a) return fallback();
+          const low = f.outcomes(box.low, a), high = f.outcomes(box.high, a);
+          aggregate(low); aggregate(high);
+          if (low.length !== high.length) throw Error("Interval event alignment failed");
+          session.stats.intervalEventPairs += low.length;
+          for (let i = 0; i < low.length; i++) {
+            const l = low[i].state, h = high[i].state;
+            if (show(low[i].p) !== show(high[i].p)) throw Error("Interval event probability changed with HP");
+            if (withoutHP(l) !== withoutHP(h) || l.fainted || h.fainted) return fallback();
+            if (!decreases(box.low, l)) return fallback();
+            if (l.result) {
+              if (l.result !== "win") return fallback();
+              continue;
+            }
+            if (l.hp.some((hp, j) => hp <= 0 || hp > h.hp[j])) return fallback();
+            const k = withoutHP(l), previous = proof.next[k];
+            if (previous) {
+              previous.low.hp = previous.low.hp.map((hp, j) => Math.min(hp, l.hp[j]));
+              previous.high.hp = previous.high.hp.map((hp, j) => Math.max(hp, h.hp[j]));
+            } else store(proof.next, k, { low: clone(l), high: clone(h) });
+          }
+        }
+        proof.index++;
+        session.stats.maxAtomicMs = Math.max(session.stats.maxAtomicMs, now() - before);
+      }
+      return { sure: true, low: ZERO, high: ZERO, unresolved: ZERO, counterexample: [] };
+    }
     try {
       while (session.status === "searching") {
         tick();
@@ -376,7 +479,8 @@ globalThis.BattleSearchExperiment = (() => {
           }
           session.phase = "verify";
         }
-        const v = verify(start);
+        const rangeResult = session.config.verifier === "interval" ? verifyRanges(start) : null;
+        const v = rangeResult || verify(start);
         session.verification = {
           sureVictory: v.sure, faintRisk: [show(v.low), show(v.high)], unresolved: show(v.unresolved)
         };
@@ -387,7 +491,7 @@ globalThis.BattleSearchExperiment = (() => {
           session.candidate = { ...session.candidate, preparation: prep,
             rootAction, modeledRootOutcomes: next.length,
             outcomes: next.map(e => ({ state: e.state, probability: show(e.p) })), unresolvedSuffix: "0/1",
-            evidence: "exact-state checked, zero-faint sure victory in this synthetic model only" };
+            evidence: `${rangeResult ? "conservative HP-range coverage" : "exact-state checked"}, zero-faint sure victory in this synthetic model only` };
           session.stats.qualifiedMs = session.stats.activeMs + now() - started;
           break;
         }
@@ -465,6 +569,7 @@ function render() {
     `Candidate: ${session.candidate?.rootAction || "none yet"}; ${session.candidate?.evidence || "no evidence yet"}.`,
     `Verification: ${session.verification ? JSON.stringify(session.verification) : "not completed"}.`,
     `HP refinements: ${session.stats.refinements}. Pause uses completed-subtree caches; interrupted call stacks are replayed.`,
+    `Whole-range checks: ${session.stats.intervalBoxes} boxes; ${session.stats.intervalFallbacks} exact fallbacks.`,
     checkpointRecord ? `Checkpoint: ${checkpointRecord}. In memory only.` : "",
     session.verdict || ""
   ].filter(Boolean)) { const p = document.createElement("p"); p.textContent = text; $("summary").append(p); }
@@ -473,7 +578,7 @@ function render() {
 function reset(id = $("fixture").value, mode = $("mode").value, edited = false) {
   generation++; running = false; elapsed = 0; checkpointRecord = null;
   $("fixture").value = id; $("mode").value = mode;
-  session = E.create(id, mode, { edited }); render();
+  session = E.create(id, mode, { edited, verifier: $("verifier").value }); render();
 }
 function step() {
   const before = session.stats.activeMs;
