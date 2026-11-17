@@ -20,13 +20,12 @@ save-file access, and downloadable APK builds through GitHub Actions.
 
 ## Offline sandbox
 
-The default landing page (`index.html`) serves the React battle planner, also
-available at `sandbox.html`. It bundles Run & Bun abilities, inherited
+The React battle planner at `sandbox.html` bundles Run & Bun abilities, inherited
 learnsets, and Pokemon sprites locally. Build with Node 22+ and `npm install &&
 npm run build`. Installation downloads the versioned data-and-sprite archive;
 running the sandbox does not contact RBDex, Pokemon Showdown, or image hosts.
 
-On HTTPS (or localhost), visit the site root or `sandbox.html` online once and let its service
+On HTTPS (or localhost), visit `sandbox.html` online once and let its service
 worker finish installing. It precaches the page, bundles, sprites, backgrounds,
 and third-party notices so the same URL can subsequently reload offline. The
 legacy calculator pages are not covered. Clearing site data removes offline

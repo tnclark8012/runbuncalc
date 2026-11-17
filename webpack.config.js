@@ -37,7 +37,6 @@ export default [{
     new CopyWebpackPlugin({
       patterns: [
         { from: './*.html', to: '[name][ext]', context: 'src' },
-        { from: './sandbox.html', to: 'index.html', context: 'src' },
         { from: './js/data/sets/gen8.js', to: 'js/data/sets/gen8.js', context: 'src' },
         { from: './extensions/ux/svgs/**/*.svg', to: 'extensions/ux/svgs/[name][ext]', context: 'src' },
         { from: './css/theme-variables.css', to: 'css/theme-variables.css', context: 'src' },

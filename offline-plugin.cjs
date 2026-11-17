@@ -22,12 +22,9 @@ self.addEventListener('activate', event => {
 
 self.addEventListener('fetch', event => {
   const url = new URL(event.request.url);
-  const isLandingPage = event.request.mode === 'navigate' && url.pathname === new URL(self.registration.scope).pathname;
-  const cachedRequest = isLandingPage ? new URL('index.html', self.registration.scope).href : event.request;
-  if (isLandingPage) url.pathname += 'index.html';
   if (event.request.method !== 'GET' || url.origin !== self.location.origin || !PATHS.has(url.pathname)) return;
   event.respondWith(caches.open(CACHE)
-    .then(async cache => (await cache.match(cachedRequest, {ignoreSearch: true})) || fetch(event.request)));
+    .then(async cache => (await cache.match(event.request, {ignoreSearch: true})) || fetch(event.request)));
 });
 `;
 }
@@ -40,7 +37,7 @@ class OfflinePlugin {
         stage: compiler.webpack.Compilation.PROCESS_ASSETS_STAGE_SUMMARIZE,
       }, () => {
         const assets = compilation.getAssets().filter(asset =>
-          /^(index\.html|sandbox\.html|(?:sandbox|worker)\.bundle\.js|css\/theme-variables\.css)$/.test(asset.name) ||
+          /^(sandbox\.html|(?:sandbox|worker)\.bundle\.js|css\/theme-variables\.css)$/.test(asset.name) ||
           /^(extensions\/ux\/svgs\/|pokemon-sprites\/|vendor\/rbdex\/)/.test(asset.name)
         ).sort((a, b) => a.name.localeCompare(b.name));
         const hash = crypto.createHash('sha256');

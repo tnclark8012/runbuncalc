@@ -28,7 +28,7 @@ function createWorker() {
     clients: {claim: jest.fn().mockResolvedValue(undefined)},
   };
   const fetch = jest.fn().mockResolvedValue('network response');
-  runInNewContext(createServiceWorker('new', ['./index.html', './sandbox.html', './sandbox.bundle.js', './pokemon-sprites/25.png']), {
+  runInNewContext(createServiceWorker('new', ['./sandbox.html', './sandbox.bundle.js', './pokemon-sprites/25.png']), {
     self, caches, fetch, URL,
     Request: class {
       constructor(public url: string, public options: {cache: string}) {}
@@ -44,7 +44,6 @@ describe('offline sandbox service worker', () => {
     handlers.install({waitUntil});
     await waitUntil.mock.calls[0][0];
     expect(cache.addAll.mock.calls[0][0].map((request: {url: string}) => request.url)).toEqual([
-      'https://example.com/calc/index.html',
       'https://example.com/calc/sandbox.html',
       'https://example.com/calc/sandbox.bundle.js',
       'https://example.com/calc/pokemon-sprites/25.png',
@@ -79,23 +78,13 @@ describe('offline sandbox service worker', () => {
     const {handlers} = createWorker();
     const respondWith = jest.fn();
     for (const request of [
+      {url: 'https://example.com/calc/', method: 'GET', mode: 'navigate'},
+      {url: 'https://example.com/calc/index.html', method: 'GET', mode: 'navigate'},
       {url: 'https://example.com/calc/randoms.html', method: 'GET'},
       {url: 'https://elsewhere.com/calc/sandbox.html', method: 'GET'},
       {url: 'https://example.com/calc/sandbox.html', method: 'POST'},
     ]) handlers.fetch({request, respondWith});
     expect(respondWith).not.toHaveBeenCalled();
-  });
-
-  it('serves the deployment root from the cached sandbox index offline', async () => {
-    const {handlers, cache, fetch} = createWorker();
-    const respondWith = jest.fn();
-    handlers.fetch({
-      request: {url: 'https://example.com/calc/?plan=1', method: 'GET', mode: 'navigate'},
-      respondWith,
-    });
-    await expect(respondWith.mock.calls[0][0]).resolves.toBe('cached response');
-    expect(cache.match).toHaveBeenCalledWith('https://example.com/calc/index.html', {ignoreSearch: true});
-    expect(fetch).not.toHaveBeenCalled();
   });
 
   it('removes only old caches for its own deployment scope', async () => {
