@@ -4,10 +4,26 @@ on:
   push:
     paths:
       - app/**
+      - src/**
+      - patches/**
+      - package.json
+      - package-lock.json
+      - webpack.config.js
+      - build.cjs
+      - offline-plugin.cjs
+      - tsconfig.json
       - .github/workflows/android-app.yml
   pull_request:
     paths:
       - app/**
+      - src/**
+      - patches/**
+      - package.json
+      - package-lock.json
+      - webpack.config.js
+      - build.cjs
+      - offline-plugin.cjs
+      - tsconfig.json
       - .github/workflows/android-app.yml
   workflow_dispatch:
 
@@ -24,7 +40,9 @@ jobs:
         with:
           node-version: '22'
           cache: npm
-          cache-dependency-path: app/package-lock.json
+          cache-dependency-path: |
+            package-lock.json
+            app/package-lock.json
       - uses: actions/setup-java@v5
         with:
           distribution: temurin
@@ -36,8 +54,10 @@ jobs:
       - uses: gradle/actions/setup-gradle@v5
       - name: Install Android SDK packages
         run: sdkmanager "platforms;android-37.0" "build-tools;37.0.0"
-      - name: Install app dependencies
-        run: npm ci --prefix app --no-audit --no-fund
+      - name: Install calculator and app dependencies
+        run: |
+          npm ci --no-audit --no-fund
+          npm ci --prefix app --no-audit --no-fund
       - name: Build web UI and sync Android
         run: npm --prefix app run android:sync
       - name: Build, lint, and test Android

@@ -7,20 +7,20 @@
     "node": ">=22"
   },
   "scripts": {
-    "build": "tsc --noEmit && webpack --mode production",
-    "dev": "webpack --mode development --watch",
+    "build": "npm --prefix .. run build && tsc --noEmit && webpack --mode production",
+    "dev": "npm --prefix .. run build && webpack --mode development --watch",
     "android:sync": "npm run build && cap sync android",
     "android:open": "cap open android",
     "android:build": "npm run android:sync && cd android && ./gradlew assembleDebug lintDebug testDebugUnitTest"
   },
   "dependencies": {
-    "@capacitor/android": "8.6.2",
-    "@capacitor/core": "8.6.2",
+    "@capacitor/android": "8.6.0",
+    "@capacitor/core": "8.6.0",
     "react": "^19.2.0",
     "react-dom": "^19.2.0"
   },
   "devDependencies": {
-    "@capacitor/cli": "8.6.2",
+    "@capacitor/cli": "8.6.0",
     "@types/react": "^19.2.2",
     "@types/react-dom": "^19.2.2",
     "copy-webpack-plugin": "^13.0.1",

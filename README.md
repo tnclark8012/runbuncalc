@@ -14,9 +14,11 @@ generation ([`@smogon/calc`][1]) as well as [logic and markup for the official U
 
 ## RnB Calc Android app
 
-The web-based Android companion lives in [`app/`](app/README.md), separately from
-the existing calculator build. See its README for Capacitor development, Android
-save-file access, and downloadable APK builds through GitHub Actions.
+The Android companion in [`app/`](app/README.md) bundles the calculator locally.
+In **App settings**, select a Run & Bun ROM and John GBA snapshot; tap **Sync** on
+the calculator to decode and import boxes/party without an intermediate JSON file.
+Sync replaces existing collections. See the app README for Capacitor development,
+Android file access, and downloadable APK builds through GitHub Actions.
 
 ## Offline sandbox
 
@@ -30,7 +32,7 @@ worker finish installing. It precaches the page, bundles, sprites, backgrounds,
 and third-party notices so the same URL can subsequently reload offline. The
 legacy calculator pages are not covered. Clearing site data removes offline
 availability; a failed registration is reported in the browser console.
-The separate Android diagnostic app is unchanged.
+The Android app bundles these assets along with the calculator.
 
 The data dependency is `@runbuncalc/rbdex-data`, installed from the versioned
 [RBDex release archive](https://github.com/tnclark8012/RBDex/releases/tag/data-v0.1.1).

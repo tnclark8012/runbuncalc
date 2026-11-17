@@ -9,7 +9,11 @@ public final class SaveSelectionStore {
     private final SharedPreferences preferences;
 
     public SaveSelectionStore(Context context) {
-        preferences = context.getSharedPreferences("save-connection", Context.MODE_PRIVATE);
+        this(context, "save-connection");
+    }
+
+    SaveSelectionStore(Context context, String name) {
+        preferences = context.getSharedPreferences(name, Context.MODE_PRIVATE);
     }
 
     public SaveSelection load() throws SaveAccessException {

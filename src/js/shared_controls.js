@@ -488,12 +488,10 @@ $(".set-selector").change(function () {
 					continue
 				}
 				var pok_name = next_poks[i].split("]")[1].split(" (")[0]
-				if (pok_name == "Zygarde-10%") {
-					pok_name = "Zygarde-10%25"
-				}//this ruined my day
 				var newPoke = document.createElement("img");
 				newPoke.className = "opposite-pok right-side";
-				newPoke.src = `https://raw.githubusercontent.com/May8th1995/sprites/master/${pok_name}.png`;
+				newPoke.src = core.getPokemonSpriteUrl(pok_name) || '';
+				newPoke.alt = pok_name;
 				newPoke.title = `${next_poks[i]}, ${next_poks[i]} BP`;
 				newPoke.draggable = true;
 				nextTrainer = `${next_poks[i]}`
@@ -1468,6 +1466,7 @@ function addBoxed(poke, box) {
 	newPoke.id = `${poke.name}${poke.nameProp}`
 	newPoke.className = "trainer-pok left-side";
 	newPoke.src = getSrcImgPokemon(poke);
+	newPoke.alt = poke.name;
 	newPoke.dataset.id = `${poke.name} (${poke.nameProp})`
 	newPoke.draggable = true;
 	newPoke.addEventListener("dragstart", dragstart_handler);
@@ -1483,11 +1482,7 @@ function getSrcImgPokemon(poke) {
 	if (!poke) {
 		return
 	}
-	if (poke.name == "Aegislash-Shield") {
-		return `https://raw.githubusercontent.com/May8th1995/sprites/master/Aegislash.png`
-	} else {
-		return `https://raw.githubusercontent.com/May8th1995/sprites/master/${poke.name}.png`
-	}
+	return core.getPokemonSpriteUrl(poke.name) || '';
 }
 
 function get_trainer_poks(trainer_name) {
