@@ -8,3 +8,4 @@ npm-debug.log
 obj
 dist/
 __testdata__/
+*.gba

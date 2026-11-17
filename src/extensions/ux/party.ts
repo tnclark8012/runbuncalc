@@ -1,6 +1,7 @@
 import { formatAllPokemon, parseSaveFile, RomType } from "../../exporter";
+import { parseSetCollectionJson } from "../core/collection-import";
 import { findPathForParty } from "../../worker/worker.client";
-import { addToParty, getActiveCollection, getActiveSets, getParty, getSetCollection, removeFromParty, saveActiveSets, saveSetCollection } from "../core/storage";
+import { addToParty, getActiveCollection, getActiveSets, getParty, getSetCollection, removeFromParty, saveActiveCollectionName, saveActiveSets, saveSetCollection } from "../core/storage";
 import { getTrainerNameByPokemonIndex } from "../trainer-sets";
 
 export function initializePartyControls(): void {
@@ -72,11 +73,19 @@ export function initializeImportExportControls(): void {
 		alert("Team copied to clipboard!");
 	});
 
-	connectFileInput("#importBox", "#importBoxInput", (files) => {
-		const file = files[0];
-		file.text().then((value: string) => {
-			saveSetCollection(JSON.parse(value));
-		});
+	connectFileInput("#importBox", "#importBoxInput", async (files) => {
+		try {
+			const collection = parseSetCollectionJson(await files[0].text());
+			saveSetCollection(collection);
+			const names = Object.keys(collection);
+			const selector = document.querySelector<HTMLSelectElement>('#activeCollection')!;
+			selector.replaceChildren(...names.map(name => new Option(name, name)));
+			selector.selectedIndex = 0;
+			saveActiveCollectionName(names[0]);
+			refreshPlayerPokedex();
+		} catch (error) {
+			alert(`Could not import box: ${error instanceof Error ? error.message : String(error)}`);
+		}
 	});
 }
 
@@ -88,9 +97,9 @@ function connectFileInput(buttonSelector: string, inputSelector: string, callbac
 		fileInput.click();
 	});
 
-	fileInput.addEventListener("change", (e: any) => {
-		const file = e.target!.files[0];
-		callback(e.target!.files);
+	fileInput.addEventListener("change", () => {
+		if (fileInput.files?.length) callback(fileInput.files);
+		fileInput.value = '';
 	});
 }
 
@@ -98,7 +107,7 @@ function connectFileInput(buttonSelector: string, inputSelector: string, callbac
  * Helper to parse Pokemon ID in format "species (setName)"
  */
 export function parsePokemonId(pokemonId: string): { species: string; setName: string } | null {
-	const match = /^(.+) \((.+)\)$/.exec(pokemonId);
+	const match = /^(.+?) \((.+)\)$/.exec(pokemonId);
 	if (!match) return null;
 	return { species: match[1], setName: match[2] };
 }

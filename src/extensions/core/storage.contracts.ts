@@ -11,6 +11,7 @@ export interface SetCollection {
 export interface SetCollectionData {
     customSets: CustomSets;
     party: string[];
+    gameStateSnapshot?: unknown;
 }
 
 export interface CustomSets {
@@ -25,6 +26,7 @@ export interface PokemonSet {
     ability?: string;
     isCustomSet?: boolean;
     ivs?: IVRecord;
+    evs?: IVRecord;
     item?: string;
     level?: number;
     nature?: string;

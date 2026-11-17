@@ -32,6 +32,29 @@ their [MIT license](.agents/skills/LICENSE). Restore the locked installation wit
 npx skills@latest experimental_install --agent github-copilot --frozen-lockfile
 ```
 
+## Git hooks
+
+Enable the tracked pre-commit hook once per clone:
+
+```sh
+git config --local core.hooksPath .githooks
+```
+
+The hook rejects staged additions or changes to `.gba` files, case-insensitively,
+even when force-added. Deleting a tracked ROM is allowed. Like other local hooks,
+this is an accidental-commit safeguard, not an unbypassable security boundary.
+
+## Run & Bun snapshot import
+
+After `npm run build`, open `dist/snapshot-decoder.html` (also linked beside
+**Import box**). Select your Run & Bun ROM and John GBA `.jgN` snapshot, then
+download JSON and load it with **Import box**. Decoding stays local.
+
+The JSON retains party, boxes, bag and partially decoded battle memory for future
+planner integration; the current calculator uses only sets and party.
+**Import replaces existing collections.** See the
+[decoder guide](src/exporter/run-and-bun/README.md) for coverage, API and limitations.
+
 ## `@smogon/calc`
 
 The `@smogon/calc` package powers the UI, providing a programmatic interface for computing damage

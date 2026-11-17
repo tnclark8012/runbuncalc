@@ -11,6 +11,7 @@ export default [{
     extensions: './src/extensions/main.ts',
     core: './src/extensions/core/main.ts',
     sandbox: './src/sandbox/main.ts',
+    'snapshot-decoder': './src/exporter/run-and-bun/page.ts',
     worker: './src/worker/impl/worker.ts',
   },
   module: {

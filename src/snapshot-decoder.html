@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Run &amp; Bun snapshot decoder</title>
+  <style>
+    body { font: 16px system-ui, sans-serif; max-width: 860px; margin: 3rem auto; padding: 0 1rem; line-height: 1.5; }
+    label { display: block; margin: 1rem 0; }
+    input { display: block; max-width: 100%; margin-top: .3rem; }
+    button { margin: .5rem .5rem .5rem 0; padding: .5rem .8rem; }
+    pre { white-space: pre-wrap; overflow-wrap: anywhere; background: #f2f4f6; padding: 1rem; }
+    #error { color: #a00; }
+  </style>
+</head>
+<body>
+  <h1>Run &amp; Bun snapshot decoder</h1>
+  <p>Select your ROM and a John GBA <code>.jg0</code> through <code>.jg9</code> snapshot.
+    Everything is decoded locally; files are not uploaded. Battery <code>.sav</code> files and
+    <code>.js</code> screenshot previews are not supported here.</p>
+  <p>The JSON includes your party, boxes, bag and partially decoded battle memory.
+    It is not yet a simulator-ready battle or a legality check. Battle activity and phase remain unknown.</p>
+  <form id="decoder">
+    <label>Run &amp; Bun ROM <input id="rom" type="file" accept=".gba" required /></label>
+    <label>John GBA snapshot <input id="state" type="file" accept=".jg0,.jg1,.jg2,.jg3,.jg4,.jg5,.jg6,.jg7,.jg8,.jg9" required /></label>
+    <label>Collection name <input id="collection-name" value="Run &amp; Bun snapshot" required /></label>
+    <button id="decode" type="submit">Decode snapshot</button>
+    <button id="download" type="button" disabled>Download Import box JSON</button>
+  </form>
+  <p id="status" role="status" aria-live="polite"></p>
+  <p id="error" role="alert"></p>
+  <pre id="summary" hidden></pre>
+  <p>Download the JSON, open <a href="./index.html">the calculator</a>, then choose <strong>Import box</strong>.
+    Import replaces all saved collections. Current HP, PP, inventory and battle details are retained in
+    <code>gameStateSnapshot</code>; the calculator currently uses only the conventional sets and party.</p>
+  <script defer src="./snapshot-decoder.bundle.js"></script>
+</body>
+</html>
