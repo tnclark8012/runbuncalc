@@ -1,7 +1,7 @@
 # Controlling battle-search branching without invalid risk claims
 
-Research for [#128](https://github.com/tnclark8012/runbuncalc/issues/128), under
-[map #113](https://github.com/tnclark8012/runbuncalc/issues/113). Investigated
+Research for [Identify search algorithms that control battle branching without invalid risk claims](https://github.com/tnclark8012/runbuncalc/issues/128), under
+the map [Design an offline-capable Run & Bun battle-planning companion](https://github.com/tnclark8012/runbuncalc/issues/113). Investigated
 2026-11-17 against repository revision
 `7f3cb4c4a13e0efd2be5ce77a016d9f27bd7b1dc`.
 This is a throwaway research-branch handoff, not an implementation, architecture
@@ -33,14 +33,14 @@ combinations has demonstrated phone feasibility here. A server remains undecided
 
 These are constraints, not choices made by this report:
 
-- [#116 resolution](https://github.com/tnclark8012/runbuncalc/issues/116#issuecomment-6902090262):
+- [Define probability fidelity and the meaning of a trustworthy risk claim — resolution](https://github.com/tnclark8012/runbuncalc/issues/116#issuecomment-6902090262):
   include every feasible nonzero modeled outcome; CPU probabilities use the AI's
   information, but player actions use only currently observable information.
   Qualification requires victory across every feasible modeled outcome and
   whole-battle faint risk within tolerance. Exact results, certified bounds,
   estimates, unsupported mechanics, and incomplete search are distinct.
-- [#117 resolution](https://github.com/tnclark8012/runbuncalc/issues/117#issuecomment-6908602775)
-  and its [amendment](https://github.com/tnclark8012/runbuncalc/issues/117#issuecomment-6950200116):
+- [Define legal team preparation and player control over recommendations — resolution](https://github.com/tnclark8012/runbuncalc/issues/117#issuecomment-6908602775)
+  and [Define legal team preparation and player control over recommendations — amendment](https://github.com/tnclark8012/runbuncalc/issues/117#issuecomment-6950200116):
   consider retrievable owned Pokemon subject to exclusions and fainted-state
   rules, including the exact `Fainted` box fallback; actual levels/stats, current
   HP/status/PP and known moves; player-set level cap with over-cap flags, not
@@ -49,7 +49,7 @@ These are constraints, not choices made by this report:
   Items on excluded/off-team Pokemon remain available; never exceed total
   bag-plus-held counts. Require verified encounter selection limits and necessary
   facts; otherwise withhold the affected recommendation.
-- [#118 resolution](https://github.com/tnclark8012/runbuncalc/issues/118#issuecomment-6950171999):
+- [Define useful automatic recommendations under finite computation — resolution](https://github.com/tnclark8012/runbuncalc/issues/118#issuecomment-6950171999):
   local, progressive, interruptible search; first actionable candidate within
   10 seconds **when feasible**, default five minutes **active computation**, then
   pause/continue; preserve exploratory results and stop at first qualification.
@@ -64,7 +64,8 @@ These are constraints, not choices made by this report:
   simulator/search architecture or background-service contract.
 
 The first useful product milestone remains editable state, CPU-action and
-next-turn probabilities, calculations and manual exploration (#113); automatic
+next-turn probabilities, calculations and manual exploration
+([Design an offline-capable Run & Bun battle-planning companion](https://github.com/tnclark8012/runbuncalc/issues/113)); automatic
 full-battle qualification must not block it.
 
 ## 2. Formal target: a preparation plus an implementable policy
@@ -170,7 +171,8 @@ For a synthetic uniform 16-roll attack, suppose four roll indices produce the
 same full successor and observation; their combined probability is `4/16`, not
 `1/16`, and not four distinct nodes. Rounding, HP clipping at zero and other
 effects can collapse additional outcomes. This example does **not** establish
-Run & Bun's roll distribution: that belongs to #124.
+Run & Bun's roll distribution: that belongs to
+[Validate game AI and mechanics evidence for probability claims](https://github.com/tnclark8012/runbuncalc/issues/124).
 
 Aggregation is by resulting semantics, not raw damage alone. Equal total damage
 across different hit sequences can differ because of berries, contact effects,
@@ -347,7 +349,7 @@ game-fidelity suite. Existing code is evidence, not an architectural constraint.
 | [`turn-state.ts`](../src/extensions/simulator/turn-state.ts): `PossibleBattleFieldState`, `applyTransforms`, `runTurn` | Phase composition, explicit probabilities and action logs | Raw arrays expand branches eagerly. Plain `BattleFieldState[]` results receive weight 1 each, so multiplicity can encode decisions rather than normalized chance; adapters must distinguish them. No demonstrated exact roll-distribution kernel. |
 | [`moveScoring.contracts.ts`](../src/extensions/simulator/moveScoring.contracts.ts): `BattleFieldState`, `PokemonPosition`, `Trainer` | Active/bench separation, field and volatile-state structures | `BattleFieldState.toString()` includes active displays only; bench formatter is unused. Display lacks field, boosts, PP, first-turn flag, turn number and much history. It cannot be a sound transposition key. |
 | [`cpu-move-selection.ts`](../src/extensions/simulator/phases/battle/cpu-move-selection.ts) | Enumerating score outcomes and splitting ties is a starting point for CPU probability work | `PROBABILITY_THRESHOLD = 0.00001` prunes partial combinations and filters final move probabilities; rare mass is unaccounted. Marginal score-combination multiplication also needs validated dependence assumptions. |
-| [`player-move-selection.ts`](../src/extensions/simulator/phases/battle/player-move-selection.ts), [`player-switch-in.ts`](../src/extensions/simulator/phases/switching/player-switch-in.ts) | Move/target candidates, singles switch candidates, forced replacements | Current code **does** add voluntary singles switches, contrary to #116's older observation; only bench Pokemon above 25% HP are proposed, doubles switches are omitted, and positive heuristic move-score filtering restricts candidates. This is not a completeness proof. |
+| [`player-move-selection.ts`](../src/extensions/simulator/phases/battle/player-move-selection.ts), [`player-switch-in.ts`](../src/extensions/simulator/phases/switching/player-switch-in.ts) | Move/target candidates, singles switch candidates, forced replacements | Current code **does** add voluntary singles switches, contrary to the older observation in [Define probability fidelity and the meaning of a trustworthy risk claim](https://github.com/tnclark8012/runbuncalc/issues/116); only bench Pokemon above 25% HP are proposed, doubles switches are omitted, and positive heuristic move-score filtering restricts candidates. This is not a completeness proof. |
 | [`execute-move.ts`](../src/extensions/simulator/phases/battle/execute-move.ts) | Ordered per-hit effects, item use and recoil | Execution reads `highestRollPerHitDamage` from a result computed with configured RNG strategy. Do not interpret that as exact enumeration of actual damage probabilities. |
 | [`moveScoring.ts`](../src/extensions/simulator/moveScoring.ts) | Explicit AI considerations including last move | `lastTurnCPUMove` is passed as `undefined` with a TODO, although Sucker Punch and protection checks read it. Missing history affects the transition model before any search theorem applies. |
 
@@ -363,10 +365,10 @@ The zero-faint winning goal check also immediately rejects a player faint,
 which is not the positive-tolerance objective.
 
 [`docs/ai.md`](ai.md), headed Run & Bun **1.07**, is the binding documented AI
-starting point per #116. Its introduction says it is not exhaustive; Perish
+starting point per [Define probability fidelity and the meaning of a trustworthy risk claim](https://github.com/tnclark8012/runbuncalc/issues/116). Its introduction says it is not exhaustive; Perish
 Song switching is explicitly unknown; damage/scoring draws and switch rules
 need versioned confirmation. Exact arithmetic on an incomplete or wrong kernel
-does not yield game-wide exact risk. [#124](https://github.com/tnclark8012/runbuncalc/issues/124)
+does not yield game-wide exact risk. [Validate game AI and mechanics evidence for probability claims](https://github.com/tnclark8012/runbuncalc/issues/124)
 owns those evidence gaps; this report does not select or repair mechanics.
 
 ## 7. Proof obligations before displaying a qualifying plan
@@ -374,7 +376,8 @@ owns those evidence gaps; this report does not select or repair mechanics.
 1. **Model closure:** every relevant mechanic and feasible outcome has a
    validated distribution, or justified uncertainty coverage and conservative
    bounds. Unknown is not probability zero. Confirm CPU scoring correlations,
-   switches, ties, actual roll distributions, effects and terminal rules with #124.
+   switches, ties, actual roll distributions, effects and terminal rules with
+   [Validate game AI and mechanics evidence for probability claims](https://github.com/tnclark8012/runbuncalc/issues/124).
 2. **Legal complete decisions:** moves, targets, voluntary switches, replacements,
    item/form decisions and doubles conflicts are covered or provably irrelevant;
    preparation honors the factual/fixed-choice constraints.
@@ -400,10 +403,10 @@ owns those evidence gaps; this report does not select or repair mechanics.
 Use "no qualifying plan established" on exhaustion of time/memory or incomplete
 model coverage. "No qualifying plan exists" requires complete/certified exclusion.
 
-## 8. Reproducible benchmark handoff for #129
+## 8. Reproducible benchmark handoff for [Measure local battle-search feasibility against branching and evidence requirements](https://github.com/tnclark8012/runbuncalc/issues/129)
 
 No benchmark ran for this research-only ticket. The following are falsifiable
-experiments for [#129](https://github.com/tnclark8012/runbuncalc/issues/129), not
+experiments for [Measure local battle-search feasibility against branching and evidence requirements](https://github.com/tnclark8012/runbuncalc/issues/129), not
 performance promises or production design choices.
 
 ### Controls and records
@@ -414,7 +417,8 @@ risk tolerance, algorithm options, cache/bound policies and memory ceiling.
 Publish synthetic generators, exact transition tables, reference answers and
 seed list (for example 0–19); repeat deterministic runs at least three times.
 Synthetic fixtures measure algorithms, not Run & Bun mechanics correctness.
-Representative game cases must identify unsupported behavior and #124 evidence.
+Representative game cases must identify unsupported behavior and evidence from
+[Validate game AI and mechanics evidence for probability claims](https://github.com/tnclark8012/runbuncalc/issues/124).
 
 Run the same graph engine under: baseline exhaustive tiny solving; incremental
 AND/OR without reductions; +aggregation; +transpositions; LAO*-style schedule;
@@ -437,7 +441,7 @@ foreground/background conditions. Report repeated runs and dispersion, not just
 best time; deterministic correctness must agree across runs and schedules.
 Android hardware is not supplied in this ticket. Desktop results must remain
 desktop evidence. Coordinate lifecycle tests with
-[#130](https://github.com/tnclark8012/runbuncalc/issues/130); foreground algorithm
+[Establish Android constraints for resumable offline background search](https://github.com/tnclark8012/runbuncalc/issues/130); foreground algorithm
 experiments need not wait for background-service work.
 
 ### Concrete fixtures and hypotheses
@@ -478,7 +482,8 @@ unresolved obligations and then declare success. Fair scheduling across team
 completions and time slices must retain the best candidate/proof status.
 
 Persisting enough to resume is a correctness requirement, but uninterrupted
-Android background execution/notification permission is a separate #130 question.
+Android background execution/notification permission is a separate question for
+[Establish Android constraints for resumable offline background search](https://github.com/tnclark8012/runbuncalc/issues/130).
 Measure active computation independently of OS suspension. No automatic network
 fallback or upload is authorized.
 
@@ -488,22 +493,23 @@ fallback or upload is authorized.
   outcome wins" require sure termination, or is almost-sure termination acceptable
   with explicit infinite-stall treatment? The distinction changes admissible
   policies and benchmark expectations; do not settle it by an algorithm default.
-- **#124 kernel contract:** which versioned joint AI-scoring/actual-RNG laws,
+- **[Validate game AI and mechanics evidence for probability claims](https://github.com/tnclark8012/runbuncalc/issues/124) — kernel contract:** which versioned joint AI-scoring/actual-RNG laws,
   voluntary CPU switches, Perish Song behavior, history-dependent rules, doubles
   interactions and terminal draw/exhaustion rules are confirmed? Which unknowns
   admit bounded uncertainty and which prevent qualification?
 - **Information contract:** precisely which live fields are visible at each
   action/replacement phase? If latent variables persist, what evidence supports
   their distribution? This decides MDP sufficiency versus information-state work.
-- **#129 device/fixture access:** which Android/API-37 device and curated encounter
+- **[Measure local battle-search feasibility against branching and evidence requirements](https://github.com/tnclark8012/runbuncalc/issues/129) — device/fixture access:** which Android/API-37 device and curated encounter
   inputs are available? Until supplied, phone feasibility and game fidelity are
   explicitly unmeasured, not negative results.
 - **Performance unknown:** are roll coalescence/transpositions common in actual
   battles, and does certification or outer preparation dominate? T1/T4/T7/T8
   distinguish these; do not infer savings from nominal branch count alone.
 
-These are coordination questions for existing tickets/specification, not new
-issues or architecture decisions.
+These are coordination questions for the goals-led specification, not architecture
+decisions. Follow-up ticket creation and all issue/map lifecycle decisions remain
+with the parent/driving developer.
 
 ## Sources and verification record
 
