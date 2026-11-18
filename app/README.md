@@ -19,6 +19,28 @@ The installed app opens the calculator; `settings.html` configures file access.
 
 ## Development
 
+### App icon
+
+The launcher uses the supplied pixel-art Wigglytuff-at-a-laptop artwork, with
+lettering removed for readability. `assets/icon.png` is the approved 1024px
+master. The generator updates all Android density variants, round icons,
+transparent adaptive foreground layers, and the matching teal background.
+Round and adaptive variants trim the original frame and white margin; Android
+controls the adaptive icon's final shape.
+
+To regenerate from the repository root:
+
+```sh
+python3 -m venv /tmp/runbuncalc-icon-tools
+/tmp/runbuncalc-icon-tools/bin/pip install -r app/scripts/requirements.txt
+/tmp/runbuncalc-icon-tools/bin/python app/scripts/generate-icons.py
+```
+
+Icon-only changes do not require a web build or Capacitor sync; rebuild the
+Android app to see them.
+
+### Building
+
 Install Node 22+, JDK 21, Android SDK platform `android-37.0`, and build-tools
 `37.0.0`. Set
 `ANDROID_HOME` to your SDK directory and `JAVA_HOME` to JDK 21.
