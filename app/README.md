@@ -67,24 +67,28 @@ outside Android.
 ## Sync into the calculator
 
 1. Open **App settings** from the calculator.
-2. Select your **John GBA snapshot (.jgN)** and **Run & Bun ROM (.gba)**. Each
-   connection can be a single document or a folder with a selected direct child.
+2. Select your **John GBA snapshot (.jgN)**. No ROM file is required.
+   The connection can be a single document or a folder with a selected direct child.
    The existing shell's save connection is retained as the snapshot selection.
 3. Return to the calculator. After the emulator finishes writing a snapshot, tap
-   **Sync** to reread both selected documents, decode, and import boxes and party.
+   **Sync** to reread the selected snapshot, decode, and import boxes and party.
 
 **Sync replaces existing calculator collections**, including manual set/party
 edits, just like Import box. No JSON download or second import step is needed.
 Nicknames become set names, with numbered duplicates. The richer game-state
 snapshot is retained in collection metadata for future planner integration;
-it does not hydrate the simulator. The researched decoder's ROM/layout limits
-and unknown battle activity/phase still apply. Battery `.sav` files and `.jsN`
+it does not hydrate the simulator. The app bundles the decoder's small lookup
+tables for the reference Run & Bun revision, not the ROM. Other ROM revisions or
+modified games are not verified; snapshot validation cannot identify every
+incompatible revision. The decoder's layout limits and unknown battle activity/phase
+still apply. Battery `.sav` files and `.jsN`
 previews are not snapshots.
 
 Read/decode/conversion failures are reported without importing partial data.
 Missing or revoked documents require reselection in settings. Sync is manual,
-not a watcher or live emulator-memory connection. ROM/save bytes are not uploaded,
+not a watcher or live emulator-memory connection. Snapshot bytes are not uploaded,
 cached in web storage, bundled in the APK, or written to an intermediate file.
+No ROM is read during Sync.
 
 ## GitHub APK builds
 
@@ -106,12 +110,13 @@ its own initial document grant.
 
 The web UI calls the typed `SaveAccessPlugin` contract in
 `src/storage/save-access.ts`. It never persists an absolute filesystem path,
-requests arbitrary file reads, or persists ROM/save bytes. Plugin calls return
+requests arbitrary file reads, or persists snapshot bytes. Plugin calls return
 connection state, metadata, or the latest read's byte count and SHA-256.
 For manual sync, `readSelected({target, includeData: true})` also returns bounded
 base64 data from that selected document to the local decoder. Diagnostic reads
-omit data. Targets are `snapshot` (the default, preserving the original shell
-connection) and `rom`, each with independently persisted selections.
+omit data. The UI and Sync use only `snapshot` (the default, preserving the
+original shell connection). The native contract retains the legacy `rom` target
+for compatibility; previous ROM grants/selections are not read or required.
 
 On Android:
 
@@ -122,7 +127,7 @@ On Android:
 - `SaveSelectionStore` owns a versioned, app-private record of selected document
   URIs. Android, not that record, owns the persisted permission grant.
 - `SaveFileReader` streams and hashes bytes; sync additionally captures at most
-  32 MiB per file for transfer to the WebView. Files are read sequentially.
+  32 MiB for transfer to the WebView.
 
 All document I/O and preference commits run off the UI thread. Picker
 cancellation leaves the previous connection unchanged. Access is checked again
@@ -140,8 +145,8 @@ checked before and after a read to detect common concurrent-write cases, but
 providers may omit metadata or reuse timestamps: this is not an atomic snapshot
 guarantee. Wait for the emulator to finish saving.
 
-Folder lists show only `.jgN` snapshots or `.gba` ROMs for the corresponding
-connection (case-insensitive). Other extensions, including `.jsN` previews, are
+The snapshot folder list shows only `.jgN` snapshots (case-insensitive).
+Other extensions, including `.jsN` previews, are
 rejected before changing the selection. Android's single-document picker uses
 MIME filters rather than filename-extension filters; providers may still show
 unsupported files if they label them as generic binary data. Use the connected
@@ -155,11 +160,12 @@ No arbitrary URI reader is exposed.
 ## Device acceptance check
 
 Connect a local save folder or file, read it, force-stop/reopen the app, and
-read again without another picker. Configure both ROM and snapshot, return to
+read again without another picker. Configure only the snapshot, return to
 the calculator and sync; check party/box counts and nicknames. Change the
 snapshot in the emulator, sync again, and verify the imported changes survive
-force-stop/reopen. Test cancellation, forgetting one of two shared-folder
-connections, replacing a folder, revoked/missing access, and invalid snapshots.
+force-stop/reopen. Verify Sync ignores a missing/revoked legacy ROM selection.
+Test cancellation, forgetting the snapshot connection (including a folder shared
+with a legacy ROM selection), replacing a folder, revoked/missing access, and invalid snapshots.
 Failed reads/decodes must leave the previous imported collection intact.
 
 The earlier lightweight-shell prototype passed the central read/reopen/changed

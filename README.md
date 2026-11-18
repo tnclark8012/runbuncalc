@@ -15,8 +15,9 @@ generation ([`@smogon/calc`][1]) as well as [logic and markup for the official U
 ## RnB Calc Android app
 
 The Android companion in [`app/`](app/README.md) bundles the calculator locally.
-In **App settings**, select a Run & Bun ROM and John GBA snapshot; tap **Sync** on
+In **App settings**, select a John GBA snapshot; tap **Sync** on
 the calculator to decode and import boxes/party without an intermediate JSON file.
+No ROM selection is needed; the supported Run & Bun lookup tables are bundled.
 Sync replaces existing collections. See the app README for Capacitor development,
 Android file access, and downloadable APK builds through GitHub Actions.
 
@@ -88,7 +89,7 @@ this is an accidental-commit safeguard, not an unbypassable security boundary.
 ## Run & Bun snapshot import
 
 After `npm run build`, open `dist/snapshot-decoder.html` (also linked beside
-**Import box**). Select your Run & Bun ROM and John GBA `.jgN` snapshot, then
+**Import box**). Select your John GBA `.jgN` snapshot (no ROM required), then
 download JSON and load it with **Import box**. Decoding stays local.
 
 The JSON retains party, boxes, bag and partially decoded battle memory for future

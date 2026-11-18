@@ -2,7 +2,8 @@ import { decodeGBAString } from '../charmap';
 import { readBattleMemory } from './battle';
 import { decompressJohnGbaState, SnapshotMemory } from './memory';
 import { readPokemon } from './pokemon';
-import { RunAndBunRom } from './rom';
+import { RunAndBunData } from './game-data';
+import { REFERENCE_ROM_SHA256 } from './tables';
 import type { GameStateSnapshot, SnapshotPokemon } from './types';
 
 const POCKETS = [
@@ -17,10 +18,10 @@ const POCKETS = [
 ];
 
 export function decodeRunAndBunMemory(
-  decompressedState: Uint8Array, romBytes: Uint8Array, source: Partial<GameStateSnapshot['source']> = {},
+  decompressedState: Uint8Array, source: Partial<GameStateSnapshot['source']> = {},
 ): GameStateSnapshot {
   const memory = new SnapshotMemory(decompressedState);
-  const rom = new RunAndBunRom(romBytes);
+  const data = new RunAndBunData();
   const sb1 = memory.pointer(0x03005D9C, 0xD54);
   const sb2 = memory.pointer(0x03005DA0, 0xA8);
   const storage = memory.pointer(0x03005DA4, 0x83D0);
@@ -28,7 +29,7 @@ export function decodeRunAndBunMemory(
   if (partyCount > 6) throw new Error(`Invalid player party count ${partyCount}.`);
   const party: SnapshotPokemon[] = [];
   for (let slot = 0; slot < partyCount; slot++) {
-    const pokemon = readPokemon(memory, rom, 0x02023A98 + slot * 100, { kind: 'party', slot });
+    const pokemon = readPokemon(memory, data, 0x02023A98 + slot * 100, { kind: 'party', slot });
     if (!pokemon) throw new Error(`Empty Pokemon record in occupied party slot ${slot}.`);
     party.push(pokemon);
   }
@@ -37,7 +38,7 @@ export function decodeRunAndBunMemory(
   const boxes = Array.from({ length: 14 }, (_, box) => {
     const pokemon: SnapshotPokemon[] = [];
     for (let slot = 0; slot < 30; slot++) {
-      const mon = readPokemon(memory, rom, storage + 4 + (box * 30 + slot) * 80, { kind: 'box', box, slot });
+      const mon = readPokemon(memory, data, storage + 4 + (box * 30 + slot) * 80, { kind: 'box', box, slot });
       if (mon) pokemon.push(mon);
     }
     return {
@@ -54,12 +55,12 @@ export function decodeRunAndBunMemory(
     }
     const items: GameStateSnapshot['player']['bag'][number]['items'] = [];
     for (let slot = 0; slot < pocket.capacity; slot++) {
-      const item = rom.item(memory.u16(address + slot * 4));
+      const item = data.item(memory.u16(address + slot * 4));
       const quantity = memory.u16(address + slot * 4 + 2) ^ quantityKey;
       if (!item) {
         if (quantity !== 0) throw new Error(`Empty bag slot has a nonzero quantity in ${pocket.name}.`);
       } else {
-        if (quantity === 0 || rom.itemPocket(item.id) !== pocket.id) {
+        if (quantity === 0 || data.itemPocket(item.id) !== pocket.id) {
           throw new Error(`Invalid item quantity or pocket in ${pocket.name}, slot ${slot}.`);
         }
         items.push({ slot, item, quantity });
@@ -79,13 +80,14 @@ export function decodeRunAndBunMemory(
     if (mon.heldItem) addItem(mon.heldItem, 1, 'held');
   }
   return {
-    schemaVersion: 1, game: 'run-and-bun', source: { ...source, format: 'john-gba-v10' },
+    schemaVersion: 1, game: 'run-and-bun',
+    source: { ...source, format: 'john-gba-v10', gameDataRomSha256: REFERENCE_ROM_SHA256 },
     coverage: {
       party: 'decoded', boxes: 'decoded', bag: 'decoded', progress: 'not-decoded',
       battle: 'partial-memory-with-unverified-activity-and-phase',
     },
     limitations: [
-      'This decoder targets only the researched Run & Bun ROM and John GBA format-10 layout.',
+      'This decoder uses bundled tables for the supported Run & Bun revision and John GBA format-10 layout; other revisions are not verified.',
       'Battle activity and snapshot phase are not decoded. Battle memory may be stale outside battle.',
       'Current-turn protection, all status masks, delayed effects, suppression and consumption are not fully decoded.',
       'Side and field timer meanings are ROM-traced; nonzero samples have not all been verified.',
@@ -95,12 +97,12 @@ export function decodeRunAndBunMemory(
       'Progress, encounter limits and individual Nuzlocke eligibility are not inferred.',
     ],
     player: { party, boxes, currentBox, bag, itemTotals: Array.from(totals.values()).sort((a, b) => a.item.id - b.item.id) },
-    battleMemory: readBattleMemory(memory, rom),
+    battleMemory: readBattleMemory(memory, data),
   };
 }
 
 export async function decodeRunAndBunSnapshot(
-  stateBytes: Uint8Array, romBytes: Uint8Array, source: Partial<GameStateSnapshot['source']> = {},
+  stateBytes: Uint8Array, source: Partial<GameStateSnapshot['source']> = {},
 ): Promise<GameStateSnapshot> {
-  return decodeRunAndBunMemory(await decompressJohnGbaState(stateBytes), romBytes, source);
+  return decodeRunAndBunMemory(await decompressJohnGbaState(stateBytes), source);
 }

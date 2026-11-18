@@ -1,9 +1,9 @@
 import { SnapshotMemory } from './memory';
 import { readPokemon } from './pokemon';
-import { RunAndBunRom } from './rom';
+import { RunAndBunData } from './game-data';
 import type { BattleMemory, SnapshotBattler, SnapshotPokemon } from './types';
 
-export function readBattleMemory(memory: SnapshotMemory, rom: RunAndBunRom): BattleMemory {
+export function readBattleMemory(memory: SnapshotMemory, data: RunAndBunData): BattleMemory {
   const battlerCount = memory.u8(0x020233E4);
   if (![0, 2, 4].includes(battlerCount)) throw new Error(`Invalid battler count ${battlerCount}.`);
   const battlers: SnapshotBattler[] = Array.from({ length: battlerCount }, (_, index) => {
@@ -14,23 +14,23 @@ export function readBattleMemory(memory: SnapshotMemory, rom: RunAndBunRom): Bat
     if (partySlot >= 6) throw new Error(`Invalid active party slot ${partySlot}.`);
     return {
       index, side: index % 2 === 0 ? 'player' : 'cpu', partySlot,
-      species: rom.species(memory.u16(address)), level: memory.u8(address + 44),
+      species: data.species(memory.u16(address)), level: memory.u8(address + 44),
       hp: memory.u16(address + 42),
       stats: {
         hp: memory.u16(address + 46), attack: memory.u16(address + 2), defense: memory.u16(address + 4),
         speed: memory.u16(address + 6), specialAttack: memory.u16(address + 8), specialDefense: memory.u16(address + 10),
       },
-      ability: rom.ability(memory.u16(address + 32)), heldItem: rom.item(memory.u16(address + 48)),
+      ability: data.ability(memory.u16(address + 32)), heldItem: data.item(memory.u16(address + 48)),
       typeIds: Array.from(memory.bytes(address + 34, 3)),
       statStagesRaw: Array.from(memory.bytes(address + 24, 8)),
       moves: Array.from({ length: 4 }, (_, slot) => ({
-        slot, move: rom.move(memory.u16(address + 12 + slot * 2)), pp: memory.u8(address + 37 + slot),
+        slot, move: data.move(memory.u16(address + 12 + slot * 2)), pp: memory.u8(address + 37 + slot),
       })),
       majorStatusRaw: memory.u32(address + 80), volatileStatusRaw: memory.u32(address + 84),
       status3Raw: memory.u32(0x02023648 + 4 * index), additionalStatusRaw: memory.u32(0x02023658 + 4 * index),
-      lastUsedMoveRaw, lastUsedMove: lastUsedMoveRaw === 0xFFFF ? null : rom.move(lastUsedMoveRaw),
+      lastUsedMoveRaw, lastUsedMove: lastUsedMoveRaw === 0xFFFF ? null : data.move(lastUsedMoveRaw),
       restrictions: {
-        encoredMove: rom.move(memory.u16(restriction + 6)), encoredMoveSlot: memory.u8(restriction + 16),
+        encoredMove: data.move(memory.u16(restriction + 6)), encoredMoveSlot: memory.u8(restriction + 16),
         encoreTurns: memory.u8(restriction + 17) & 15, encoreTimerByteRaw: memory.u8(restriction + 17),
         protectUseCount: memory.u8(restriction + 8), disableTurns: memory.u8(restriction + 15) & 15,
         tauntTurns: memory.u8(restriction + 22) & 15, firstTurnOutRaw: memory.u8(restriction + 25),
@@ -41,7 +41,7 @@ export function readBattleMemory(memory: SnapshotMemory, rom: RunAndBunRom): Bat
   });
   const opponentParty: SnapshotPokemon[] = [];
   for (let slot = 0; slot < 6; slot++) {
-    const pokemon = readPokemon(memory, rom, 0x02023CF0 + slot * 100, { kind: 'opponent-party', slot });
+    const pokemon = readPokemon(memory, data, 0x02023CF0 + slot * 100, { kind: 'opponent-party', slot });
     if (pokemon) opponentParty.push(pokemon);
   }
   const resourcesAddress = memory.u32(0x02023A18);

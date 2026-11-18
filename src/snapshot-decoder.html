@@ -15,13 +15,13 @@
 </head>
 <body>
   <h1>Run &amp; Bun snapshot decoder</h1>
-  <p>Select your ROM and a John GBA <code>.jg0</code> through <code>.jg9</code> snapshot.
-    Everything is decoded locally; files are not uploaded. Battery <code>.sav</code> files and
+  <p>Select a John GBA <code>.jg0</code> through <code>.jg9</code> snapshot.
+    No ROM file is needed. Everything is decoded locally; files are not uploaded. Battery <code>.sav</code> files and
     <code>.js</code> screenshot previews are not supported here.</p>
+  <p>The supported Run &amp; Bun game-data tables are included. Other ROM revisions or modified games are not verified.</p>
   <p>The JSON includes your party, boxes, bag and partially decoded battle memory.
     It is not yet a simulator-ready battle or a legality check. Battle activity and phase remain unknown.</p>
   <form id="decoder">
-    <label>Run &amp; Bun ROM <input id="rom" type="file" accept=".gba" required /></label>
     <label>John GBA snapshot <input id="state" type="file" accept=".jg0,.jg1,.jg2,.jg3,.jg4,.jg5,.jg6,.jg7,.jg8,.jg9" required /></label>
     <label>Collection name <input id="collection-name" value="Run &amp; Bun snapshot" required /></label>
     <button id="decode" type="submit">Decode snapshot</button>
