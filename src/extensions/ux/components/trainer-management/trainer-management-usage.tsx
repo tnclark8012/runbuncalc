@@ -80,7 +80,7 @@ export const PlayerPartyManager: React.FC = () => {
   };
 
   return (
-    <div style={containerStyle}>
+    <div className="player-party-manager" style={containerStyle}>
       <div style={{ paddingTop: '10px' }}>
         {isSelectedInBox && (
           <Button
@@ -103,7 +103,7 @@ export const PlayerPartyManager: React.FC = () => {
           />
         )}
       </div>
-      <div style={{ flex: 1 }}>
+      <div style={{ flex: 1, minWidth: 0 }}>
         <TrainerParty
           party={playerParty}
           availableSets={availableSets}
@@ -165,6 +165,7 @@ export const CpuPartyManager: React.FC = () => {
 
   const buttonContainerStyle: React.CSSProperties = {
     display: 'flex',
+    flexWrap: 'wrap',
     gap: '8px',
     marginTop: '8px',
     justifyContent: 'center',

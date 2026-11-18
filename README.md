@@ -34,6 +34,11 @@ legacy calculator pages are not covered. Clearing site data removes offline
 availability; a failed registration is reported in the browser console.
 The Android app bundles these assets along with the calculator.
 
+The sandbox keeps player and opponent side-by-side on phones, with **Field** in
+the header. Missing selections default to the first party member (or the first
+Pokemon in the box), and the saved trainer's lead; without a saved trainer it
+starts with the first trainer. Valid saved selections are retained.
+
 The data dependency is `@runbuncalc/rbdex-data`, installed from the versioned
 [RBDex release archive](https://github.com/tnclark8012/RBDex/releases/tag/data-v0.1.1).
 The archive already contains generated data, sprites, and corresponding source;

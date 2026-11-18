@@ -22,8 +22,11 @@ export const useStyles = makeStyles({
   },
   twoColumn: {
     display: 'grid',
-    gridTemplateColumns: '1fr 1fr',
+    gridTemplateColumns: 'repeat(2, minmax(0, 1fr))',
     gap: tokens.spacingHorizontalL,
+    '@media (max-width: 599px)': {
+      gridTemplateColumns: 'minmax(0, 1fr)',
+    },
   },
   fieldRow: {
     display: 'flex',
