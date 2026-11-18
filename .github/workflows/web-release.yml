@@ -1,0 +1,48 @@
+name: Web releases
+
+on:
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+    branches: [master]
+  workflow_dispatch:
+    inputs:
+      run_id:
+        description: Successful master push CI run ID to promote to stable
+        required: true
+        type: string
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: read
+
+concurrency:
+  group: web-release-publishing
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    if: >-
+      github.repository == 'tnclark8012/runbuncalc' &&
+      (github.event_name != 'workflow_run' ||
+       (github.event.workflow_run.conclusion == 'success' &&
+        github.event.workflow_run.event == 'push' &&
+        github.event.workflow_run.head_repository.full_name == github.repository))
+    runs-on: ubuntu-latest
+    permissions:
+      actions: read
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: master
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Publish or promote verified CI bundle
+        run: node scripts/web-release.mjs publish
+        env:
+          GH_TOKEN: ${{ github.token }}
+          WEB_UPDATE_PRIVATE_KEY: ${{ secrets.WEB_UPDATE_PRIVATE_KEY }}

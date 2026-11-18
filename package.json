@@ -70,6 +70,7 @@
     "dev": "concurrently \"npm run watch\" \"npm run serve\"",
     "start": "npm run build && npm run dev",
     "testAll": "npm test && npm run build && eslint --cache src --ext js",
-    "test": "jest"
+    "test": "jest",
+    "test:releases": "node --test scripts/web-release.test.mjs"
   }
 }
