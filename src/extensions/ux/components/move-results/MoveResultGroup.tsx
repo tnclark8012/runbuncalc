@@ -69,6 +69,7 @@ export const MoveResultGroup: React.FC<MoveResultGroupProps> = ({
 			>
 				{moves.map((move: MoveItem) => (
 					<Radio
+						className={styles.moveRadio}
 						key={move.id}
 						value={move.name}
 						disabled={move.name === 'No move'}

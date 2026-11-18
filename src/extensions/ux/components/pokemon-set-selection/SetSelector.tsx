@@ -125,7 +125,8 @@ export const SetSelector: React.FC<SetSelectorProps> = ({
       onInput={(e) => setInputValue(e.currentTarget.value)}
       freeform={true}
       onOptionSelect={handleOptionSelect}
-      style={{ width: '300px' }}
+      style={{ width: '100%', minWidth: 0, boxSizing: 'border-box', gridTemplateColumns: 'minmax(0, 1fr) auto' }}
+      input={{ style: { minWidth: 0 } }}
     >
       {renderOptions()}
     </Combobox>

@@ -1,4 +1,4 @@
-import { Dropdown, Input, Label, Option, Table, TableBody, TableCell, TableHeader, TableHeaderCell, TableRow } from '@fluentui/react-components';
+import { Dropdown, Input, Label, mergeClasses, Option, Table, TableBody, TableCell, TableHeader, TableHeaderCell, TableRow } from '@fluentui/react-components';
 import { Field, Pokemon, Side, StatsTable } from '@smogon/calc';
 import type { StatusName, TypeName } from '@smogon/calc/dist/data/interface';
 import { ItemName } from '@smogon/calc/dist/data/interface';
@@ -367,12 +367,12 @@ export const PokemonSetDetails: React.FC<PokemonSetDetailsProps> = ({
   // Generate boost options from -6 to +6
   const boostOptions = Array.from({ length: 13 }, (_, i) => i - 6);
   const stats = [
-    { key: 'hp' as const, label: 'HP', boostKey: undefined },
-    { key: 'at' as const, label: 'Attack', boostKey: 'atk' as keyof StatsTable },
-    { key: 'df' as const, label: 'Defense', boostKey: 'def' as keyof StatsTable },
-    { key: 'sa' as const, label: 'Sp. Atk', boostKey: 'spa' as keyof StatsTable },
-    { key: 'sd' as const, label: 'Sp. Def', boostKey: 'spd' as keyof StatsTable },
-    { key: 'sp' as const, label: 'Speed', boostKey: 'spe' as keyof StatsTable },
+    { key: 'hp' as const, label: 'HP', shortLabel: 'HP', boostKey: undefined },
+    { key: 'at' as const, label: 'Attack', shortLabel: 'Atk', boostKey: 'atk' as keyof StatsTable },
+    { key: 'df' as const, label: 'Defense', shortLabel: 'Def', boostKey: 'def' as keyof StatsTable },
+    { key: 'sa' as const, label: 'Sp. Atk', shortLabel: 'SpA', boostKey: 'spa' as keyof StatsTable },
+    { key: 'sd' as const, label: 'Sp. Def', shortLabel: 'SpD', boostKey: 'spd' as keyof StatsTable },
+    { key: 'sp' as const, label: 'Speed', shortLabel: 'Spe', boostKey: 'spe' as keyof StatsTable },
   ];
 
   return (
@@ -380,7 +380,7 @@ export const PokemonSetDetails: React.FC<PokemonSetDetailsProps> = ({
       <Label size="large" weight="semibold">{label}</Label>
       
       {/* Type controls */}
-      <div className={styles.controlRow}>
+      <div className={mergeClasses(styles.controlRow, styles.typeRow)}>
         <Label className={styles.controlLabel}>Type:</Label>
         <Dropdown
           value={type1}
@@ -408,7 +408,7 @@ export const PokemonSetDetails: React.FC<PokemonSetDetailsProps> = ({
       </div>
 
       {/* Form control */}
-      <div className={styles.controlRow} style={{ visibility: availableForms.length > 0 ? 'visible' : 'hidden' }}>
+      <div className={mergeClasses(styles.controlRow, availableForms.length === 0 && styles.hiddenFormRow)}>
         <Label className={styles.controlLabel}>Form:</Label>
         {availableForms.length > 0 ? (
           <Dropdown
@@ -456,9 +456,12 @@ export const PokemonSetDetails: React.FC<PokemonSetDetailsProps> = ({
           </TableRow>
         </TableHeader>
         <TableBody>
-          {stats.map(({ key, label: statLabel, boostKey }) => (
+          {stats.map(({ key, label: statLabel, shortLabel, boostKey }) => (
             <TableRow key={key}>
-              <TableCell>{statLabel}</TableCell>
+              <TableCell title={statLabel}>
+                <span className={styles.fullStatLabel}>{statLabel}</span>
+                <span className={styles.shortStatLabel}>{shortLabel}</span>
+              </TableCell>
               <TableCell>
                 <Input
                   type="number"

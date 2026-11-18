@@ -10,18 +10,36 @@ export const useStyles = makeStyles({
   },
   inputRow: {
     display: 'flex',
+    flexWrap: 'wrap',
     gap: '10px',
     alignItems: 'center',
     marginBottom: '5px',
+    '@media (max-width: 799px)': {
+      gap: '4px',
+      fontSize: '12px',
+    },
   },
   label: {
     minWidth: '60px',
+    '@media (max-width: 799px)': {
+      flexBasis: '100%',
+    },
   },
   hpInput: {
     width: '68px',
+    minWidth: 0,
+    '@media (max-width: 799px)': {
+      width: '48px',
+      paddingLeft: '2px',
+      paddingRight: '2px',
+      '& input': {
+        fontSize: '12px',
+        padding: '0 2px',
+      },
+    },
   },
   healthBarContainer: {
-    width: '100%',
+    width: 'calc(100% - 70px)',
     height: '8px',
     backgroundColor: '#333',
     border: '1px solid #666',
@@ -29,6 +47,11 @@ export const useStyles = makeStyles({
     overflow: 'hidden',
     marginLeft: '70px',
     maxWidth: '300px',
+    '@media (max-width: 799px)': {
+      width: '100%',
+      marginLeft: 0,
+      boxSizing: 'border-box',
+    },
   },
   healthBar: {
     height: '100%',

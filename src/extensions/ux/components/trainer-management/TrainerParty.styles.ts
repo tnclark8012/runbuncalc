@@ -19,6 +19,7 @@ export const useStyles = makeStyles({
   },
   partyRow: {
     display: 'flex',
+    flexWrap: 'wrap',
     gap: '8px',
     alignItems: 'center',
     minHeight: '45px',
