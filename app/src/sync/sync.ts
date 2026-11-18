@@ -15,18 +15,13 @@ export async function syncSelectedSnapshot(
   access: Pick<SaveAccessPlugin, 'getState' | 'readSelected'>,
   importBox: (json: string) => void,
 ): Promise<{pokemon: number; warnings: string[]}> {
-  for (const target of ['rom', 'snapshot'] as const) {
-    const state = await access.getState({target});
-    if (state.access !== 'ready' || !state.selectedFile) {
-      throw new Error(`The ${target === 'rom' ? 'ROM' : 'snapshot'} is unavailable. Select or reconnect it in App settings.`);
-    }
+  const state = await access.getState({target: 'snapshot'});
+  if (state.access !== 'ready' || !state.selectedFile) {
+    throw new Error('The snapshot is unavailable. Select or reconnect it in App settings.');
   }
-  // The native plugin serializes operations; read one file at a time.
-  const romRead = await access.readSelected({target: 'rom', includeData: true});
-  const rom = bytesFromRead(romRead);
   const read = await access.readSelected({target: 'snapshot', includeData: true});
-  const snapshot = await decodeRunAndBunSnapshot(bytesFromRead(read), rom, {
-    stateFileName: read.document.name, romFileName: romRead.document.name,
+  const snapshot = await decodeRunAndBunSnapshot(bytesFromRead(read), {
+    stateFileName: read.document.name,
   });
   const exported = snapshotToBoxExport(snapshot);
   importBox(JSON.stringify(exported.collection));

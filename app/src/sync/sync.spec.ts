@@ -36,23 +36,19 @@ function setup() {
 describe('manual snapshot sync', () => {
   beforeEach(() => jest.clearAllMocks());
 
-  it('reads both saved selections sequentially, decodes, and sends compatible JSON to Import box', async () => {
+  it('reads only the snapshot selection, decodes without a ROM, and sends compatible JSON to Import box', async () => {
     const {access, importer} = setup();
-    let reading = false;
-    access.readSelected.mockImplementation(async options => {
-      if (reading) throw new Error('BUSY');
-      reading = true;
-      await Promise.resolve();
-      reading = false;
-      return options?.target === 'rom' ? {...read, document: {...read.document, name: 'game.gba'}} : read;
+    access.getState.mockImplementation(async options => {
+      if (options?.target !== 'snapshot') throw new Error('No ROM connection exists.');
+      return ready;
     });
     const result = await syncSelectedSnapshot(access, importer);
+    expect(access.getState.mock.calls).toEqual([[{target: 'snapshot'}]]);
     expect(access.readSelected.mock.calls).toEqual([
-      [{target: 'rom', includeData: true}], [{target: 'snapshot', includeData: true}],
+      [{target: 'snapshot', includeData: true}],
     ]);
     expect(decodeRunAndBunSnapshot).toHaveBeenCalledWith(
-      new Uint8Array([97, 98, 99]), new Uint8Array([97, 98, 99]),
-      {stateFileName: 'save.jg0', romFileName: 'game.gba'},
+      new Uint8Array([97, 98, 99]), {stateFileName: 'save.jg0'},
     );
     const imported = JSON.parse(importer.mock.calls[0][0]);
     expect(imported.Imported.party).toEqual(['Bulbasaur (Leaf)']);
@@ -60,10 +56,9 @@ describe('manual snapshot sync', () => {
     expect(result).toEqual({pokemon: 1, warnings: ['An egg was retained only in snapshot metadata.']});
   });
 
-  it.each(['rom', 'snapshot'] as const)('rejects missing %s access without reading or importing', async target => {
+  it('rejects missing snapshot access without reading or importing', async () => {
     const {access, importer} = setup();
-    access.getState.mockImplementation(async options => options?.target === target
-      ? {...ready, access: 'permission-required'} : ready);
+    access.getState.mockResolvedValue({...ready, access: 'permission-required'});
     await expect(syncSelectedSnapshot(access, importer)).rejects.toThrow('App settings');
     expect(access.readSelected).not.toHaveBeenCalled();
     expect(importer).not.toHaveBeenCalled();
@@ -81,7 +76,7 @@ describe('manual snapshot sync', () => {
 
   it('preserves the current collection if the snapshot changes while being read', async () => {
     const {access, importer} = setup();
-    access.readSelected.mockResolvedValueOnce(read).mockRejectedValueOnce(new Error('The save changed during the read.'));
+    access.readSelected.mockRejectedValueOnce(new Error('The save changed during the read.'));
     await expect(syncSelectedSnapshot(access, importer)).rejects.toThrow('changed during the read');
     expect(importer).not.toHaveBeenCalled();
   });

@@ -131,6 +131,7 @@ export interface GameStateSnapshot {
     format: 'john-gba-v10';
     stateFileName?: string;
     romFileName?: string;
+    gameDataRomSha256?: string;
   };
   coverage: {
     party: 'decoded';

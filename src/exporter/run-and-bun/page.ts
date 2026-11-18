@@ -2,7 +2,6 @@ import { decodeRunAndBunSnapshot } from './decoder';
 import { snapshotToBoxExport } from './box-export';
 
 const form = document.querySelector<HTMLFormElement>('#decoder')!;
-const romInput = document.querySelector<HTMLInputElement>('#rom')!;
 const stateInput = document.querySelector<HTMLInputElement>('#state')!;
 const nameInput = document.querySelector<HTMLInputElement>('#collection-name')!;
 const decodeButton = document.querySelector<HTMLButtonElement>('#decode')!;
@@ -26,19 +25,18 @@ form.addEventListener('change', clearResult);
 form.addEventListener('submit', async event => {
   event.preventDefault();
   clearResult();
-  const romFile = romInput.files?.[0];
   const stateFile = stateInput.files?.[0];
-  if (!romFile || !stateFile) {
-    errorOutput.textContent = 'Select both a ROM and a snapshot.';
+  if (!stateFile) {
+    errorOutput.textContent = 'Select a John GBA snapshot.';
     return;
   }
   decodeButton.disabled = true;
-  for (const input of [romInput, stateInput, nameInput]) input.disabled = true;
+  for (const input of [stateInput, nameInput]) input.disabled = true;
   status.textContent = 'Decoding locally...';
   try {
-    const [state, rom] = await Promise.all([stateFile.arrayBuffer(), romFile.arrayBuffer()]);
-    const snapshot = await decodeRunAndBunSnapshot(new Uint8Array(state), new Uint8Array(rom), {
-      stateFileName: stateFile.name, romFileName: romFile.name,
+    const state = await stateFile.arrayBuffer();
+    const snapshot = await decodeRunAndBunSnapshot(new Uint8Array(state), {
+      stateFileName: stateFile.name,
     });
     const output = snapshotToBoxExport(snapshot, nameInput.value);
     json = JSON.stringify(output.collection, null, 2);
@@ -57,7 +55,7 @@ form.addEventListener('submit', async event => {
     errorOutput.textContent = error instanceof Error ? error.message : String(error);
   } finally {
     decodeButton.disabled = false;
-    for (const input of [romInput, stateInput, nameInput]) input.disabled = false;
+    for (const input of [stateInput, nameInput]) input.disabled = false;
   }
 });
 

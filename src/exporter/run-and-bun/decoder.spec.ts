@@ -5,7 +5,8 @@ import { snapshotToBoxExport } from './box-export';
 import { decodeRunAndBunMemory, decodeRunAndBunSnapshot } from './decoder';
 import { decompressJohnGbaState, JOHN_GBA_STATE_SIZE, SnapshotMemory } from './memory';
 import { readPokemon } from './pokemon';
-import { RunAndBunRom } from './rom';
+import { RunAndBunData } from './game-data';
+import { REFERENCE_ROM_SHA256 } from './tables';
 
 const SB1 = 0x02025000;
 const SB2 = 0x02024000;
@@ -38,16 +39,6 @@ function fixture() {
   const u8 = (address: number, value: number) => view.setUint8(offset(address), value);
   const u16 = (address: number, value: number) => view.setUint16(offset(address), value, true);
   const u32 = (address: number, value: number) => view.setUint32(offset(address), value, true);
-  const rom = new Uint8Array(0x690000);
-  const romView = new DataView(rom.buffer);
-  rom.set(gbaText('Stench'), 0x3AC0C9 + 17);
-  rom.set(gbaText('Intimidate'), 0x3AC0C9 + 22 * 17);
-  rom.set(gbaText('As One'), 0x3AC0C9 + 266 * 17);
-  rom.set([45, 49, 49, 45, 65, 65], 0x3B7CE0 + 36);
-  romView.setUint16(0x3B7CE0 + 36 + 24, 22, true);
-  rom[0x3B0C5C + 20 + 6] = 35;
-  rom[0x678D60 + 44 + 26] = 1;
-  for (let level = 0; level <= 100; level++) romView.setUint32(0x3B7040 + level * 4, level ** 3, true);
   u32(0x03005D9C, SB1);
   u32(0x03005DA0, SB2);
   u32(0x03005DA4, STORAGE);
@@ -57,8 +48,8 @@ function fixture() {
     u8(0x020393E0 + index * 8 + 4, capacity);
     for (let slot = 0; slot < capacity; slot++) u16(SB1 + start + slot * 4 + 2, QUANTITY_KEY);
   }
-  u16(SB1 + 0x4E8, 1);
-  u16(SB1 + 0x4E8 + 2, 2 ^ QUANTITY_KEY);
+  u16(SB1 + 0x7A4, 1);
+  u16(SB1 + 0x7A4 + 2, 2 ^ QUANTITY_KEY);
   bytes.set(gbaText('Fainted'), offset(STORAGE + 0x8344 + 2 * 9));
   u8(STORAGE + 0x83C2 + 2, 7);
 
@@ -75,7 +66,7 @@ function fixture() {
     const data = new DataView(logical.buffer);
     data.setUint16(0, 1, true);
     data.setUint16(2, 1, true);
-    data.setUint32(4, 50 ** 3, true);
+    data.setUint32(4, 117360, true);
     data.setUint8(9, 70);
     data.setUint8(10, 26);
     data.setUint16(12, 1, true);
@@ -118,13 +109,13 @@ function fixture() {
   u32(0x02023A18, 0x02038000);
   u32(0x02038014, 0x02038100);
   u16(0x02038104, 400);
-  return { bytes, rom, view, offset, u8, u16, u32, writePokemon };
+  return { bytes, view, offset, u8, u16, u32, writePokemon };
 }
 
 describe('Run & Bun John GBA decoder', () => {
   it('uses the live party, preserves box locations, and counts bag plus owned held items only once', () => {
     const f = fixture();
-    const snapshot = decodeRunAndBunMemory(f.bytes, f.rom);
+    const snapshot = decodeRunAndBunMemory(f.bytes);
     const player = snapshot.player;
     expect(player.party).toHaveLength(1);
     expect(player.party[0].condition).toMatchObject({ hp: 90, majorStatusRaw: 8, source: 'party-memory' });
@@ -138,7 +129,7 @@ describe('Run & Bun John GBA decoder', () => {
     expect(player.boxes[2].pokemon[0].condition.stats).toEqual({
       hp: 106, attack: 56, defense: 57, speed: 54, specialAttack: 67, specialDefense: 83,
     });
-    expect(player.bag[0].items[0]).toMatchObject({ slot: 0, quantity: 2 });
+    expect(player.bag[5].items[0]).toMatchObject({ slot: 0, quantity: 2 });
     expect(player.itemTotals).toEqual([{ item: { id: 1, name: 'Poke Ball' }, inBag: 2, held: 2, total: 4 }]);
     expect(snapshot.coverage.progress).toBe('not-decoded');
   });
@@ -147,18 +138,18 @@ describe('Run & Bun John GBA decoder', () => {
     const f = fixture();
     for (let personality = 0; personality < 24; personality++) {
       f.writePokemon(BOX, personality, false);
-      const mon = readPokemon(new SnapshotMemory(f.bytes), new RunAndBunRom(f.rom), BOX, { kind: 'box', box: 2, slot: 4 })!;
+      const mon = readPokemon(new SnapshotMemory(f.bytes), new RunAndBunData(), BOX, { kind: 'box', box: 2, slot: 4 })!;
       expect(mon.nature.id).toBe(personality % 25);
       expect(mon.ivs.specialDefense).toBe(6);
       expect(mon.species.name).toBe('Bulbasaur');
     }
     f.u8(BOX + 32, f.bytes[f.offset(BOX + 32)] ^ 1);
-    expect(() => decodeRunAndBunMemory(f.bytes, f.rom)).toThrow('checksum');
+    expect(() => decodeRunAndBunMemory(f.bytes)).toThrow('checksum');
   });
 
   it('preserves confirmed restrictions, move sentinels, 16-bit AI scores and uncertain opponent PP', () => {
     const f = fixture();
-    const battle = decodeRunAndBunMemory(f.bytes, f.rom).battleMemory;
+    const battle = decodeRunAndBunMemory(f.bytes).battleMemory;
     expect(battle).toMatchObject({ activity: 'unknown', phase: 'unknown', ai: { moveScores: [400, 0, 0, 0] } });
     expect(battle.battlers[0]).toMatchObject({
       side: 'player', lastUsedMoveRaw: 0xFFFF, lastUsedMove: null,
@@ -169,7 +160,7 @@ describe('Run & Bun John GBA decoder', () => {
 
   it('round-trips duplicates and snapshot metadata through the actual collection storage path', () => {
     const f = fixture();
-    const snapshot = decodeRunAndBunMemory(f.bytes, f.rom);
+    const snapshot = decodeRunAndBunMemory(f.bytes);
     const { collection, warnings } = snapshotToBoxExport(snapshot, 'Test import');
     expect(warnings).toEqual([]);
     const data = collection['Test import'];
@@ -193,7 +184,7 @@ describe('Run & Bun John GBA decoder', () => {
 
   it('numbers duplicate nicknames without taking another Pokemon original nickname or losing party references', () => {
     const f = fixture();
-    const snapshot = decodeRunAndBunMemory(f.bytes, f.rom);
+    const snapshot = decodeRunAndBunMemory(f.bytes);
     snapshot.player.party[0].nickname = 'Sparky';
     snapshot.player.party.push({
       ...snapshot.player.party[0], id: 'party:1', location: { kind: 'party', slot: 1 },
@@ -209,7 +200,7 @@ describe('Run & Bun John GBA decoder', () => {
 
   it('allows the same nickname for different species', () => {
     const f = fixture();
-    const snapshot = decodeRunAndBunMemory(f.bytes, f.rom);
+    const snapshot = decodeRunAndBunMemory(f.bytes);
     snapshot.player.boxes[2].pokemon[0].species = { id: 2, name: 'Ivysaur' };
     const data = Object.values(snapshotToBoxExport(snapshot).collection)[0];
     expect(Object.keys(data.customSets.Bulbasaur)).toEqual(['Test']);
@@ -219,7 +210,7 @@ describe('Run & Bun John GBA decoder', () => {
   it.each([['', 'Bulbasaur'], ['   ', 'Bulbasaur'], ['prototype', 'prototype 2'], ['__proto__', '__proto__ 2']])(
     'reports a usable fallback for nickname "%s"', (nickname, expected) => {
       const f = fixture();
-      const snapshot = decodeRunAndBunMemory(f.bytes, f.rom);
+      const snapshot = decodeRunAndBunMemory(f.bytes);
       snapshot.player.party[0].nickname = nickname;
       const { collection, warnings } = snapshotToBoxExport(snapshot);
       expect(Object.values(collection)[0].party).toEqual([`Bulbasaur (${expected})`]);
@@ -230,7 +221,7 @@ describe('Run & Bun John GBA decoder', () => {
 
   it('distinguishes As One variants for the calculator while preserving raw game names', () => {
     const f = fixture();
-    const snapshot = decodeRunAndBunMemory(f.bytes, f.rom);
+    const snapshot = decodeRunAndBunMemory(f.bytes);
     snapshot.player.party[0].ability = { id: 266, name: 'As One', slot: 0 };
     const { collection } = snapshotToBoxExport(snapshot);
     expect(Object.values(collection)[0].customSets.Bulbasaur.Test.ability).toBe('As One (Glastrier)');
@@ -240,15 +231,33 @@ describe('Run & Bun John GBA decoder', () => {
   it('reports invalid pointers and bag quantities instead of returning empty or partial success', () => {
     const f = fixture();
     f.u32(0x03005DA4, 0x08000000);
-    expect(() => decodeRunAndBunMemory(f.bytes, f.rom)).toThrow('Invalid RAM range');
+    expect(() => decodeRunAndBunMemory(f.bytes)).toThrow('Invalid RAM range');
     f.u32(0x03005DA4, STORAGE);
-    f.u16(SB1 + 0x4E8 + 2, QUANTITY_KEY);
-    expect(() => decodeRunAndBunMemory(f.bytes, f.rom)).toThrow('Invalid item quantity');
+    f.u16(SB1 + 0x7A4 + 2, QUANTITY_KEY);
+    expect(() => decodeRunAndBunMemory(f.bytes)).toThrow('Invalid item quantity');
+    f.u16(SB1 + 0x7A4, 0);
+    f.u16(SB1 + 0x4E8, 1);
+    f.u16(SB1 + 0x4E8 + 2, 2 ^ QUANTITY_KEY);
+    expect(() => decodeRunAndBunMemory(f.bytes)).toThrow('Invalid item quantity or pocket');
+  });
+
+  it('uses bundled ability slots and exact boxed level thresholds without ROM bytes', () => {
+    const data = new RunAndBunData();
+    expect(data.speciesAbility(1, 0)).toEqual({id: 65, name: 'Overgrow'});
+    expect(data.speciesAbility(1, 1)).toEqual(data.speciesAbility(1, 0));
+    expect(data.speciesAbility(1, 2)).toEqual({id: 34, name: 'Chlorophyll'});
+    expect(data.ability(266)).toEqual({id: 266, name: 'As One'});
+    expect(data.level(1, 117359)).toBe(49);
+    expect(data.level(1, 117360)).toBe(50);
+    expect(data.level(1, 0)).toBe(1);
+    expect(data.level(1, 2000000)).toBe(100);
+    expect(() => data.ability(268)).toThrow('Unknown Run & Bun ability');
+    expect(() => data.speciesAbility(1, 3)).toThrow('Invalid ability slot');
   });
 
   it('refuses to silently drop a decoded move that the calculator cannot represent', () => {
     const f = fixture();
-    const snapshot = decodeRunAndBunMemory(f.bytes, f.rom);
+    const snapshot = decodeRunAndBunMemory(f.bytes);
     snapshot.player.party[0].moves[0].move = { id: 778, name: 'Unsupported move' };
     expect(() => snapshotToBoxExport(snapshot)).toThrow('Calculator does not recognize move');
     expect(snapshot.player.party[0].moves[0].move.name).toBe('Unsupported move');
@@ -256,8 +265,12 @@ describe('Run & Bun John GBA decoder', () => {
 
   it('decompresses valid snapshots and rejects previews, truncation, corrupt gzip and oversized payloads', async () => {
     const f = fixture();
-    const snapshot = await decodeRunAndBunSnapshot(gzipSync(f.bytes), f.rom);
+    const snapshot = await decodeRunAndBunSnapshot(gzipSync(f.bytes), {stateFileName: 'test.jg9'});
     expect(snapshot.player.party).toHaveLength(1);
+    expect(snapshot.player.party[0].ability).toMatchObject({id: 65, name: 'Overgrow'});
+    expect(snapshot.source).toEqual({
+      format: 'john-gba-v10', stateFileName: 'test.jg9', gameDataRomSha256: REFERENCE_ROM_SHA256,
+    });
     await expect(decompressJohnGbaState(Uint8Array.from([0xFF, 0xD8]))).rejects.toThrow('not a .sav or .js preview');
     await expect(decompressJohnGbaState(gzipSync(f.bytes.subarray(0, 100)))).rejects.toThrow('Truncated');
     const corrupt = gzipSync(f.bytes);

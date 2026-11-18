@@ -1,6 +1,6 @@
 import { decodeGBAString } from '../charmap';
 import { SnapshotMemory } from './memory';
-import { RunAndBunRom } from './rom';
+import { RunAndBunData } from './game-data';
 import type { PokemonLocation, SnapshotPokemon, Stats } from './types';
 
 const ORDERS = [
@@ -11,7 +11,7 @@ const ORDERS = [
 ];
 
 export function readPokemon(
-  memory: SnapshotMemory, rom: RunAndBunRom, address: number, location: PokemonLocation,
+  memory: SnapshotMemory, data: RunAndBunData, address: number, location: PokemonLocation,
 ): SnapshotPokemon | null {
   const isBox = location.kind === 'box';
   const raw = memory.bytes(address, isBox ? 80 : 100);
@@ -35,13 +35,13 @@ export function readPokemon(
   const misc = order[3] * 12;
   const speciesId = decrypted.getUint16(growth, true);
   if (speciesId === 0) return null;
-  const species = rom.species(speciesId);
+  const species = data.species(speciesId);
   const flagsRaw = memory.u8(address + 19);
   const experience = decrypted.getUint32(growth + 4, true);
-  const level = isBox ? rom.level(speciesId, experience) : memory.u8(address + 84);
+  const level = isBox ? data.level(speciesId, experience) : memory.u8(address + 84);
   if (level < 1 || level > 100) throw new Error(`Invalid Pokemon level ${level}.`);
   const storedId = decrypted.getUint8(growth + 10) & 31;
-  const nature = rom.nature(storedId === 26 ? personality % 25 : storedId);
+  const nature = data.nature(storedId === 26 ? personality % 25 : storedId);
   const ivWord = decrypted.getUint32(misc + 4, true);
   const ivs: Stats = {
     hp: (ivWord >>> 1) & 31, attack: (ivWord >>> 6) & 31, defense: (ivWord >>> 11) & 31,
@@ -55,15 +55,15 @@ export function readPokemon(
   const ppBonuses = decrypted.getUint8(growth + 8);
   const moves = Array.from({ length: 4 }, (_, slot) => {
     const id = decrypted.getUint16(attacks + slot * 2, true);
-    const move = rom.move(id);
+    const move = data.move(id);
     const pp = decrypted.getUint8(attacks + 8 + slot);
     const ppUps = (ppBonuses >>> (slot * 2)) & 3;
-    const basePp = move ? rom.basePp(id) : 0;
+    const basePp = move ? data.basePp(id) : 0;
     const maxPp = location.kind === 'opponent-party' ? null : basePp + Math.floor(basePp * ppUps / 5);
     if (maxPp !== null && pp > maxPp) throw new Error(`Invalid PP at ${JSON.stringify(location)}, move slot ${slot}.`);
     return { slot, move, pp, maxPp, ppUps };
   });
-  const stats: Stats = isBox ? rom.stats(species, level, ivs, evs, nature.id) : {
+  const stats: Stats = isBox ? data.stats(species, level, ivs, evs, nature.id) : {
     hp: memory.u16(address + 88), attack: memory.u16(address + 90), defense: memory.u16(address + 92),
     speed: memory.u16(address + 94), specialAttack: memory.u16(address + 96), specialDefense: memory.u16(address + 98),
   };
@@ -75,9 +75,9 @@ export function readPokemon(
     nickname: decodeGBAString(memory.bytes(address + 8, 10), 10),
     originalTrainerName: decodeGBAString(memory.bytes(address + 20, 7), 7),
     language: memory.u8(address + 18), flagsRaw, isEgg: !!(flagsRaw & 4), isBadEgg: !!(flagsRaw & 1),
-    heldItem: rom.item(decrypted.getUint16(growth + 2, true)), experience, level,
+    heldItem: data.item(decrypted.getUint16(growth + 2, true)), experience, level,
     friendship: decrypted.getUint8(growth + 9), nature: { ...nature, storedId },
-    ability: { ...rom.speciesAbility(speciesId, abilitySlot), slot: abilitySlot }, ivs, evs, moves,
+    ability: { ...data.speciesAbility(speciesId, abilitySlot), slot: abilitySlot }, ivs, evs, moves,
     condition: {
       source: isBox ? 'box-withdrawal-derivation' : 'party-memory', hp, stats,
       majorStatusRaw: isBox ? 0 : memory.u32(address + 80),
