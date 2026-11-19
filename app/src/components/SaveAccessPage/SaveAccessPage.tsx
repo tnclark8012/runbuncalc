@@ -4,7 +4,7 @@ import {SaveStateTile} from '../SaveStateTile/SaveStateTile';
 export function SaveAccessPage(props: SaveAccessPageProps) {
   const {target, state, files, result, busy, supported, error} = props;
   const ready = state?.access === 'ready';
-  const title = target === 'rom' ? 'Run & Bun ROM (.gba)' : 'John GBA snapshot (.jgN)';
+  const title = target === 'rom' ? 'Run & Bun ROM (.gba)' : 'John GBA snapshot (.jg0)';
   return <section aria-label={title}>
     <h2>{title}</h2>
     {error && <p role="alert" className="error">{error}</p>}
@@ -25,7 +25,8 @@ export function SaveAccessPage(props: SaveAccessPageProps) {
         </div>
         {props.truncated && <p>Only the first 200 snapshots are checked for matching screenshots. Choose a narrower folder.</p>}
         {!files.length && (ready || state.access === 'missing')
-          && <p>No matching .jgN/.jsN pairs found. Both files must have the same name and slot number.
+          && <p>No matching .jg0/.js0 pairs found. Both files must have the same name.
+            Only save-state slot 0 is supported.
             Subfolders are not scanned.</p>}
       </>}
     </fieldset>

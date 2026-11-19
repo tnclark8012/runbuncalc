@@ -4,7 +4,7 @@ import type {SaveStateTileProps} from './SaveStateTileProps';
 
 export function SaveStateTile({file, selected, onSelect}: SaveStateTileProps) {
   const [previewFailed, setPreviewFailed] = useState(false);
-  const label = file.name.replace(/\.jg[0-9]+$/i, '');
+  const label = file.name.replace(/\.jg0$/i, '');
   return <button type="button" className="save-state-tile" aria-pressed={selected}
     aria-label={file.name} title={file.name} onClick={() => onSelect(file.uri)}>
     {file.preview && !previewFailed

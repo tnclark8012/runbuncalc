@@ -18,7 +18,8 @@ function App() {
       Files and decoded data stay on your device.</p>
     <p>The supported Run &amp; Bun game-data tables are included.
       Other ROM revisions or modified games are not verified.</p>
-    <p>Each tile pairs a John GBA .jgN snapshot with its matching .jsN screenshot.
+    <p>Each tile pairs a John GBA .jg0 snapshot with its matching .js0 screenshot.
+      Only save-state slot 0 is supported, with one tile per game filename.
       The screenshot appears on the left; selecting the tile connects the snapshot.
       Wait for the emulator to finish saving before syncing.
       The snapshot is limited to 32 MiB.</p>

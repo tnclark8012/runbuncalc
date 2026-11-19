@@ -68,10 +68,11 @@ outside Android.
 
 1. Open **App settings** from the calculator.
 2. Choose your **John GBA save folder**, then tap a save-state tile. Each tile
-   pairs a `.jgN` snapshot with the same filename and slot's `.jsN` screenshot
+   pairs a `.jg0` snapshot with the same filename's `.js0` screenshot
    (for example, `save.jg0` and `save.js0`). The screenshot is on the left and
    the filename without its extension is the label. The selected tile is marked
-   **Connected** and its `.jgN` is used for Sync. No ROM file is required.
+   **Connected** and its `.jg0` is used for Sync. Only slot 0 is supported,
+   with one tile per game filename. No ROM file is required.
    Existing connections are retained; choose a folder to switch a legacy
    single-file connection to the tile picker.
 3. Return to the calculator. After the emulator finishes writing a snapshot, tap
@@ -149,13 +150,13 @@ checked before and after a read to detect common concurrent-write cases, but
 providers may omit metadata or reuse timestamps: this is not an atomic snapshot
 guarantee. Wait for the emulator to finish saving.
 
-The snapshot folder list shows only matching `.jgN`/`.jsN` pairs
-(case-insensitive, including the slot number). Unpaired files and directories
+The snapshot folder list shows only matching `.jg0`/`.js0` pairs
+(case-insensitive). Other slots, unpaired files, and directories
 are not shown. Screenshot documents are displayed locally through Capacitor's
 content-URI bridge using the folder's read grant; they are not uploaded or decoded
 as snapshots. A screenshot that cannot be displayed is marked unavailable, but
 its snapshot can still be selected. **Refresh folder** reloads the listing after
-the emulator creates or removes saves. Only `.jgN` documents can become the
+the emulator creates or removes saves. Only `.jg0` documents can become the
 snapshot selection; previews and other extensions are rejected before changing it.
 
 Settings retains the read/hash tools under **Connection diagnostics**. The calculator's Sync uses the
@@ -165,7 +166,7 @@ No arbitrary URI reader is exposed.
 
 ## Device acceptance check
 
-Choose a local save folder and verify that only matching `.jgN`/`.jsN` pairs
+Choose a local save folder and verify that only matching `.jg0`/`.js0` pairs
 appear, with screenshots and extension-free labels. Select a tile, read it,
 force-stop/reopen the app, and read again without another picker. Verify that
 the connected tile is retained and choosing another tile changes the snapshot

@@ -147,7 +147,7 @@ public final class SaveDocumentRepository {
     }
 
     private static String previewName(String snapshotName) {
-        return snapshotName.toLowerCase(Locale.ROOT).replaceFirst("\\.jg([0-9]+)$", ".js$1");
+        return snapshotName.toLowerCase(Locale.ROOT).replaceFirst("\\.jg0$", ".js0");
     }
 
     public JSObject selectFile(String value) throws SaveAccessException, IOException {
@@ -203,13 +203,13 @@ public final class SaveDocumentRepository {
     }
 
     private boolean allowsName(String name) {
-        return name != null && (rom ? name.matches("(?i).+\\.gba") : name.matches("(?i).+\\.jg[0-9]+"));
+        return name != null && (rom ? name.matches("(?i).+\\.gba") : name.matches("(?i).+\\.jg0"));
     }
 
     private void validateFile(Document document) throws SaveAccessException {
         if (document.directory || !allowsName(document.name)) {
             throw new SaveAccessException("INVALID_SELECTION",
-                rom ? "Select a Run & Bun ROM (.gba)." : "Select a John GBA snapshot (.jgN), not a .sav or .jsN preview.");
+                rom ? "Select a Run & Bun ROM (.gba)." : "Select a John GBA slot-0 snapshot (.jg0). Other slots, .sav files, and .js0 previews are not supported.");
         }
     }
 
