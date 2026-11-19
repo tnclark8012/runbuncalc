@@ -91,9 +91,41 @@ previews are not snapshots.
 
 Read/decode/conversion failures are reported without importing partial data.
 Missing or revoked documents require reselection in settings. Sync is manual,
-not a watcher or live emulator-memory connection. Snapshot bytes are not uploaded,
+not a watcher or live emulator-memory connection. During Sync, snapshot bytes
+are not uploaded,
 cached in web storage, bundled in the APK, or written to an intermediate file.
 No ROM is read during Sync.
+
+## Bug reports (Android and browser)
+
+The calculator's center column has an **App** section above Notes. Select
+**Report bug** to prepare a diagnostic ZIP locally. The first report explains
+public sharing; acknowledgment is remembered on that device/browser.
+
+1. Review the capture status and any missing diagnostics.
+2. Select **Save ZIP and open GitHub**. Android asks where to save the ZIP;
+   browsers download it. The ZIP filename is copied to the clipboard when
+   possible, or displayed for manual copying.
+3. In the GitHub issue editor, describe the bug and expected behavior, then use
+   the paperclip to attach the saved ZIP. Review its contents before posting.
+   The filename on the clipboard does not attach the file.
+
+The ZIP includes calculator controls (including unsaved notes), app-specific
+stored collections/settings, selected calculator runtime state, available decoded
+JG snapshots, a visible-viewport screenshot, and build/environment metadata.
+On Android it also reads the **currently connected JG file at report time**.
+That file may differ from the previously synced decoded snapshot; both are
+labelled separately. No additional JG copy is retained at sync time, and ROMs
+are not included. Native screenshots exclude Android system UI; browser
+screenshots render the visible page DOM and may differ from native rendering.
+
+Missing/disconnected JG data or other capture failures are listed in
+`manifest.json` and the report dialog; partial reports are allowed. A failed
+or cancelled Android ZIP save does not open GitHub. Browser downloads must be
+checked by the user because the page cannot verify that a download was retained.
+Nothing is uploaded automatically, and the app needs no GitHub token. Attaching
+the ZIP to a public issue makes its save, notes, and screenshot public.
+This is export-only, not an automatic restore, interaction-history, or RNG replay.
 
 ## GitHub APK builds
 

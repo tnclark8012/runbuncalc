@@ -1007,7 +1007,14 @@
                 </table>
             </fieldset>
         </div>
-        <div aria-label="Import team" role="region">
+        <div aria-label="App" role="region">
+            <fieldset class="app-section">
+                <legend align="center">App</legend>
+                <button id="report-bug" type="button"><img id="report-bug-sprite" src="./img/report-bug-caterpie.png" alt="" width="16" height="16" />Report bug</button>
+                <p id="report-bug-status" role="status" aria-live="polite"></p>
+            </fieldset>
+        </div>
+        <div aria-label="Notes" role="region">
             <fieldset class="note-button">
                 <legend align="center">Note</legend>
                 <button id="open-note">Open Notes</button>
@@ -1731,6 +1738,20 @@
     </div>
     <textarea cols="30" rows="10"></textarea>
 </div>
+
+<dialog id="bug-report-dialog" aria-labelledby="bug-report-title" data-html2canvas-ignore>
+    <h2 id="bug-report-title">Report bug</h2>
+    <p id="bug-report-privacy">The ZIP includes your decoded game save, the currently connected JG file when available, calculator state and notes, and a screenshot. Attaching it to a public GitHub issue makes these files public. Review the ZIP before attaching it. This notice is remembered on this device after you continue.</p>
+    <p id="bug-report-progress" role="status" aria-live="polite"></p>
+    <p id="bug-report-missing"></p>
+    <p><strong id="bug-report-filename"></strong></p>
+    <p>Save the ZIP, then attach it in GitHub's issue editor using the paperclip. The filename is copied for convenience; the file itself is not copied or attached automatically.</p>
+    <div class="bug-report-actions">
+        <button id="bug-report-save" type="button" disabled>Save ZIP and open GitHub</button>
+        <button id="bug-report-close" type="button">Cancel</button>
+        <a id="bug-report-open" target="_blank" rel="noopener noreferrer" hidden>Open GitHub issue editor</a>
+    </div>
+</dialog>
 
 </body>
 

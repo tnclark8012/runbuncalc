@@ -3,6 +3,8 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import { createRequire } from 'node:module';
 import offline from './offline-plugin.cjs';
+import webpack from 'webpack';
+import {execFileSync} from 'node:child_process';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -35,6 +37,13 @@ export default [{
     path: path.resolve(__dirname, 'dist'),
   },
   plugins: [
+    new webpack.DefinePlugin({
+      __REPORT_BUILD__: JSON.stringify({
+        revision: execFileSync('git', ['rev-parse', 'HEAD'], {encoding: 'utf8'}).trim(),
+        builtAt: new Date().toISOString(),
+        dexVersion: require('@runbuncalc/rbdex-data/package.json').version,
+      }),
+    }),
     new CopyWebpackPlugin({
       patterns: [
         { from: './*.html', to: '[name][ext]', context: 'src' },

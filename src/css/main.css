@@ -1,3 +1,44 @@
+.app-section {
+    text-align: center;
+}
+#report-bug {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 1px 6px;
+}
+#report-bug img {
+    object-fit: contain;
+    image-rendering: pixelated;
+}
+#report-bug-status:empty {
+    display: none;
+}
+#bug-report-dialog {
+    box-sizing: border-box;
+    width: min(540px, calc(100% - 32px));
+    max-height: calc(100% - 32px);
+    overflow: auto;
+    border: 1px solid #888;
+    border-radius: 8px;
+    padding: 20px;
+    background: var(--background, #fff);
+    color: var(--text, #222);
+    line-height: 1.5;
+}
+#bug-report-dialog::backdrop {
+    background: rgba(0, 0, 0, .6);
+}
+#bug-report-filename {
+    overflow-wrap: anywhere;
+}
+.bug-report-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    align-items: center;
+}
+
 /* header */
 a img {
     border: 0;
@@ -235,7 +276,7 @@ th {
 .poke-info {
     width: 30em;
 }
-.field-info, .poke-import , .note-button{
+.field-info, .poke-import, .note-button, .app-section {
     text-align: center;
     width: 27.5em;
 }

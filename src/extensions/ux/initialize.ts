@@ -3,8 +3,10 @@ import { LEVEL_CAP_CHECKPOINTS } from "../recommended-movesets";
 import { updateSets } from "../simulator/utils";
 import { initializeCalcCustomization } from "./calc-customization";
 import { initializeImportExportControls, initializePartyControls, refreshPlayerPokedex } from "./party";
+import { initializeBugReport } from './bug-report/report';
 
 export function initializeUx(): void {
+  initializeBugReport();
   initializeLevelCap();
   initializeCollectionSelection();
   adjustTabOrders(); 
