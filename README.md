@@ -15,7 +15,8 @@ generation ([`@smogon/calc`][1]) as well as [logic and markup for the official U
 ## RnB Calc Android app
 
 The Android companion in [`app/`](app/README.md) bundles the calculator locally.
-In **App settings**, select a John GBA snapshot; tap **Sync** on
+In **App settings**, choose your John GBA save folder and select a screenshot
+tile for a matching slot-0 `.jg0`/`.js0` pair; tap **Sync** on
 the calculator to decode and import boxes/party without an intermediate JSON file.
 No ROM selection is needed; the supported Run & Bun lookup tables are bundled.
 Sync replaces existing collections. See the app README for Capacitor development,

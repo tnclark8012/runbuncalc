@@ -31,7 +31,7 @@ export function useSaveAccess(target: SaveTarget) {
   const refresh = useCallback(async () => {
     const next = await saveAccess.getState({target});
     setState(next);
-    if (next.source === 'folder' && next.access === 'ready') {
+    if (next.source === 'folder' && (next.access === 'ready' || next.access === 'missing')) {
       const listing = await saveAccess.listFiles({target});
       setFiles(listing.files);
       setTruncated(listing.truncated);
@@ -42,8 +42,8 @@ export function useSaveAccess(target: SaveTarget) {
   }, [target]);
   const refreshConnection = useCallback(() => run(refresh), [run, refresh]);
 
-  const choose = (kind: 'file' | 'folder') => run(async () => {
-    const next = await (kind === 'file' ? saveAccess.chooseFile({target}) : saveAccess.chooseFolder({target}));
+  const chooseFolder = () => run(async () => {
+    const next = await saveAccess.chooseFolder({target});
     setState(next);
     setResult(null);
     setFiles([]);
@@ -52,8 +52,7 @@ export function useSaveAccess(target: SaveTarget) {
 
   return {
     target, state, files, truncated, result, busy, error, supported: supportsSaveAccess,
-    chooseFile: () => choose('file'),
-    chooseFolder: () => choose('folder'),
+    chooseFolder,
     refresh: refreshConnection,
     selectFile: (uri: string) => run(async () => {
       setState(await saveAccess.selectFile({uri, target}));

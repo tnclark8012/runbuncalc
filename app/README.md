@@ -67,9 +67,14 @@ outside Android.
 ## Sync into the calculator
 
 1. Open **App settings** from the calculator.
-2. Select your **John GBA snapshot (.jgN)**. No ROM file is required.
-   The connection can be a single document or a folder with a selected direct child.
-   The existing shell's save connection is retained as the snapshot selection.
+2. Choose your **John GBA save folder**, then tap a save-state tile. Each tile
+   pairs a `.jg0` snapshot with the same filename's `.js0` screenshot
+   (for example, `save.jg0` and `save.js0`). The screenshot is on the left and
+   the filename without its extension is the label. The selected tile is marked
+   **Connected** and its `.jg0` is used for Sync. Only slot 0 is supported,
+   with one tile per game filename. No ROM file is required.
+   Existing connections are retained; choose a folder to switch a legacy
+   single-file connection to the tile picker.
 3. Return to the calculator. After the emulator finishes writing a snapshot, tap
    **Sync** to reread the selected snapshot, decode, and import boxes and party.
 
@@ -139,28 +144,33 @@ the connection; migrations must be added when a future schema changes.
 Backup is disabled because restoring URI strings would not restore permission.
 
 Connecting a different folder clears the old selected file. Folder listings
-contain at most 200 direct child files, with explicit truncation; subfolders
+check at most 200 direct child snapshots for matching screenshots, with explicit truncation; subfolders
 require their own selection. Reads have an explicit 32 MiB limit. Metadata is
 checked before and after a read to detect common concurrent-write cases, but
 providers may omit metadata or reuse timestamps: this is not an atomic snapshot
 guarantee. Wait for the emulator to finish saving.
 
-The snapshot folder list shows only `.jgN` snapshots (case-insensitive).
-Other extensions, including `.jsN` previews, are
-rejected before changing the selection. Android's single-document picker uses
-MIME filters rather than filename-extension filters; providers may still show
-unsupported files if they label them as generic binary data. Use the connected
-folder list for exact extension filtering.
+The snapshot folder list shows only matching `.jg0`/`.js0` pairs
+(case-insensitive). Other slots, unpaired files, and directories
+are not shown. Screenshot documents are displayed locally through Capacitor's
+content-URI bridge using the folder's read grant; they are not uploaded or decoded
+as snapshots. A screenshot that cannot be displayed is marked unavailable, but
+its snapshot can still be selected. **Refresh folder** reloads the listing after
+the emulator creates or removes saves. Only `.jg0` documents can become the
+snapshot selection; previews and other extensions are rejected before changing it.
 
-Settings retains the diagnostic read/hash tools. The calculator's Sync uses the
+Settings retains the read/hash tools under **Connection diagnostics**. The calculator's Sync uses the
 same granted-document boundary and the reusable Run & Bun decoder, then calls
 the same validated box-import function used by the browser's Import box button.
 No arbitrary URI reader is exposed.
 
 ## Device acceptance check
 
-Connect a local save folder or file, read it, force-stop/reopen the app, and
-read again without another picker. Configure only the snapshot, return to
+Choose a local save folder and verify that only matching `.jg0`/`.js0` pairs
+appear, with screenshots and extension-free labels. Select a tile, read it,
+force-stop/reopen the app, and read again without another picker. Verify that
+the connected tile is retained and choosing another tile changes the snapshot
+used by Sync. Configure only the snapshot, return to
 the calculator and sync; check party/box counts and nicknames. Change the
 snapshot in the emulator, sync again, and verify the imported changes survive
 force-stop/reopen. Verify Sync ignores a missing/revoked legacy ROM selection.
