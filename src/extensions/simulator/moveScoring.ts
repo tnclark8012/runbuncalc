@@ -10,9 +10,6 @@ import { canFlinch, combinePerHitDamageRolls, curHPPercentage, getFinalSpeed, ge
 export function scoreCPUMoves(cpuResults: Result[], playerMove: MoveResult, state: BattleFieldState): MoveScore[] {
     let moveResults = toMoveResults(cpuResults);
     const moveResultsMap = new Map<string, number>();
-    const outcomeMap = new Map<string, number>();
-    let totalCombinationsCountingTiesAsSeparate = 0;
-    const seenRollsMap = new Map<string, MoveProbability[]>();
 
     const getMaxScoringMoves: (rollDamage: number[]) => MoveProbability[] =([m1RollDamage, m2RollDamage, m3RollDamage, m4RollDamage]): MoveProbability[] => {
         let map = new Map<MoveResult, number>();
@@ -40,25 +37,23 @@ export function scoreCPUMoves(cpuResults: Result[], playerMove: MoveResult, stat
         return flattened;
     }
 
-    const totalCombinationsScored = processCartesianProduct<number>([
-        ...moveResults.map(m => flattenMultiHitMoves(m.damageRollsPerHit)),
-    ], ([m1RollDamage, m2RollDamage, m3RollDamage, m4RollDamage]) => {
-        const seenRollsKey = JSON.stringify([m1RollDamage, m2RollDamage, m3RollDamage, m4RollDamage]);
-        if (!seenRollsMap.has(seenRollsKey)) {
-            seenRollsMap.set(seenRollsKey, getMaxScoringMoves([m1RollDamage, m2RollDamage, m3RollDamage, m4RollDamage]));
+    const weightedRolls = moveResults.map(move => {
+        const counts = new Map<number, number>();
+        for (const damage of flattenMultiHitMoves(move.damageRollsPerHit)) {
+            counts.set(damage, (counts.get(damage) ?? 0) + 1);
         }
+        return [...counts];
+    });
 
-        const maxScoringMoves = seenRollsMap.get(seenRollsKey)!;
-        const outcomeKey = JSON.stringify(maxScoringMoves.map(m => m.move.move.name));
-        outcomeMap.set(
-            outcomeKey, 
-            (outcomeMap.get(outcomeKey) || 0) + 1);
-
+    let totalCombinationsScored = 0;
+    processCartesianProduct(weightedRolls, rolls => {
+        // Each unique tuple stands for the product of its per-move roll counts.
+        const multiplicity = rolls.reduce((product, [, count]) => product * count, 1);
+        totalCombinationsScored += multiplicity;
+        const maxScoringMoves = getMaxScoringMoves(rolls.map(([damage]) => damage));
         for (let maxScoreMove of maxScoringMoves) {
-            totalCombinationsCountingTiesAsSeparate++;
-            moveResultsMap.set(
-                maxScoreMove.move.move.name, 
-                (moveResultsMap.get(maxScoreMove.move.move.name) || 0) + maxScoreMove.probability);
+            const name = maxScoreMove.move.move.name;
+            moveResultsMap.set(name, (moveResultsMap.get(name) ?? 0) + maxScoreMove.probability * multiplicity);
         }
     });
 

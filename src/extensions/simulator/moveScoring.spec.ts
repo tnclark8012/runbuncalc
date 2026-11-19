@@ -1,17 +1,45 @@
 /* eslint-disable max-len */
 
 import {
-  calculate
+  calculate, Field
 } from '@smogon/calc';
 import { gen } from '../configuration';
-import { importTeam } from './helper';
-import { createMove, megaEvolve, toMoveResult } from './moveScoring';
+import { create1v1BattleState, importTeam } from './helper';
+import { createMove, megaEvolve, scoreCPUMoves, toMoveResult } from './moveScoring';
 import { inGen } from './test-helper';
 import { combinePerHitDamageRolls } from './utils';
 
 const RunAndBun = 8;
 inGen(RunAndBun, ({ }) => {
   describe('Move Scoring', () => {
+    test.each([
+      { scratchRolls: [8, 8, 12] },
+      { scratchRolls: [[3, 3, 5], [5, 5, 7]] },
+    ])('weights duplicate rolls and ties ($scratchRolls)', ({ scratchRolls }) => {
+      const [cpu, player] = importTeam(`
+Meowth
+Level: 20
+- Scratch
+- Pound
+
+Snorlax
+Level: 20
+- Tackle
+`);
+      const field = new Field();
+      const scratch = calculate(gen, cpu, player, createMove(cpu, 'Scratch'), field);
+      const pound = calculate(gen, cpu, player, createMove(cpu, 'Pound'), field);
+      const playerMove = toMoveResult(calculate(gen, player, cpu, createMove(player, 'Tackle'), field));
+      scratch.damage = scratchRolls;
+      pound.damage = [8, 10, 10, 10];
+      const scores = scoreCPUMoves([scratch, pound], playerMove, create1v1BattleState(player, cpu));
+
+      expect(scores.map(score => score.move.move.name)).toEqual(['Scratch', 'Pound']);
+      // Among the 12 equally likely raw tuples, Scratch wins 4, Pound wins 6, and 2 tie.
+      expect(scores[0].getScores().find(score => score.modifier === 1)?.percentChance).toBeCloseTo(5 / 12, 12);
+      expect(scores[1].getScores().find(score => score.modifier === 1)?.percentChance).toBeCloseTo(7 / 12, 12);
+    });
+
     describe('Mega evolution', () => {
       test(`Mega evolve`, () => {
         let [Lopunny] = importTeam(`
