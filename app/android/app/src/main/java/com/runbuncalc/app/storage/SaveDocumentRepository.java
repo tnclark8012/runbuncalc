@@ -16,6 +16,11 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
 import java.util.Objects;
 
 public final class SaveDocumentRepository {
@@ -99,23 +104,50 @@ public final class SaveDocumentRepository {
         Uri children = DocumentsContract.buildChildDocumentsUriUsingTree(tree,
             DocumentsContract.getTreeDocumentId(tree));
         JSArray files = new JSArray();
+        List<Document> snapshots = new ArrayList<>();
         boolean truncated = false;
         try (Cursor cursor = query(children)) {
             while (cursor.moveToNext()) {
                 if (DocumentsContract.Document.MIME_TYPE_DIR.equals(cursor.getString(4))) continue;
                 if (!allowsName(cursor.getString(1))) continue;
-                if (files.length() == 200) {
+                if ((rom ? files.length() : snapshots.size()) == 200) {
                     truncated = true;
                     break;
                 }
                 Uri document = DocumentsContract.buildDocumentUriUsingTree(tree, cursor.getString(0));
-                files.put(document(cursor, document).json());
+                Document file = document(cursor, document);
+                if (rom) files.put(file.json());
+                else snapshots.add(file);
+            }
+        }
+        if (!rom) {
+            Map<String, Document> previews = new HashMap<>();
+            for (Document snapshot : snapshots) previews.put(previewName(snapshot.name), null);
+            try (Cursor cursor = query(children)) {
+                while (cursor.moveToNext()) {
+                    if (DocumentsContract.Document.MIME_TYPE_DIR.equals(cursor.getString(4))) continue;
+                    String name = cursor.getString(1);
+                    if (name == null || !previews.containsKey(name.toLowerCase(Locale.ROOT))) continue;
+                    Uri uri = DocumentsContract.buildDocumentUriUsingTree(tree, cursor.getString(0));
+                    previews.put(name.toLowerCase(Locale.ROOT), document(cursor, uri));
+                }
+            }
+            for (Document snapshot : snapshots) {
+                Document preview = previews.get(previewName(snapshot.name));
+                if (preview == null) continue;
+                JSObject file = snapshot.json();
+                file.put("preview", preview.json());
+                files.put(file);
             }
         }
         JSObject result = new JSObject();
         result.put("files", files);
         result.put("truncated", truncated);
         return result;
+    }
+
+    private static String previewName(String snapshotName) {
+        return snapshotName.toLowerCase(Locale.ROOT).replaceFirst("\\.jg([0-9]+)$", ".js$1");
     }
 
     public JSObject selectFile(String value) throws SaveAccessException, IOException {

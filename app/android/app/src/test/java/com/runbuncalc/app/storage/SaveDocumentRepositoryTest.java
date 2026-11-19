@@ -61,23 +61,39 @@ public class SaveDocumentRepositoryTest {
     }
 
     @Test
-    public void listsOnlyAllowedExtensionsForEachConnection() throws Exception {
+    public void listsOnlyMatchingSnapshotPreviewPairsAndKeepsRomListingUnchanged() throws Exception {
         org.json.JSONArray snapshots = repository.listFiles().getJSONArray("files");
         assertEquals(2, snapshots.length());
         assertEquals("save.jg0", snapshots.getJSONObject(0).getString("name"));
+        assertEquals("content://saves/tree/folder/document/save", snapshots.getJSONObject(0).getString("uri"));
+        assertEquals("content://saves/tree/folder/document/preview",
+            snapshots.getJSONObject(0).getJSONObject("preview").getString("uri"));
         assertEquals("other.JG9", snapshots.getJSONObject(1).getString("name"));
+        assertEquals("OTHER.Js9", snapshots.getJSONObject(1).getJSONObject("preview").getString("name"));
         new SaveSelectionStore(RuntimeEnvironment.getApplication(), "rom-connection")
             .save(SaveSelection.folder("content://saves/tree/folder"));
         org.json.JSONArray roms = new SaveDocumentRepository(RuntimeEnvironment.getApplication(), true)
             .listFiles().getJSONArray("files");
         assertEquals(1, roms.length());
         assertEquals("game.GBA", roms.getJSONObject(0).getString("name"));
+        assertFalse(roms.getJSONObject(0).has("preview"));
+    }
+
+    @Test
+    public void selectingAPairPersistsAndReadsTheSnapshotRatherThanItsPreview() throws Exception {
+        repository.connect(Uri.parse("content://saves/tree/folder"), true);
+        String uri = repository.listFiles().getJSONArray("files").getJSONObject(0).getString("uri");
+        repository.selectFile(uri);
+        SaveDocumentRepository reopened = new SaveDocumentRepository(RuntimeEnvironment.getApplication());
+        assertEquals(uri, reopened.getState().getString("selectedUri"));
+        assertEquals("save.jg0", reopened.readSelected(true).getJSONObject("document").getString("name"));
+        assertEquals("YWJj", reopened.readSelected(true).getString("dataBase64"));
     }
 
     @Test
     public void rejectsHiddenFilesWithoutReplacingTheSelectedSnapshot() throws Exception {
         repository.selectFile("content://saves/tree/folder/document/save");
-        for (String id : new String[] {"preview", "battery", "rom", "invalid"}) {
+        for (String id : new String[] {"preview", "other-preview", "battery", "rom", "invalid"}) {
             assertEquals("INVALID_SELECTION", assertThrows(SaveAccessException.class,
                 () -> repository.selectFile("content://saves/tree/folder/document/" + id)).code);
         }
@@ -155,11 +171,16 @@ public class SaveDocumentRepositoryTest {
         @Override
         public Cursor query(Uri uri, String[] projection, String selection, String[] args, String order) {
             MatrixCursor cursor = new MatrixCursor(projection);
+            if (uri.toString().equals("content://saves/tree/folder/document/folder")) {
+                cursor.addRow(new Object[] {"folder", "folder", null, null, DocumentsContract.Document.MIME_TYPE_DIR});
+                return cursor;
+            }
             if (uri.toString().equals("content://saves/document/preview")) {
                 cursor.addRow(new Object[] {"preview", "save.js0", 3L, 1L, "application/octet-stream"});
                 return cursor;
             }
-            if (uri.toString().equals("content://saves/document/save")) {
+            if (uri.toString().equals("content://saves/document/save")
+                || uri.toString().equals("content://saves/tree/folder/document/save")) {
                 cursor.addRow(new Object[] {"save", "save.jg0", changes && metadataReads++ > 0 ? 4L : 3L, 1L, "application/octet-stream"});
                 return cursor;
             }
@@ -169,6 +190,12 @@ public class SaveDocumentRepositoryTest {
             cursor.addRow(new Object[] {"invalid", "save.jg0.bak", 3L, 1L, "application/octet-stream"});
             cursor.addRow(new Object[] {"save", "save.jg0", 3L, 1L, "application/octet-stream"});
             cursor.addRow(new Object[] {"other", "other.JG9", 3L, 1L, "application/octet-stream"});
+            cursor.addRow(new Object[] {"other-preview", "OTHER.Js9", 3L, 1L, "application/octet-stream"});
+            cursor.addRow(new Object[] {"wrong-slot", "save.jg1", 3L, 1L, "application/octet-stream"});
+            cursor.addRow(new Object[] {"orphan", "orphan.js0", 3L, 1L, "image/jpeg"});
+            cursor.addRow(new Object[] {"wrong-slot-preview", "save.js2", 3L, 1L, "image/jpeg"});
+            cursor.addRow(new Object[] {"directory-preview-save", "directory.jg0", 3L, 1L, "application/octet-stream"});
+            cursor.addRow(new Object[] {"directory-preview", "directory.js0", null, null, DocumentsContract.Document.MIME_TYPE_DIR});
             cursor.addRow(new Object[] {"rom", "game.GBA", 3L, 1L, "application/octet-stream"});
             cursor.addRow(new Object[] {"subfolder", "folder", null, null, DocumentsContract.Document.MIME_TYPE_DIR});
             return cursor;

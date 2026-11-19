@@ -12,13 +12,14 @@ function App() {
   return <main>
     <h1>App settings</h1>
     <a href="index.html">Back to calculator</a>
-    <p>Select your emulator snapshot once. No ROM file is needed.
+    <p>Choose your emulator save folder, then select a save-state tile. No ROM file is needed.
       On the calculator, use <strong>Sync</strong> to
       read the latest snapshot, decode it, and replace the imported boxes and party.
       Files and decoded data stay on your device.</p>
     <p>The supported Run &amp; Bun game-data tables are included.
       Other ROM revisions or modified games are not verified.</p>
-    <p>Use a John GBA .jgN snapshot, not a battery .sav or .jsN preview.
+    <p>Each tile pairs a John GBA .jgN snapshot with its matching .jsN screenshot.
+      The screenshot appears on the left; selecting the tile connects the snapshot.
       Wait for the emulator to finish saving before syncing.
       The snapshot is limited to 32 MiB.</p>
     {!snapshot.supported && <p role="status">File connections require the Android app.

@@ -3,6 +3,7 @@ export interface SaveDocument {
   name: string;
   size: number | null;
   modifiedAt: number | null;
+  preview?: SaveDocument;
 }
 
 export interface SaveAccessState {

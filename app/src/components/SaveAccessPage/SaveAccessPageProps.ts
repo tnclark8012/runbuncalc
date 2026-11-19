@@ -9,7 +9,6 @@ export interface SaveAccessPageProps {
   busy: boolean;
   error: string | null;
   supported: boolean;
-  chooseFile(): void;
   chooseFolder(): void;
   refresh(): void;
   selectFile(uri: string): void;
