@@ -97,6 +97,11 @@ No ROM is read during Sync.
 
 ## GitHub APK builds
 
+Web-only update bundles have a separate [release pipeline](../docs/web-releases.md)
+with continuous and stable channels, CI-run promotion, and version tags.
+The installed app does not consume those updates yet; this is separate from APK
+distribution below.
+
 The **RnB Calc Android** workflow builds the web UI, syncs Capacitor, runs Android
 unit tests and lint, and uploads `rnb-calc-debug` containing `app-debug.apk`.
 It runs for app or calculator changes on pushes and pull requests, or manually after the

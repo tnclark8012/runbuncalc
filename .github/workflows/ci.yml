@@ -26,9 +26,26 @@ jobs:
       with:
         node-version: ${{ matrix.node-version }}
     - run: npm install
+    - run: npm run test:releases
     - run: npm run test
       env:
         CI: true
+    - run: npm ci --prefix app --no-audit --no-fund
+    - run: npm --prefix app run build
+    - name: Package Android-ready web update
+      if: github.event_name == 'push'
+      run: node scripts/web-release.mjs pack
+    - uses: actions/upload-artifact@v4
+      if: github.event_name == 'push'
+      with:
+        name: web-release-${{ github.run_attempt }}
+        path: web-release/
+        if-no-files-found: error
+        retention-days: 30
+    - uses: actions/upload-pages-artifact@v3
+      if: github.event_name == 'push'
+      with:
+        path: dist
 
   publish:
     if: ${{ github.event_name == 'push' }}
@@ -43,18 +60,6 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
 
     steps:
-    - uses: actions/checkout@v4
-    - name: Use Node.js 22.x
-      uses: Zarel/setup-node@patch-1
-      with:
-        node-version: 22.x
-    - run: npm install
-    - name: Build
-      run: npm run build
-    - name: Upload artifact for GitHub Pages
-      uses: actions/upload-pages-artifact@v3
-      with:
-        path: 'dist'
     - uses: actions/configure-pages@v5
     - name: Deploy to GitHub Pages
       id: deployment

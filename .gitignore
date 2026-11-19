@@ -7,5 +7,6 @@ pnpm-debug.log
 npm-debug.log
 obj
 dist/
+web-release/
 __testdata__/
 *.gba
