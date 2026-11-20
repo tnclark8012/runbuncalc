@@ -1,0 +1,640 @@
+<!doctype html>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Throwaway battle-search experiment</title>
+<style>
+  body { max-width: 1000px; margin: 32px auto; padding: 0 18px; font: 16px/1.5 system-ui; color: #172531; background: #f7fafb; }
+  h1 { line-height: 1.15; } button, select { font: inherit; margin: 4px; padding: 8px; }
+  button { cursor: pointer; } section { background: white; padding: 18px; margin: 18px 0; border: 1px solid #d5e0e5; }
+  pre { white-space: pre-wrap; overflow-wrap: anywhere; font-size: 13px; }
+  .warning { border-left: 5px solid #b65b00; padding-left: 16px; }
+  [aria-selected="true"] { background: #cdebf2; }
+</style>
+<h1>Can human planning shortcuts accelerate verified search?</h1>
+<p class="warning"><strong>THROWAWAY SYNTHETIC EXPERIMENT.</strong> Not a Pokemon simulator,
+  a production algorithm, or evidence of Android feasibility. No uploads or automatic persistence.
+  Open this file directly. The desktop runner uses the identical inline logic.</p>
+<p>Compare matchup-first team/switch ordering, coarse HP groups refined after a failed check,
+  and strongest-move-first ordering. Every proposed complete plan goes through an independent
+  checker retaining every modeled outcome. Compare exact-state checking with conservative HP-range
+  coverage (with exact fallback). Only zero-faint plans are synthesized;
+  positive-tolerance synthesis, hidden-state inference, LAO*/BRTDP and real mechanics are not implemented.</p>
+<section>
+  <h2>Free play</h2>
+  <label>Situation <select id="fixture"></select></label>
+  <label>Search <select id="mode">
+    <option value="baseline">Unassisted exact-state baseline</option>
+    <option value="matchup">Matchups first</option>
+    <option value="ranges">Adaptive HP groups</option>
+    <option value="progress">Strongest moves first</option>
+    <option value="combined">All three</option>
+  </select></label>
+  <label>Verification <select id="verifier">
+    <option value="exact">Every reachable exact state</option>
+    <option value="interval">Whole HP ranges, exact fallback</option>
+  </select></label>
+  <p>
+    <button id="reset">Reset situation</button>
+    <button id="step">Work for one short slice</button>
+    <button id="run">Run / continue (five active minutes maximum)</button>
+    <button id="pause">Pause</button>
+    <button id="resume">Checkpoint and restore in memory</button>
+    <button id="edit">Edit starting HP (invalidates old work)</button>
+    <button id="download">Download measurements</button>
+  </p>
+</section>
+<section>
+  <h2>Current state and evidence</h2>
+  <div id="summary"></div>
+  <details><summary>Full experiment state and counters</summary><pre id="state"></pre></details>
+</section>
+<section>
+  <h2>Guided walkthroughs</h2>
+  <div id="tabs"></div><p id="description"></p><div id="steps"></div>
+</section>
+<script id="search-kernel">
+"use strict";
+globalThis.BattleSearchExperiment = (() => {
+  const VERSION = "synthetic-129-v2";
+  const clone = value => JSON.parse(JSON.stringify(value));
+  const key = value => JSON.stringify(value);
+  const now = () => performance.now();
+  const gcd = (a, b) => b === 0n ? a : gcd(b, a % b);
+  function fraction(n, d = 1n) {
+    n = BigInt(n); d = BigInt(d);
+    if (d <= 0n || n < 0n) throw Error("Invalid nonnegative fraction");
+    const g = gcd(n, d);
+    return [n / g, d / g];
+  }
+  const add = (a, b) => fraction(a[0] * b[1] + b[0] * a[1], a[1] * b[1]);
+  const mul = (a, b) => fraction(a[0] * b[0], a[1] * b[1]);
+  const show = a => `${a[0]}/${a[1]}`;
+  const atMost = (a, b) => a[0] * b[1] <= b[0] * a[1];
+  const ZERO = fraction(0), ONE = fraction(1);
+  const edge = (state, n = 1, d = 1) => ({ state, p: fraction(n, d) });
+  const action = (id, damage = 0, matchup = 0) => ({ id, damage, matchup });
+  const terminal = (result, fainted = false) => ({ result, fainted });
+  const PAUSE = Symbol("computation boundary");
+  function aggregate(events, enabled = true) {
+    const total = events.reduce((s, e) => add(s, e.p), ZERO);
+    if (show(total) !== "1/1" || events.some(e => e.p[0] <= 0n))
+      throw Error("A modeled action must conserve all positive probability mass");
+    if (!enabled) return events;
+    const grouped = new Map();
+    for (const e of events) {
+      const k = key(e.state);
+      if (grouped.has(k)) grouped.get(k).p = add(grouped.get(k).p, e.p);
+      else grouped.set(k, { state: e.state, p: e.p });
+    }
+    return [...grouped.values()];
+  }
+  function graphFixture(id, nodes, start, options = {}) {
+    return {
+      id, description: options.description || id,
+      preparation: [{ team: [{ name: "Synthetic fixed team", item: null }], score: 0 }],
+      start: () => clone(start), actions: s => nodes[s.node]?.actions || [],
+      outcomes: (s, a) => nodes[s.node].next(s, a), ...options
+    };
+  }
+  function fixture(id, edited = false) {
+    if (id === "threshold") return graphFixture(id, {
+      lead: { actions: [action("Defeat the lead", 100)], next: () =>
+        Array.from({ length: 16 }, (_, i) => edge({ node: "reserve", hp: [20 + i * 4], fainted: false }, 1, 16)) },
+      reserve: { actions: [action("Use high-HP switch-in", 100), action("Use low-HP bait line", 20)], next: (s, a) =>
+        [edge(terminal((s.hp[0] >= 70) === (a.id === "Use high-HP switch-in") ? "win" : "loss"))] }
+    }, { node: "lead", hp: [edited ? 99 : 100], fainted: false }, {
+      description: "Synthetic threshold: 16 HP outcomes, two incompatible continuations at 70 HP. A coarse representative alone is unsound."
+    });
+    if (id === "uniform") return graphFixture(id, {
+      lead: { actions: [action("Defeat the lead", 100)], next: () =>
+        Array.from({ length: 16 }, (_, i) => edge({ node: "reserve", hp: [20 + i * 4], fainted: false }, 1, 16)) },
+      reserve: { actions: [action("One continuation works for the entire range", 20)], next: () => [edge(terminal("win"))] }
+    }, { node: "lead", hp: [100], fainted: false }, {
+      description: "All 16 exact HP values admit the same continuation: range discovery can share work, but checking still covers all 16."
+    });
+    if (id === "interior-trap") return graphFixture(id, {
+      lead: { actions: [action("Enter the HP range")], next: () =>
+        Array.from({ length: 16 }, (_, i) => edge({ node: "reserve", hp: [20 + i * 4], fainted: false }, 1, 16)) },
+      reserve: { actions: [action("Continuation with an interior trap")], next: s =>
+        [edge(terminal(s.hp[0] === 40 ? "loss" : "win"))] }
+    }, { node: "lead", hp: [100], fainted: false }, {
+      description: "Both HP endpoints win, but 40 HP loses. This kernel has no range-proof rule and must fall back to exact checking."
+    });
+    if (id === "rare") return graphFixture(id, {
+      lead: { actions: [action("Risky victory", 100)], next: () =>
+        [edge(terminal("win"), 999999, 1000000), edge(terminal("win", true), 1, 1000000)] }
+    }, { node: "lead", hp: [100], fainted: false }, {
+      description: "One-in-a-million faint followed by victory. Zero-faint search must not qualify it; the fixed-policy checker reports exact risk."
+    });
+    if (id === "bait") return graphFixture(id, {
+      lead: { actions: [action("Strong attack", 100), action("Lower-damage HP bait", 20)],
+        next: (_, a) => [edge(terminal(a.damage === 100 ? "loss" : "win"))] }
+    }, { node: "lead", hp: [100], fainted: false }, {
+      description: "Synthetic HP-bait counterexample: only the weaker attack wins. Strongest-first must remain ordering, not deletion."
+    });
+    if (id === "hidden") return graphFixture(id, {
+      lead: { actions: [action("Commit to attack", 100), action("Commit to protection", 0)], next: () =>
+        [edge(terminal("win"), 1, 2), edge(terminal("loss"), 1, 2)] }
+    }, { node: "lead", hp: [100], fainted: false }, {
+      description: "CPU choice is unrevealed at the root. Either commitment loses in one supported case; no pre-reveal branching is permitted."
+    });
+    if (id === "revealed") return graphFixture(id, {
+      lead: { actions: [action("Wait for observation")], next: () =>
+        [edge({ node: "attack", hp: [100] }, 1, 2), edge({ node: "protect", hp: [100] }, 1, 2)] },
+      attack: { actions: [action("Respond to observed attack")], next: () => [edge(terminal("win"))] },
+      protect: { actions: [action("Respond to observed protection")], next: () => [edge(terminal("win"))] }
+    }, { node: "lead", hp: [100] }, {
+      description: "The observation is revealed before the next decision; next-turn branching is legitimate."
+    });
+    if (id === "cycle") return graphFixture(id, {
+      lead: { actions: [action("Repeat forever or win")], next: s =>
+        [edge(s, 1, 2), edge(terminal("win"), 1, 2)] }
+    }, { node: "lead", hp: [100], fainted: false }, {
+      description: "Half self-loop, half victory: almost-sure winning is not sure eventual victory. Cyclic synthesis is explicitly unsupported."
+    });
+    if (id === "chain") {
+      return {
+        id, description: "A 24-step finite chain: there is no invented turn-20 loss.",
+        preparation: [{ team: [{ name: "Chain", item: null }], score: 0 }],
+        start: () => ({ turn: 0, hp: [100] }),
+        actions: () => [action("Advance")],
+        outcomes: s => [edge(s.turn === 23 ? terminal("win") : { ...s, turn: s.turn + 1 })]
+      };
+    }
+    if (id === "hp-progress") return {
+      id, description: "HP itself is the finite progress measure. A spurious coarse cycle must trigger exact fallback, not rejection.",
+      preparation: [{ team: [{ name: "HP progress", item: null }], score: 0 }],
+      start: () => ({ hp: [3] }), actions: () => [action("Advance")],
+      outcomes: s => [edge(s.hp[0] === 1 ? terminal("win") : { hp: [s.hp[0] - 1] })]
+    };
+    if (!["fixed", "partial", "open", "stress"].includes(id)) throw Error(`Unknown fixture: ${id}`);
+    const size = id === "stress" ? 6 : 4;
+    const roster = Array.from({ length: size }, (_, i) => ({
+      name: `Owned ${i + 1}`, type: i % 3, item: null, hp: edited && i === 0 ? 39 : 80
+    }));
+    const fixed = id === "fixed" ? roster.slice(0, 3) : id === "partial" ? roster.slice(0, 1) : [];
+    const preparation = [];
+    function choose(from, team) {
+      if (team.length === 3) {
+        preparation.push({ team: clone(team), score: new Set(team.map(p => p.type)).size });
+        return;
+      }
+      for (let i = from; i < roster.length; i++) choose(i + 1, [...team, roster[i]]);
+    }
+    choose(fixed.length, fixed);
+    const enemyCount = id === "stress" ? 4 : 2;
+    return {
+      id, description: "Synthetic resource-limited singles gauntlet with voluntary switches, two CPU attacks, 16 damage indices, finite PP and explicit recoil. Not Run & Bun mechanics.",
+      preparation,
+      start: prep => ({
+        hp: prep.team.map(p => p.hp), types: prep.team.map(p => p.type), pp: [4, 4, 4],
+        active: 0, enemy: 0, enemyHP: 55, enemyPP: 3, fainted: false
+      }),
+      actions: s => {
+        const result = [];
+        if (s.hp[s.active] > 0) {
+          if (s.pp[s.active]) result.push(action("Quick strike", 16), action("Heavy strike", 35));
+          else result.push(action("Player recoil attack", 25));
+        }
+        for (let i = 0; i < s.hp.length; i++) if (i !== s.active && s.hp[i] > 0)
+          result.push(action(`Switch ${i}`, 0, s.types[i] === s.enemy % 3 ? 100 : 0));
+        return result;
+      },
+      outcomes: (s, a) => {
+        const events = [];
+        for (let cpu = 0; cpu < 2; cpu++) for (let roll = 0; roll < 16; roll++) {
+          const next = clone(s);
+          const switching = a.id.startsWith("Switch");
+          if (switching) next.active = Number(a.id.split(" ")[1]);
+          const active = next.active;
+          const favorable = next.types[active] === next.enemy % 3;
+          const hit = a.damage + (favorable ? 25 : 0);
+          if (a.id === "Quick strike") next.enemyHP = Math.max(0, next.enemyHP - hit);
+          if (next.enemyHP > 0) {
+            const incoming = next.enemyPP ? (favorable ? 5 : 15) + cpu * 3 + roll % 4 : 22;
+            next.hp[active] = Math.max(0, next.hp[active] - incoming);
+            if (!next.enemyPP) next.enemyHP = Math.max(0, next.enemyHP - 18);
+            next.enemyPP = Math.max(0, next.enemyPP - 1);
+          }
+          if (!switching) {
+            next.pp[active] = Math.max(0, next.pp[active] - 1);
+            if (next.hp[active] > 0 && a.id !== "Quick strike")
+              next.enemyHP = Math.max(0, next.enemyHP - hit);
+            if (a.id === "Player recoil attack") next.hp[active] = Math.max(0, next.hp[active] - 8);
+          }
+          next.fainted ||= next.hp.some(hp => hp === 0);
+          if (!next.hp.some(hp => hp > 0)) events.push(edge(terminal("loss", true), 1, 32));
+          else if (!next.enemyHP && next.enemy + 1 === enemyCount)
+            events.push(edge(terminal("win", next.fainted), 1, 32));
+          else {
+            if (!next.enemyHP) {
+              next.enemy++;
+              next.enemyHP = 55;
+              next.enemyPP = 3;
+            }
+            events.push(edge(next, 1, 32));
+          }
+        }
+        return events;
+      }
+    };
+  }
+  const names = ["threshold", "uniform", "interior-trap", "rare", "bait", "hidden", "revealed", "cycle", "chain", "hp-progress", "fixed", "partial", "open", "stress"];
+  const flags = mode => ({
+    matchup: mode === "matchup" || mode === "combined",
+    ranges: mode === "ranges" || mode === "combined",
+    progress: mode === "progress" || mode === "combined"
+  });
+  function create(id, mode = "baseline", options = {}) {
+    const started = now();
+    const config = { aggregate: true, edited: false, maxStates: 20000, verifier: "exact", ...options };
+    const f = fixture(id, config.edited), fl = flags(mode);
+    const preparations = clone(f.preparation);
+    if (fl.matchup) preparations.sort((a, b) => b.score - a.score);
+    const preprocessingMs = now() - started;
+    return {
+      version: VERSION, id, mode, config, input: key([VERSION, id, config, preparations]),
+      preparations, teamIndex: 0, status: "searching", memo: {}, policy: {}, representatives: {},
+      cuts: {}, forceExact: false, storedStates: 0, verificationMemo: {}, rangeProof: null,
+      phase: "discover", candidate: null, verdict: null,
+      stats: { activeMs: preprocessingMs, preprocessingMs, firstCandidateMs: null, qualifiedMs: null, visits: 0, expansions: 0,
+        memoHits: 0, rawEvents: 0, aggregatedEvents: 0, verificationStates: 0,
+        refinements: 0, pauses: 0, peakStoredStates: 0, teamsTried: 0, maxAtomicMs: 0,
+        intervalBoxes: 0, intervalSplits: 0, intervalEventPairs: 0, intervalFallbacks: 0 },
+      verification: null
+    };
+  }
+  function project(s, session) {
+    if (!flags(session.mode).ranges || session.forceExact || !s.hp) return key(s);
+    const base = key({ ...s, hp: [] }), cuts = session.cuts[base] || [];
+    return key({ ...s, hp: s.hp.map((hp, i) => {
+      const points = cuts[i] || [];
+      return points.filter(p => p <= hp).length;
+    }) });
+  }
+  function ordered(f, s, session) {
+    const fl = flags(session.mode);
+    return [...f.actions(s)].sort((a, b) =>
+      (fl.matchup ? b.matchup - a.matchup : 0) || (fl.progress ? b.damage - a.damage : 0));
+  }
+  function clearSearch(session) {
+    session.memo = {}; session.policy = {}; session.representatives = {};
+    session.verificationMemo = {}; session.verification = null; session.rangeProof = null;
+    session.storedStates = 0; session.phase = "discover";
+  }
+  function work(session, milliseconds = 20, maxVisits = Infinity) {
+    if (session.status !== "searching") return session;
+    const f = fixture(session.id, session.config.edited), started = now();
+    const initialVisits = session.stats.visits;
+    function tick() {
+      if (now() - started >= milliseconds || session.stats.visits - initialVisits >= maxVisits) throw PAUSE;
+      session.stats.visits++;
+    }
+    function store(map, k, value) {
+      if (!Object.hasOwn(map, k)) {
+        if (session.storedStates >= session.config.maxStates) {
+          session.status = "memory-boundary"; throw PAUSE;
+        }
+        session.storedStates++;
+        session.stats.peakStoredStates = Math.max(session.stats.peakStoredStates, session.storedStates);
+      }
+      map[k] = value;
+      return value;
+    }
+    function events(s, a) {
+      const before = now(), raw = f.outcomes(s, a), grouped = aggregate(raw, session.config.aggregate);
+      session.stats.maxAtomicMs = Math.max(session.stats.maxAtomicMs, now() - before);
+      session.stats.rawEvents += raw.length; session.stats.aggregatedEvents += grouped.length;
+      return grouped;
+    }
+    function discover(original, active = new Set()) {
+      tick();
+      if (original.result) return original.result === "win" && !original.fainted;
+      if (original.fainted) return false;
+      const k = project(original, session);
+      if (Object.hasOwn(session.memo, k)) { session.stats.memoHits++; return session.memo[k]; }
+      if (active.has(k)) return null;
+      const s = session.representatives[k] || store(session.representatives, k, clone(original));
+      active.add(k); session.stats.expansions++;
+      let unknown = false;
+      for (const a of ordered(f, s, session)) {
+        let all = true;
+        for (const e of events(s, a)) {
+          const result = discover(e.state, active);
+          if (result !== true) { all = false; unknown ||= result === null; break; }
+        }
+        if (all) {
+          session.policy[k] = a.id; session.memo[k] = true; active.delete(k); return true;
+        }
+      }
+      active.delete(k);
+      if (!unknown) session.memo[k] = false;
+      return unknown ? null : false;
+    }
+    function verify(s, active = new Set(), path = []) {
+      tick();
+      if (s.result) return {
+        sure: s.result === "win", low: s.fainted ? ONE : ZERO, high: s.fainted ? ONE : ZERO,
+        unresolved: ZERO, cyclic: false, counterexample: s.result === "win" && !s.fainted ? [] : [...path, s]
+      };
+      const exact = key(s);
+      if (session.verificationMemo[exact]) return session.verificationMemo[exact];
+      if (active.has(exact)) return {
+        sure: false, low: s.fainted ? ONE : ZERO, high: ONE, unresolved: ONE, cyclic: true, counterexample: [...path, s]
+      };
+      const selected = session.policy[project(s, session)];
+      const a = f.actions(s).find(candidate => candidate.id === selected);
+      if (!a) return { sure: null, low: s.fainted ? ONE : ZERO, high: ONE,
+        unresolved: ONE, cyclic: false, counterexample: [...path, s] };
+      active.add(exact); session.stats.verificationStates++;
+      let sure = true, low = ZERO, high = ZERO, unresolved = ZERO, cyclic = false, counterexample = [];
+      for (const e of events(s, a)) {
+        const v = verify(e.state, active, [...path, s]);
+        if (v.sure === false) sure = false;
+        else if (v.sure === null && sure === true) sure = null;
+        low = add(low, mul(e.p, v.low)); high = add(high, mul(e.p, v.high));
+        unresolved = add(unresolved, mul(e.p, v.unresolved));
+        cyclic ||= v.cyclic;
+        if (!counterexample.length && v.counterexample.length) counterexample = v.counterexample;
+      }
+      active.delete(exact);
+      const result = { sure, low, high, unresolved, cyclic, counterexample };
+      // Do not cache a context-dependent cyclic result.
+      if (!cyclic) store(session.verificationMemo, exact, result);
+      return result;
+    }
+    function verifyRanges(start) {
+      // These kernels are piecewise affine in HP; this is not a generic endpoint theorem.
+      const supported = ["uniform", "threshold", "fixed", "partial", "open", "stress"];
+      const withoutHP = s => key({ ...s, hp: [] });
+      function rank(s) {
+        if (s.result) return [0, 0, 0];
+        if (s.node) return [s.node === "lead" ? 2 : 1, 0, 0];
+        return [5 - s.enemy, s.enemyPP, s.enemyHP];
+      }
+      function decreases(before, after) {
+        const a = rank(before), b = rank(after);
+        for (let i = 0; i < a.length; i++) if (a[i] !== b[i]) return b[i] < a[i];
+        return false;
+      }
+      function split(box) {
+        const base = withoutHP(box.low), cuts = session.cuts[base] || [];
+        for (let i = 0; i < box.low.hp.length; i++) {
+          const points = session.forceExact || !flags(session.mode).ranges
+            ? [box.low.hp[i] + 1] : cuts[i] || [];
+          const boundaries = session.id === "threshold" && box.low.node === "reserve"
+            ? [...points, 70] : points;
+          const point = boundaries.find(p => box.low.hp[i] < p && p <= box.high.hp[i]);
+          if (point !== undefined) {
+            const left = clone(box), right = clone(box);
+            left.high.hp[i] = point - 1; right.low.hp[i] = point;
+            session.stats.intervalSplits++;
+            return [...split(left), ...split(right)];
+          }
+        }
+        return [box];
+      }
+      if (!session.rangeProof) {
+        session.rangeProof = { frontier: [], next: {}, index: 0,
+          fallback: !supported.includes(session.id) || !flags(session.mode).ranges || session.forceExact };
+        if (!session.rangeProof.fallback)
+          session.rangeProof.frontier.push(store({}, "root", { low: clone(start), high: clone(start) }));
+        else session.stats.intervalFallbacks++;
+      }
+      const proof = session.rangeProof;
+      function fallback() {
+        session.stats.intervalFallbacks++;
+        session.storedStates -= proof.frontier.length + Object.keys(proof.next).length;
+        proof.frontier = []; proof.next = {}; proof.fallback = true;
+        return null;
+      }
+      if (proof.fallback) return null;
+      while (proof.frontier.length) {
+        tick();
+        if (proof.index === proof.frontier.length) {
+          session.storedStates -= proof.frontier.length;
+          proof.frontier = Object.values(proof.next); proof.next = {}; proof.index = 0;
+          continue;
+        }
+        const before = now();
+        for (const box of split(proof.frontier[proof.index])) {
+          session.stats.intervalBoxes++;
+          if (box.low.fainted || box.low.hp.some(hp => hp <= 0)) return fallback();
+          const selected = session.policy[project(box.low, session)];
+          if (selected !== session.policy[project(box.high, session)]) return fallback();
+          const a = f.actions(box.low).find(candidate => candidate.id === selected);
+          if (!a) return fallback();
+          const low = f.outcomes(box.low, a), high = f.outcomes(box.high, a);
+          aggregate(low); aggregate(high);
+          if (low.length !== high.length) throw Error("Interval event alignment failed");
+          session.stats.intervalEventPairs += low.length;
+          for (let i = 0; i < low.length; i++) {
+            const l = low[i].state, h = high[i].state;
+            if (show(low[i].p) !== show(high[i].p)) throw Error("Interval event probability changed with HP");
+            if (withoutHP(l) !== withoutHP(h) || l.fainted || h.fainted) return fallback();
+            if (!decreases(box.low, l)) return fallback();
+            if (l.result) {
+              if (l.result !== "win") return fallback();
+              continue;
+            }
+            if (l.hp.some((hp, j) => hp <= 0 || hp > h.hp[j])) return fallback();
+            const k = withoutHP(l), previous = proof.next[k];
+            if (previous) {
+              previous.low.hp = previous.low.hp.map((hp, j) => Math.min(hp, l.hp[j]));
+              previous.high.hp = previous.high.hp.map((hp, j) => Math.max(hp, h.hp[j]));
+            } else store(proof.next, k, { low: clone(l), high: clone(h) });
+          }
+        }
+        proof.index++;
+        session.stats.maxAtomicMs = Math.max(session.stats.maxAtomicMs, now() - before);
+      }
+      return { sure: true, low: ZERO, high: ZERO, unresolved: ZERO, counterexample: [] };
+    }
+    try {
+      while (session.status === "searching") {
+        tick();
+        const prep = session.preparations[session.teamIndex];
+        if (!prep) { session.status = "not-established"; break; }
+        const start = f.start(prep);
+        if (!session.candidate) {
+          const a = ordered(f, start, session)[0], next = a ? events(start, a) : [];
+          session.candidate = {
+            preparation: prep, rootAction: a?.id || null, modeledRootOutcomes: next.length,
+            outcomes: next.map(e => ({ state: e.state, probability: show(e.p) })),
+            rootMass: next.length ? "1/1" : "0/1", unresolvedSuffix: "not yet qualified",
+            evidence: "synthetic one-step exploratory candidate; not a verified whole-battle plan"
+          };
+          session.stats.firstCandidateMs = session.stats.activeMs + now() - started;
+        }
+        if (session.phase === "discover") {
+          const result = discover(start);
+          if (result !== true) {
+            if (flags(session.mode).ranges && !session.forceExact) {
+              session.forceExact = true; clearSearch(session); continue;
+            }
+            session.stats.teamsTried++;
+            session.teamIndex++; session.cuts = {}; session.forceExact = false; clearSearch(session);
+            if (result === null) session.verdict = "Cyclic synthesis unsupported; no impossibility claim.";
+            continue;
+          }
+          session.phase = "verify";
+        }
+        const rangeResult = session.config.verifier === "interval" ? verifyRanges(start) : null;
+        const v = rangeResult || verify(start);
+        session.verification = {
+          sureVictory: v.sure, faintRisk: [show(v.low), show(v.high)], unresolved: show(v.unresolved)
+        };
+        if (v.sure === true && v.high[0] === 0n && v.unresolved[0] === 0n) {
+          session.status = "qualified-synthetic";
+          const rootAction = session.policy[project(start, session)];
+          const next = events(start, f.actions(start).find(a => a.id === rootAction));
+          session.candidate = { ...session.candidate, preparation: prep,
+            rootAction, modeledRootOutcomes: next.length,
+            outcomes: next.map(e => ({ state: e.state, probability: show(e.p) })), unresolvedSuffix: "0/1",
+            evidence: `${rangeResult ? "conservative HP-range coverage" : "exact-state checked"}, zero-faint sure victory in this synthetic model only` };
+          session.stats.qualifiedMs = session.stats.activeMs + now() - started;
+          break;
+        }
+        let refined = false;
+        if (flags(session.mode).ranges) for (const state of v.counterexample) {
+          if (!state.hp || state.result) continue;
+          const k = project(state, session), rep = session.representatives[k];
+          if (rep && key(rep) !== key(state)) {
+            const base = key({ ...state, hp: [] }), cuts = session.cuts[base] ||= [];
+            state.hp.forEach((hp, i) => {
+              if (hp !== rep.hp[i]) cuts[i] = [...new Set([...(cuts[i] || []), hp, hp + 1])].sort((a, b) => a - b);
+            });
+            refined = true;
+          }
+        }
+        if (!refined) throw Error("Candidate failed exact verification without a refinable HP counterexample");
+        session.stats.refinements++; clearSearch(session);
+      }
+    } catch (error) {
+      if (error !== PAUSE) throw error;
+      session.stats.pauses++;
+    } finally { session.stats.activeMs += now() - started; }
+    return session;
+  }
+  function serialize(session) {
+    return JSON.stringify(session, (_, value) => typeof value === "bigint" ? { bigint: String(value) } : value);
+  }
+  function restore(text, expectedInput) {
+    const session = JSON.parse(text, (_, value) =>
+      value && typeof value === "object" && Object.keys(value).length === 1 && "bigint" in value ? BigInt(value.bigint) : value);
+    if (session.version !== VERSION || session.input !== expectedInput) throw Error("Checkpoint belongs to different inputs or model");
+    return session;
+  }
+  function run(session, budget = 300000) {
+    while (session.status === "searching" && session.stats.activeMs < budget)
+      work(session, Math.min(1000, budget - session.stats.activeMs));
+    return session;
+  }
+  function checkFixed(id, policy, tolerance = [0, 1]) {
+    const f = fixture(id), start = f.start(f.preparation[0]), active = new Set();
+    function visit(s) {
+      if (s.result) return { sure: s.result === "win", low: s.fainted ? ONE : ZERO, high: s.fainted ? ONE : ZERO };
+      if (active.has(key(s))) return { sure: false, low: s.fainted ? ONE : ZERO, high: ONE };
+      const a = f.actions(s).find(a => a.id === policy[s.node]);
+      if (!a) throw Error("Incomplete fixed diagnostic policy");
+      active.add(key(s));
+      let sure = true, low = ZERO, high = ZERO;
+      for (const e of aggregate(f.outcomes(s, a))) {
+        const v = visit(e.state);
+        sure &&= v.sure; low = add(low, mul(e.p, v.low)); high = add(high, mul(e.p, v.high));
+      }
+      active.delete(key(s));
+      return { sure, low, high };
+    }
+    const result = visit(start);
+    return { sureVictory: result.sure, faintRisk: [show(result.low), show(result.high)],
+      qualifies: result.sure && atMost(result.high, fraction(...tolerance)) };
+  }
+  return { VERSION, names, fixture, create, work, run, serialize, restore, checkFixed, aggregate, edge, fraction, project };
+})();
+</script>
+<script>
+"use strict";
+const E = BattleSearchExperiment;
+const $ = id => document.getElementById(id);
+let session, running = false, generation = 0, elapsed = 0, checkpointRecord = null;
+for (const name of E.names) $("fixture").add(new Option(name, name));
+function render() {
+  $("summary").replaceChildren();
+  for (const text of [
+    `Situation: ${E.fixture(session.id).description}`,
+    `Status: ${session.status}. Active computation: ${session.stats.activeMs.toFixed(1)} ms.`,
+    `Preparation ${Math.min(session.teamIndex + 1, session.preparations.length)} of ${session.preparations.length}.`,
+    `Selected team: ${session.candidate?.preparation.team.map(p => `${p.name}, ${p.hp ?? "fixture-defined"} starting HP, ${p.item ?? "no item"}`).join("; ") || "not analyzed yet"}.`,
+    `Candidate: ${session.candidate?.rootAction || "none yet"}; ${session.candidate?.evidence || "no evidence yet"}.`,
+    `Verification: ${session.verification ? JSON.stringify(session.verification) : "not completed"}.`,
+    `HP refinements: ${session.stats.refinements}. Pause uses completed-subtree caches; interrupted call stacks are replayed.`,
+    `Whole-range checks: ${session.stats.intervalBoxes} boxes; ${session.stats.intervalFallbacks} exact fallbacks.`,
+    checkpointRecord ? `Checkpoint: ${checkpointRecord}. In memory only.` : "",
+    session.verdict || ""
+  ].filter(Boolean)) { const p = document.createElement("p"); p.textContent = text; $("summary").append(p); }
+  $("state").textContent = $("state").parentElement.open ? E.serialize(session) : "Open to inspect the full state.";
+}
+function reset(id = $("fixture").value, mode = $("mode").value, edited = false) {
+  generation++; running = false; elapsed = 0; checkpointRecord = null;
+  $("fixture").value = id; $("mode").value = mode;
+  session = E.create(id, mode, { edited, verifier: $("verifier").value }); render();
+}
+function step() {
+  const before = session.stats.activeMs;
+  E.work(session, 20); elapsed += session.stats.activeMs - before;
+  if (elapsed >= 300000 || session.status !== "searching") running = false;
+  render();
+}
+function run() {
+  if (running) return;
+  running = true; elapsed = 0;
+  const token = generation;
+  function loop() {
+    if (!running || generation !== token) return;
+    try { step(); } catch (error) { running = false; $("summary").textContent = `Experiment error: ${error.message}`; throw error; }
+    if (running) setTimeout(loop, 0);
+  }
+  loop();
+}
+$("reset").onclick = () => reset();
+$("state").parentElement.ontoggle = () => {
+  if ($("state").parentElement.open) $("state").textContent = E.serialize(session);
+};
+$("step").onclick = step; $("run").onclick = run; $("pause").onclick = () => { running = false; };
+$("resume").onclick = () => {
+  running = false;
+  const before = performance.now(), text = E.serialize(session);
+  session = E.restore(text, session.input);
+  checkpointRecord = `${new Blob([text]).size} bytes, ${(performance.now() - before).toFixed(2)} ms serialize + restore`;
+  render();
+};
+$("edit").onclick = () => reset("partial", $("mode").value, !session.config.edited);
+$("download").onclick = () => {
+  const url = URL.createObjectURL(new Blob([E.serialize(session)], { type: "application/json" }));
+  const a = document.createElement("a"); a.href = url; a.download = "prototype-search-measurements.json"; a.click(); URL.revokeObjectURL(url);
+};
+const scenarios = [
+  ["One range really works", "All HP outcomes support one continuation. Discovery may be shared; exact checking still visits each reachable HP.", "uniform",
+    [["Baseline", () => { reset("uniform", "baseline"); run(); }], ["HP grouping", () => { reset("uniform", "ranges"); run(); }]]],
+  ["A breakpoint changes the plan", "A representative HP is misleading. Watch the failed candidate trigger refinement rather than a false guarantee.", "threshold",
+    [["Start coarse", () => { reset("threshold", "ranges"); run(); }], ["Inspect checkpoint", () => $("resume").click()]]],
+  ["Strongest is not always right", "The weaker synthetic HP-bait move must remain available even when strongest-first ordering is enabled.", "bait",
+    [["Try strongest first", () => { reset("bait", "progress"); run(); }]]],
+  ["Rare risk and cycles", "One rare faint must survive aggregation. A possible endless loop cannot qualify as sure eventual victory.", "rare",
+    [["Retain rare risk", () => { reset("rare", "combined"); run(); }], ["Reject cyclic qualification", () => { reset("cycle", "combined"); run(); }]]],
+  ["Fixed choices and edits", "A fixed slot includes its explicit no-item choice. An edit starts new work; old checkpoints must not replace it.", "partial",
+    [["Complete fixed partial team", () => { reset("partial", "combined"); run(); }], ["Edit HP and invalidate", () => $("edit").click()]]]
+];
+function tab(index) {
+  const [title, description, id, steps] = scenarios[index];
+  [...$("tabs").children].forEach((el, i) => el.setAttribute("aria-selected", String(i === index)));
+  $("description").textContent = description; $("steps").replaceChildren();
+  steps.forEach(([label, fn], i) => { const b = document.createElement("button"); b.textContent = `${i + 1}. ${label}`; b.onclick = fn; $("steps").append(b); });
+  reset(id, "combined");
+}
+scenarios.forEach(([title], i) => {
+  const b = document.createElement("button"); b.textContent = title; b.setAttribute("role", "tab"); b.onclick = () => tab(i); $("tabs").append(b);
+});
+tab(0);
+</script>
