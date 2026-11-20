@@ -1,8 +1,10 @@
 import {describeSaveError, saveAccess, supportsSaveAccess} from './storage/save-access';
 import {syncSelectedSnapshot} from './sync/sync';
 import {initializeNativeDiagnostics} from './diagnostics';
+import {reportWebReady} from './updates';
 
 initializeNativeDiagnostics();
+window.addEventListener('runbuncalc:ready', reportWebReady, {once: true});
 
 declare global {
   interface Window {
