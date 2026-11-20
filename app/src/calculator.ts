@@ -1,5 +1,8 @@
 import {describeSaveError, saveAccess, supportsSaveAccess} from './storage/save-access';
 import {syncSelectedSnapshot} from './sync/sync';
+import {initializeNativeDiagnostics} from './diagnostics';
+
+initializeNativeDiagnostics();
 
 declare global {
   interface Window {
