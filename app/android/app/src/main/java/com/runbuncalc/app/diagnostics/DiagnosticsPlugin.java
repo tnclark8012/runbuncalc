@@ -105,6 +105,8 @@ public final class DiagnosticsPlugin extends Plugin {
         submit(call, () -> {
             try {
                 pendingZip = Base64.decode(base64, Base64.DEFAULT);
+                // Capacitor serializes activity call options twice; keep ZIP bytes only in memory.
+                call.getData().remove("dataBase64");
             } catch (IllegalArgumentException error) {
                 clearPending();
                 call.reject("The diagnostic ZIP is not valid base64.", "INVALID_ZIP", error);

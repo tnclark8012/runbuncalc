@@ -127,6 +127,10 @@ Nothing is uploaded automatically, and the app needs no GitHub token. Attaching
 the ZIP to a public issue makes its save, notes, and screenshot public.
 This is export-only, not an automatic restore, interaction-history, or RNG replay.
 
+Android keeps the prepared ZIP in memory, not in activity saved state, while
+the document picker is open. If Android destroys the app during the picker,
+prepare the report again; the ZIP payload is not restored.
+
 ## GitHub APK builds
 
 The **RnB Calc Android** workflow builds the web UI, syncs Capacitor, runs Android
