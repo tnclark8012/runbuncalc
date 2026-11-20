@@ -3,6 +3,7 @@ import { initializeUx } from './ux/initialize';
 (window as any).extensions = windowExtensions;
 domReady(async () => {
   initializeUx();
+  window.dispatchEvent(new Event('runbuncalc:ready'));
 });
 
 function domReady(callback: () => void) {

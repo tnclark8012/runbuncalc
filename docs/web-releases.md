@@ -1,9 +1,10 @@
 # Web update releases
 
 This pipeline publishes Android-ready web bundles to the public
-`tnclark8012/runbuncalc` GitHub Releases. It does not update the installed app yet:
-the updater, pinned verification key, offline activation, and rollback belong in
-a separate app change. Native APK builds remain in the Android workflow.
+`tnclark8012/runbuncalc` GitHub Releases. The Android app checks the continuous
+channel, verifies signatures using its pinned public key, and stages updates for
+the next launch with offline fallback and startup rollback. Native APK builds
+remain in the Android workflow; see [app behavior](../app/README.md#github-apk-builds).
 
 ## One-time signing setup
 
@@ -18,7 +19,9 @@ gh secret set WEB_UPDATE_PRIVATE_KEY --repo tnclark8012/runbuncalc < "$key_dir/p
 ```
 
 Keep the private key in a secure backup and the public key for pinning in the
-future app updater. Do not commit the private key or upload it as an artifact.
+app updater. Its pinned public key is in
+`app/android/app/src/main/java/com/runbuncalc/app/updates/UpdateManifest.java`.
+Do not commit the private key or upload it as an artifact.
 After securely retaining the keys, remove these two temporary files and their
 directory. A release must fail, not publish unsigned, if signing is unavailable.
 Do not replace the signing key without a key-rotation plan and an app update:
@@ -125,12 +128,16 @@ HTTPS alone or a checksum beside an unsigned bundle is not this trust boundary.
 
 `app/web-release.json` defines the native compatibility generation. Increment it
 when the bundle requires incompatible native APIs, plugins, or updater behavior,
-and ship a matching APK. The future updater must accept only its supported
+and ship a matching APK. The updater must accept only its supported
 generation and schema, restrict download destinations, validate archive paths
 and limits, stage and verify the whole bundle before activation, and retain a
 working offline fallback. It must handle channel/network/cache failures without
 discarding the working version. Signing does not provide freshness or prevent
 replay of an older signed release; stable rollback is intentionally supported.
+The current app consumes continuous only. Generation 2 adds an explicit startup
+acknowledgement after calculator UI initialization; generation-1 releases cannot
+be activated by this APK. Changing channels or verification keys requires an APK
+change; publishing infrastructure supports stable independently.
 
 Channel release tags themselves do not identify the currently selected commit;
 the signed manifest is authoritative. Release management must permit replacing
