@@ -336,48 +336,27 @@ function saveTrigger(ev) {
 	}
 }
 
+var SAVED_MON_FIELDS = [
+	".type1", ".type2", ".forme", ".level", ".weight",
+	".at .boost", ".df .boost", ".sa .boost", ".sd .boost", ".sp .boost",
+	".nature", ".ability", ".item", ".status",
+];
+
+// Snapshot the opposing panel's editable fields so they survive swapping sets during doubles calcs.
 function saveCurrentMon() {
-	var data = document.getElementsByClassName("info-group i-f-o-stats")[0];
-	var type = data.previousElementSibling.children;
-	var stats = data.children[0].children[1].children;
-	var props = data.nextElementSibling.children;
-	return {
-		tp1: type[0].children[1].value,
-		tp2: type[0].children[2].value,
-		frm: type[2].children[1].value,
-		gdr: type[3].children[1].value,
-		lvl: type[4].children[1].value,
-		att: stats[1].children[6].children[0].value,
-		def: stats[2].children[6].children[0].value,
-		spa: stats[3].children[6].children[0].value,
-		spd: stats[4].children[6].children[0].value,
-		spe: stats[6].children[6].children[0].value,
-		ntr: props[0].children[1].value,
-		abi: props[1].children[1].value,
-		itm: props[2].children[1].value,
-		sts: props[3].children[1].value,
-	};
+	var panel = $("#p2");
+	var data = {};
+	for (var i = 0; i < SAVED_MON_FIELDS.length; i++) {
+		data[SAVED_MON_FIELDS[i]] = panel.find(SAVED_MON_FIELDS[i]).first().val();
+	}
+	return data;
 }
 
 function loadSavedMon(data) {
-	var dataField = document.getElementsByClassName("info-group i-f-o-stats")[0];
-	var typeField = dataField.previousElementSibling.children;
-	var statsField = dataField.children[0].children[1].children;
-	var propsField = dataField.nextElementSibling.children;
-	typeField[0].children[1].value = data.tp1;
-	typeField[0].children[2].value = data.tp2;
-	typeField[2].children[1].value = data.frm;
-	typeField[3].children[1].value = data.gdr;
-	typeField[4].children[1].value = data.lvl;
-	statsField[1].children[6].children[0].value = data.att;
-	statsField[2].children[6].children[0].value = data.def;
-	statsField[3].children[6].children[0].value = data.spa;
-	statsField[4].children[6].children[0].value = data.spd;
-	statsField[6].children[6].children[0].value = data.spe;
-	propsField[0].children[1].value = data.ntr;
-	propsField[1].children[1].value = data.abi;
-	propsField[2].children[1].value = data.itm;
-	propsField[3].children[1].value = data.sts;
+	var panel = $("#p2");
+	for (var i = 0; i < SAVED_MON_FIELDS.length; i++) {
+		panel.find(SAVED_MON_FIELDS[i]).first().val(data[SAVED_MON_FIELDS[i]]);
+	}
 }
 
 function calcTrigger() {
@@ -399,44 +378,47 @@ function calcTrigger() {
 		var activeMon = $('#p2').find("input.set-selector").val();
 		window.NO_CALC = true;
 		window.NO_CALC_RECURSION = true;
-		var dataSave = saveCurrentMon();
-		if (!monRow1 || !monRow2) {
-			performCalculations();
-		} else {
-			if (monRow1 != activeMon && monRow2 != activeMon) {
-				if (document.querySelectorAll(`[data-id="${activeMon}"]`)[0].parentNode.id == "trainer-pok-list-opposing") {
+		try {
+			var dataSave = saveCurrentMon();
+			if (!monRow1 || !monRow2) {
+				performCalculations();
+			} else {
+				if (monRow1 != activeMon && monRow2 != activeMon) {
+					if (document.querySelectorAll(`[data-id="${activeMon}"]`)[0].parentNode.id == "trainer-pok-list-opposing") {
+						performCalculations();
+						$('.opposing').val(monRow2);
+						$('.opposing').change();
+						$('.opposing .select2-chosen').text(monRow2);
+						performCalculations(false, true);
+					} else {
+						performCalculations(false, true);
+						$('.opposing').val(monRow1);
+						$('.opposing').change();
+						$('.opposing .select2-chosen').text(monRow1);
+						performCalculations();
+					}
+				} else if (monRow1 == activeMon) {
 					performCalculations();
 					$('.opposing').val(monRow2);
 					$('.opposing').change();
 					$('.opposing .select2-chosen').text(monRow2);
 					performCalculations(false, true);
-				} else {
+				} else if (monRow2 == activeMon) {
 					performCalculations(false, true);
 					$('.opposing').val(monRow1);
 					$('.opposing').change();
 					$('.opposing .select2-chosen').text(monRow1);
 					performCalculations();
 				}
-			} else if (monRow1 == activeMon) {
-				performCalculations();
-				$('.opposing').val(monRow2);
-				$('.opposing').change();
-				$('.opposing .select2-chosen').text(monRow2);
-				performCalculations(false, true);
-			} else if (monRow2 == activeMon) {
-				performCalculations(false, true);
-				$('.opposing').val(monRow1);
-				$('.opposing').change();
-				$('.opposing .select2-chosen').text(monRow1);
-				performCalculations();
 			}
+			$('.opposing').val(activeMon);
+			$('.opposing').change();
+			$('.opposing .select2-chosen').text(activeMon);
+			loadSavedMon(dataSave);
+		} finally {
+			window.NO_CALC_RECURSION = false;
+			window.NO_CALC = false;
 		}
-		$('.opposing').val(activeMon);
-		$('.opposing').change();
-		$('.opposing .select2-chosen').text(activeMon);
-		loadSavedMon(dataSave);
-		window.NO_CALC_RECURSION = false;
-		window.NO_CALC = false;
 	} else {
 		performCalculations();
 	}
