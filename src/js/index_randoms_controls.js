@@ -359,6 +359,7 @@ function loadSavedMon(data) {
 	}
 }
 
+var calcTriggerQueued = false;
 function calcTrigger() {
 	/*
 		This prevents like 8 performCalculations out of 8 that were useless
@@ -367,6 +368,18 @@ function calcTrigger() {
 	if (window.NO_CALC || window.NO_CALC_RECURSION) {
 		return;
 	}
+	// A single change (e.g. `$('.player').change()`) fires on several .calc-trigger elements; calc once.
+	if (calcTriggerQueued) {
+		return;
+	}
+	calcTriggerQueued = true;
+	queueMicrotask(function () {
+		calcTriggerQueued = false;
+		runCalcTrigger();
+	});
+}
+
+function runCalcTrigger() {
 	if (window.AUTO_REFRESH) {
 		window.refreshColorCode();
 	}
