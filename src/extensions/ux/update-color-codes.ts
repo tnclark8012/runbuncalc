@@ -1,44 +1,99 @@
 import { calculate, Field, GenerationNum, Pokemon, Result } from '@smogon/calc';
 import { Generation } from '@smogon/calc/dist/data/interface';
-import { Deferred } from '../../deferred';
 import { gen } from '../configuration';
 import { BattleFieldState } from '../simulator/moveScoring.contracts';
 import { BattleSimulator } from '../simulator/simulator';
 import { curHPPercentage } from '../simulator/utils';
 
+const MAX_CACHED_OPPONENTS = 20;
+const TIME_SLICE_MS = 12;
+
+/** Results keyed by opponent/field, then by player Pokemon. */
+const matchupCache = new Map<string, Map<string, CalculationColor>>();
+let latestRun = 0;
+
+function yieldToBrowser(): Promise<void> {
+	return new Promise(resolve => setTimeout(resolve));
+}
+
+function getOpponentCache(key: string): Map<string, CalculationColor> {
+	let cache = matchupCache.get(key);
+	if (cache) {
+		// Refresh recency for LRU eviction.
+		matchupCache.delete(key);
+	} else {
+		cache = new Map();
+		if (matchupCache.size >= MAX_CACHED_OPPONENTS)
+			matchupCache.delete(matchupCache.keys().next().value!);
+	}
+	matchupCache.set(key, cache);
+	return cache;
+}
+
+// createPokemon assigns a random id on every call, so it can't be part of a cache key.
+function toCacheKey(value: unknown): string {
+	return JSON.stringify(value, (key, val) => key === 'id' ? undefined : val);
+}
+
+function applyColorCode(element: Element, result: CalculationColor, speCheck: boolean, ohkoCheck: boolean): void {
+	if (speCheck && ohkoCheck) {
+		element.className = `trainer-pok left-side mon-speed-${result.speed} mon-dmg-${result.code}`;
+	}
+	else if (speCheck) {
+		element.className = `trainer-pok left-side mon-speed-${result.speed}`;
+	}
+	else if (ohkoCheck) {
+		element.className = `trainer-pok left-side mon-dmg-${result.code}`;
+	}
+}
+
 export async function updateColorCodes(): Promise<void> {
+	// Superseded runs bail out, so rapid selection changes only pay for the latest one.
+	const run = ++latestRun;
+	await yieldToBrowser();
+	if (run !== latestRun)
+		return;
+
 	var speCheck = (document.getElementById("cc-spe-border") as HTMLInputElement).checked;
 	var ohkoCheck = (document.getElementById("cc-ohko-color") as HTMLInputElement).checked;
 	if (!speCheck && !ohkoCheck) {
 		return
 	}
-	var pMons = document.getElementsByClassName("trainer-pok left-side");
-	// i calc here to alleviate some calculation
-	var p1info = $("#p1");
-	var p2info = $("#p2");
-	var p1 = createPokemon(p1info);
-	var p2 = createPokemon(p2info);
+	const pMons = Array.from(document.getElementsByClassName("trainer-pok left-side"));
+	const cpuPokemon = createPokemon($("#p2"));
+	const field = createField();
+	const cache = getOpponentCache(toCacheKey([
+		cpuPokemon,
+		field,
+		$('#StatBoostL').prop("checked"),
+		$('#StatBoostR').prop("checked"),
+	]));
 
-	let playerPokemon = [];
-	for (let i = 0; i < pMons.length; i++) {
-		playerPokemon.push(createPokemon(pMons[i].getAttribute("data-id")));
-	}
-	let pokemonResults = await getCalculationColors(playerPokemon, p2);
-	for (let i = 0; i < pMons.length; i++) {
-		let set = pMons[i].getAttribute("data-id");
-		let pokemonResult = pokemonResults[i];
-		if (speCheck && ohkoCheck) {
-			pMons[i].className = `trainer-pok left-side mon-speed-${pokemonResult.speed} mon-dmg-${pokemonResult.code}`;
-		}
-		else if (speCheck) {
-			pMons[i].className = `trainer-pok left-side mon-speed-${pokemonResult.speed}`;
-		}
-		else if (ohkoCheck) {
-			pMons[i].className = `trainer-pok left-side mon-dmg-${pokemonResult.code}`;
+	const results: CalculationColor[] = [];
+	let sliceStart = performance.now();
+	for (const element of pMons) {
+		if (performance.now() - sliceStart > TIME_SLICE_MS) {
+			await yieldToBrowser();
+			if (run !== latestRun)
+				return;
+			sliceStart = performance.now();
 		}
 
-		pMons[i].classList.toggle('best', !!(pokemonResult as any).best);
+		const playerMon = createPokemon(element.getAttribute("data-id"));
+		const key = toCacheKey(playerMon);
+		let result = cache.get(key);
+		if (!result) {
+			result = getSimulatedCalculationResult(playerMon, cpuPokemon, field);
+			cache.set(key, result);
+		}
+		results.push(result);
+		applyColorCode(element, result, speCheck, ohkoCheck);
+		element.classList.remove('best');
 	}
+
+	const best = getBestResult(results);
+	if (best)
+		pMons[results.indexOf(best)].classList.add('best');
 }
 
 export type SpeedTier = 'F' | 'S' | 'T';
@@ -78,67 +133,45 @@ export interface SimulatorCalculationColor {
 
 export type CalculationColor = LegacyCalculationColor | SimulatorCalculationColor;
 
-async function getCalculationColors(playerPokemon: Pokemon[], cpuPokemon: Pokemon): Promise<CalculationColor[]> {
-	var field = createField();
-
-	const result: CalculationColor[] = [];
-	const diff: Array<{ name: string, legacy: MatchupResultCode, simulated: MatchupResultCode }> = [];
-
-	for (let playerMon of playerPokemon) {
-		let legacy = getLegacyCalculationResult(playerMon, cpuPokemon, field);
-		let simulated = await getSimulatedCalculationResult(playerMon, cpuPokemon, field);
-		result.push(simulated);
-
-		if (legacy.code !== simulated.code)
-			diff.push({ name: playerMon.name, legacy: legacy.code, simulated: simulated.code });
+function getBestResult(results: CalculationColor[]): CalculationColor | undefined {
+	let best: SimulatorCalculationColor | undefined;
+	for (const result of results) {
+		if (result.type !== 'simulator')
+			continue;
+		if (!best || curHPPercentage(result.finalState.player.active[0].pokemon) > curHPPercentage(best.finalState.player.active[0].pokemon))
+			best = result;
 	}
-
-	let bestMon = result
-		.filter(r => r.type === 'simulator')
-		.sort((a, b) => curHPPercentage(b.finalState.player.active[0].pokemon) - curHPPercentage(a.finalState.player.active[0].pokemon))
-		.at(0);
-	if (bestMon)
-		(bestMon as any).best = true;
-
-	if (diff.length)
-		console.warn('Simulator and legacy impl diverge:', diff);
-
-	return result;
+	return best;
 }
 
-async function getSimulatedCalculationResult(p1: Pokemon, p2: Pokemon, field: Field): Promise<CalculationColor> {
-	const deferred = new Deferred<CalculationColor>();
+function getSimulatedCalculationResult(p1: Pokemon, p2: Pokemon, field: Field): CalculationColor {
 	var p1speed = p1.stats.spe;
 	var p2speed = p2.stats.spe;
 	//Faster Tied Slower
 	var fastest: SpeedTier = p1speed > p2speed ? "F" : p1speed < p2speed ? "S" : p1speed === p2speed ? "T" : "T";
 
-	setTimeout(() => {
-		const simulator = new BattleSimulator(gen, p1, p2, field);
-		const result = simulator.getResult({ playerSwitchingIn: true });
-		let code: MatchupResultCode;
-		const playerWon = result.winner.equals(p1);
-		const turnsOut = result.turnOutcomes.slice(1);
-		if (turnsOut.length == 1) {
-			if (turnsOut[0].actions[0].attacker.equals(result.winner)) {
-				code = playerWon ? MatchupResultCode.SwitchAndFastKO : MatchupResultCode.GetsOneHitKOd;
-			}
-			else {
-				code = playerWon ? MatchupResultCode.SwitchAndGetOneHitKO : MatchupResultCode.GetsOneHitKOd;
-			}
-		}
-		else if (playerWon){
-			code = MatchupResultCode.SafeOneVOne;
+	const simulator = new BattleSimulator(gen, p1.clone(), p2.clone(), field);
+	const result = simulator.getResult({ playerSwitchingIn: true });
+	let code: MatchupResultCode;
+	const playerWon = result.winner.equals(p1);
+	const turnsOut = result.turnOutcomes.slice(1);
+	if (turnsOut.length == 1) {
+		if (turnsOut[0].actions[0].attacker.equals(result.winner)) {
+			code = playerWon ? MatchupResultCode.SwitchAndFastKO : MatchupResultCode.GetsOneHitKOd;
 		}
 		else {
-			deferred.resolve(getLegacyCalculationResult(p1, p2, field));
-			return;
+			code = playerWon ? MatchupResultCode.SwitchAndGetOneHitKO : MatchupResultCode.GetsOneHitKOd;
 		}
-		
-		deferred.resolve({ type: 'simulator', speed: fastest, code, finalState: result.turnOutcomes.at(-1)!.endOfTurnState });
-	});
+	}
+	else if (playerWon) {
+		code = MatchupResultCode.SafeOneVOne;
+	}
+	else {
+		// Legacy calc applies stat boosts in place, so keep the shared CPU Pokemon untouched.
+		return getLegacyCalculationResult(p1.clone(), p2.clone(), field);
+	}
 
-	return deferred.promise;
+	return { type: 'simulator', speed: fastest, code, finalState: result.turnOutcomes.at(-1)!.endOfTurnState };
 }
 
 function getLegacyCalculationResult(p1: Pokemon, p2: Pokemon, field: Field): LegacyCalculationColor {
