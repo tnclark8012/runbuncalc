@@ -463,6 +463,38 @@ function isMonFromCurrentTrainer(current, neew) {
 		return false
 	}
 }
+// Resets the field to the trainer's known conditions (or a clear field when none are specified).
+// Player side maps to the "L" controls and CPU side to the "R" controls.
+function applyTrainerFieldState(trainerName) {
+	var field = (window.extensions && window.extensions.getTrainerFieldState(trainerName)) || {};
+	var weather = field.weather || "";
+	var terrain = field.terrain || "";
+
+	$("input:radio[name='weather'][value='" + weather + "']").first().prop("checked", true);
+	$("input:checkbox[name='terrain']").prop("checked", false);
+	if (terrain) {
+		$("input:checkbox[name='terrain'][value='" + terrain + "']").prop("checked", true);
+	}
+	$("#trickroom").prop("checked", !!field.isTrickRoom);
+
+	[["L", field.playerSide], ["R", field.cpuSide]].forEach(function (entry) {
+		var suffix = entry[0];
+		var side = entry[1] || {};
+		$("#reflect" + suffix).prop("checked", !!side.isReflect);
+		$("#lightScreen" + suffix).prop("checked", !!side.isLightScreen);
+		$("#auroraVeil" + suffix).prop("checked", !!side.isAuroraVeil);
+		$("#tailwind" + suffix).prop("checked", !!side.isTailwind);
+		$("#sr" + suffix).prop("checked", !!side.isSR);
+		$("input:radio[name='spikes" + suffix + "'][value='" + (side.spikes || 0) + "']").prop("checked", true);
+	});
+
+	// Treat the trainer's field as the manual baseline so ability autoset doesn't revert to the previous trainer's.
+	lastManualWeather = weather;
+	lastAutoWeather = ["", ""];
+	lastManualTerrain = terrain || "No terrain";
+	lastAutoTerrain = ["", ""];
+}
+
 var nextTrainerId = 1;
 var previousTrainerId = 1;
 // auto-update set details on select top bar pokemon
@@ -479,6 +511,7 @@ $(".set-selector").change(function () {
 			// don't reload
 		} else {
 			CURRENT_TRAINER_POKS = get_trainer_poks(fullSetName)
+			applyTrainerFieldState(window.CURRENT_TRAINER);
 			var next_poks = CURRENT_TRAINER_POKS.sort(sortmons)
 			monNumbers = next_poks.length;
 			var frag = new DocumentFragment();
