@@ -2,8 +2,9 @@
 
 The Android companion bundles the calculator's `index.html` locally inside
 Capacitor, with React/TypeScript app settings. Android save access
-uses the Storage Access Framework; no root, internet, or broad storage permission
-is requested. Android 17+ (API 37) is required.
+uses the Storage Access Framework; no root or broad storage permission is
+requested. Internet permission is used only to fetch public calculator updates
+from GitHub; saves remain local. Android 17+ (API 37) is required.
 
 ## Layout
 
@@ -135,8 +136,42 @@ prepare the report again; the ZIP payload is not restored.
 
 Web-only update bundles have a separate [release pipeline](../docs/web-releases.md)
 with continuous and stable channels, CI-run promotion, and version tags.
-The installed app does not consume those updates yet; this is separate from APK
-distribution below.
+The app automatically checks the continuous channel after the calculator starts.
+App settings shows update status and offers a manual check. Downloads are
+verified using the pinned Ed25519 public key, native compatibility generation,
+archive size, and SHA-256, then extracted into app-private storage with path,
+file-count, and expanded-size limits.
+
+Updates never replace an open calculator. Fully close and reopen the app to
+activate a staged update. The first launch must acknowledge calculator
+initialization within 30 foreground seconds; otherwise the app restores the
+previous working download or the calculator bundled in the APK. Killing the app
+before that acknowledgement also rolls back on the next launch. A failed
+version is not downloaded again until the channel points to a different
+version. The installed calculator works offline, including first use, and
+network/signature/download failures leave it intact and appear in settings.
+Automatic checks run once per activity lifetime, not continuously in the
+background; there is no mobile-data restriction.
+
+This APK supports native compatibility generation 2, which adds the startup
+acknowledgement contract. Earlier generation-1 web releases are intentionally
+rejected. Merge this change and wait for its generation-2 web release before
+expecting a successful update check. Native changes, pinned-key changes, or
+incompatible web changes still need a new APK. Installing a new APK discards
+downloaded web versions in favor of its bundled assets; imported collections
+and document grants are not cleared. Updates retain the same local WebView
+origin, so browser storage stays local and is not reset by activation.
+
+For a device acceptance check: install this APK, launch offline, then go online
+and check for updates. Confirm a pending version appears without reloading the
+calculator; fully close/reopen and verify the active version, save access, and
+collections. Reopen offline. Exercise invalid signatures, interrupted downloads,
+and a signed test bundle without startup acknowledgement in a nonproduction
+test channel/build; verify rollback and quarantine without touching production
+channel assets. Native automated tests cover signature/compatibility validation,
+archive tampering/traversal/size limits, and persisted activation/rollback.
+
+APK distribution remains separate:
 
 The **RnB Calc Android** workflow builds the web UI, syncs Capacitor, runs Android
 unit tests and lint, and uploads `rnb-calc-debug` containing `app-debug.apk`.

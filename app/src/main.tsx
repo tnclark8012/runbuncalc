@@ -2,9 +2,12 @@ import {createRoot} from 'react-dom/client';
 import {useEffect} from 'react';
 import {SaveAccessPage} from './components/SaveAccessPage/SaveAccessPage';
 import {useSaveAccess} from './hooks/useSaveAccess';
+import {WebUpdatePage} from './components/WebUpdatePage/WebUpdatePage';
+import {useWebUpdates} from './hooks/useWebUpdates';
 
 function App() {
   const snapshot = useSaveAccess('snapshot');
+  const updates = useWebUpdates();
   const refreshSnapshot = snapshot.refresh;
   useEffect(() => {
     void refreshSnapshot();
@@ -26,6 +29,7 @@ function App() {
     {!snapshot.supported && <p role="status">File connections require the Android app.
       In a browser, use the calculator's snapshot decoder and Import box instead.</p>}
     <SaveAccessPage {...snapshot} />
+    <WebUpdatePage {...updates} />
     <p>Sync retains the decoded snapshot for future planner integration; it does not hydrate
       the simulator or infer whether a battle is active. Forgetting a connection does not
       delete files or clear an already imported collection.</p>
