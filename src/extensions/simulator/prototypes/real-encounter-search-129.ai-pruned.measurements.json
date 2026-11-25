@@ -1,0 +1,382 @@
+{
+ "warning": "THROWAWAY prototype. Desktop timings are not phone evidence. Results are conditional on the mechanics model AND on the repo AI model.",
+ "command": "PROTOTYPE_BUDGET_MS=300000 npx jest --runInBand --runTestsByPath src/extensions/simulator/prototypes/real-encounter-search-129.spec.ts -t \"AI-informed\"",
+ "baseRevision": "d0c4ab421fcfc39b707ca74cc4b598c352d5afbc",
+ "device": {
+  "platform": "linux",
+  "arch": "x64",
+  "cpu": "AMD EPYC 9V74 80-Core Processor",
+  "logicalCPUs": 2,
+  "runtime": "v26.13.0",
+  "conditions": "Shared Linux host under Jest/ts-jest; not Android"
+ },
+ "activeBudgetMsPerCase": 120000,
+ "model": {
+  "modelled": [
+   "Damage: patched @smogon/calc gen-8 formula, all 16 rolls each 1/16, equal damage values aggregated.",
+   "Critical hits 1/24 (stage 0), damage via calc isCrit; none against Shell Armor/Battle Armor.",
+   "Accuracy from a hand-entered gen-8 move table with accuracy/evasion stages; Keen Eye blocks accuracy drops.",
+   "Move order: priority, then calc final speed (stages, paralysis); exact ties split 1/2.",
+   "Multi-hit (Pin Missile): 2/3/4/5 hits at 35/35/15/15%, independent roll and crit per hit; Sturdy only on first hit.",
+   "Sturdy and Focus Sash at full HP; Oran Berry heals 10 at <=50% immediately after damage (between multi-hits).",
+   "Paralysis (30% Spark/Bounce; Electric immune; 25% full paralysis, no PP used), burn (10% Ember; Fire immune; 1/16 end of turn; attack halving via calc).",
+   "Flinch (30% Bite, only if the user moved first), Bubble Beam 10% Speed drop, stat-stage status moves (Growl, Confide, Sand Attack, Baby-Doll Eyes, Iron Defense).",
+   "Absorb drains round(dealt/2), min 1. Cotton Down lowers attacker Speed per damaging hit; Rattled raises Speed on Bug/Dark/Ghost hits.",
+   "Wrap: traps for 4 or 5 end-of-turn 1/8 damage ticks; the remaining count is hidden, so the state stores the observable belief set; ends if the trapper faints. Trapped player cannot switch.",
+   "Bounce: charge turn (PP used), semi-invulnerable to all player moves, strikes next turn. Choice Band locks the first move used.",
+   "PP tracked exactly (no PP used on full paralysis/flinch). Struggle when no move has PP: 50 BP typeless via calc, never misses, recoil round(max/4). Bug Bite against a held berry is UNSUPPORTED.",
+   "CPU move choice and CPU replacement after a faint are adversarial over every legal option (AI-agnostic superset of the AI document).",
+   "Player: every move with PP and every voluntary switch to a healthy bench Pokemon each turn. Set mode: no free switch after a KO.",
+   "End of turn: player residuals before CPU residuals (conservative: a player faint is never excused by a same-turn win)."
+  ],
+  "notModelledOrAssumed": [
+   "Exact Run & Bun ROM behaviour: crit rate, multi-hit distribution, Wrap duration, PP-on-full-paralysis, drain rounding, residual order and Set mode are gen-8 assumptions pending the mechanics-validation ticket.",
+   "CPU AI probabilities are not used; zero-tolerance qualification needs only the support of CPU behaviour, so an adversarial CPU is a sound superset. Positive-tolerance risk is not computed.",
+   "Player observes exact CPU HP (HP bar has >= 48 pixels, more than these opponents' max HP). Other hidden state: only Wrap duration, handled by belief sets.",
+   "Moves, items and abilities outside the tables above throw at fixture construction, or become UNSUPPORTED outcomes during search.",
+   "No positive-tolerance synthesis, doubles, held-item allocation, interruption/resume or Android measurement in this run."
+  ],
+  "cpu": [
+   "CPU move choice: repo AI (getCpuPossibleActions/calculateCpuMove) on the exact current state; moves without PP hidden from the AI; Bounce second turn, Choice lock and Struggle forced by the kernel.",
+   "CPU replacement after a KO: repo chooseSwitchIn (deterministic). No voluntary CPU switching (the repo AI does not model it either).",
+   "PP IGNORED by default (PROTOTYPE_IGNORE_PP=0 to track it): no move consumes PP, so Struggle never occurs and PP is constant in the state key. Optimistic only if a fight would otherwise run a move dry.",
+   "firstTurnOut passed as false: only Fake Out/First Impression/hazards/Protect read it, none present in these fixtures."
+  ]
+ },
+ "runs": [
+  {
+   "fixture": "Darian first Magikarp only (sub-fight)",
+   "ignorePP": true,
+   "bestCompletedLevel": null,
+   "levels": [
+    {
+     "pruneBelowRarity": 0.5,
+     "completed": false,
+     "winZeroFaintLowerBound": 0.0030926404143001214,
+     "winZeroFaintUpperBound": 1,
+     "cumulativeMs": 120038.5,
+     "ms": 120038.3,
+     "expansions": 305981,
+     "turnEvals": 2161780,
+     "memoStates": 101718,
+     "prunedNodes": 1280782,
+     "cycleHits": 48972,
+     "cutActions": 967990,
+     "calcCalls": 13724,
+     "aiCalls": 1,
+     "aiMoveDistributions": 1,
+     "aiReplacements": 0,
+     "aiMaxMassError": 0,
+     "unsupportedOutcomes": {}
+    }
+   ]
+  },
+  {
+   "fixture": "DIAGNOSTIC Darian first Magikarp only, player never switches voluntarily",
+   "ignorePP": true,
+   "bestCompletedLevel": {
+    "threshold": 0.01,
+    "lo": 0.9619963883888485,
+    "hi": 0.9790093057326534
+   },
+   "levels": [
+    {
+     "pruneBelowRarity": 0.5,
+     "completed": true,
+     "winZeroFaintLowerBound": 0.4657688524412193,
+     "winZeroFaintUpperBound": 0.9922941007250177,
+     "cumulativeMs": 3163.8,
+     "ms": 3163.8,
+     "expansions": 3821,
+     "turnEvals": 15284,
+     "memoStates": 3821,
+     "prunedNodes": 54912,
+     "cycleHits": 657,
+     "cutActions": 1700,
+     "calcCalls": 13890,
+     "aiCalls": 1,
+     "aiMoveDistributions": 1,
+     "aiReplacements": 0,
+     "aiMaxMassError": 0,
+     "unsupportedOutcomes": {},
+     "audit": {
+      "policyWinProbability": 0.47262092604431005,
+      "statesVisited": 302,
+      "policyLeavesWithoutDecision": 255,
+      "capped": false,
+      "ms": 35.3
+     },
+     "auditConsistent": true,
+     "policyOpening": [
+      "Starly: Quick Attack  [P(win,0 faints) >= 46.58%; reach 100.0%; vs Magikarp 30HP AI: Bounce 100%]",
+      "  Starly: Aerial Ace  [P(win,0 faints) >= 48.50%; reach 89.8%; vs Magikarp 23HP AI: Bounce 100%]",
+      "    Starly: Quick Attack  [P(win,0 faints) >= 89.00%; reach 16.1%; vs Magikarp 13HP AI: Bounce 100%]",
+      "    Starly: Quick Attack  [P(win,0 faints) >= 88.02%; reach 13.8%; vs Magikarp 13HP AI: Bounce 100%]",
+      "  Starly: Aerial Ace  [P(win,0 faints) >= 50.14%; reach 6.0%; vs Magikarp 21HP AI: Bounce 100%]",
+      "    Starly: Quick Attack  [P(win,0 faints) >= 91.87%; reach 1.1%; vs Magikarp 11HP AI: Bounce 100%]",
+      "    Starly: Quick Attack  [P(win,0 faints) >= 90.89%; reach 0.9%; vs Magikarp 11HP AI: Bounce 100%]"
+     ]
+    },
+    {
+     "pruneBelowRarity": 0.2,
+     "completed": true,
+     "winZeroFaintLowerBound": 0.6705922316480891,
+     "winZeroFaintUpperBound": 0.9878072798074595,
+     "cumulativeMs": 8804.9,
+     "ms": 5597.6,
+     "expansions": 7629,
+     "turnEvals": 30516,
+     "memoStates": 7629,
+     "prunedNodes": 21395,
+     "cycleHits": 6896,
+     "cutActions": 6140,
+     "calcCalls": 14092,
+     "aiCalls": 1,
+     "aiMoveDistributions": 1,
+     "aiReplacements": 0,
+     "aiMaxMassError": 0,
+     "unsupportedOutcomes": {},
+     "audit": {
+      "policyWinProbability": 0.6872294632956354,
+      "statesVisited": 862,
+      "policyLeavesWithoutDecision": 209,
+      "capped": false,
+      "ms": 204.3
+     },
+     "auditConsistent": true,
+     "policyOpening": [
+      "Starly: Quick Attack  [P(win,0 faints) >= 67.06%; reach 100.0%; vs Magikarp 30HP AI: Bounce 100%]",
+      "  Starly: Tackle  [P(win,0 faints) >= 69.96%; reach 89.8%; vs Magikarp 23HP AI: Bounce 100%]",
+      "    Starly: Quick Attack  [P(win,0 faints) >= 92.95%; reach 20.1%; vs Magikarp 16HP AI: Bounce 100%]",
+      "    Starly: Quick Attack  [P(win,0 faints) >= 96.32%; reach 17.3%; vs Magikarp 16HP AI: Bounce 100%]",
+      "  Starly: Tackle  [P(win,0 faints) >= 70.21%; reach 6.0%; vs Magikarp 21HP AI: Bounce 100%]",
+      "    Starly: Quick Attack  [P(win,0 faints) >= 95.44%; reach 1.3%; vs Magikarp 14HP AI: Bounce 100%]",
+      "    Starly: Quick Attack  [P(win,0 faints) >= 94.44%; reach 1.2%; vs Magikarp 14HP AI: Bounce 100%]"
+     ]
+    },
+    {
+     "pruneBelowRarity": 0.1,
+     "completed": true,
+     "winZeroFaintLowerBound": 0.8253638674659383,
+     "winZeroFaintUpperBound": 0.9848306361694179,
+     "cumulativeMs": 22451.6,
+     "ms": 13435.8,
+     "expansions": 16157,
+     "turnEvals": 64628,
+     "memoStates": 10502,
+     "prunedNodes": 77715,
+     "cycleHits": 9621,
+     "cutActions": 12431,
+     "calcCalls": 14340,
+     "aiCalls": 1,
+     "aiMoveDistributions": 1,
+     "aiReplacements": 0,
+     "aiMaxMassError": 0,
+     "unsupportedOutcomes": {},
+     "audit": {
+      "policyWinProbability": 0.8686815222657516,
+      "statesVisited": 1043,
+      "policyLeavesWithoutDecision": 262,
+      "capped": false,
+      "ms": 250.5
+     },
+     "auditConsistent": true,
+     "policyOpening": [
+      "Starly: Quick Attack  [P(win,0 faints) >= 82.54%; reach 100.0%; vs Magikarp 30HP AI: Bounce 100%]",
+      "  Starly: Aerial Ace  [P(win,0 faints) >= 85.90%; reach 89.8%; vs Magikarp 23HP AI: Bounce 100%]",
+      "    Starly: Tackle  [P(win,0 faints) >= 94.69%; reach 16.1%; vs Magikarp 13HP AI: Bounce 100%]",
+      "    Starly: Tackle  [P(win,0 faints) >= 94.63%; reach 13.8%; vs Magikarp 13HP AI: Bounce 100%]",
+      "  Starly: Aerial Ace  [P(win,0 faints) >= 89.45%; reach 6.0%; vs Magikarp 21HP AI: Bounce 100%]",
+      "    Starly: Quick Attack  [P(win,0 faints) >= 98.50%; reach 1.1%; vs Magikarp 11HP AI: Bounce 100%]",
+      "    Starly: Quick Attack  [P(win,0 faints) >= 97.57%; reach 0.9%; vs Magikarp 11HP AI: Bounce 100%]"
+     ]
+    },
+    {
+     "pruneBelowRarity": 0.05,
+     "completed": true,
+     "winZeroFaintLowerBound": 0.8800017761658024,
+     "winZeroFaintUpperBound": 0.9861460255839914,
+     "cumulativeMs": 40034.4,
+     "ms": 17324.9,
+     "expansions": 21139,
+     "turnEvals": 84556,
+     "memoStates": 13335,
+     "prunedNodes": 40692,
+     "cycleHits": 13383,
+     "cutActions": 17614,
+     "calcCalls": 14600,
+     "aiCalls": 1,
+     "aiMoveDistributions": 1,
+     "aiReplacements": 0,
+     "aiMaxMassError": 0,
+     "unsupportedOutcomes": {},
+     "audit": {
+      "policyWinProbability": 0.8792087420463544,
+      "statesVisited": 3861,
+      "policyLeavesWithoutDecision": 249,
+      "capped": false,
+      "ms": 1078
+     },
+     "auditConsistent": false,
+     "policyOpening": [
+      "Starly: Quick Attack  [P(win,0 faints) >= 88.00%; reach 100.0%; vs Magikarp 30HP AI: Bounce 100%]",
+      "  Starly: Growl  [P(win,0 faints) >= 91.75%; reach 89.8%; vs Magikarp 23HP AI: Bounce 100%]",
+      "    Starly: Quick Attack  [P(win,0 faints) >= 97.30%; reach 22.4%; vs Magikarp 23HP AI: Bounce 100%]",
+      "    Starly: Quick Attack  [P(win,0 faints) >= 96.42%; reach 19.2%; vs Magikarp 23HP AI: Bounce 100%]",
+      "  Starly: Growl  [P(win,0 faints) >= 93.00%; reach 6.0%; vs Magikarp 21HP AI: Bounce 100%]",
+      "    Starly: Quick Attack  [P(win,0 faints) >= 97.93%; reach 1.5%; vs Magikarp 21HP AI: Bounce 100%]",
+      "    Starly: Quick Attack  [P(win,0 faints) >= 96.98%; reach 1.3%; vs Magikarp 21HP AI: Bounce 100%]"
+     ]
+    },
+    {
+     "pruneBelowRarity": 0.02,
+     "completed": true,
+     "winZeroFaintLowerBound": 0.9453182129236867,
+     "winZeroFaintUpperBound": 0.9821752732480773,
+     "cumulativeMs": 69127.2,
+     "ms": 28012.2,
+     "expansions": 31924,
+     "turnEvals": 127696,
+     "memoStates": 15641,
+     "prunedNodes": 89707,
+     "cycleHits": 16059,
+     "cutActions": 28480,
+     "calcCalls": 14884,
+     "aiCalls": 1,
+     "aiMoveDistributions": 1,
+     "aiReplacements": 0,
+     "aiMaxMassError": 0,
+     "unsupportedOutcomes": {},
+     "audit": {
+      "policyWinProbability": 0.929740838647218,
+      "statesVisited": 3035,
+      "policyLeavesWithoutDecision": 235,
+      "capped": false,
+      "ms": 789.4
+     },
+     "auditConsistent": false,
+     "policyOpening": [
+      "Starly: Quick Attack  [P(win,0 faints) >= 94.53%; reach 100.0%; vs Magikarp 30HP AI: Bounce 100%]",
+      "  Starly: Aerial Ace  [P(win,0 faints) >= 94.64%; reach 89.8%; vs Magikarp 23HP AI: Bounce 100%]",
+      "    Starly: Quick Attack  [P(win,0 faints) >= 98.52%; reach 16.1%; vs Magikarp 13HP AI: Bounce 100%]",
+      "    Starly: Quick Attack  [P(win,0 faints) >= 97.50%; reach 13.8%; vs Magikarp 13HP AI: Bounce 100%]",
+      "  Starly: Growl  [P(win,0 faints) >= 96.28%; reach 6.0%; vs Magikarp 21HP AI: Bounce 100%]",
+      "    Starly: Quick Attack  [P(win,0 faints) >= 98.18%; reach 1.5%; vs Magikarp 21HP AI: Bounce 100%]",
+      "    Starly: Quick Attack  [P(win,0 faints) >= 97.38%; reach 1.3%; vs Magikarp 21HP AI: Bounce 100%]"
+     ]
+    },
+    {
+     "pruneBelowRarity": 0.01,
+     "completed": true,
+     "winZeroFaintLowerBound": 0.9619963883888485,
+     "winZeroFaintUpperBound": 0.9790093057326534,
+     "cumulativeMs": 104338.5,
+     "ms": 34417.1,
+     "expansions": 40301,
+     "turnEvals": 161204,
+     "memoStates": 17842,
+     "prunedNodes": 33685,
+     "cycleHits": 18503,
+     "cutActions": 39929,
+     "calcCalls": 15176,
+     "aiCalls": 1,
+     "aiMoveDistributions": 1,
+     "aiReplacements": 0,
+     "aiMaxMassError": 0,
+     "unsupportedOutcomes": {},
+     "audit": {
+      "policyWinProbability": 0.8940084600342036,
+      "statesVisited": 4270,
+      "policyLeavesWithoutDecision": 116,
+      "capped": false,
+      "ms": 1208.4
+     },
+     "auditConsistent": false,
+     "policyOpening": [
+      "Starly: Quick Attack  [P(win,0 faints) >= 96.20%; reach 100.0%; vs Magikarp 30HP AI: Bounce 100%]",
+      "  Starly: Growl  [P(win,0 faints) >= 96.40%; reach 89.8%; vs Magikarp 23HP AI: Bounce 100%]",
+      "    Starly: Quick Attack  [P(win,0 faints) >= 98.49%; reach 22.4%; vs Magikarp 23HP AI: Bounce 100%]",
+      "    Starly: Quick Attack  [P(win,0 faints) >= 97.42%; reach 19.2%; vs Magikarp 23HP AI: Bounce 100%]",
+      "  Starly: Aerial Ace  [P(win,0 faints) >= 96.92%; reach 6.0%; vs Magikarp 21HP AI: Bounce 100%]",
+      "    Starly: Quick Attack  [P(win,0 faints) >= 98.58%; reach 1.1%; vs Magikarp 11HP AI: Bounce 100%]",
+      "    Starly: Quick Attack  [P(win,0 faints) >= 97.66%; reach 0.9%; vs Magikarp 11HP AI: Bounce 100%]"
+     ]
+    },
+    {
+     "pruneBelowRarity": 0.005,
+     "completed": false,
+     "winZeroFaintLowerBound": 0.5342329809917574,
+     "winZeroFaintUpperBound": 1,
+     "cumulativeMs": 120053.9,
+     "ms": 14502,
+     "expansions": 21279,
+     "turnEvals": 83964,
+     "memoStates": 8682,
+     "prunedNodes": 19216,
+     "cycleHits": 8529,
+     "cutActions": 22331,
+     "calcCalls": 15480,
+     "aiCalls": 1,
+     "aiMoveDistributions": 1,
+     "aiReplacements": 0,
+     "aiMaxMassError": 0,
+     "unsupportedOutcomes": {}
+    }
+   ]
+  },
+  {
+   "fixture": "Fisherman Darian — Starly/Gossifleur/Poochyena/Turtwig/Surskit (lead Starly, all Oran Berry)",
+   "ignorePP": true,
+   "bestCompletedLevel": null,
+   "levels": [
+    {
+     "pruneBelowRarity": 0.5,
+     "completed": false,
+     "winZeroFaintLowerBound": 0.000025294908626819827,
+     "winZeroFaintUpperBound": 1,
+     "cumulativeMs": 120062.9,
+     "ms": 120062.8,
+     "expansions": 48915,
+     "turnEvals": 336340,
+     "memoStates": 45996,
+     "prunedNodes": 328510,
+     "cycleHits": 7262,
+     "cutActions": 203648,
+     "calcCalls": 20007,
+     "aiCalls": 5826,
+     "aiMoveDistributions": 5825,
+     "aiReplacements": 1,
+     "aiMaxMassError": 0.000003814697265625,
+     "unsupportedOutcomes": {}
+    }
+   ]
+  },
+  {
+   "fixture": "Bug Catcher Rick — Turtwig/Gossifleur/Poochyena/Starly/Surskit (lead Turtwig, no items)",
+   "ignorePP": true,
+   "bestCompletedLevel": null,
+   "levels": [
+    {
+     "pruneBelowRarity": 0.5,
+     "completed": false,
+     "winZeroFaintLowerBound": 0.04712814924626694,
+     "winZeroFaintUpperBound": 1,
+     "cumulativeMs": 123001.8,
+     "ms": 123001.7,
+     "expansions": 14764,
+     "turnEvals": 111954,
+     "memoStates": 14546,
+     "prunedNodes": 277145,
+     "cycleHits": 428,
+     "cutActions": 60006,
+     "calcCalls": 20833,
+     "aiCalls": 2890,
+     "aiMoveDistributions": 2845,
+     "aiReplacements": 45,
+     "aiMaxMassError": 1.1102230246251565e-16,
+     "unsupportedOutcomes": {}
+    }
+   ]
+  }
+ ]
+}

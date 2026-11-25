@@ -13,6 +13,9 @@ import { gen } from '../../configuration';
 import { OpposingTrainer } from '../../trainer-sets';
 import { importTeam } from '../helper';
 import { getBox } from '../playthrough/museum.collection';
+import { getCpuPossibleActions } from '../phases/battle/cpu-move-selection';
+import { chooseSwitchIn } from '../phases/switching/cpu-switch-in';
+import { BattleFieldState, CpuTrainer, PlayerTrainer, PokemonPosition } from '../moveScoring.contracts';
 
 // ---------- exact rationals (per-turn mass-conservation oracle only) ----------
 type Frac = [bigint, bigint];
@@ -58,7 +61,7 @@ type Side = { a: number; mons: Mon[]; b: number[] };
 type S = { p: Side; c: Side; trap: number[]; charging: boolean; lock: number; replace: boolean };
 type Template = { mon: Pokemon; moves: string[]; info: MoveInfo[]; max: number; item: string; ability: string };
 // ablate: COUNTERFACTUAL switches used only to diagnose which mechanic drives a result; never the game.
-type Fixture = { name: string; player: Template[]; cpu: Template[]; lead: number; notes: string[]; ablate?: Set<string> };
+type Fixture = { name: string; player: Template[]; cpu: Template[]; lead: number; notes: string[]; ablate?: Set<string>; noVoluntarySwitch?: boolean; ignorePP?: boolean };
 
 const cloneSide = (x: Side): Side => ({ a: x.a, b: x.b.slice(), mons: x.mons.map(m => ({ ...m, pp: m.pp.slice() })) });
 const cloneS = (s: S): S => ({ ...s, p: cloneSide(s.p), c: cloneSide(s.c), trap: s.trap.slice() });
@@ -116,8 +119,11 @@ function speed(t: Template, m: Mon, b: number[]): number {
 }
 
 // ---------- turn kernel ----------
-type World = { s: S; p: Frac; flinch: [boolean, boolean]; moved: [boolean, boolean]; cpuFainted: boolean; end?: 'fail' | 'win' | 'unsupported'; why?: string };
-type Outcome = { kind: 'state' | 'fail' | 'win' | 'unsupported'; s?: S; p: Frac; why?: string };
+// rf: rarity factor, product over chance branches of p / (most likely sibling p); damage-roll spread excluded.
+type World = { s: S; p: Frac; rf?: number; flinch: [boolean, boolean]; moved: [boolean, boolean]; cpuFainted: boolean; end?: 'fail' | 'win' | 'unsupported'; why?: string };
+// pf: float probability including the AI-informed CPU choice weight (1 per choice when adversarial).
+type Outcome = { kind: 'state' | 'fail' | 'win' | 'unsupported'; s?: S; p: Frac; pf: number; rf: number; why?: string };
+const toNum = (a: Frac) => Number(a[0]) / Number(a[1]);
 export type Action = { kind: 'move'; i: number } | { kind: 'switch'; to: number };
 
 const typeCache = new Map<string, string>();
@@ -135,21 +141,23 @@ function makeKernel(fx: Fixture) {
   function merge(ws: World[]): World[] {
     const m = new Map<string, World>();
     for (const w of ws) {
-      const { s, p, ...rest } = w as any;
+      const { s, p, rf, ...rest } = w as any;
       const k = keyOf(s) + JSON.stringify(rest, Object.keys(rest).sort());
       const e = m.get(k);
-      if (e) e.p = add(e.p, p); else m.set(k, w);
+      if (e) { e.p = add(e.p, p); e.rf = Math.max(e.rf ?? 1, rf ?? 1); } else m.set(k, w);
     }
     return [...m.values()];
   }
-  function branch(ws: World[], f: (w: World) => Array<[Frac, (w: World) => void]>): World[] {
+  // Optional third element: probability used for rarity instead of p (damage rolls pass only the crit factor).
+  function branch(ws: World[], f: (w: World) => Array<[Frac, (w: World) => void, number?]>): World[] {
     const out: World[] = [];
     for (const w of ws) {
       if (w.end) { out.push(w); continue; }
       const opts = f(w).filter(([p]) => !isZero(p));
       if (opts.length === 1) { opts[0][1](w); out.push(w); continue; }
-      for (const [p, fn] of opts) {
-        const n: World = { ...w, s: cloneS(w.s), p: mul(w.p, p), flinch: [...w.flinch] as any, moved: [...w.moved] as any };
+      const rp = opts.map(([p, , r]) => r ?? toNum(p)), top = Math.max(...rp);
+      for (const [j, [p, fn]] of opts.entries()) {
+        const n: World = { ...w, s: cloneS(w.s), p: mul(w.p, p), rf: (w.rf ?? 1) * rp[j] / top, flinch: [...w.flinch] as any, moved: [...w.moved] as any };
         fn(n); out.push(n);
       }
     }
@@ -192,7 +200,7 @@ function makeKernel(fx: Fixture) {
       const inf = info(w), m = mOf(w.s, who);
       if (who === 1 && inf.bounce && w.s.charging) { w.s.charging = false; return true; }
       if (mi < 0) return true;
-      m.pp[mi]--;
+      if (!fx.ignorePP) m.pp[mi]--;
       if (who === 1 && tOf(w.s, 1).item === 'Choice Band') w.s.lock = mi;
       if (who === 1 && inf.bounce) { w.s.charging = true; w.moved[who] = true; charged.push(w); return false; }
       return true;
@@ -235,7 +243,7 @@ function makeKernel(fx: Fixture) {
         if (w.end || (w as any).hits <= h || mOf(w.s, opp).hp === 0) return [[ONE, () => {}]];
         const at = tOf(w.s, who), dt = tOf(w.s, opp);
         const critP = ab.has('crit') || dt.ability === 'Shell Armor' || dt.ability === 'Battle Armor' ? fr(0, 1) : fr(1, 24);
-        const res: Array<[Frac, (w: World) => void]> = [];
+        const res: Array<[Frac, (w: World) => void, number?]> = [];
         for (const crit of [false, true]) {
           const pc = crit ? critP : add(ONE, [-critP[0], critP[1]]);
           if (isZero(pc)) continue;
@@ -253,7 +261,7 @@ function makeKernel(fx: Fixture) {
             if (d > 0 && dt.ability === 'Cotton Down') { const b = sideOf(x.s, who).b; b[4] = Math.max(-6, b[4] - 1); }
             const mt = moveType(name(x));
             if (d > 0 && dt.ability === 'Rattled' && ['Bug', 'Dark', 'Ghost'].includes(mt)) { const b = sideOf(x.s, opp).b; b[4] = Math.min(6, b[4] + 1); }
-          }]);
+          }, toNum(pc)]);
         }
         return res;
       });
@@ -311,18 +319,20 @@ function makeKernel(fx: Fixture) {
     const m = mOf(s, 0);
     const acts: Action[] = tOf(s, 0).info.map((_, i) => ({ kind: 'move', i } as Action)).filter(a => m.pp[(a as any).i] > 0);
     if (!acts.length) acts.push({ kind: 'move', i: -1 });
-    if (!s.trap.length) s.p.mons.forEach((x, i) => { if (i !== s.p.a && x.hp > 0) acts.push({ kind: 'switch', to: i }); });
+    if (!s.trap.length && !fx.noVoluntarySwitch) s.p.mons.forEach((x, i) => { if (i !== s.p.a && x.hp > 0) acts.push({ kind: 'switch', to: i }); });
     return acts;
   }
 
   // All outcomes of one turn for a fixed player action, over every CPU choice (AI-agnostic) and chance.
-  function turn(s0: S, act: Action): { outcomes: Outcome[]; massChecks: number } {
+  function turn(s0: S, act: Action, dist?: Array<[number, number]>): { outcomes: Outcome[]; massChecks: number } {
     if (s0.replace) throw Error('turn() on replacement node');
     const all: Outcome[] = [];
     let massChecks = 0;
     const choices: number[] = cpuChoices(s0);
     if (!choices.length) choices.push(-1);
-    for (const ci of choices) {
+    const cpuDist = dist ?? choices.map(c => [c, 1] as [number, number]);
+    const topW = Math.max(...cpuDist.map(([, q]) => q));
+    for (const [ci, cw] of cpuDist) {
       const s = cloneS(s0);
       if (act.kind === 'switch') { s.p.a = act.to; s.p.b = freshBoosts(); }
       let ws: World[] = [{ s, p: ONE, flinch: [false, false], moved: [false, false], cpuFainted: false }];
@@ -345,10 +355,10 @@ function makeKernel(fx: Fixture) {
       let mass: Frac = [0n, 1n];
       for (const w of ws) {
         mass = add(mass, w.p);
-        if (w.end) { all.push({ kind: w.end, p: w.p, why: w.why }); continue; }
+        if (w.end) { all.push({ kind: w.end, p: w.p, pf: toNum(w.p) * cw, rf: (w.rf ?? 1) * cw / topW, why: w.why }); continue; }
         const s = w.s;
         if (w.cpuFainted) { s.replace = true; s.charging = false; s.lock = -1; s.trap = []; s.c.b = freshBoosts(); }
-        all.push({ kind: 'state', s, p: w.p });
+        all.push({ kind: 'state', s, p: w.p, pf: toNum(w.p) * cw, rf: (w.rf ?? 1) * cw / topW });
       }
       if (mass[0] !== mass[1]) throw Error(`Probability mass ${mass} != 1`);
       massChecks++;
@@ -358,7 +368,7 @@ function makeKernel(fx: Fixture) {
     for (const o of all) {
       const k = o.kind === 'state' ? keyOf(o.s!) : `${o.kind}:${o.why || ''}`;
       const e = agg.get(k);
-      if (e) e.p = add(e.p, o.p); else agg.set(k, o);
+      if (e) { e.p = add(e.p, o.p); e.pf += o.pf; e.rf = Math.max(e.rf, o.rf); } else agg.set(k, o);
     }
     return { outcomes: [...agg.values()], massChecks };
   }
@@ -367,7 +377,7 @@ function makeKernel(fx: Fixture) {
       const n = cloneS(s); n.c.a = i; n.replace = false; return n;
     });
   }
-  return { turn, replacements, playerActions, tOf, mOf };
+  return { turn, replacements, playerActions, tOf, mOf, cpuChoices };
 }
 
 // ---------- search ----------
@@ -653,3 +663,227 @@ test('real-encounter exact search (prototype #129)', () => {
   }
   writeFileSync(`${__dirname}/real-encounter-search-129.measurements.json`, JSON.stringify(report, null, 1) + '\n');
 }, 3_600_000);
+
+// =====================================================================================================
+// AI-INFORMED, PROBABILITY-PRUNED SEARCH (follow-up experiment on #129)
+// CPU move choice: the repo's AI scorer (getCpuPossibleActions -> calculateCpuMove probabilities).
+// CPU replacement after a KO: the repo's chooseSwitchIn (deterministic).
+// Objective: maximise P(win with zero player faints). Branches whose cumulative RARITY (product over chance
+// events of p / most-likely-sibling p, so damage-roll spread and the AI's favourite move cost nothing)
+// falls below a threshold are pruned and reported as an interval: counted as losses for the lower
+// bound and as wins for the upper bound. Both bounds are sound for the modelled game + AI.
+// =====================================================================================================
+function makeAi(fx: Fixture, K: ReturnType<typeof makeKernel>) {
+  const distCache = new Map<string, Array<[number, number]>>(), replCache = new Map<string, number>();
+  let aiCalls = 0, maxMassError = 0;
+  const aiMon = (t: Template, m: Mon, b: number[]) => {
+    const p = battleMon(t, m, b);
+    p.moves = t.moves.filter((_, i) => m.pp[i] > 0) as any;
+    return p;
+  };
+  const stateFor = (s: S, cpuActive: number) => {
+    const pt = fx.player[s.p.a], ct = fx.cpu[cpuActive];
+    const player = new PlayerTrainer([new PokemonPosition(aiMon(pt, s.p.mons[s.p.a], s.p.b), false)],
+      fx.player.map((t, i) => [t, i] as const).filter(([, i]) => i !== s.p.a && s.p.mons[i].hp > 0).map(([t, i]) => battleMon(t, s.p.mons[i], freshBoosts())));
+    const cpu = new CpuTrainer([new PokemonPosition(aiMon(ct, s.c.mons[cpuActive], s.c.b), false)],
+      fx.cpu.map((t, i) => [t, i] as const).filter(([, i]) => i !== cpuActive && s.c.mons[i].hp > 0).map(([t, i]) => battleMon(t, s.c.mons[i], freshBoosts())));
+    return new BattleFieldState(player, cpu, new Field({ gameType: 'Singles' }));
+  };
+  function dist(s: S): Array<[number, number]> {
+    const forced = K.cpuChoices(s);
+    if (!forced.length) return [[-1, 1]];
+    if (s.charging || s.lock >= 0) return [[forced[0], 1]];
+    const k = JSON.stringify([s.p.a, s.p.mons[s.p.a], s.p.b, s.c.a, s.c.mons[s.c.a], s.c.b, s.c.mons.map(m => m.hp > 0)]);
+    let d = distCache.get(k);
+    if (!d) {
+      aiCalls++;
+      const st = stateFor(s, s.c.a);
+      const acts = getCpuPossibleActions(st, st.cpu.active[0]) as any[];
+      const moves = fx.cpu[s.c.a].moves;
+      const m = new Map<number, number>();
+      for (const a of acts) {
+        if (a.type !== 'move') throw Error('AI returned non-move action');
+        const i = moves.indexOf(a.move.move.name);
+        if (i < 0 || s.c.mons[s.c.a].pp[i] <= 0) throw Error(`AI chose unavailable move ${a.move.move.name}`);
+        m.set(i, (m.get(i) || 0) + a.probability);
+      }
+      const tot = [...m.values()].reduce((x, y) => x + y, 0);
+      maxMassError = Math.max(maxMassError, Math.abs(tot - 1));
+      d = [...m.entries()].map(([i, q]) => [i, q / tot] as [number, number]);
+      distCache.set(k, d);
+    }
+    return d;
+  }
+  function replacement(s: S): S {
+    const alive = s.c.mons.map((m, i) => [m, i] as const).filter(([m]) => m.hp > 0).map(([, i]) => i);
+    const k = JSON.stringify([s.p.a, s.p.mons[s.p.a], s.p.b, s.c.mons]);
+    let idx = replCache.get(k);
+    if (idx === undefined) {
+      aiCalls++;
+      const st = stateFor(s, alive[0]);
+      const cands = alive.map(i => battleMon(fx.cpu[i], s.c.mons[i], freshBoosts()));
+      const chosen = chooseSwitchIn(cands, st.player.active[0].pokemon, st);
+      idx = alive[cands.indexOf(chosen!)];
+      if (idx === undefined) throw Error('replacement not found');
+      replCache.set(k, idx);
+    }
+    const n = cloneS(s); n.c.a = idx; n.replace = false; return n;
+  }
+  return { dist, replacement, stats: () => ({ aiCalls, aiMoveDistributions: distCache.size, aiReplacements: replCache.size, aiMaxMassError: maxMassError }) };
+}
+
+type Val = { lo: number; hi: number; p: number; a?: Action };
+function prunedSearch(fx: Fixture, threshold: number, budgetMs: number, shared?: { K: ReturnType<typeof makeKernel>; AI: ReturnType<typeof makeAi>; hint?: Map<string, Val> }) {
+  const K = shared?.K ?? makeKernel(fx), AI = shared?.AI ?? makeAi(fx, K);
+  if (!shared) { dmgCache.clear(); speedCache.clear(); }
+  let cutActions = 0;
+  const memo = new Map<string, Val>(), onStack = new Set<string>();
+  const t0 = performance.now();
+  let expansions = 0, turnEvals = 0, prunedNodes = 0, cycleHits = 0, aborted = false;
+  const unsupported = new Map<string, number>();
+  function value(s: S, p: number): Val {
+    const k = keyOf(s);
+    const m = memo.get(k);
+    if (m && m.p >= p) return m;
+    if (onStack.has(k)) { cycleHits++; return { lo: 0, hi: 1, p }; }
+    if (p < threshold) { prunedNodes++; return { lo: 0, hi: 1, p }; }
+    if ((++expansions & 255) === 0 && performance.now() - t0 > budgetMs) aborted = true;
+    if (aborted) return { lo: 0, hi: 1, p };
+    onStack.add(k);
+    let best: Val;
+    if (s.replace) { const v = value(AI.replacement(s), p); best = { lo: v.lo, hi: v.hi, p }; }
+    else {
+      best = { lo: -1, hi: 0, p };
+      const d = AI.dist(s);
+      const acts = K.playerActions(s), h = shared?.hint?.get(k)?.a;
+      if (h) acts.sort((x, y) => +(JSON.stringify(y) === JSON.stringify(h)) - +(JSON.stringify(x) === JSON.stringify(h)));
+      for (const a of acts) {
+        const outs = K.turn(s, a, d).outcomes; turnEvals++;
+        let lo = 0, hi = 0;
+        const states: Outcome[] = [];
+        for (const o of outs) {
+          if (o.kind === 'win') { lo += o.pf; hi += o.pf; }
+          else if (o.kind === 'unsupported') { unsupported.set(o.why!, (unsupported.get(o.why!) || 0) + 1); hi += o.pf; }
+          else if (o.kind === 'state') states.push(o);
+        }
+        // Explore likely successors first.
+        states.sort((x, y) => y.pf - x.pf);
+        // Branch-and-bound: once even all-remaining-wins cannot beat the best lower bound, this action's
+        // upper bound is <= best.lo <= best.hi, so skipping it changes neither bound.
+        let rest = states.reduce((x, o) => x + o.pf, 0), cut = false;
+        for (const o of states) {
+          if (best.lo >= 0 && hi + rest <= best.lo) { cut = true; break; }
+          const v = value(o.s!, p * o.rf); lo += o.pf * v.lo; hi += o.pf * v.hi; rest -= o.pf;
+        }
+        if (cut) { cutActions++; continue; }
+        if (lo > best.lo) best = { lo, hi: Math.max(hi, best.hi), p, a };
+        else best.hi = Math.max(best.hi, hi);
+      }
+    }
+    onStack.delete(k);
+    if (!m || best.lo >= m.lo) memo.set(k, best);
+    return best;
+  }
+  const root: S = { p: initialSide(fx.player, fx.lead), c: initialSide(fx.cpu, 0), trap: [], charging: false, lock: -1, replace: false };
+  const r = value(root, 1);
+  return { K, root, memo, r, aborted, stats: { ms: +(performance.now() - t0).toFixed(1), expansions, turnEvals, memoStates: memo.size, prunedNodes, cycleHits, cutActions,
+    calcCalls, ...AI.stats(), unsupportedOutcomes: Object.fromEntries(unsupported) } };
+}
+
+// Independent audit: fresh kernel, fresh calc and AI caches; follows the stored policy with no pruning.
+// Policy-less states and cycles count as losses, so the audited value must be >= the search lower bound.
+function auditPruned(fx: Fixture, root: S, memo: Map<string, Val>, nodeCap = 2_000_000) {
+  dmgCache.clear(); speedCache.clear();
+  const K = makeKernel(fx), AI = makeAi(fx, K);
+  const t0 = performance.now();
+  const done = new Map<string, number>(), path = new Set<string>();
+  let nodes = 0, missing = 0, capped = false;
+  function ev(s: S): number {
+    const k = keyOf(s);
+    const c = done.get(k); if (c !== undefined) return c;
+    if (path.has(k) || ++nodes > nodeCap) { capped ||= nodes > nodeCap; return 0; }
+    path.add(k);
+    let v = 0;
+    if (s.replace) v = ev(AI.replacement(s));
+    else {
+      const a = memo.get(k)?.a;
+      if (!a) missing++;
+      else for (const o of K.turn(s, a, AI.dist(s)).outcomes) v += o.kind === 'win' ? o.pf : o.kind === 'state' ? o.pf * ev(o.s!) : 0;
+    }
+    path.delete(k); done.set(k, v);
+    return v;
+  }
+  const v = ev(root);
+  return { policyWinProbability: v, statesVisited: nodes, policyLeavesWithoutDecision: missing, capped, ms: +(performance.now() - t0).toFixed(1) };
+}
+
+function prunedPolicyOpening(fx: Fixture, K: ReturnType<typeof makeKernel>, root: S, memo: Map<string, Val>, depth: number): string[] {
+  const AI = makeAi(fx, K), lines: string[] = [];
+  const name = (s: S, a?: Action) => !a ? '(none)' : a.kind === 'switch' ? `switch to ${fx.player[a.to].mon.name}` : `${fx.player[s.p.a].mon.name}: ${a.i < 0 ? 'Struggle' : fx.player[s.p.a].moves[a.i]}`;
+  const walk = (s: S, pre: string, d: number, pr: number) => {
+    if (s.replace) s = AI.replacement(s);
+    const v = memo.get(keyOf(s));
+    const d0 = AI.dist(s).map(([i, q]) => `${i < 0 ? 'Struggle' : fx.cpu[s.c.a].moves[i]} ${(q * 100).toFixed(0)}%`).join(', ');
+    lines.push(`${pre}${name(s, v?.a)}  [P(win,0 faints) >= ${((v?.lo ?? 0) * 100).toFixed(2)}%; reach ${(pr * 100).toFixed(1)}%; vs ${fx.cpu[s.c.a].mon.name} ${s.c.mons[s.c.a].hp}HP AI: ${d0}]`);
+    if (d <= 1 || !v?.a) return;
+    const outs = K.turn(s, v.a, AI.dist(s)).outcomes.filter(o => o.kind === 'state').sort((x, y) => y.pf - x.pf).slice(0, 2);
+    for (const o of outs) walk(o.s!, pre + '  ', d - 1, pr * o.pf);
+  };
+  walk(root, '', depth, 1);
+  return lines;
+}
+
+test('AI-informed pruned search (prototype #129 follow-up)', () => {
+  const budget = +(process.env.PROTOTYPE_BUDGET_MS || 300000);
+  const thresholds = (process.env.PROTOTYPE_THRESHOLDS || '0.5,0.2,0.1,0.05,0.02,0.01,0.005,0.002,0.001').split(',').map(Number);
+  const cases: Array<() => Fixture> = [
+    () => { const fx = darianFixture(['Starly', 'Gossifleur', 'Poochyena', 'Turtwig', 'Surskit'], 'Starly'); fx.cpu = fx.cpu.slice(0, 1); fx.name = 'Darian first Magikarp only (sub-fight)'; return fx; },
+    ...(process.env.PROTOTYPE_NO_SWITCH_DIAG ? [() => { const fx = darianFixture(['Starly', 'Gossifleur', 'Poochyena', 'Turtwig', 'Surskit'], 'Starly'); fx.cpu = fx.cpu.slice(0, 1); fx.noVoluntarySwitch = true; fx.name = 'DIAGNOSTIC Darian first Magikarp only, player never switches voluntarily'; return fx; }] : []),
+    () => darianFixture(['Starly', 'Gossifleur', 'Poochyena', 'Turtwig', 'Surskit'], 'Starly'),
+    () => rickFixture(['Turtwig', 'Gossifleur', 'Poochyena', 'Starly', 'Surskit'], 'Turtwig'),
+  ];
+  const report: any = {
+    warning: 'THROWAWAY prototype. Desktop timings are not phone evidence. Results are conditional on the mechanics model AND on the repo AI model.',
+    command: 'PROTOTYPE_BUDGET_MS=300000 npx jest --runInBand --runTestsByPath src/extensions/simulator/prototypes/real-encounter-search-129.spec.ts -t "AI-informed"',
+    baseRevision: execFileSync('git', ['rev-parse', 'HEAD'], { encoding: 'utf8' }).trim(),
+    device: { platform: platform(), arch: arch(), cpu: cpus()[0]?.model, logicalCPUs: cpus().length, runtime: process.version, conditions: 'Shared Linux host under Jest/ts-jest; not Android' },
+    activeBudgetMsPerCase: budget,
+    model: { ...MODEL, cpu: [
+      'CPU move choice: repo AI (getCpuPossibleActions/calculateCpuMove) on the exact current state; moves without PP hidden from the AI; Bounce second turn, Choice lock and Struggle forced by the kernel.',
+      'CPU replacement after a KO: repo chooseSwitchIn (deterministic). No voluntary CPU switching (the repo AI does not model it either).',
+      'PP IGNORED by default (PROTOTYPE_IGNORE_PP=0 to track it): no move consumes PP, so Struggle never occurs and PP is constant in the state key. Optimistic only if a fight would otherwise run a move dry.',
+      'firstTurnOut passed as false: only Fake Out/First Impression/hazards/Protect read it, none present in these fixtures.',
+    ] },
+    runs: [] as any[],
+  };
+  // Iterative deepening on the rarity threshold within one budget per fight; each completed level is an anytime answer.
+  for (const make of cases) {
+    const fx = make();
+    if (process.env.PROTOTYPE_ONLY && !fx.name.includes(process.env.PROTOTYPE_ONLY)) continue;
+    fx.ignorePP = process.env.PROTOTYPE_IGNORE_PP !== '0';
+    dmgCache.clear(); speedCache.clear();
+    const K = makeKernel(fx), AI = makeAi(fx, K);
+    const t0 = performance.now();
+    let hint: Map<string, Val> | undefined;
+    const levels: any[] = [];
+    let last: any;
+    for (const th of thresholds) {
+      const left = budget - (performance.now() - t0);
+      if (left <= 0) break;
+      const r = prunedSearch(fx, th, left, { K, AI, hint });
+      const lvl: any = { pruneBelowRarity: th, completed: !r.aborted, winZeroFaintLowerBound: r.r.lo, winZeroFaintUpperBound: r.r.hi,
+        cumulativeMs: +(performance.now() - t0).toFixed(1), ...r.stats };
+      if (!r.aborted) {
+        lvl.audit = auditPruned(fx, r.root, r.memo);
+        lvl.auditConsistent = lvl.audit.policyWinProbability >= r.r.lo - 1e-9;
+        lvl.policyOpening = prunedPolicyOpening(fx, K, r.root, r.memo, 3);
+        hint = r.memo; last = lvl;
+      }
+      levels.push(lvl);
+      console.log(fx.name, JSON.stringify({ ...lvl, policyOpening: undefined }));
+      if (r.aborted) break;
+    }
+    report.runs.push({ fixture: fx.name, ignorePP: fx.ignorePP, bestCompletedLevel: last ? { threshold: last.pruneBelowRarity, lo: last.winZeroFaintLowerBound, hi: last.winZeroFaintUpperBound } : null, levels });
+  }
+  writeFileSync(`${__dirname}/real-encounter-search-129.ai-pruned.measurements.json`, JSON.stringify(report, null, 1) + '\n');
+}, 7_200_000);

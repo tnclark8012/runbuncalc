@@ -1,0 +1,192 @@
+{
+ "warning": "THROWAWAY prototype. Desktop timings are not phone evidence. Results are conditional on the mechanics model AND on the repo AI model.",
+ "command": "PROTOTYPE_BUDGET_MS=300000 npx jest --runInBand --runTestsByPath src/extensions/simulator/prototypes/real-encounter-search-129.spec.ts -t \"AI-informed\"",
+ "baseRevision": "d0c4ab421fcfc39b707ca74cc4b598c352d5afbc",
+ "device": {
+  "platform": "linux",
+  "arch": "x64",
+  "cpu": "AMD EPYC 9V74 80-Core Processor",
+  "logicalCPUs": 2,
+  "runtime": "v26.13.0",
+  "conditions": "Shared Linux host under Jest/ts-jest; not Android"
+ },
+ "activeBudgetMsPerCase": 120000,
+ "model": {
+  "modelled": [
+   "Damage: patched @smogon/calc gen-8 formula, all 16 rolls each 1/16, equal damage values aggregated.",
+   "Critical hits 1/24 (stage 0), damage via calc isCrit; none against Shell Armor/Battle Armor.",
+   "Accuracy from a hand-entered gen-8 move table with accuracy/evasion stages; Keen Eye blocks accuracy drops.",
+   "Move order: priority, then calc final speed (stages, paralysis); exact ties split 1/2.",
+   "Multi-hit (Pin Missile): 2/3/4/5 hits at 35/35/15/15%, independent roll and crit per hit; Sturdy only on first hit.",
+   "Sturdy and Focus Sash at full HP; Oran Berry heals 10 at <=50% immediately after damage (between multi-hits).",
+   "Paralysis (30% Spark/Bounce; Electric immune; 25% full paralysis, no PP used), burn (10% Ember; Fire immune; 1/16 end of turn; attack halving via calc).",
+   "Flinch (30% Bite, only if the user moved first), Bubble Beam 10% Speed drop, stat-stage status moves (Growl, Confide, Sand Attack, Baby-Doll Eyes, Iron Defense).",
+   "Absorb drains round(dealt/2), min 1. Cotton Down lowers attacker Speed per damaging hit; Rattled raises Speed on Bug/Dark/Ghost hits.",
+   "Wrap: traps for 4 or 5 end-of-turn 1/8 damage ticks; the remaining count is hidden, so the state stores the observable belief set; ends if the trapper faints. Trapped player cannot switch.",
+   "Bounce: charge turn (PP used), semi-invulnerable to all player moves, strikes next turn. Choice Band locks the first move used.",
+   "PP tracked exactly (no PP used on full paralysis/flinch). Struggle when no move has PP: 50 BP typeless via calc, never misses, recoil round(max/4). Bug Bite against a held berry is UNSUPPORTED.",
+   "CPU move choice and CPU replacement after a faint are adversarial over every legal option (AI-agnostic superset of the AI document).",
+   "Player: every move with PP and every voluntary switch to a healthy bench Pokemon each turn. Set mode: no free switch after a KO.",
+   "End of turn: player residuals before CPU residuals (conservative: a player faint is never excused by a same-turn win)."
+  ],
+  "notModelledOrAssumed": [
+   "Exact Run & Bun ROM behaviour: crit rate, multi-hit distribution, Wrap duration, PP-on-full-paralysis, drain rounding, residual order and Set mode are gen-8 assumptions pending the mechanics-validation ticket.",
+   "CPU AI probabilities are not used; zero-tolerance qualification needs only the support of CPU behaviour, so an adversarial CPU is a sound superset. Positive-tolerance risk is not computed.",
+   "Player observes exact CPU HP (HP bar has >= 48 pixels, more than these opponents' max HP). Other hidden state: only Wrap duration, handled by belief sets.",
+   "Moves, items and abilities outside the tables above throw at fixture construction, or become UNSUPPORTED outcomes during search.",
+   "No positive-tolerance synthesis, doubles, held-item allocation, interruption/resume or Android measurement in this run."
+  ],
+  "cpu": [
+   "CPU move choice: repo AI (getCpuPossibleActions/calculateCpuMove) on the exact current state; moves without PP hidden from the AI; Bounce second turn, Choice lock and Struggle forced by the kernel.",
+   "CPU replacement after a KO: repo chooseSwitchIn (deterministic). No voluntary CPU switching (the repo AI does not model it either).",
+   "firstTurnOut passed as false: only Fake Out/First Impression/hazards/Protect read it, none present in these fixtures."
+  ]
+ },
+ "runs": [
+  {
+   "fixture": "Darian first Magikarp only (sub-fight)",
+   "bestCompletedLevel": null,
+   "levels": [
+    {
+     "pruneBelowRarity": 0.5,
+     "completed": false,
+     "winZeroFaintLowerBound": 0.025809836625661352,
+     "winZeroFaintUpperBound": 1,
+     "cumulativeMs": 120119.9,
+     "ms": 120119.7,
+     "expansions": 119447,
+     "turnEvals": 848576,
+     "memoStates": 119295,
+     "prunedNodes": 458408,
+     "cycleHits": 0,
+     "cutActions": 122823,
+     "calcCalls": 1716,
+     "aiCalls": 1,
+     "aiMoveDistributions": 1,
+     "aiReplacements": 0,
+     "aiMaxMassError": 0,
+     "unsupportedOutcomes": {}
+    }
+   ]
+  },
+  {
+   "fixture": "DIAGNOSTIC Darian first Magikarp only, player never switches voluntarily",
+   "bestCompletedLevel": {
+    "threshold": 0.5,
+    "lo": 0.4666529909706504,
+    "hi": 0.9922941007250177
+   },
+   "levels": [
+    {
+     "pruneBelowRarity": 0.5,
+     "completed": true,
+     "winZeroFaintLowerBound": 0.4666529909706504,
+     "winZeroFaintUpperBound": 0.9922941007250177,
+     "cumulativeMs": 73365.5,
+     "ms": 73365.5,
+     "expansions": 102285,
+     "turnEvals": 409140,
+     "memoStates": 102285,
+     "prunedNodes": 984587,
+     "cycleHits": 0,
+     "cutActions": 53458,
+     "calcCalls": 1886,
+     "aiCalls": 1,
+     "aiMoveDistributions": 1,
+     "aiReplacements": 0,
+     "aiMaxMassError": 0,
+     "unsupportedOutcomes": {},
+     "audit": {
+      "policyWinProbability": 0.47262092604431005,
+      "statesVisited": 302,
+      "policyLeavesWithoutDecision": 255,
+      "capped": false,
+      "ms": 36
+     },
+     "auditConsistent": true,
+     "policyOpening": [
+      "Starly: Quick Attack  [P(win,0 faints) >= 46.67%; reach 100.0%; vs Magikarp 30HP AI: Bounce 100%]",
+      "  Starly: Aerial Ace  [P(win,0 faints) >= 48.60%; reach 89.8%; vs Magikarp 23HP AI: Bounce 100%]",
+      "    Starly: Quick Attack  [P(win,0 faints) >= 89.00%; reach 16.1%; vs Magikarp 13HP AI: Bounce 100%]",
+      "    Starly: Quick Attack  [P(win,0 faints) >= 88.02%; reach 13.8%; vs Magikarp 13HP AI: Bounce 100%]",
+      "  Starly: Aerial Ace  [P(win,0 faints) >= 50.14%; reach 6.0%; vs Magikarp 21HP AI: Bounce 100%]",
+      "    Starly: Quick Attack  [P(win,0 faints) >= 91.87%; reach 1.1%; vs Magikarp 11HP AI: Bounce 100%]",
+      "    Starly: Quick Attack  [P(win,0 faints) >= 90.89%; reach 0.9%; vs Magikarp 11HP AI: Bounce 100%]"
+     ]
+    },
+    {
+     "pruneBelowRarity": 0.2,
+     "completed": false,
+     "winZeroFaintLowerBound": 0.5210130207927499,
+     "winZeroFaintUpperBound": 1,
+     "cumulativeMs": 120010.1,
+     "ms": 46600.6,
+     "expansions": 71441,
+     "turnEvals": 285692,
+     "memoStates": 71423,
+     "prunedNodes": 512082,
+     "cycleHits": 0,
+     "cutActions": 39852,
+     "calcCalls": 2094,
+     "aiCalls": 1,
+     "aiMoveDistributions": 1,
+     "aiReplacements": 0,
+     "aiMaxMassError": 0,
+     "unsupportedOutcomes": {}
+    }
+   ]
+  },
+  {
+   "fixture": "Fisherman Darian — Starly/Gossifleur/Poochyena/Turtwig/Surskit (lead Starly, all Oran Berry)",
+   "bestCompletedLevel": null,
+   "levels": [
+    {
+     "pruneBelowRarity": 0.5,
+     "completed": false,
+     "winZeroFaintLowerBound": 0.0000668052808871592,
+     "winZeroFaintUpperBound": 1,
+     "cumulativeMs": 120182.6,
+     "ms": 120182.5,
+     "expansions": 81464,
+     "turnEvals": 604908,
+     "memoStates": 80223,
+     "prunedNodes": 296101,
+     "cycleHits": 0,
+     "cutActions": 411837,
+     "calcCalls": 4707,
+     "aiCalls": 16062,
+     "aiMoveDistributions": 16061,
+     "aiReplacements": 1,
+     "aiMaxMassError": 1.1102230246251565e-16,
+     "unsupportedOutcomes": {}
+    }
+   ]
+  },
+  {
+   "fixture": "Bug Catcher Rick — Turtwig/Gossifleur/Poochyena/Starly/Surskit (lead Turtwig, no items)",
+   "bestCompletedLevel": null,
+   "levels": [
+    {
+     "pruneBelowRarity": 0.5,
+     "completed": false,
+     "winZeroFaintLowerBound": 0.007273034049983107,
+     "winZeroFaintUpperBound": 1,
+     "cumulativeMs": 121085.9,
+     "ms": 121085.7,
+     "expansions": 30207,
+     "turnEvals": 209750,
+     "memoStates": 29821,
+     "prunedNodes": 174731,
+     "cycleHits": 0,
+     "cutActions": 66379,
+     "calcCalls": 5457,
+     "aiCalls": 18622,
+     "aiMoveDistributions": 17765,
+     "aiReplacements": 857,
+     "aiMaxMassError": 1.1102230246251565e-16,
+     "unsupportedOutcomes": {}
+    }
+   ]
+  }
+ ]
+}
