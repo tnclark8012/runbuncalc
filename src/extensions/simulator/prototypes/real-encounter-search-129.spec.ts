@@ -998,7 +998,7 @@ test('AI-informed pruned search (prototype #129 follow-up)', () => {
   function policy(s: S): Action {
     const a = s.p.a, landing = s.charging, cm = s.c.mons[s.c.a];
     if (s.c.a === 1) return a === T ? mv(T, 'Absorb') : sw(T);
-    if (a === P) return s.c.b[5] <= -2 && !landing ? sw(G) : mv(P, 'Sand Attack');
+    if (a === P) return s.c.b[5] <= -1 && !landing ? sw(G) : mv(P, 'Sand Attack');
     if (a === G) return !landing && cm.hp < fx.cpu[0].max ? sw(St) : mv(G, 'Magical Leaf');
     if (a === St) return landing ? mv(St, 'Aerial Ace') : mv(St, 'Quick Attack');
     return mv(T, 'Bite');
