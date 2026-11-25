@@ -63,7 +63,7 @@ type S = { p: Side; c: Side; trap: number[]; charging: boolean; lock: number; re
 const markSeen = (s: S) => { if (s.seen) s.seen[s.p.a] |= 1 << s.c.a; };
 type Template = { mon: Pokemon; moves: string[]; info: MoveInfo[]; max: number; item: string; ability: string };
 // ablate: COUNTERFACTUAL switches used only to diagnose which mechanic drives a result; never the game.
-type Fixture = { name: string; player: Template[]; cpu: Template[]; lead: number; notes: string[]; ablate?: Set<string>; noVoluntarySwitch?: boolean; ignorePP?: boolean; noReturn?: boolean };
+type Fixture = { name: string; player: Template[]; cpu: Template[]; lead: number; notes: string[]; ablate?: Set<string>; noVoluntarySwitch?: boolean; ignorePP?: boolean; noReturn?: boolean; hpBands?: boolean };
 
 const cloneSide = (x: Side): Side => ({ a: x.a, b: x.b.slice(), mons: x.mons.map(m => ({ ...m, pp: m.pp.slice() })) });
 const cloneS = (s: S): S => ({ ...s, p: cloneSide(s.p), c: cloneSide(s.c), trap: s.trap.slice(), seen: s.seen?.slice() });
@@ -137,6 +137,24 @@ function makeKernel(fx: Fixture) {
   const T = [fx.player, fx.cpu];
   const ab = fx.ablate || new Set<string>();
   const tOf = (s: S, who: 0 | 1) => T[who][sideOf(s, who).a];
+  // HP bands (fx.hpBands): a player mon's HP is rounded DOWN to a band edge when it goes to the bench.
+  // Edges: 1 + k*D (D = strongest CPU single-hit max roll vs this mon, attacker at 1 HP so Flail/pinch
+  // abilities are at their worst), plus the Oran Berry (<= 1/2) and pinch (<= 1/3) thresholds, plus max HP.
+  // Rounding down never crosses those thresholds, so it is pessimistic except via berry timing
+  // (a lower HP can trigger Oran earlier) and AI scoring that reads player HP.
+  const edges = fx.player.map(pt => {
+    const pm = initialSide([pt], 0).mons[0];
+    let D = 1;
+    for (const ct of fx.cpu) {
+      const cm = { ...initialSide([ct], 0).mons[0], hp: 1 };
+      ct.moves.forEach((mv, i) => { if (!ct.info[i].status) D = Math.max(D, ...rolls(ct, cm, freshBoosts(), pt, pm, freshBoosts(), mv, false)); });
+    }
+    const e = new Set<number>([pt.max, Math.floor(pt.max / 3) + 1]);
+    if (pt.item === 'Oran Berry') e.add(Math.floor(pt.max / 2) + 1);
+    for (let h = 1; h < pt.max; h += D) e.add(h);
+    return [...e].sort((a, b) => b - a);
+  });
+  const band = (i: number, hp: number) => hp <= 0 ? hp : edges[i].find(e => e <= hp)!;
   const mOf = (s: S, who: 0 | 1) => sideOf(s, who).mons[sideOf(s, who).a];
 
   // Merge in-turn worlds that are identical in every respect except probability.
@@ -336,7 +354,7 @@ function makeKernel(fx: Fixture) {
     const topW = Math.max(...cpuDist.map(([, q]) => q));
     for (const [ci, cw] of cpuDist) {
       const s = cloneS(s0);
-      if (act.kind === 'switch') { s.p.a = act.to; s.p.b = freshBoosts(); markSeen(s); }
+      if (act.kind === 'switch') { if (fx.hpBands) s.p.mons[s.p.a].hp = band(s.p.a, s.p.mons[s.p.a].hp); s.p.a = act.to; s.p.b = freshBoosts(); markSeen(s); }
       let ws: World[] = [{ s, p: ONE, flinch: [false, false], moved: [false, false], cpuFainted: false }];
       const pInfo = act.kind === 'move' ? (act.i < 0 ? STRUGGLE : tOf(s, 0).info[act.i]) : undefined, cInfo = ci < 0 ? STRUGGLE : tOf(s, 1).info[ci];
       const pPrio = pInfo?.prio || 0, cPrio = s0.charging ? 0 : cInfo.prio || 0;
@@ -379,7 +397,7 @@ function makeKernel(fx: Fixture) {
       const n = cloneS(s); n.c.a = i; n.replace = false; markSeen(n); return n;
     });
   }
-  return { turn, replacements, playerActions, tOf, mOf, cpuChoices };
+  return { turn, replacements, playerActions, tOf, mOf, cpuChoices, edges };
 }
 
 // ---------- search ----------
@@ -871,6 +889,7 @@ test('AI-informed pruned search (prototype #129 follow-up)', () => {
       'CPU replacement after a KO: repo chooseSwitchIn (deterministic). No voluntary CPU switching (the repo AI does not model it either).',
       'PP IGNORED by default (PROTOTYPE_IGNORE_PP=0 to track it): no move consumes PP, so Struggle never occurs and PP is constant in the state key. Optimistic only if a fight would otherwise run a move dry.',
       'PLAYER SWITCH RULE (default on, PROTOTYPE_NO_RETURN=0 to disable): a player mon may not switch in against a CPU mon it has already been active against. The per-mon "seen" mask is part of the state.',
+      'HP BANDS (default on, PROTOTYPE_HP_BANDS=0 to disable): a player mon going to the bench has HP rounded down to the next band edge (1 + k*strongest CPU max roll, Oran 1/2 and pinch 1/3 thresholds, max). Pessimistic except Oran timing and AI scoring that reads player HP.',
       'firstTurnOut passed as false: only Fake Out/First Impression/hazards/Protect read it, none present in these fixtures.',
     ] },
     runs: [] as any[],
@@ -881,6 +900,7 @@ test('AI-informed pruned search (prototype #129 follow-up)', () => {
     if (process.env.PROTOTYPE_ONLY && !fx.name.includes(process.env.PROTOTYPE_ONLY)) continue;
     fx.ignorePP = process.env.PROTOTYPE_IGNORE_PP !== '0';
     fx.noReturn = process.env.PROTOTYPE_NO_RETURN !== '0';
+    fx.hpBands = process.env.PROTOTYPE_HP_BANDS !== '0';
     dmgCache.clear(); speedCache.clear();
     const K = makeKernel(fx), AI = makeAi(fx, K);
     const t0 = performance.now();
@@ -903,7 +923,7 @@ test('AI-informed pruned search (prototype #129 follow-up)', () => {
       console.log(fx.name, JSON.stringify({ ...lvl, policyOpening: undefined }));
       if (r.aborted) break;
     }
-    report.runs.push({ fixture: fx.name, ignorePP: fx.ignorePP, noReturn: fx.noReturn, bestCompletedLevel: last ? { threshold: last.pruneBelowRarity, lo: last.winZeroFaintLowerBound, hi: last.winZeroFaintUpperBound } : null, levels });
+    report.runs.push({ fixture: fx.name, ignorePP: fx.ignorePP, noReturn: fx.noReturn, hpBands: fx.hpBands, hpBandEdges: Object.fromEntries(fx.player.map((t, i) => [t.mon.name, K.edges[i].slice().reverse()])), bestCompletedLevel: last ? { threshold: last.pruneBelowRarity, lo: last.winZeroFaintLowerBound, hi: last.winZeroFaintUpperBound } : null, levels });
   }
   writeFileSync(`${__dirname}/real-encounter-search-129.ai-pruned.measurements.json`, JSON.stringify(report, null, 1) + '\n');
 }, 7_200_000);
