@@ -58,14 +58,16 @@ const MODELLED_ITEMS = new Set(['', 'Oran Berry', 'Focus Sash', 'Choice Band']);
 // ---------- state ----------
 type Mon = { hp: number; st: '' | 'par' | 'brn'; item: boolean; pp: number[] };
 type Side = { a: number; mons: Mon[]; b: number[] };
-type S = { p: Side; c: Side; trap: number[]; charging: boolean; lock: number; replace: boolean };
+// seen[i]: bitmask of CPU mons player mon i has been active against (only with fx.noReturn).
+type S = { p: Side; c: Side; trap: number[]; charging: boolean; lock: number; replace: boolean; seen?: number[] };
+const markSeen = (s: S) => { if (s.seen) s.seen[s.p.a] |= 1 << s.c.a; };
 type Template = { mon: Pokemon; moves: string[]; info: MoveInfo[]; max: number; item: string; ability: string };
 // ablate: COUNTERFACTUAL switches used only to diagnose which mechanic drives a result; never the game.
-type Fixture = { name: string; player: Template[]; cpu: Template[]; lead: number; notes: string[]; ablate?: Set<string>; noVoluntarySwitch?: boolean; ignorePP?: boolean };
+type Fixture = { name: string; player: Template[]; cpu: Template[]; lead: number; notes: string[]; ablate?: Set<string>; noVoluntarySwitch?: boolean; ignorePP?: boolean; noReturn?: boolean };
 
 const cloneSide = (x: Side): Side => ({ a: x.a, b: x.b.slice(), mons: x.mons.map(m => ({ ...m, pp: m.pp.slice() })) });
-const cloneS = (s: S): S => ({ ...s, p: cloneSide(s.p), c: cloneSide(s.c), trap: s.trap.slice() });
-const keyOf = (s: S) => JSON.stringify([s.p, s.c, s.trap, s.charging, s.lock, s.replace]);
+const cloneS = (s: S): S => ({ ...s, p: cloneSide(s.p), c: cloneSide(s.c), trap: s.trap.slice(), seen: s.seen?.slice() });
+const keyOf = (s: S) => JSON.stringify([s.p, s.c, s.trap, s.charging, s.lock, s.replace, s.seen]);
 const freshBoosts = () => [0, 0, 0, 0, 0, 0, 0];
 
 function template(mon: Pokemon): Template {
@@ -319,7 +321,7 @@ function makeKernel(fx: Fixture) {
     const m = mOf(s, 0);
     const acts: Action[] = tOf(s, 0).info.map((_, i) => ({ kind: 'move', i } as Action)).filter(a => m.pp[(a as any).i] > 0);
     if (!acts.length) acts.push({ kind: 'move', i: -1 });
-    if (!s.trap.length && !fx.noVoluntarySwitch) s.p.mons.forEach((x, i) => { if (i !== s.p.a && x.hp > 0) acts.push({ kind: 'switch', to: i }); });
+    if (!s.trap.length && !fx.noVoluntarySwitch) s.p.mons.forEach((x, i) => { if (i !== s.p.a && x.hp > 0 && !(s.seen && s.seen[i] & (1 << s.c.a))) acts.push({ kind: 'switch', to: i }); });
     return acts;
   }
 
@@ -334,7 +336,7 @@ function makeKernel(fx: Fixture) {
     const topW = Math.max(...cpuDist.map(([, q]) => q));
     for (const [ci, cw] of cpuDist) {
       const s = cloneS(s0);
-      if (act.kind === 'switch') { s.p.a = act.to; s.p.b = freshBoosts(); }
+      if (act.kind === 'switch') { s.p.a = act.to; s.p.b = freshBoosts(); markSeen(s); }
       let ws: World[] = [{ s, p: ONE, flinch: [false, false], moved: [false, false], cpuFainted: false }];
       const pInfo = act.kind === 'move' ? (act.i < 0 ? STRUGGLE : tOf(s, 0).info[act.i]) : undefined, cInfo = ci < 0 ? STRUGGLE : tOf(s, 1).info[ci];
       const pPrio = pInfo?.prio || 0, cPrio = s0.charging ? 0 : cInfo.prio || 0;
@@ -374,7 +376,7 @@ function makeKernel(fx: Fixture) {
   }
   function replacements(s: S): S[] {
     return s.c.mons.map((m, i) => [m, i] as const).filter(([m]) => m.hp > 0).map(([, i]) => {
-      const n = cloneS(s); n.c.a = i; n.replace = false; return n;
+      const n = cloneS(s); n.c.a = i; n.replace = false; markSeen(n); return n;
     });
   }
   return { turn, replacements, playerActions, tOf, mOf, cpuChoices };
@@ -727,7 +729,7 @@ function makeAi(fx: Fixture, K: ReturnType<typeof makeKernel>) {
       if (idx === undefined) throw Error('replacement not found');
       replCache.set(k, idx);
     }
-    const n = cloneS(s); n.c.a = idx; n.replace = false; return n;
+    const n = cloneS(s); n.c.a = idx; n.replace = false; markSeen(n); return n;
   }
   return { dist, replacement, stats: () => ({ aiCalls, aiMoveDistributions: distCache.size, aiReplacements: replCache.size, aiMaxMassError: maxMassError }) };
 }
@@ -743,9 +745,11 @@ function prunedSearch(fx: Fixture, threshold: number, budgetMs: number, shared?:
   const unsupported = new Map<string, number>();
   function value(s: S, p: number): Val {
     const k = keyOf(s);
+    // On-stack check must precede memo reuse: an on-stack state's stale memo entry would let its new
+    // action justify itself around a loop (lower bound not achieved by the stored stationary policy).
+    if (onStack.has(k)) { cycleHits++; return { lo: 0, hi: 1, p }; }
     const m = memo.get(k);
     if (m && m.p >= p) return m;
-    if (onStack.has(k)) { cycleHits++; return { lo: 0, hi: 1, p }; }
     if (p < threshold) { prunedNodes++; return { lo: 0, hi: 1, p }; }
     if ((++expansions & 255) === 0 && performance.now() - t0 > budgetMs) aborted = true;
     if (aborted) return { lo: 0, hi: 1, p };
@@ -784,7 +788,8 @@ function prunedSearch(fx: Fixture, threshold: number, budgetMs: number, shared?:
     if (!m || best.lo >= m.lo) memo.set(k, best);
     return best;
   }
-  const root: S = { p: initialSide(fx.player, fx.lead), c: initialSide(fx.cpu, 0), trap: [], charging: false, lock: -1, replace: false };
+  const root: S = { p: initialSide(fx.player, fx.lead), c: initialSide(fx.cpu, 0), trap: [], charging: false, lock: -1, replace: false, seen: fx.noReturn ? fx.player.map(() => 0) : undefined };
+  markSeen(root);
   const r = value(root, 1);
   return { K, root, memo, r, aborted, stats: { ms: +(performance.now() - t0).toFixed(1), expansions, turnEvals, memoStates: memo.size, prunedNodes, cycleHits, cutActions,
     calcCalls, ...AI.stats(), unsupportedOutcomes: Object.fromEntries(unsupported) } };
@@ -796,25 +801,38 @@ function auditPruned(fx: Fixture, root: S, memo: Map<string, Val>, nodeCap = 2_0
   dmgCache.clear(); speedCache.clear();
   const K = makeKernel(fx), AI = makeAi(fx, K);
   const t0 = performance.now();
-  const done = new Map<string, number>(), path = new Set<string>();
-  let nodes = 0, missing = 0, capped = false;
-  function ev(s: S): number {
-    const k = keyOf(s);
-    const c = done.get(k); if (c !== undefined) return c;
-    if (path.has(k) || ++nodes > nodeCap) { capped ||= nodes > nodeCap; return 0; }
-    path.add(k);
-    let v = 0;
-    if (s.replace) v = ev(AI.replacement(s));
-    else {
-      const a = memo.get(k)?.a;
-      if (!a) missing++;
-      else for (const o of K.turn(s, a, AI.dist(s)).outcomes) v += o.kind === 'win' ? o.pf : o.kind === 'state' ? o.pf * ev(o.s!) : 0;
+  // Build the Markov chain the stored policy induces, then value-iterate from 0. Iterates increase
+  // monotonically to the true policy value (least fixed point), so any iterate is a sound lower bound;
+  // unlike DFS-with-memo, it does not freeze values computed while a loop was cut to 0.
+  const idx = new Map<string, number>(), win: number[] = [], edges: Array<Array<[number, number]>> = [];
+  let missing = 0, capped = false;
+  const id = (s: S): number => {
+    const k = keyOf(s); let n = idx.get(k);
+    if (n === undefined) { n = win.length; idx.set(k, n); win.push(0); edges.push([]); queue.push(s); }
+    return n;
+  };
+  const queue: S[] = [];
+  const rootId = id(root);
+  for (let q = 0; q < queue.length; q++) {
+    if (q >= nodeCap) { capped = true; break; }
+    const s = queue[q], n = idx.get(keyOf(s))!;
+    if (s.replace) { edges[n].push([1, id(AI.replacement(s))]); continue; }
+    const a = memo.get(keyOf(s))?.a;
+    if (!a) { missing++; continue; }
+    for (const o of K.turn(s, a, AI.dist(s)).outcomes) {
+      if (o.kind === 'win') win[n] += o.pf; else if (o.kind === 'state') edges[n].push([o.pf, id(o.s!)]);
     }
-    path.delete(k); done.set(k, v);
-    return v;
   }
-  const v = ev(root);
-  return { policyWinProbability: v, statesVisited: nodes, policyLeavesWithoutDecision: missing, capped, ms: +(performance.now() - t0).toFixed(1) };
+  const v = new Float64Array(win.length);
+  let iters = 0, delta = 1;
+  while (delta > 1e-12 && iters < 100000 && !capped) {
+    delta = 0; iters++;
+    for (let n = win.length - 1; n >= 0; n--) {
+      let x = win[n]; for (const [p, m] of edges[n]) x += p * v[m];
+      if (x - v[n] > delta) delta = x - v[n]; v[n] = x;
+    }
+  }
+  return { policyWinProbability: capped ? 0 : v[rootId], statesVisited: win.length, valueIterations: iters, finalDelta: delta, policyLeavesWithoutDecision: missing, capped, ms: +(performance.now() - t0).toFixed(1) };
 }
 
 function prunedPolicyOpening(fx: Fixture, K: ReturnType<typeof makeKernel>, root: S, memo: Map<string, Val>, depth: number): string[] {
@@ -852,6 +870,7 @@ test('AI-informed pruned search (prototype #129 follow-up)', () => {
       'CPU move choice: repo AI (getCpuPossibleActions/calculateCpuMove) on the exact current state; moves without PP hidden from the AI; Bounce second turn, Choice lock and Struggle forced by the kernel.',
       'CPU replacement after a KO: repo chooseSwitchIn (deterministic). No voluntary CPU switching (the repo AI does not model it either).',
       'PP IGNORED by default (PROTOTYPE_IGNORE_PP=0 to track it): no move consumes PP, so Struggle never occurs and PP is constant in the state key. Optimistic only if a fight would otherwise run a move dry.',
+      'PLAYER SWITCH RULE (default on, PROTOTYPE_NO_RETURN=0 to disable): a player mon may not switch in against a CPU mon it has already been active against. The per-mon "seen" mask is part of the state.',
       'firstTurnOut passed as false: only Fake Out/First Impression/hazards/Protect read it, none present in these fixtures.',
     ] },
     runs: [] as any[],
@@ -861,6 +880,7 @@ test('AI-informed pruned search (prototype #129 follow-up)', () => {
     const fx = make();
     if (process.env.PROTOTYPE_ONLY && !fx.name.includes(process.env.PROTOTYPE_ONLY)) continue;
     fx.ignorePP = process.env.PROTOTYPE_IGNORE_PP !== '0';
+    fx.noReturn = process.env.PROTOTYPE_NO_RETURN !== '0';
     dmgCache.clear(); speedCache.clear();
     const K = makeKernel(fx), AI = makeAi(fx, K);
     const t0 = performance.now();
@@ -883,7 +903,7 @@ test('AI-informed pruned search (prototype #129 follow-up)', () => {
       console.log(fx.name, JSON.stringify({ ...lvl, policyOpening: undefined }));
       if (r.aborted) break;
     }
-    report.runs.push({ fixture: fx.name, ignorePP: fx.ignorePP, bestCompletedLevel: last ? { threshold: last.pruneBelowRarity, lo: last.winZeroFaintLowerBound, hi: last.winZeroFaintUpperBound } : null, levels });
+    report.runs.push({ fixture: fx.name, ignorePP: fx.ignorePP, noReturn: fx.noReturn, bestCompletedLevel: last ? { threshold: last.pruneBelowRarity, lo: last.winZeroFaintLowerBound, hi: last.winZeroFaintUpperBound } : null, levels });
   }
   writeFileSync(`${__dirname}/real-encounter-search-129.ai-pruned.measurements.json`, JSON.stringify(report, null, 1) + '\n');
 }, 7_200_000);
