@@ -1,0 +1,36 @@
+{
+ "variant": "starly-solo-growl",
+ "speeds": {
+  "Poochyena": 17,
+  "Gossifleur": 8,
+  "Starly": 24,
+  "Turtwig": 16,
+  "Magikarp #1": 27,
+  "Magikarp #2": 29
+ },
+ "items": {
+  "Poochyena": "Cheri Berry",
+  "Gossifleur": "Oran Berry",
+  "Starly": "Cheri Berry",
+  "Turtwig": "Oran Berry"
+ },
+ "states": 4729,
+ "deathless": 0.9805425177573538,
+ "clearMagikarp1Deathless": 0.9805425177573538,
+ "byOutcome": {
+  "Starly fainted": 0.019457482242645954,
+  "win": 0.9805425177573538
+ },
+ "mostLikelyLine": [
+  "T1: Starly 34HP vs Magikarp#1 30HP acc0 | Quick Attack | CPU Bounce 100% | top: state 89.8%, state 6.0%, state 2.9%",
+  "T2: Starly 34HP vs Magikarp#1 23HP (airborne) acc0 | Growl | CPU Bounce 100% | top: state 24.9%, state 21.4%, state 15.0%",
+  "T3: Starly 21HP vs Magikarp#1 23HP acc0 | Quick Attack | CPU Bounce 100% | top: state 89.8%, state 6.0%, state 2.9%",
+  "T4: Starly 21HP vs Magikarp#1 16HP (airborne) acc0 | Aerial Ace | CPU Bounce 100% | top: state 25.6%, state 12.8%, state 11.0%",
+  "T5: Starly 12HP vs Magikarp#1 6HP acc0 | Quick Attack | CPU Bounce 100% | top: state 100.0%",
+  "T6: Starly 12HP vs Magikarp#2 26HP acc0 | switch to Turtwig | CPU Hydro Pump 100% | top: state 60.0%, state 20.0%, state 20.0%",
+  "T7: Turtwig 32HP vs Magikarp#2 26HP acc0 | Absorb | CPU Hydro Pump 100% | top: state 53.9%, state 18.0%, state 18.0%",
+  "T8: Turtwig 30HP vs Magikarp#2 18HP acc0 | Absorb | CPU Hydro Pump 100% | top: state 53.9%, state 18.0%, state 18.0%",
+  "T9: Turtwig 28HP vs Magikarp#2 10HP acc0 | Absorb | CPU Hydro Pump 100% | top: state 53.9%, state 18.0%, state 18.0%",
+  "T10: Turtwig 26HP vs Magikarp#2 2HP acc0 | Absorb | CPU Flail 100% | top: win 100.0%"
+ ]
+}

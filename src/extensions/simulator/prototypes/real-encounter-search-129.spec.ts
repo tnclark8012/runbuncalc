@@ -984,9 +984,12 @@ test('AI-informed pruned search (prototype #129 follow-up)', () => {
 // Exact evaluation of the player's scripted Darian line (PROTOTYPE_LINE=1). No pruning, PP tracked, no abstractions.
 (process.env.PROTOTYPE_LINE ? test : test.skip)('player line: Poochyena/Gossifleur/Starly/Turtwig vs Darian (prototype #129)', () => {
   const box = getBox() as Record<string, Pokemon>;
-  const items: Record<string, string> = { Poochyena: 'Cheri Berry', Gossifleur: 'Oran Berry', Starly: 'Cheri Berry', Turtwig: 'Oran Berry' };
+  // Variants: user (Pooch Cheri, 1 landed Sand Attack), pooch-oran-2sa, starly-solo, starly-solo-growl.
+  const variant = process.env.PROTOTYPE_LINE_VARIANT || 'user';
+  const items: Record<string, string> = { Poochyena: variant === 'pooch-oran-2sa' ? 'Oran Berry' : 'Cheri Berry', Gossifleur: 'Oran Berry', Starly: 'Cheri Berry', Turtwig: 'Oran Berry' };
+  const saStages = variant === 'pooch-oran-2sa' ? -2 : -1, starlyGrowl = variant === 'starly-solo-growl';
   const names = Object.keys(items);
-  const fx: Fixture = { name: 'Player line vs Fisherman Darian', lead: 0, notes: [],
+  const fx: Fixture = { name: 'Player line vs Fisherman Darian: ' + variant, lead: variant.startsWith('starly-solo') ? 2 : 0, notes: [],
     player: names.map(n => { const p = box[n]; p.item = items[n] as any; return template(p); }),
     cpu: (OpposingTrainer('Fisherman Darian') as Pokemon[]).map(template) };
   dmgCache.clear(); speedCache.clear();
@@ -998,9 +1001,9 @@ test('AI-informed pruned search (prototype #129 follow-up)', () => {
   function policy(s: S): Action {
     const a = s.p.a, landing = s.charging, cm = s.c.mons[s.c.a];
     if (s.c.a === 1) return a === T ? mv(T, 'Absorb') : sw(T);
-    if (a === P) return s.c.b[5] <= -1 && !landing ? sw(G) : mv(P, 'Sand Attack');
+    if (a === P) return s.c.b[5] <= saStages && !landing ? sw(G) : mv(P, 'Sand Attack');
     if (a === G) return !landing && cm.hp < fx.cpu[0].max ? sw(St) : mv(G, 'Magical Leaf');
-    if (a === St) return landing ? mv(St, 'Aerial Ace') : mv(St, 'Quick Attack');
+    if (a === St) return landing ? (starlyGrowl && s.c.b[0] === 0 ? mv(St, 'Growl') : mv(St, 'Aerial Ace')) : mv(St, 'Quick Attack');
     return mv(T, 'Bite');
   }
   const spd = (t: Template) => getFinalSpeed(gen, battleMon(t, initialSide([t], 0).mons[0], freshBoosts()), field, field.attackerSide);
@@ -1035,7 +1038,7 @@ test('AI-informed pruned search (prototype #129 follow-up)', () => {
     return v[0];
   };
   const classes = new Set<string>(); term.forEach(m => m.forEach((_, k) => classes.add(k)));
-  const result: any = { speeds, items, states: nodes.length,
+  const result: any = { variant, speeds, items, states: nodes.length,
     deathless: absorb(n => term[n].get('win') || 0, () => false),
     clearMagikarp1Deathless: absorb(() => 0, st => st.c.a === 1 || st.replace),
     byOutcome: Object.fromEntries([...classes].map(c => [c, absorb(n => term[n].get(c) || 0, () => false)])) };
@@ -1050,5 +1053,5 @@ test('AI-informed pruned search (prototype #129 follow-up)', () => {
     const n = outs[0]; if (n.kind !== 'state') break; st = n.s!;
   }
   console.log(lines.join('\n'));
-  writeFileSync(`${__dirname}/real-encounter-search-129.player-line.json`, JSON.stringify({ ...result, mostLikelyLine: lines }, null, 1) + '\n');
+  writeFileSync(`${__dirname}/real-encounter-search-129.player-line${variant === 'user' ? '' : '.' + variant}.json`, JSON.stringify({ ...result, mostLikelyLine: lines }, null, 1) + '\n');
 }, 1_800_000);
