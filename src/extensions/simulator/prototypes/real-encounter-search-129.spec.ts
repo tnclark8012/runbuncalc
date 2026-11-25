@@ -53,7 +53,7 @@ const STRUGGLE: MoveInfo = { acc: true, pp: 0, struggle: true };
 const MODELLED_ABILITIES = new Set(['Shell Armor', 'Battle Armor', 'Sturdy', 'Cotton Down', 'Rattled',
   // Present but inert for these fixtures (no trigger exists in the encounter):
   'Keen Eye', 'Run Away', 'Swift Swim', 'Flash Fire', 'Blaze', 'Swarm' /* calc applies Swarm/Blaze */]);
-const MODELLED_ITEMS = new Set(['', 'Oran Berry', 'Focus Sash', 'Choice Band']);
+const MODELLED_ITEMS = new Set(['', 'Oran Berry', 'Focus Sash', 'Choice Band', 'Cheri Berry']);
 
 // ---------- state ----------
 type Mon = { hp: number; st: '' | 'par' | 'brn'; item: boolean; pp: number[] };
@@ -295,7 +295,7 @@ function makeKernel(fx: Fixture) {
       if (inf.bugBite && dm.item && dt.item === 'Oran Berry') return [[ONE, x => { x.end = 'unsupported'; x.why = 'Bug Bite berry theft'; }]];
       const opts: Array<[Frac, (w: World) => void]> = [];
       const chance = (pct: number, fn: (x: World) => void) => { opts.push([fr(pct, 100), fn], [fr(100 - pct, 100), () => {}]); };
-      if (inf.par && !ab.has('paralysis') && !dm.st && !dt.mon.hasType('Electric')) chance(inf.par, x => { mOf(x.s, opp).st = 'par'; });
+      if (inf.par && !ab.has('paralysis') && !dm.st && !dt.mon.hasType('Electric')) chance(inf.par, x => { const xm = mOf(x.s, opp); if (dt.item === 'Cheri Berry' && xm.item) xm.item = false; else xm.st = 'par'; });
       else if (inf.brn && !ab.has('burn') && !dm.st && !dt.mon.hasType('Fire')) chance(inf.brn, x => { mOf(x.s, opp).st = 'brn'; });
       else if (inf.flinch && !w.moved[opp]) chance(inf.flinch, x => { x.flinch[opp] = true; });
       else if (inf.speDrop) chance(inf.speDrop, x => { const b = sideOf(x.s, opp).b; b[4] = Math.max(-6, b[4] - 1); });
@@ -980,3 +980,75 @@ test('AI-informed pruned search (prototype #129 follow-up)', () => {
   writeFileSync(`${__dirname}/real-encounter-search-129.ai-pruned.trace.txt`, out.join('\n') + '\n');
   console.log(out.join('\n'));
 }, 7_200_000);
+
+// Exact evaluation of the player's scripted Darian line (PROTOTYPE_LINE=1). No pruning, PP tracked, no abstractions.
+(process.env.PROTOTYPE_LINE ? test : test.skip)('player line: Poochyena/Gossifleur/Starly/Turtwig vs Darian (prototype #129)', () => {
+  const box = getBox() as Record<string, Pokemon>;
+  const items: Record<string, string> = { Poochyena: 'Cheri Berry', Gossifleur: 'Oran Berry', Starly: 'Cheri Berry', Turtwig: 'Oran Berry' };
+  const names = Object.keys(items);
+  const fx: Fixture = { name: 'Player line vs Fisherman Darian', lead: 0, notes: [],
+    player: names.map(n => { const p = box[n]; p.item = items[n] as any; return template(p); }),
+    cpu: (OpposingTrainer('Fisherman Darian') as Pokemon[]).map(template) };
+  dmgCache.clear(); speedCache.clear();
+  const K = makeKernel(fx), AI = makeAi(fx, K);
+  const [P, G, St, T] = [0, 1, 2, 3];
+  const mv = (i: number, m: string): Action => { const j = fx.player[i].moves.indexOf(m); if (j < 0) throw Error(m); return { kind: 'move', i: j }; };
+  const sw = (to: number): Action => ({ kind: 'switch', to });
+  // "landing" = Magikarp #1 is in the air and comes down this turn; otherwise it springs up this turn.
+  function policy(s: S): Action {
+    const a = s.p.a, landing = s.charging, cm = s.c.mons[s.c.a];
+    if (s.c.a === 1) return a === T ? mv(T, 'Absorb') : sw(T);
+    if (a === P) return s.c.b[5] <= -2 && !landing ? sw(G) : mv(P, 'Sand Attack');
+    if (a === G) return !landing && cm.hp < fx.cpu[0].max ? sw(St) : mv(G, 'Magical Leaf');
+    if (a === St) return landing ? mv(St, 'Aerial Ace') : mv(St, 'Quick Attack');
+    return mv(T, 'Bite');
+  }
+  const spd = (t: Template) => getFinalSpeed(gen, battleMon(t, initialSide([t], 0).mons[0], freshBoosts()), field, field.attackerSide);
+  const speeds = Object.fromEntries([...fx.player, ...fx.cpu].map((t, i) => [`${t.mon.name}${i >= 4 ? ' #' + (i - 3) : ''}`, spd(t)]));
+  // Build the policy's Markov chain; absorbing classes: win, each faint reason, unsupported, and (separately) "reached Magikarp #2".
+  const root: S = { p: initialSide(fx.player, fx.lead), c: initialSide(fx.cpu, 0), trap: [], charging: false, lock: -1, replace: false };
+  const idx = new Map<string, number>(), nodes: S[] = [], edges: Array<Array<[number, number]>> = [], term: Array<Map<string, number>> = [];
+  // Once Magikarp #2 is out, the line never uses benched mons again: canonicalise them (full, unused) to stop
+  // phase-1 bench HP/PP combinations from multiplying phase 2. Only effect: the repo AI sees a canonical bench.
+  const fresh = initialSide(fx.player, 0).mons;
+  const canon = (st: S) => { if (st.c.a === 1 && !st.replace) st.p.mons.forEach((m, i) => { if (i !== st.p.a && i !== T) st.p.mons[i] = { ...fresh[i], pp: fresh[i].pp.slice() }; }); return st; };
+  const id = (st0: S) => { const st = canon(st0); const k = keyOf(st); let n = idx.get(k); if (n === undefined) { n = nodes.length; idx.set(k, n); nodes.push(st); edges.push([]); term.push(new Map()); } return n; };
+  id(root);
+  for (let q = 0; q < nodes.length; q++) {
+    const st = nodes[q];
+    if (q > 0 && q % 200000 === 0) {
+      const h = new Map<string, number>(); for (const x of nodes) { const k = `${fx.player[x.p.a].mon.name} vs #${x.c.a + 1}`; h.set(k, (h.get(k) || 0) + 1); }
+      console.log('states', q, nodes.length, JSON.stringify([...h]), JSON.stringify(st));
+      if (q >= 600000) throw Error('state cap');
+    }
+    if (st.replace) { edges[q].push([1, id(AI.replacement(st))]); continue; }
+    for (const o of K.turn(st, policy(st), AI.dist(st)).outcomes) {
+      if (o.kind === 'state') edges[q].push([o.pf, id(o.s!)]);
+      else { const c = o.kind === 'fail' ? o.why! : o.kind; term[q].set(c, (term[q].get(c) || 0) + o.pf); }
+    }
+  }
+  const absorb = (cls: (n: number) => number, stop: (st: S) => boolean) => {
+    const v = new Float64Array(nodes.length); let d = 1, it = 0;
+    while (d > 1e-13 && it++ < 100000) { d = 0;
+      for (let n = nodes.length - 1; n >= 0; n--) { if (stop(nodes[n])) { if (v[n] !== 1) { d = Math.max(d, 1 - v[n]); v[n] = 1; } continue; }
+        let x = cls(n); for (const [p, m] of edges[n]) x += p * v[m]; d = Math.max(d, Math.abs(x - v[n])); v[n] = x; } }
+    return v[0];
+  };
+  const classes = new Set<string>(); term.forEach(m => m.forEach((_, k) => classes.add(k)));
+  const result: any = { speeds, items, states: nodes.length,
+    deathless: absorb(n => term[n].get('win') || 0, () => false),
+    clearMagikarp1Deathless: absorb(() => 0, st => st.c.a === 1 || st.replace),
+    byOutcome: Object.fromEntries([...classes].map(c => [c, absorb(n => term[n].get(c) || 0, () => false)])) };
+  console.log(JSON.stringify(result, null, 1));
+  // Most likely line, for sanity.
+  let st = root; const lines: string[] = [];
+  for (let t = 1; t <= 12; t++) {
+    if (st.replace) st = AI.replacement(st);
+    const a = policy(st), d = AI.dist(st);
+    const outs = K.turn(st, a, d).outcomes.sort((x, y) => y.pf - x.pf);
+    lines.push(`T${t}: ${fx.player[st.p.a].mon.name} ${st.p.mons[st.p.a].hp}HP${st.p.mons[st.p.a].st ? ' ' + st.p.mons[st.p.a].st : ''} vs ${fx.cpu[st.c.a].mon.name}#${st.c.a + 1} ${st.c.mons[st.c.a].hp}HP${st.charging ? ' (airborne)' : ''} acc${st.c.b[5]} | ${a.kind === 'switch' ? 'switch to ' + fx.player[a.to].mon.name : fx.player[st.p.a].moves[a.i]} | CPU ${d.map(([i, q]) => fx.cpu[st.c.a].moves[i] + ' ' + (q * 100).toFixed(0) + '%').join(', ')} | top: ${outs.slice(0, 3).map(o => o.kind + ' ' + (o.pf * 100).toFixed(1) + '%').join(', ')}`);
+    const n = outs[0]; if (n.kind !== 'state') break; st = n.s!;
+  }
+  console.log(lines.join('\n'));
+  writeFileSync(`${__dirname}/real-encounter-search-129.player-line.json`, JSON.stringify({ ...result, mostLikelyLine: lines }, null, 1) + '\n');
+}, 1_800_000);

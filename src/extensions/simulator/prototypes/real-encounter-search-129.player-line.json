@@ -1,0 +1,38 @@
+{
+ "speeds": {
+  "Poochyena": 17,
+  "Gossifleur": 8,
+  "Starly": 24,
+  "Turtwig": 16,
+  "Magikarp #1": 27,
+  "Magikarp #2": 29
+ },
+ "items": {
+  "Poochyena": "Cheri Berry",
+  "Gossifleur": "Oran Berry",
+  "Starly": "Cheri Berry",
+  "Turtwig": "Oran Berry"
+ },
+ "states": 197482,
+ "deathless": 0.962939920226264,
+ "clearMagikarp1Deathless": 0.962939920226264,
+ "byOutcome": {
+  "Poochyena fainted": 0.029606373840930816,
+  "Gossifleur fainted": 0.007453705932805061,
+  "win": 0.962939920226264
+ },
+ "mostLikelyLine": [
+  "T1: Poochyena 32HP vs Magikarp#1 30HP acc0 | Sand Attack | CPU Bounce 100% | top: state 100.0%",
+  "T2: Poochyena 32HP vs Magikarp#1 30HP (airborne) acc0 | Sand Attack | CPU Bounce 100% | top: state 24.9%, state 24.9%, state 15.0%",
+  "T3: Poochyena 20HP vs Magikarp#1 30HP acc-1 | Sand Attack | CPU Bounce 100% | top: state 100.0%",
+  "T4: Poochyena 20HP vs Magikarp#1 30HP (airborne) acc-1 | Sand Attack | CPU Bounce 100% | top: state 36.3%, state 18.7%, state 18.7%",
+  "T5: Poochyena 20HP vs Magikarp#1 30HP acc-2 | switch to Gossifleur | CPU Bounce 100% | top: state 100.0%",
+  "T6: Gossifleur 31HP vs Magikarp#1 30HP (airborne) acc-2 | Magical Leaf | CPU Bounce 100% | top: state 29.3%, state 14.7%, state 11.5%",
+  "T7: Gossifleur 31HP vs Magikarp#1 4HP acc-2 | switch to Starly | CPU Bounce 100% | top: state 100.0%",
+  "T8: Starly 34HP vs Magikarp#1 4HP (airborne) acc-2 | Aerial Ace | CPU Bounce 100% | top: state 49.0%, state 15.0%, state 12.8%",
+  "T9: Starly 34HP vs Magikarp#2 26HP acc0 | switch to Turtwig | CPU Hydro Pump 100% | top: state 60.0%, state 20.0%, state 20.0%",
+  "T10: Turtwig 32HP vs Magikarp#2 26HP acc0 | Absorb | CPU Hydro Pump 100% | top: state 53.9%, state 18.0%, state 18.0%",
+  "T11: Turtwig 30HP vs Magikarp#2 18HP acc0 | Absorb | CPU Hydro Pump 100% | top: state 53.9%, state 18.0%, state 18.0%",
+  "T12: Turtwig 28HP vs Magikarp#2 10HP acc0 | Absorb | CPU Hydro Pump 100% | top: state 53.9%, state 18.0%, state 18.0%"
+ ]
+}
