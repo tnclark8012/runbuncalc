@@ -850,7 +850,8 @@ function auditPruned(fx: Fixture, root: S, memo: Map<string, Val>, nodeCap = 2_0
       if (x - v[n] > delta) delta = x - v[n]; v[n] = x;
     }
   }
-  return { policyWinProbability: capped ? 0 : v[rootId], statesVisited: win.length, valueIterations: iters, finalDelta: delta, policyLeavesWithoutDecision: missing, capped, ms: +(performance.now() - t0).toFixed(1) };
+  const valueOf = (st: S) => { const n = idx.get(keyOf(st)); return n === undefined ? undefined : v[n]; };
+  return { valueOf, policyWinProbability: capped ? 0 : v[rootId], statesVisited: win.length, valueIterations: iters, finalDelta: delta, policyLeavesWithoutDecision: missing, capped, ms: +(performance.now() - t0).toFixed(1) };
 }
 
 function prunedPolicyOpening(fx: Fixture, K: ReturnType<typeof makeKernel>, root: S, memo: Map<string, Val>, depth: number): string[] {
@@ -926,4 +927,56 @@ test('AI-informed pruned search (prototype #129 follow-up)', () => {
     report.runs.push({ fixture: fx.name, ignorePP: fx.ignorePP, noReturn: fx.noReturn, hpBands: fx.hpBands, hpBandEdges: Object.fromEntries(fx.player.map((t, i) => [t.mon.name, K.edges[i].slice().reverse()])), bestCompletedLevel: last ? { threshold: last.pruneBelowRarity, lo: last.winZeroFaintLowerBound, hi: last.winZeroFaintUpperBound } : null, levels });
   }
   writeFileSync(`${__dirname}/real-encounter-search-129.ai-pruned.measurements.json`, JSON.stringify(report, null, 1) + '\n');
+}, 7_200_000);
+
+// Turn-by-turn trace of the solved no-switch 1v1 (PROTOTYPE_TRACE=1). Values are the audited exact plan value.
+(process.env.PROTOTYPE_TRACE ? test : test.skip)('AI-informed 1v1 trace (prototype #129)', () => {
+  const fx = darianFixture(['Starly', 'Gossifleur', 'Poochyena', 'Turtwig', 'Surskit'], 'Starly');
+  fx.cpu = fx.cpu.slice(0, 1); fx.noVoluntarySwitch = true; fx.ignorePP = true;
+  dmgCache.clear(); speedCache.clear();
+  const K = makeKernel(fx), AI = makeAi(fx, K);
+  let hint: Map<string, Val> | undefined, r: any;
+  for (const th of (process.env.PROTOTYPE_THRESHOLDS || '0.5,0.2,0.1,0.05,0.02,0.01').split(',').map(Number)) {
+    r = prunedSearch(fx, th, 600000, { K, AI, hint }); hint = r.memo;
+  }
+  const au = auditPruned(fx, r.root, r.memo);
+  const pt = fx.player[0], ct = fx.cpu[0], pc = (x: number) => (x * 100).toFixed(1) + '%';
+  const STG = ['Atk', 'Def', 'SpA', 'SpD', 'Spe', 'Acc', 'Eva'];
+  const boosts = (b: number[]) => b.map((x, i) => x ? `${STG[i]}${x > 0 ? '+' : ''}${x}` : '').filter(Boolean).join(' ');
+  const side = (name: string, t: Template, m: Mon, b: number[]) => `${name} ${m.hp}/${t.max}${m.st ? ' ' + m.st.toUpperCase() : ''}${t.item && !m.item ? ' (berry used)' : ''}${boosts(b) ? ' [' + boosts(b) + ']' : ''}`;
+  const show = (s: S) => `${side(pt.mon.name, pt, s.p.mons[0], s.p.b)}  vs  ${side(ct.mon.name, ct, s.c.mons[0], s.c.b)}${s.charging ? ' (in the air: Bounce)' : ''}`;
+  const diff = (a: S, b: S) => {
+    const d: string[] = [];
+    const dh = (x: Mon, y: Mon, n: string) => { if (y.hp !== x.hp) d.push(`${n} ${y.hp - x.hp > 0 ? '+' : ''}${y.hp - x.hp}`); if (y.st !== x.st) d.push(`${n} ${y.st.toUpperCase()}`); if (x.item && !y.item) d.push(`${n} ate berry`); };
+    dh(a.p.mons[0], b.p.mons[0], pt.mon.name); dh(a.c.mons[0], b.c.mons[0], ct.mon.name);
+    if (boosts(a.p.b) !== boosts(b.p.b)) d.push(`${pt.mon.name} boosts -> [${boosts(b.p.b) || 'none'}]`);
+    if (boosts(a.c.b) !== boosts(b.c.b)) d.push(`${ct.mon.name} boosts -> [${boosts(b.c.b) || 'none'}]`);
+    if (!a.charging && b.charging) d.push(`${ct.mon.name} flies up`);
+    return d.join(', ') || 'no change (miss / full para / status fail)';
+  };
+  const out: string[] = [`Plan value at root (exact, audited): ${pc(au.policyWinProbability)}; search bounds [${pc(r.r.lo)}, ${pc(r.r.hi)}]`, ''];
+  const trace = (title: string, pick: (os: Outcome[]) => Outcome | undefined) => {
+    out.push(`=== ${title} ===`);
+    let s: S = r.root, reach = 1;
+    for (let t = 1; t <= 25; t++) {
+      const a = r.memo.get(keyOf(s))?.a as Action | undefined;
+      out.push(`Turn ${t}: ${show(s)}   plan value ${pc(au.valueOf(s) ?? 0)}, reach ${pc(reach)}`);
+      if (!a) { out.push('  (no stored decision: pruned region)'); break; }
+      const d = AI.dist(s);
+      out.push(`  Player: ${a.kind === 'move' ? (a.i < 0 ? 'Struggle' : pt.moves[a.i]) : 'switch'}   CPU AI: ${d.map(([i, q]) => `${i < 0 ? 'Struggle' : ct.moves[i]} ${pc(q)}`).join(', ')}`);
+      const outs = K.turn(s, a, d).outcomes.sort((x, y) => y.pf - x.pf);
+      const win = outs.filter(o => o.kind === 'win').reduce((x, o) => x + o.pf, 0), fail = outs.filter(o => o.kind === 'fail').reduce((x, o) => x + o.pf, 0);
+      out.push(`  -> win now ${pc(win)}, faint now ${pc(fail)}, continue ${pc(1 - win - fail)} over ${outs.filter(o => o.kind === 'state').length} states`);
+      for (const o of outs.filter(o => o.kind === 'state').slice(0, 5)) out.push(`     ${pc(o.pf).padStart(6)}  ${diff(s, o.s!)}  -> plan value ${pc(au.valueOf(o.s!) ?? 0)}`);
+      const n = pick(outs.filter(o => o.kind === 'state'));
+      if (!n) { out.push('  (line ends)'); break; }
+      reach *= n.pf; s = n.s!;
+      out.push(`  following: ${diff(s === n.s ? r.root : s, n.s!) && ''}${pc(n.pf)} branch`);
+    }
+    out.push('');
+  };
+  trace('Most likely line', os => os[0]);
+  trace('Rough line (each turn: worst-plan-value outcome with >= 5% chance)', os => os.filter(o => o.pf >= 0.05).sort((x, y) => (au.valueOf(x.s!) ?? 0) - (au.valueOf(y.s!) ?? 0))[0]);
+  writeFileSync(`${__dirname}/real-encounter-search-129.ai-pruned.trace.txt`, out.join('\n') + '\n');
+  console.log(out.join('\n'));
 }, 7_200_000);

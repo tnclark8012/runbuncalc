@@ -1,0 +1,163 @@
+Plan value at root (exact, audited): 97.3%; search bounds [95.6%, 97.9%]
+
+=== Most likely line ===
+Turn 1: Starly 34/34  vs  Magikarp 30/30   plan value 97.3%, reach 100.0%
+  Player: Quick Attack   CPU AI: Bounce 100.0%
+  -> win now 0.0%, faint now 0.0%, continue 100.0% over 5 states
+      89.8%  Magikarp -7, Magikarp flies up  -> plan value 97.3%
+       6.0%  Magikarp -9, Magikarp flies up  -> plan value 97.5%
+       2.9%  Magikarp -12, Magikarp flies up  -> plan value 97.5%
+       1.0%  Magikarp -10, Magikarp flies up  -> plan value 96.9%
+       0.3%  Magikarp -13, Magikarp flies up  -> plan value 95.8%
+  following: 89.8% branch
+Turn 2: Starly 34/34  vs  Magikarp 23/30 (in the air: Bounce)   plan value 97.3%, reach 89.8%
+  Player: Growl   CPU AI: Bounce 100.0%
+  -> win now 0.0%, faint now 0.0%, continue 100.0% over 28 states
+      24.9%  Starly -13, Magikarp boosts -> [Atk-1]  -> plan value 98.6%
+      21.4%  Starly -14, Magikarp boosts -> [Atk-1]  -> plan value 97.5%
+      15.0%  Magikarp boosts -> [Atk-1]  -> plan value 99.7%
+       8.0%  Starly -13, Starly PAR, Magikarp boosts -> [Atk-1]  -> plan value 97.0%
+       7.1%  Starly -12, Magikarp boosts -> [Atk-1]  -> plan value 99.5%
+  following: 24.9% branch
+Turn 3: Starly 21/34  vs  Magikarp 23/30 [Atk-1]   plan value 98.6%, reach 22.4%
+  Player: Quick Attack   CPU AI: Bounce 100.0%
+  -> win now 0.0%, faint now 0.0%, continue 100.0% over 5 states
+      89.8%  Magikarp -7, Magikarp flies up  -> plan value 98.6%
+       6.0%  Magikarp -9, Magikarp flies up  -> plan value 98.7%
+       2.9%  Magikarp -12, Magikarp flies up  -> plan value 98.7%
+       1.0%  Magikarp -10, Magikarp flies up  -> plan value 98.7%
+       0.3%  Magikarp -13, Magikarp flies up  -> plan value 98.8%
+  following: 89.8% branch
+Turn 4: Starly 21/34  vs  Magikarp 16/30 [Atk-1] (in the air: Bounce)   plan value 98.6%, reach 20.1%
+  Player: Aerial Ace   CPU AI: Bounce 100.0%
+  -> win now 2.2%, faint now 1.1%, continue 96.7% over 53 states
+      25.6%  Starly +1, Starly ate berry, Magikarp -10  -> plan value 100.0%
+      12.8%  Starly +2, Starly ate berry, Magikarp -10  -> plan value 100.0%
+      10.8%  Magikarp -10  -> plan value 100.0%
+       8.2%  Starly +1, Starly PAR, Starly ate berry, Magikarp -10  -> plan value 99.8%
+       6.4%  Starly +1, Starly ate berry, Magikarp -9  -> plan value 100.0%
+  following: 25.6% branch
+Turn 5: Starly 22/34 (berry used)  vs  Magikarp 6/30 [Atk-1]   plan value 100.0%, reach 5.2%
+  Player: Quick Attack   CPU AI: Bounce 100.0%
+  -> win now 100.0%, faint now 0.0%, continue 0.0% over 0 states
+  (line ends)
+
+=== Rough line (each turn: worst-plan-value outcome with >= 5% chance) ===
+Turn 1: Starly 34/34  vs  Magikarp 30/30   plan value 97.3%, reach 100.0%
+  Player: Quick Attack   CPU AI: Bounce 100.0%
+  -> win now 0.0%, faint now 0.0%, continue 100.0% over 5 states
+      89.8%  Magikarp -7, Magikarp flies up  -> plan value 97.3%
+       6.0%  Magikarp -9, Magikarp flies up  -> plan value 97.5%
+       2.9%  Magikarp -12, Magikarp flies up  -> plan value 97.5%
+       1.0%  Magikarp -10, Magikarp flies up  -> plan value 96.9%
+       0.3%  Magikarp -13, Magikarp flies up  -> plan value 95.8%
+  following: 89.8% branch
+Turn 2: Starly 34/34  vs  Magikarp 23/30 (in the air: Bounce)   plan value 97.3%, reach 89.8%
+  Player: Growl   CPU AI: Bounce 100.0%
+  -> win now 0.0%, faint now 0.0%, continue 100.0% over 28 states
+      24.9%  Starly -13, Magikarp boosts -> [Atk-1]  -> plan value 98.6%
+      21.4%  Starly -14, Magikarp boosts -> [Atk-1]  -> plan value 97.5%
+      15.0%  Magikarp boosts -> [Atk-1]  -> plan value 99.7%
+       8.0%  Starly -13, Starly PAR, Magikarp boosts -> [Atk-1]  -> plan value 97.0%
+       7.1%  Starly -12, Magikarp boosts -> [Atk-1]  -> plan value 99.5%
+  following: 6.9% branch
+Turn 3: Starly 20/34 PAR  vs  Magikarp 23/30 [Atk-1]   plan value 95.6%, reach 6.2%
+  Player: Quick Attack   CPU AI: Bounce 100.0%
+  -> win now 0.0%, faint now 0.0%, continue 100.0% over 6 states
+      67.4%  Magikarp -7, Magikarp flies up  -> plan value 96.4%
+      25.0%  Magikarp flies up  -> plan value 93.2%
+       4.5%  Magikarp -9, Magikarp flies up  -> plan value 96.8%
+       2.1%  Magikarp -12, Magikarp flies up  -> plan value 96.9%
+       0.8%  Magikarp -10, Magikarp flies up  -> plan value 96.8%
+  following: 25.0% branch
+Turn 4: Starly 20/34 PAR  vs  Magikarp 23/30 [Atk-1] (in the air: Bounce)   plan value 93.2%, reach 1.5%
+  Player: Aerial Ace   CPU AI: Bounce 100.0%
+  -> win now 0.0%, faint now 2.2%, continue 97.8% over 42 states
+      27.4%  Starly +1, Starly ate berry, Magikarp -10  -> plan value 97.2%
+      13.7%  Starly +2, Starly ate berry, Magikarp -10  -> plan value 98.0%
+      12.7%  Starly +1, Starly ate berry  -> plan value 88.5%
+       8.1%  Magikarp -10  -> plan value 97.5%
+       6.9%  Starly +1, Starly ate berry, Magikarp -9  -> plan value 97.2%
+  following: 12.7% branch
+Turn 5: Starly 21/34 PAR (berry used)  vs  Magikarp 23/30 [Atk-1]   plan value 88.5%, reach 0.2%
+  Player: Quick Attack   CPU AI: Bounce 100.0%
+  -> win now 0.0%, faint now 0.0%, continue 100.0% over 6 states
+      67.4%  Magikarp -7, Magikarp flies up  -> plan value 91.9%
+      25.0%  Magikarp flies up  -> plan value 78.0%
+       4.5%  Magikarp -9, Magikarp flies up  -> plan value 93.7%
+       2.1%  Magikarp -12, Magikarp flies up  -> plan value 93.9%
+       0.8%  Magikarp -10, Magikarp flies up  -> plan value 93.7%
+  following: 25.0% branch
+Turn 6: Starly 21/34 PAR (berry used)  vs  Magikarp 23/30 [Atk-1] (in the air: Bounce)   plan value 78.0%, reach 0.0%
+  Player: Aerial Ace   CPU AI: Bounce 100.0%
+  -> win now 0.0%, faint now 1.1%, continue 98.9% over 49 states
+      27.4%  Starly -9, Magikarp -10  -> plan value 85.4%
+      13.7%  Starly -8, Magikarp -10  -> plan value 85.4%
+      12.7%  Starly -9  -> plan value 54.1%
+       8.1%  Magikarp -10  -> plan value 97.2%
+       6.9%  Starly -9, Magikarp -9  -> plan value 85.4%
+  following: 12.7% branch
+Turn 7: Starly 12/34 PAR (berry used)  vs  Magikarp 23/30 [Atk-1]   plan value 54.1%, reach 0.0%
+  Player: Quick Attack   CPU AI: Bounce 100.0%
+  -> win now 0.0%, faint now 0.0%, continue 100.0% over 6 states
+      67.4%  Magikarp -7, Magikarp flies up  -> plan value 64.6%
+      25.0%  Magikarp flies up  -> plan value 22.3%
+       4.5%  Magikarp -9, Magikarp flies up  -> plan value 65.4%
+       2.1%  Magikarp -12, Magikarp flies up  -> plan value 66.7%
+       0.8%  Magikarp -10, Magikarp flies up  -> plan value 65.5%
+  following: 25.0% branch
+Turn 8: Starly 12/34 PAR (berry used)  vs  Magikarp 23/30 [Atk-1] (in the air: Bounce)   plan value 22.3%, reach 0.0%
+  Player: Aerial Ace   CPU AI: Bounce 100.0%
+  -> win now 0.0%, faint now 3.5%, continue 96.5% over 28 states
+      27.4%  Starly -9, Magikarp -10  -> plan value 13.2%
+      13.7%  Starly -8, Magikarp -10  -> plan value 13.2%
+      12.7%  Starly -9  -> plan value 7.5%
+       8.1%  Magikarp -10  -> plan value 85.4%
+       6.9%  Starly -9, Magikarp -9  -> plan value 13.0%
+  following: 12.7% branch
+Turn 9: Starly 3/34 PAR (berry used)  vs  Magikarp 23/30 [Atk-1]   plan value 7.5%, reach 0.0%
+  Player: Quick Attack   CPU AI: Bounce 100.0%
+  -> win now 0.0%, faint now 0.0%, continue 100.0% over 6 states
+      67.4%  Magikarp -7, Magikarp flies up  -> plan value 9.3%
+      25.0%  Magikarp flies up  -> plan value 2.0%
+       4.5%  Magikarp -9, Magikarp flies up  -> plan value 9.4%
+       2.1%  Magikarp -12, Magikarp flies up  -> plan value 9.6%
+       0.8%  Magikarp -10, Magikarp flies up  -> plan value 9.4%
+  following: 25.0% branch
+Turn 10: Starly 3/34 PAR (berry used)  vs  Magikarp 23/30 [Atk-1] (in the air: Bounce)   plan value 2.0%, reach 0.0%
+  Player: Aerial Ace   CPU AI: Bounce 100.0%
+  -> win now 0.0%, faint now 85.0%, continue 15.0% over 7 states
+       8.1%  Magikarp -10  -> plan value 13.2%
+       3.8%  no change (miss / full para / status fail)  -> plan value 7.5%
+       2.0%  Magikarp -9  -> plan value 13.0%
+       0.7%  Magikarp -12  -> plan value 15.1%
+       0.2%  Magikarp -16  -> plan value 78.5%
+  following: 8.1% branch
+Turn 11: Starly 3/34 PAR (berry used)  vs  Magikarp 13/30 [Atk-1]   plan value 13.2%, reach 0.0%
+  Player: Quick Attack   CPU AI: Bounce 100.0%
+  -> win now 0.2%, faint now 0.0%, continue 99.8% over 5 states
+      67.4%  Magikarp -7, Magikarp flies up  -> plan value 14.2%
+      25.0%  Magikarp flies up  -> plan value 9.4%
+       4.5%  Magikarp -9, Magikarp flies up  -> plan value 14.2%
+       2.1%  Magikarp -12, Magikarp flies up  -> plan value 14.2%
+       0.8%  Magikarp -10, Magikarp flies up  -> plan value 14.2%
+  following: 25.0% branch
+Turn 12: Starly 3/34 PAR (berry used)  vs  Magikarp 13/30 [Atk-1] (in the air: Bounce)   plan value 9.4%, reach 0.0%
+  Player: Aerial Ace   CPU AI: Bounce 100.0%
+  -> win now 0.5%, faint now 85.0%, continue 14.5% over 4 states
+       8.1%  Magikarp -10  -> plan value 78.5%
+       3.8%  no change (miss / full para / status fail)  -> plan value 13.2%
+       2.0%  Magikarp -9  -> plan value 78.5%
+       0.7%  Magikarp -12  -> plan value 78.5%
+  following: 8.1% branch
+Turn 13: Starly 3/34 PAR (berry used)  vs  Magikarp 3/30 [Atk-1]   plan value 78.5%, reach 0.0%
+  Player: Quick Attack   CPU AI: Bounce 100.0%
+  -> win now 75.0%, faint now 0.0%, continue 25.0% over 1 states
+      25.0%  Magikarp flies up  -> plan value 14.2%
+  following: 25.0% branch
+Turn 14: Starly 3/34 PAR (berry used)  vs  Magikarp 3/30 [Atk-1] (in the air: Bounce)   plan value 14.2%, reach 0.0%
+  Player: Tackle   CPU AI: Bounce 100.0%
+  -> win now 11.3%, faint now 85.0%, continue 3.7% over 1 states
+       3.8%  no change (miss / full para / status fail)  -> plan value 78.5%
+  (line ends)
+
