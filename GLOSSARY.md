@@ -8,7 +8,7 @@ Planning teams and battle decisions for Pokemon Run & Bun.
 The probability that at least one of the player's Pokemon faints over the entire battle.
 
 **Risk tolerance**:
-The maximum acceptable faint risk for a battle plan, chosen by the player and defaulting to 0%.
+An optional maximum acceptable faint risk for a battle plan, set by the player; without one, plans are ranked by faint risk, lowest first.
 
 **Riskless victory**:
 A battle victory with zero faint risk.
@@ -27,3 +27,11 @@ The team selection and held-item reallocations proposed for an upcoming battle, 
 
 **Live battle state**:
 The participants, conditions, and relevant action history of an in-progress battle at a particular point in a turn, distinct from the facts needed to prepare for an upcoming battle.
+
+**Player plan**:
+A planned preparation plus any pinned turns, from which the engine completes a branching battle plan.
+_Avoid_: Strategy, script
+
+**Pinned turn**:
+A player action fixed by the player at a specific point in a battle, which the engine must play rather than choose.
+_Avoid_: Forced move, scripted turn
