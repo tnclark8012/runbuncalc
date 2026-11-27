@@ -16,6 +16,9 @@ A battle victory with zero faint risk.
 **Branching battle plan**:
 A plan whose prescribed player actions can differ according to observed battle outcomes.
 
+**Qualifying battle plan**:
+A battle plan for which every feasible modeled execution eventually ends in player victory and exact or certified evidence establishes that whole-battle faint risk does not exceed the player's risk tolerance.
+
 **Player state**:
 The facts about the player's owned Pokemon, resources, and progress at a particular point in the game, distinct from proposed preparation or battle actions.
 
