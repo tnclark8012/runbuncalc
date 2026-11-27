@@ -47,19 +47,43 @@ function applyColorCode(element: Element, result: CalculationColor, speCheck: bo
 	}
 }
 
+function getPlayerMonElements(): Element[] {
+	return Array.from(document.getElementsByClassName("trainer-pok left-side"));
+}
+
+// Clear stale colors immediately so the previous matchup's results are never mistaken for the new one.
+function markColorCodesLoading(): void {
+	for (const element of getPlayerMonElements())
+		element.className = 'trainer-pok left-side color-loading';
+}
+
+function colorCodesEnabled(): { speCheck: boolean, ohkoCheck: boolean } {
+	return {
+		speCheck: (document.getElementById("cc-spe-border") as HTMLInputElement).checked,
+		ohkoCheck: (document.getElementById("cc-ohko-color") as HTMLInputElement).checked,
+	};
+}
+
 export async function updateColorCodes(): Promise<void> {
 	// Superseded runs bail out, so rapid selection changes only pay for the latest one.
 	const run = ++latestRun;
+	const initial = colorCodesEnabled();
+	if (initial.speCheck || initial.ohkoCheck)
+		markColorCodesLoading();
+
 	await yieldToBrowser();
 	if (run !== latestRun)
 		return;
 
-	var speCheck = (document.getElementById("cc-spe-border") as HTMLInputElement).checked;
-	var ohkoCheck = (document.getElementById("cc-ohko-color") as HTMLInputElement).checked;
+	const { speCheck, ohkoCheck } = colorCodesEnabled();
 	if (!speCheck && !ohkoCheck) {
+		for (const element of getPlayerMonElements())
+			element.classList.remove('color-loading');
 		return
 	}
-	const pMons = Array.from(document.getElementsByClassName("trainer-pok left-side"));
+	// Elements may have been re-rendered during the yield.
+	markColorCodesLoading();
+	const pMons = getPlayerMonElements();
 	const cpuPokemon = createPokemon($("#p2"));
 	const field = createField();
 	const cache = getOpponentCache(toCacheKey([
@@ -88,7 +112,6 @@ export async function updateColorCodes(): Promise<void> {
 		}
 		results.push(result);
 		applyColorCode(element, result, speCheck, ohkoCheck);
-		element.classList.remove('best');
 	}
 
 	const best = getBestResult(results);
