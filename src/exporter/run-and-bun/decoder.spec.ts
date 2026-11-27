@@ -219,6 +219,19 @@ describe('Run & Bun John GBA decoder', () => {
     },
   );
 
+  it('adds each mega form to the box holding its mega stone, without adding it to the party', () => {
+    const f = fixture();
+    const snapshot = decodeRunAndBunMemory(f.bytes);
+    snapshot.player.party[0].species = { id: 6, name: 'Charizard' };
+    const data = Object.values(snapshotToBoxExport(snapshot).collection)[0];
+    const base = data.customSets.Charizard.Test;
+    expect(data.customSets['Charizard-Mega-X'].Test).toEqual({ ...base, ability: 'Tough Claws', item: 'Charizardite X' });
+    expect(data.customSets['Charizard-Mega-Y'].Test).toEqual({ ...base, ability: 'Drought', item: 'Charizardite Y' });
+    expect(data.customSets.Bulbasaur).toBeDefined();
+    expect(Object.keys(data.customSets)).toHaveLength(4);
+    expect(data.party).toEqual(['Charizard (Test)']);
+  });
+
   it('distinguishes As One variants for the calculator while preserving raw game names', () => {
     const f = fixture();
     const snapshot = decodeRunAndBunMemory(f.bytes);

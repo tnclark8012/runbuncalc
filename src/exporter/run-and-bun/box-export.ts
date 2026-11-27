@@ -1,9 +1,15 @@
-import { Generations, toID } from '@smogon/calc';
+import { Generations, MEGA_STONES, toID } from '@smogon/calc';
 import type { IVRecord, SetCollectionData } from '../../extensions/core/storage.contracts';
 import type { GameStateSnapshot, SnapshotPokemon, Stats } from './types';
 
 function legacyStats(stats: Stats): IVRecord {
   return { hp: stats.hp, at: stats.attack, df: stats.defense, sp: stats.speed, sa: stats.specialAttack, sd: stats.specialDefense };
+}
+
+function megaFormsOf(species: string): Array<{ megaSpecies: string; megaStone: string }> {
+  return Object.entries(MEGA_STONES).flatMap(([megaStone, forms]) =>
+    Object.prototype.hasOwnProperty.call(forms, species) && forms[species].includes('-Mega')
+      ? [{ megaSpecies: forms[species], megaStone }] : []);
 }
 
 function baseSetName(pokemon: SnapshotPokemon): string {
@@ -69,11 +75,19 @@ export function snapshotToBoxExport(snapshot: GameStateSnapshot, collectionName 
     if (['__proto__', 'constructor', 'prototype'].includes(baseName)) {
       warnings.push(`Used "${setName}" for ${pokemon.id} because its nickname is a reserved set name.`);
     }
-    sets[setName] = {
+    const set = {
       isCustomSet: true, ability: ability.name, item: item?.name ?? '',
       level: pokemon.level, nature: pokemon.nature.name, ivs: legacyStats(pokemon.ivs), evs: legacyStats(pokemon.evs),
       moves,
     };
+    sets[setName] = set;
+    for (const { megaSpecies, megaStone } of megaFormsOf(species)) {
+      const mega = generation.species.get(toID(megaSpecies));
+      const stone = generation.items.get(toID(megaStone));
+      if (!mega || !stone) continue;
+      const megaSets = result.customSets[mega.name] ?? (result.customSets[mega.name] = {});
+      megaSets[setName] = { ...set, ability: mega.abilities?.[0] ?? set.ability, item: stone.name, moves: [...moves] };
+    }
     if (pokemon.location.kind === 'party') result.party.push(`${species} (${setName})`);
   };
   ownedPokemon.forEach(addPokemon);

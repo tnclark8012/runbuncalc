@@ -31,6 +31,12 @@ reserved object keys receive a suffix and warning. Party order and original
 box/slot locations are preserved in snapshot metadata. Eggs/bad eggs remain in the snapshot
 but are omitted from calculator sets with explicit export warnings.
 
+Each Pokemon that can mega evolve also gets a box set for every mega form (for
+example `Charizard-Mega-X` and `Charizard-Mega-Y`) under the same set name, with
+the same level, nature, IVs/EVs and moves, the mega form's ability, and the
+matching mega stone held. Mega sets are never added to the party and have no
+snapshot metadata of their own.
+
 `GameStateSnapshot` is JSON-only data, versioned with `schemaVersion: 1`:
 
 - Party and all 14 boxes: identity fields, original locations, box names, species,
