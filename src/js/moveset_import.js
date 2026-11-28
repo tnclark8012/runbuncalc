@@ -17,8 +17,17 @@ function placeBsBtn() {
 */
 function saveTrainerPokemon(){
 	$('#save-change').attr("hidden", true);
-	ExportPokemon($("#p1"));
-	$("#import.bs-btn").click()
+	var pokes = ExportPokemon($("#p1"));
+	$("textarea.import-team-text").val("");
+	addSets(pokes, getSelectedSetName($("#p1")));
+}
+
+// Overwrite the selected set (e.g. a nickname-named box set) instead of a generic "Custom Set".
+function getSelectedSetName(pokeInfo) {
+	var fullSetName = pokeInfo.find("input.set-selector").val() || "";
+	var start = fullSetName.indexOf("(");
+	var end = fullSetName.lastIndexOf(")");
+	return start !== -1 && end > start ? fullSetName.substring(start + 1, end) : "Custom Set";
 }
 
 function ExportPokemon(pokeInfo) {
@@ -261,7 +270,37 @@ function addToDex(poke) {
 		}
 		customsets["Aegislash-Shield"][poke.nameProp] = dexObject;
 	}
+	syncMegaForms(customsets, poke.name, poke.nameProp, dexObject);
 	updateDex(customsets);
+}
+
+// Box megas mirror their base form's set (see box-export.ts); keep each form's own ability and item.
+function syncMegaForms(customsets, speciesName, setName, source) {
+	var related = getMegaRelatedSpecies(speciesName);
+	for (var i = 0; i < related.length; i++) {
+		var sets = customsets[related[i]];
+		if (!sets || !sets[setName]) continue;
+		sets[setName] = $.extend({}, sets[setName], {
+			level: source.level,
+			nature: source.nature,
+			evs: $.extend({}, source.evs),
+			ivs: $.extend({}, source.ivs),
+			moves: source.moves.slice(),
+		});
+	}
+}
+
+function getMegaRelatedSpecies(speciesName) {
+	var species = calc.SPECIES[9][speciesName];
+	var baseName = species && species.baseSpecies && speciesName.indexOf("-Mega") !== -1 ? species.baseSpecies : speciesName;
+	var base = calc.SPECIES[9][baseName];
+	var megas = ((base && base.otherFormes) || []).filter(function (forme) {
+		return forme.indexOf("-Mega") !== -1;
+	});
+	if (!megas.length) return [];
+	return [baseName].concat(megas).filter(function (name) {
+		return name !== speciesName;
+	});
 }
 
 function updateDex(customsets) {

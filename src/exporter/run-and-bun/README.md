@@ -35,7 +35,9 @@ Each Pokemon that can mega evolve also gets a box set for every mega form (for
 example `Charizard-Mega-X` and `Charizard-Mega-Y`) under the same set name, with
 the same level, nature, IVs/EVs and moves, the mega form's ability, and the
 matching mega stone held. Mega sets are never added to the party and have no
-snapshot metadata of their own.
+snapshot metadata of their own. Saving changes to either form in the calculator
+copies its level, nature, IVs/EVs and moves to the other forms' sets with the
+same name, keeping each form's own ability and item.
 
 `GameStateSnapshot` is JSON-only data, versioned with `schemaVersion: 1`:
 
