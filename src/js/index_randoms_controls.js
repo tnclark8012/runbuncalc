@@ -134,13 +134,15 @@ function getDamageRanges(attackerResults) {
 	var p1HD = 0, p2HD = 0;
 
 	return attackerResults.map((result, i) => {
-		let lowestHitDamage = result.damage[0] ? result.damage[0] : result.damage;
-		let highestHitDamage = result.damage[15] ? result.damage[15] : result.damage;
-		let getDamagePct = (hitDamage) => hitDamage * attacker.moves[i].hits / defender.stats.hp * 100;
+		// Multi-hit moves report one damage array per hit, which range() already sums.
+		let damageRange = result.range();
+		let isPerHitDamage = Array.isArray(result.damage) && Array.isArray(result.damage[0]);
+		let hits = isPerHitDamage ? 1 : attacker.moves[i].hits;
+		let getDamagePct = (damage) => damage * hits / defender.stats.hp * 100;
 		return {
 			move: result.move,
-			lowestRoll: getDamagePct(lowestHitDamage),
-			highestRoll: getDamagePct(highestHitDamage),
+			lowestRoll: getDamagePct(damageRange[0]),
+			highestRoll: getDamagePct(damageRange[1]),
 		};
 	});
 }
